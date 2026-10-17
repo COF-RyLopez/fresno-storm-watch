@@ -1,6 +1,18 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
 Version 0.8.0 | October 17, 2026 | Dark Calcite workspace
 
+EOC PILOT LINKS
+App: https://cof-rylopez.github.io/fresno-storm-watch/?view=watch
+Testing and setup guide: https://cof-rylopez.github.io/fresno-storm-watch/setup.html
+Repository: https://github.com/COF-RyLopez/fresno-storm-watch
+Deployment runs: https://github.com/COF-RyLopez/fresno-storm-watch/actions/workflows/pages.yml
+The app is ready to share only after its Pages deployment succeeds. This is a
+public-source prototype; testers do not need GitHub or ArcGIS accounts. It does
+not provide private operational records, shared acknowledgements or assignments.
+For a manual reservoir refresh/deployment: Actions -> Verify and deploy Storm
+Watch -> Run workflow -> main. Normal collection targets 15-minute intervals;
+GitHub scheduling can be delayed. Check source and collection times in the app.
+
 START HERE
 Open site/setup.html for the complete GitHub and optional ArcGIS sign-in guide.
 To run locally: Node 22.22.3; npm test; npm run check; npm start.
