@@ -1,0 +1,91 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { realNumber,sourceTime,radarFrames,qpfCycle,cdecSeries,reservoirMetricState,validateReservoirSnapshot,QPF_PERIODS } from '../site/lib/environment-model.js';
+import { fetchQpfCycle,fetchRadarFrames } from '../site/lib/environment-data.js';
+import { collectReservoirs } from '../scripts/collect-reservoirs.mjs';
+
+const now=Date.parse('2026-10-17T21:00:00Z');
+const metric={key:'outflow',label:'Outflow',sensor:23,duration:'H',units:'CFS',maxAgeHours:3};
+const row=(changes={})=>({stationId:'PNF',durCode:'H',SENSOR_NUM:23,obsDate:'2026-10-17 12:00',date:'2026-10-17 12:00',value:252,units:'CFS',dataFlag:' ',...changes});
+const cycle=(changes={})=>({product:'72-hour QPF',units:'Inches',issue_time:'2026-10-17 18:00:00',start_time:'2026-10-18 00:00:00',end_time:'2026-10-21 00:00:00',...changes});
+const feature=a=>({attributes:a});
+const selection={stations:[{id:'MIL',metrics:[{...metric,duration:'D'}]},{id:'PNF',metrics:[metric]}]};
+
+test('CDEC fixed PST and NOAA UTC parsing are independent of browser daylight saving',()=>{
+  assert.equal(sourceTime('2026-10-17 12:00','-08:00'),Date.parse('2026-10-17T20:00:00Z'));
+  assert.equal(sourceTime('2026-10-17 18:00:00'),Date.parse('2026-10-17T18:00:00Z'));
+  for(const s of ['2026-02-30 12:00','2026-10-17 24:00','yesterday',''])assert.equal(sourceTime(s),null);
+});
+test('real numeric zero survives while sentinel, blank and boolean values stay unknown',()=>{
+  assert.equal(realNumber(0),0);assert.equal(realNumber('0'),0);
+  for(const n of [null,undefined,'',true,NaN,Infinity,-9999,'-999'])assert.equal(realNumber(n),null);
+});
+test('radar timestamps come from CONUS, not the newer Guam frame; duplicates are deterministic',()=>{
+  const f=(id,time,subset='CONUS')=>feature({objectid:id,idp_validtime:time,idp_subset:subset});
+  const frames=radarFrames({features:[f(1,now-600000),f(2,now-300000),f(3,now-300000),f(4,now,'GUAM'),f(5,now+999999)]},now);
+  assert.deepEqual(frames.map(f=>f.id),[3,1]);
+  assert.throws(()=>radarFrames({features:[f(1,now)],exceededTransferLimit:true},now),/incomplete/);
+  assert.throws(()=>radarFrames({features:[f(1,now-6*3600000)]},now),/No recent/);
+});
+test('QPF has one coherent fixed forecast window across all polygon bands',()=>{
+  const result=qpfCycle({features:[feature(cycle()),feature(cycle())]},72,now);
+  assert.equal(result.start,Date.parse('2026-10-18T00:00:00Z'));assert.equal(result.hours,72);
+  assert.throws(()=>qpfCycle({features:[feature(cycle()),feature(cycle({issue_time:'2026-10-17 12:00:00'}))]},72,now),/mixed/);
+  assert.throws(()=>qpfCycle({features:[feature(cycle())],exceededTransferLimit:true},72,now),/incomplete/);
+});
+test('QPF rejects unexpected units, future issuance and a wrong accumulation length',()=>{
+  for(const a of [cycle({units:'mm'}),cycle({issue_time:'2026-10-18 06:00:00'}),cycle({end_time:'2026-10-20 00:00:00'})])assert.throws(()=>qpfCycle({features:[feature(a)]},72,now),/times or units/);
+});
+test('a forecast update during its valid window is legitimate and keeps that fixed window',()=>{
+  const result=qpfCycle({features:[feature(cycle({start_time:'2026-10-17 00:00:00',end_time:'2026-10-20 00:00:00'}))]},72,now);
+  assert(result.issue>result.start);assert.equal(result.end-result.start,72*3600000);
+});
+test('CDEC values retain source identity and units; missing newest record is explicit',()=>{
+  const result=cdecSeries([row(),row({obsDate:'2026-10-17 13:00',value:-9999}),row({stationId:'MIL',value:999})],'PNF',metric,now);
+  assert.equal(result.lastValid.value,252);assert.equal(result.latest.value,null);assert.equal(result.input,2);
+  assert.match(reservoirMetricState(result,metric,now).label,/Newer record missing/);
+});
+test('zero release is a measured zero; negative inflow is allowed only for an inflow contract',()=>{
+  assert.equal(cdecSeries([row({value:0})],'PNF',metric,now).lastValid.value,0);
+  assert.equal(cdecSeries([row({value:-4})],'PNF',metric,now).lastValid,null);
+  assert.equal(cdecSeries([row({value:-4})],'PNF',{...metric,allowNegative:true},now).lastValid.value,-4);
+});
+test('flagged/wrong-unit values, future samples and conflicting duplicates cannot look current',()=>{
+  for(const a of [row({dataFlag:'M'}),row({units:'CMS'}),row({obsDate:'2026-10-18 12:00'})])assert.equal(cdecSeries([a],'PNF',metric,now).lastValid,null);
+  assert.throws(()=>cdecSeries([row(),row({value:253})],'PNF',metric,now),/Conflicting/);
+  const deduplicated=cdecSeries([row(),row(),row({obsDate:'2026-10-18 12:00'})],'PNF',metric,now);
+  assert.equal(deduplicated.duplicates,1);assert.equal(deduplicated.input,deduplicated.accepted+deduplicated.rejected+deduplicated.duplicates);
+});
+test('recent snapshot collection does not refresh the age of a reservoir measurement',()=>{
+  const series=cdecSeries([row({obsDate:'2026-10-16 12:00'})],'PNF',metric,now);
+  assert.equal(reservoirMetricState(series,metric,now).label,'Old reading');
+  assert.equal(reservoirMetricState(null,metric,now).sample,null);
+});
+test('collector distinguishes Millerton total outflow, river outlet release and spill contracts',async()=>{
+  const settings=JSON.parse(await readFile(new URL('../site/data/reservoir-watchlist.json',import.meta.url),'utf8'));
+  const mil=settings.stations.find(s=>s.id==='MIL');
+  assert.deepEqual(mil.metrics.filter(m=>['release','spill','outflow'].includes(m.key)).map(m=>[m.key,m.sensor,m.duration]),[['release',85,'D'],['spill',71,'D'],['outflow',23,'D']]);
+});
+test('collector partial failure retains the failed station with its old successful time',async()=>{
+  const previous={stations:[{id:'MIL',lastSuccess:'2026-10-16T20:00:00Z',metrics:{outflow:{lastValid:{value:387}}}}]};
+  const snapshot=await collectReservoirs({selection,previous,now,fetchImpl:async url=>{
+    if(url.searchParams.get('Stations')==='MIL')throw new Error('Test source unavailable');
+    return {ok:true,json:async()=>[row()]};
+  }});
+  assert.match(snapshot.stations[0].error,/unavailable/);assert.equal(snapshot.stations[0].lastSuccess,previous.stations[0].lastSuccess);
+  assert.equal(snapshot.stations[0].metrics.outflow.lastValid.value,387);assert.equal(snapshot.stations[1].metrics.outflow.lastValid.value,252);
+  validateReservoirSnapshot(snapshot);
+});
+test('collector marks unexpected station responses failed rather than silently discarding them',async()=>{
+  const snapshot=await collectReservoirs({selection,now,fetchImpl:async()=>({ok:true,json:async()=>[row({stationId:'OTHER'})]})});
+  assert(snapshot.stations.every(s=>s.error&&s.lastSuccess===null));
+  assert.throws(()=>validateReservoirSnapshot({...snapshot,stations:snapshot.stations.slice(0,1)}),/missing/);
+});
+test('public source adapters reject HTTP/service errors and never send credentials',async()=>{
+  await assert.rejects(fetchRadarFrames(async()=>({ok:false,status:503}),now),/503/);
+  await assert.rejects(fetchQpfCycle(QPF_PERIODS[1],async()=>({ok:true,json:async()=>({error:{code:400}})}),now),/service error/);
+  let query;
+  await fetchQpfCycle(QPF_PERIODS[1],async(url,options)=>{query=url;assert.equal(options.credentials,'omit');return {ok:true,json:async()=>({features:[feature(cycle())]})};},now);
+  assert.equal(query.searchParams.get('returnGeometry'),'false');assert.equal(query.searchParams.get('resultRecordCount'),'2000');
+});

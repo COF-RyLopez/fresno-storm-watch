@@ -1,0 +1,47 @@
+{
+  "version": "0.8.0",
+  "design_system": "Esri Calcite Design System, supplied by unified https://js.arcgis.com/5.1/ entry",
+  "documentation_checked": "2026-10-17",
+  "reference": "https://developers.arcgis.com/calcite-design-system/components/",
+  "components": {
+    "calcite-shell": "Application header, central workspace, footer and dialogs",
+    "calcite-navigation / calcite-navigation-logo": "Application identity and source/sign-in controls",
+    "calcite-panel": "Independent scrollable alert panel and regional map panel",
+    "calcite-notice": "Persistent session notification and feed-failure state; no automatic dismissal",
+    "calcite-list / calcite-list-item": "Weather alerts, river gauges and camera selections use native selection and keyboard behavior.",
+    "calcite-select / calcite-option": "Forecast horizon 24/48/72 hours, river group, or weather category. Group/category filters do not alter regional totals.",
+    "calcite-chip": "Accessible count, category, changed-record and connection labels",
+    "calcite-action": "Clear session notice and reset map extent",
+    "calcite-button / calcite-link": "Refresh, exercise, source and sign-in controls",
+    "calcite-dialog": "Gauge hydrograph, source times, threshold evidence, uncertainty notes and official links; also source/sign-in dialogs.",
+    "calcite-icon": "Supplementary visual cues; category text retained",
+    "calcite-shell-panel": "Docked review/map/camera regions. Narrow screens switch panes without recreating the MapView or its layers.",
+    "calcite-action-bar / calcite-action-group": "Primary workspace navigation with labels/tooltips, native active state, and pressed state passed to the internal button through the documented aria API.",
+    "calcite-block": "River-area and reservoir groups; native collapsible Source evidence disclosures retain expansion across source refreshes.",
+    "calcite-tooltip": "Labels for compact workspace actions."
+  },
+  "layout": {
+    "desktop": "Viewport-sized Shell with a 49px Action Bar, docked review panel, central map and optional camera panel. Camera panel initially open at 1280px and wider. At 901-1279px, camera and review panels replace each other to preserve the map.",
+    "mobile": "At widths at most 900px, one pane or the map fills the workspace. Show map, Map watchpoints and Locate dam/camera switch directly. The map remains measured but visually hidden and inert behind a work pane, allowing SDK initialization and preserving layers. Header and panel bodies scroll independently when necessary.",
+    "tokens": "Distinct weather-polygon, gauge-point and FEMA-zone legends. Threshold triangle, forecast-higher square, monitor circle and gap diamond; each has list text.",
+    "map": "Web Mercator display; WGS84 gauges and county boundaries; FEMA native NAD83 projected by SDK. No area/depth or asset-exposure calculation. Default river extent and fit button use Fresno County; weather view uses the five-county region. FEMA polygons are filtered by intersection with Fresno County.",
+    "cameras": "Native list and dropdown select one camera. Closing its pane stops media but retains map locations. Still/video timestamps and review notes unchanged.",
+    "scene": "Lazy SceneView with only one attached rendering container; overhead and tilted presets; failure returns to previous view. No vertical exaggeration or hydraulic surface.",
+    "environment": "Native Blocks for atmospheric controls and CDEC reservoir records. Source dates, missing data, units and fixed forecast periods remain visible. Source and query logic unchanged.",
+    "rainfall": "Six fixed sequential blue classes, original numeric value and UTC window in popup; no basin aggregation.",
+    "area_watch": "Persistent fixed six-area banner, separate from official weather alerts. Area panel exposes quantitative gauge/release changes, fixed WPC Days 1-3 sample values, source times and gaps. No risk score or affected-area polygon; Map watchpoints fits publisher points only. Native Blocks replace custom article cards; source evidence is keyboard-expandable; readiness guidance is stated once in the panel footer.",
+    "styles": "Native Calcite dark mode by default, with a persistent Light/Dark action; responsive layout in calcite-layout.css, shared semantic palette in theme.css, early preference/controller in theme.js. Guides use guide.css.",
+    "theme": "Calcite mode class and pinned SDK core stylesheet switch together. Gray base/reference layers follow the theme in 2D and 3D. Historical imagery remains selected across a theme change. County labels, alert polygons, selected outlines and gauge points read the same semantic palette as their legends. SVG hydrographs use inherited CSS variables. Camera pixels, FEMA classes, radar and QPF colors remain unchanged."
+  },
+  "scope": "River view scoped to Fresno County and its San Joaquin boundary reaches; regional weather scope remains five counties. Experience Builder untouched.",
+  "accessibility": "Text accompanies every hazard color. Count/status chips have dynamic accessible labels. Calcite provides component keyboard interaction; full assistive-technology and physical-device acceptance remains a county test task.",
+  "documentation": [
+    "https://developers.arcgis.com/calcite-design-system/components/shell/",
+    "https://developers.arcgis.com/calcite-design-system/components/shell-panel/",
+    "https://developers.arcgis.com/calcite-design-system/components/action-bar/",
+    "https://developers.arcgis.com/calcite-design-system/components/block/",
+    "https://developers.arcgis.com/calcite-design-system/components/action/",
+    "https://developers.arcgis.com/calcite-design-system/tutorials/build-a-dark-mode-switch/",
+    "https://developers.arcgis.com/javascript/latest/building-your-ui/"
+  ]
+}

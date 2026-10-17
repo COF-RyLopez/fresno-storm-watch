@@ -1,0 +1,353 @@
+{
+  "checked": "2026-10-17T22:21:30.089Z",
+  "reservoirCollection": "2026-10-17T22:08:39.338Z",
+  "qpfCheck": 1792275448790,
+  "rows": [
+    {
+      "area": "James Bypass",
+      "status": "River change — review",
+      "review": true,
+      "rainSampleMax": null,
+      "gaps": [
+        "1/1 rainfall sample amounts unknown"
+      ],
+      "gauges": [
+        {
+          "id": "JAMC1",
+          "current": true,
+          "observed": {
+            "time": 1792270800000,
+            "value": 5.77,
+            "secondary": null,
+            "generated": 1792272252000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": 0,
+            "hours": 2.5,
+            "start": 1792261800000
+          },
+          "forecastHigh": {
+            "time": 1792278000000,
+            "value": 7.6,
+            "secondary": 0,
+            "generated": 1792247053000,
+            "lastTime": 1792533600000
+          },
+          "forecastUnits": "ft",
+          "forecastDelta": 1.83,
+          "forecastIssued": 1792245540000,
+          "thresholdsKnown": false
+        }
+      ],
+      "releases": []
+    },
+    {
+      "area": "San Joaquin · Friant to Mendota",
+      "status": "River change — review",
+      "review": true,
+      "rainSampleMax": null,
+      "gaps": [
+        "SJXC1: forecast unavailable/old",
+        "RSBC1: forecast unavailable/old",
+        "5/5 rainfall sample amounts unknown",
+        "MIL River outlet release: Newer record missing or flagged · last valid",
+        "MIL Spillway discharge: Newer record missing or flagged · last valid"
+      ],
+      "gauges": [
+        {
+          "id": "SJXC1",
+          "current": true,
+          "observed": {
+            "time": 1792270800000,
+            "value": 6.78,
+            "secondary": 0.391,
+            "generated": 1792272266000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": 0.010000000000000675,
+            "hours": 2.5,
+            "start": 1792261800000
+          },
+          "forecastHigh": null,
+          "forecastUnits": "",
+          "forecastDelta": null,
+          "forecastIssued": null,
+          "thresholdsKnown": false
+        },
+        {
+          "id": "RSBC1",
+          "current": true,
+          "observed": {
+            "time": 1792271700000,
+            "value": 3.04,
+            "secondary": 0.223,
+            "generated": 1792273164000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": 0,
+            "hours": 2.5,
+            "start": 1792262700000
+          },
+          "forecastHigh": null,
+          "forecastUnits": "",
+          "forecastDelta": null,
+          "forecastIssued": null,
+          "thresholdsKnown": false
+        },
+        {
+          "id": "GVAC1",
+          "current": true,
+          "observed": {
+            "time": 1792271700000,
+            "value": 3.2,
+            "secondary": 0.208,
+            "generated": 1792273151000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": 0,
+            "hours": 2.5,
+            "start": 1792262700000
+          },
+          "forecastHigh": {
+            "time": 1792519200000,
+            "value": 3.24,
+            "secondary": 0.219,
+            "generated": 1792247052000,
+            "lastTime": 1792533600000
+          },
+          "forecastUnits": "ft",
+          "forecastDelta": 0.040000000000000036,
+          "forecastIssued": 1792245540000,
+          "thresholdsKnown": false
+        },
+        {
+          "id": "SJMC1",
+          "current": true,
+          "observed": {
+            "time": 1792270800000,
+            "value": 3.76,
+            "secondary": 0.394,
+            "generated": 1792272266000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": -0.010000000000000231,
+            "hours": 2.5,
+            "start": 1792261800000
+          },
+          "forecastHigh": {
+            "time": 1792278000000,
+            "value": 3.77,
+            "secondary": 0.395,
+            "generated": 1792247068000,
+            "lastTime": 1792285200000
+          },
+          "forecastUnits": "ft",
+          "forecastDelta": 0.010000000000000231,
+          "forecastIssued": 1792245540000,
+          "thresholdsKnown": false
+        }
+      ],
+      "releases": [
+        {
+          "station": "MIL",
+          "name": "Millerton / Friant Dam",
+          "label": "River outlet release",
+          "metric": "release",
+          "source": "https://cdec.water.ca.gov/dynamicapp/QueryDaily?s=MIL",
+          "duration": "D",
+          "sample": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 387,
+            "flag": "",
+            "units": "CFS"
+          },
+          "prior": null,
+          "hours": null,
+          "delta": null,
+          "current": false,
+          "increasing": false,
+          "reason": "Newer record missing or flagged · last valid"
+        },
+        {
+          "station": "MIL",
+          "name": "Millerton / Friant Dam",
+          "label": "Spillway discharge",
+          "metric": "spill",
+          "source": "https://cdec.water.ca.gov/dynamicapp/QueryDaily?s=MIL",
+          "duration": "D",
+          "sample": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 0,
+            "flag": "",
+            "units": "CFS"
+          },
+          "prior": null,
+          "hours": null,
+          "delta": null,
+          "current": false,
+          "increasing": false,
+          "reason": "Newer record missing or flagged · last valid"
+        }
+      ]
+    },
+    {
+      "area": "Kings · below Pine Flat",
+      "status": "Incomplete evidence",
+      "review": false,
+      "rainSampleMax": null,
+      "gaps": [
+        "No downstream gauge connected",
+        "1/1 rainfall sample amounts unknown"
+      ],
+      "gauges": [],
+      "releases": [
+        {
+          "station": "PNF",
+          "name": "Pine Flat Dam",
+          "label": "Reported outflow / release",
+          "metric": "outflow",
+          "source": "https://cdec.water.ca.gov/dynamicapp/QueryF?s=PNF",
+          "duration": "H",
+          "sample": {
+            "time": 1792274400000,
+            "reportDate": "2026-10-17",
+            "value": 252,
+            "flag": "",
+            "units": "CFS"
+          },
+          "prior": {
+            "time": 1792270800000,
+            "reportDate": "2026-10-17",
+            "value": 252,
+            "flag": "",
+            "units": "CFS"
+          },
+          "hours": 1,
+          "delta": 0,
+          "current": true,
+          "increasing": false,
+          "reason": "Comparable source reports"
+        }
+      ]
+    },
+    {
+      "area": "Kings · Trimmer & North Fork",
+      "status": "Incomplete evidence",
+      "review": false,
+      "rainSampleMax": null,
+      "gaps": [
+        "KREC1: forecast unavailable/old",
+        "NFCC1: forecast unavailable/old",
+        "2/2 rainfall sample amounts unknown"
+      ],
+      "gauges": [
+        {
+          "id": "KREC1",
+          "current": true,
+          "observed": {
+            "time": 1792270800000,
+            "value": 2.32,
+            "secondary": 0.216,
+            "generated": 1792272255000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": 0,
+            "hours": 2.5,
+            "start": 1792261800000
+          },
+          "forecastHigh": null,
+          "forecastUnits": "",
+          "forecastDelta": null,
+          "forecastIssued": null,
+          "thresholdsKnown": false
+        },
+        {
+          "id": "NFCC1",
+          "current": true,
+          "observed": {
+            "time": 1792273500000,
+            "value": 3.27,
+            "secondary": null,
+            "generated": 1792274061000
+          },
+          "observedUnits": "ft",
+          "trend": {
+            "delta": 0,
+            "hours": 2.5,
+            "start": 1792264500000
+          },
+          "forecastHigh": null,
+          "forecastUnits": "",
+          "forecastDelta": null,
+          "forecastIssued": null,
+          "thresholdsKnown": false
+        }
+      ],
+      "releases": []
+    },
+    {
+      "area": "Little Dry Creek · below Friant",
+      "status": "Incomplete evidence",
+      "review": false,
+      "rainSampleMax": null,
+      "gaps": [
+        "LTDC1: observation unavailable/old",
+        "1/1 rainfall sample amounts unknown"
+      ],
+      "gauges": [
+        {
+          "id": "LTDC1",
+          "current": false,
+          "observed": null,
+          "observedUnits": "",
+          "trend": null,
+          "forecastHigh": {
+            "time": 1792278000000,
+            "value": 4.6,
+            "secondary": 0.017,
+            "generated": 1792247059000,
+            "lastTime": 1792533600000
+          },
+          "forecastUnits": "ft",
+          "forecastDelta": null,
+          "forecastIssued": 1792245540000,
+          "thresholdsKnown": false
+        }
+      ],
+      "releases": []
+    },
+    {
+      "area": "San Joaquin · Redinger reach",
+      "status": "Incomplete evidence",
+      "review": false,
+      "rainSampleMax": null,
+      "gaps": [
+        "RJQC1: observation unavailable/old",
+        "1/1 rainfall sample amounts unknown"
+      ],
+      "gauges": [
+        {
+          "id": "RJQC1",
+          "current": false,
+          "observed": null,
+          "observedUnits": "",
+          "trend": null,
+          "forecastHigh": null,
+          "forecastUnits": "",
+          "forecastDelta": null,
+          "forecastIssued": null,
+          "thresholdsKnown": false
+        }
+      ],
+      "releases": []
+    }
+  ]
+}

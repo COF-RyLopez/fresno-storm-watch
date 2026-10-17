@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-10-16T21:39:57.922260+00:00",
+  "library": "Shapely 2.1.2",
+  "sha256": "caca43ac4a58464db728d5e92461ff0fcf03b3ca0a63afc796caa9d2f7f066f2",
+  "features": [
+    {
+      "geoid": "06047",
+      "valid": true,
+      "empty": false,
+      "validity_reason": "Valid Geometry"
+    },
+    {
+      "geoid": "06019",
+      "valid": true,
+      "empty": false,
+      "validity_reason": "Valid Geometry"
+    },
+    {
+      "geoid": "06107",
+      "valid": true,
+      "empty": false,
+      "validity_reason": "Valid Geometry"
+    },
+    {
+      "geoid": "06039",
+      "valid": true,
+      "empty": false,
+      "validity_reason": "Valid Geometry"
+    },
+    {
+      "geoid": "06031",
+      "valid": true,
+      "empty": false,
+      "validity_reason": "Valid Geometry"
+    }
+  ],
+  "union_valid": true,
+  "geometry_repairs": 0,
+  "dropped_features": 0
+}

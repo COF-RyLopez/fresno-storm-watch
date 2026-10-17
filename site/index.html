@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval'; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
+<link rel="icon" href="./assets/mark.svg" type="image/svg+xml"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css"><link rel="stylesheet" href="./calcite-layout.css">
+<script src="./theme.js"></script>
+<!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js"></script>
+</head><body>
+<a class="skip-link" href="#workspace-actions">Skip to workspace tools</a>
+<calcite-shell id="storm-shell">
+  <div slot="header" class="shell-header">
+    <calcite-navigation label="Storm Watch navigation">
+      <calcite-navigation-logo id="app-logo" slot="logo" heading="Storm Watch" heading-level="1" description="Fresno County · 2026–27" thumbnail="./assets/mark.svg"></calcite-navigation-logo>
+      <div slot="content-end" class="navigation-actions">
+        <calcite-button class="official-link" appearance="transparent" kind="neutral" scale="s" href="https://www.weather.gov/hnx/" target="_blank" rel="noopener noreferrer" icon-end="launch">NWS Hanford</calcite-button>
+        <calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action>
+        <calcite-action id="about" text="Sources &amp; notes" icon="information" text-enabled></calcite-action>
+        <calcite-action id="sign-in" text="ArcGIS sign-in setup" icon="user" text-enabled></calcite-action>
+      </div>
+    </calcite-navigation>
+    <div class="scope-bar"><div><span id="eyebrow">GIS PROTOTYPE</span><span id="scope-label" class="scope-label">Fresno County · boundary river reaches</span></div><span id="identity-status">Public NWS view</span></div>
+    <section id="exercise-controls" class="exercise-controls" aria-label="Fictional exercise controls" hidden>
+      <strong>EXERCISE ONLY · fictional alerts, no live NWS queries</strong>
+      <div><calcite-button data-scenario="baseline" appearance="solid" kind="neutral" scale="s" aria-pressed="true">Baseline / recover</calcite-button><calcite-button data-scenario="warning" appearance="outline" kind="neutral" scale="s" aria-pressed="false">Add warning</calcite-button><calcite-button data-scenario="revision" appearance="outline" kind="neutral" scale="s" aria-pressed="false">New revision</calcite-button><calcite-button data-scenario="duplicate" appearance="outline" kind="neutral" scale="s" aria-pressed="false">Duplicate polygons</calcite-button><calcite-button data-scenario="failure" appearance="outline" kind="neutral" scale="s" aria-pressed="false">Feed failure</calcite-button><calcite-button data-scenario="expired" appearance="outline" kind="neutral" scale="s" aria-pressed="false">Expired alerts</calcite-button><calcite-button data-scenario="empty" appearance="outline" kind="neutral" scale="s" aria-pressed="false">Empty result</calcite-button><calcite-button href="./" appearance="transparent" scale="s" icon-end="launch">Live NWS view</calcite-button></div>
+    </section>
+    <div id="weather-banner-wrap" class="notification-wrap" hidden>
+      <calcite-notice id="banner" open width="full" icon="bell" kind="info" scale="m" data-tone="loading">
+        <div slot="title" class="banner-heading" role="status" aria-live="polite" aria-atomic="true"><span class="eyebrow">NOTIFICATIONS · THIS TAB</span><span id="banner-title">Checking regional NWS alerts</span></div>
+        <div id="banner-detail" slot="message">Waiting for all five county queries.</div>
+        <calcite-action id="clear-notice" slot="actions-end" text="Clear notification" icon="check" text-enabled hidden></calcite-action>
+      </calcite-notice>
+    </div>
+    <div id="river-banner-wrap" class="notification-wrap">
+      <calcite-notice id="river-banner" open width="full" kind="info" icon="water-drop">
+        <div slot="title" class="banner-heading"><span class="eyebrow">RIVER-AREA REVIEW · PLANNING CUES</span><span id="river-title" role="status">Checking rainfall, releases and river watchpoints</span></div>
+        <div id="river-summary" slot="message">Waiting for source evidence. County action thresholds are not configured.</div><calcite-action id="review-areas" slot="actions-end" text="Review areas" icon="chevron-right" text-enabled></calcite-action>
+      </calcite-notice>
+    </div>
+  </div>
+  <calcite-shell-panel id="tools-shell" slot="panel-start" display-mode="dock">
+    <calcite-action-bar id="workspace-actions" slot="action-bar" tabindex="-1" expand-disabled>
+      <calcite-action-group label="Storm workspaces">
+        <calcite-action id="view-watch" text="Area watch" icon="exclamation-mark-triangle" aria-pressed="false"></calcite-action>
+        <calcite-action id="view-rivers" text="River watch" icon="water-drop" active aria-pressed="true"></calcite-action>
+        <calcite-action id="view-environment" text="Weather &amp; reservoirs" icon="rain" aria-pressed="false"></calcite-action>
+        <calcite-action id="view-alerts" text="Weather alerts" icon="bell" aria-pressed="false"></calcite-action>
+      </calcite-action-group>
+      <calcite-action-group label="Map and cameras">
+        <calcite-action id="view-map" text="Show map" icon="map" aria-pressed="false"></calcite-action>
+        <calcite-action id="view-cameras" text="River-area cameras" icon="camera" aria-pressed="false"></calcite-action>
+      </calcite-action-group>
+    </calcite-action-bar>
+
+
+    <calcite-panel id="watch-panel" class="alert-panel watch-panel" heading="Fresno river-area review" heading-level="2" description="Possible prepositioning · evidence first" hidden>
+      <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
+      <div slot="content-top" class="watch-intro"><p id="watch-rule-summary">Loading the fixed river-area inventory.</p><a href="./planning.html#area-watch">How review cues work</a></div>
+      <div id="watch-exercise" class="river-exercise" hidden><strong>FICTIONAL AREA-WATCH EXERCISE</strong><calcite-button scale="s" data-watch-scenario="combined" aria-pressed="true">Rain + rise + release</calcite-button><calcite-button scale="s" data-watch-scenario="threshold" appearance="outline">NWS threshold</calcite-button><calcite-button scale="s" data-watch-scenario="baseline" appearance="outline">No change</calcite-button><calcite-button scale="s" data-watch-scenario="stale" appearance="outline">Stale sources</calcite-button><calcite-button scale="s" data-watch-scenario="missing" appearance="outline">Missing sources</calcite-button></div>
+      <div id="area-watch-list"></div>
+      <div slot="footer" class="sidebar-footer"><div><calcite-button id="watch-refresh" scale="s" appearance="transparent" icon-start="refresh">Check area rainfall</calcite-button><calcite-button id="watch-conditions" scale="s" appearance="outline">Weather &amp; releases</calcite-button></div><span id="watch-check-time">Waiting for sources</span><span>Verify NWS/operator guidance, field reports, closures and approved staging access before assigning resources.</span></div>
+    </calcite-panel>
+    <calcite-panel id="environment-panel" class="alert-panel environment-panel" heading="Weather &amp; reservoirs" heading-level="2" description="Incoming weather · river controls" hidden>
+      <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
+      <calcite-block class="environment-section" heading="Atmospheric overlay" heading-level="3" description="Observed radar and forecast precipitation" expanded>
+        <div class="environment-actions" role="group" aria-label="Atmospheric map overlay"><calcite-button id="env-off" scale="s" aria-pressed="true">Off</calcite-button><calcite-button id="env-radar" scale="s" appearance="outline" aria-pressed="false">Radar</calcite-button><calcite-button id="env-qpf" scale="s" appearance="outline" aria-pressed="false">Rainfall forecast</calcite-button></div>
+        <div id="radar-controls" hidden><h3>NOAA radar reflectivity</h3><calcite-select id="radar-frame" label="Radar frame" scale="s"><calcite-option value="latest" selected>Latest available</calcite-option></calcite-select><p id="radar-time" class="environment-time">No frame selected</p><p id="radar-health" class="environment-health" role="status">Waiting for NOAA</p><p class="environment-note">Observed echoes, measured in dBZ. This image is not rainfall accumulation or a forecast. Terrain blockage, radar gaps and non-rain echoes can occur.</p><a href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Official NWS radar &amp; legend</a></div>
+        <div id="qpf-controls" hidden><h3>WPC precipitation forecast</h3><calcite-select id="qpf-period" label="Rainfall forecast period" scale="s"><calcite-option value="1">Day 1 · 24 hours</calcite-option><calcite-option value="9" selected>Days 1–3 · 72 hours</calcite-option><calcite-option value="11">Days 1–7 · 168 hours</calcite-option></calcite-select><dl class="environment-times"><dt>Issued</dt><dd id="qpf-issued">Not available</dd><dt>Valid period</dt><dd id="qpf-window">Not available</dd></dl><p id="qpf-health" class="environment-health" role="status">Waiting for WPC</p><p class="environment-note">Inches of liquid-equivalent precipitation, including melted snow/ice. The period is fixed by WPC; it does not start when you open the app. This is not runoff, a basin average or flood depth.</p><a href="https://www.wpc.ncep.noaa.gov/#page=qpf" target="_blank" rel="noopener noreferrer">Official WPC forecast</a></div>
+        <div class="environment-actions"><calcite-button id="environment-extent" scale="s" appearance="outline" icon-start="extent" disabled>Sierra &amp; river approaches</calcite-button><calcite-button id="environment-refresh" scale="s" appearance="transparent" icon-start="refresh">Check weather</calcite-button></div>
+      </calcite-block>
+      <calcite-block class="environment-section reservoir-section" heading="Reservoir conditions" heading-level="3" description="CDEC · levels, inflow and releases" expanded><p id="reservoir-status" class="environment-health" role="status">Waiting for CDEC snapshot</p><p id="reservoir-read-time" class="environment-note"></p><div id="reservoir-list"></div><p class="environment-note">Initial coverage: Millerton/Friant and Pine Flat. Other upstream reservoirs are not included. Reported inflow may be computed. No operating schedule, routing, arrival time or safe staging location is inferred.</p></calcite-block>
+      <div slot="footer" class="sidebar-footer"><div><calcite-button id="reservoir-refresh" scale="s" appearance="transparent" icon-start="refresh">Check collected data</calcite-button><calcite-link href="./planning.html#weather-reservoirs">Source &amp; refresh rules</calcite-link></div><span>Collection and measurement times are separate.</span></div>
+    </calcite-panel>
+    <calcite-panel id="river-panel" class="alert-panel river-panel" heading="Fresno river watchpoints" heading-level="2" description="County and boundary river reaches">
+      <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
+      <calcite-chip id="river-count" slot="header-actions-end" scale="s" label="Watchpoint count">—</calcite-chip>
+      <div slot="content-top" class="river-toolbar"><section id="river-metrics" class="status-row" aria-label="River coverage counts"><div class="count-set"><div class="metric"><strong id="river-count-sites">—</strong><span>Watchpoints</span></div><div class="metric"><strong id="river-count-current">—</strong><span>Current observations</span></div><div class="metric"><strong id="river-count-forecasts">—</strong><span>Usable forecasts</span></div><div class="metric"><strong id="river-count-unknown">—</strong><span>Thresholds unknown</span></div></div></section><div class="river-tools"><calcite-select id="river-horizon" label="Forecast planning window" scale="s"><calcite-option value="24">Next 24 hours</calcite-option><calcite-option value="48">Next 48 hours</calcite-option><calcite-option value="72" selected>Next 72 hours</calcite-option></calcite-select><calcite-select id="river-basin" label="River or bypass group" scale="s"><calcite-option value="All" selected>All river groups</calcite-option></calcite-select></div></div>
+      <div id="river-exercise" class="river-exercise" hidden><strong>Fictional river tests</strong><calcite-button scale="s" appearance="outline" data-river-scenario="baseline">River baseline</calcite-button><calcite-button scale="s" appearance="outline" data-river-scenario="crossing">Threshold crossing</calcite-button><calcite-button scale="s" appearance="outline" data-river-scenario="old">Old river data</calcite-button><calcite-button scale="s" appearance="outline" data-river-scenario="failure">Station failure</calcite-button></div>
+      <calcite-list id="river-list" label="River planning watchpoints" selection-mode="single-persist" selection-appearance="highlight" scale="m"></calcite-list>
+      <div slot="footer" class="sidebar-footer"><div><calcite-button id="river-refresh" appearance="transparent" scale="s" icon-start="refresh">Refresh rivers</calcite-button><calcite-button id="river-detail-open" appearance="outline" scale="s" disabled>Gauge details</calcite-button></div><span id="river-check-time">Waiting for NWPS</span><calcite-link href="./planning.html">Planning rules &amp; next sources</calcite-link></div>
+    </calcite-panel>
+    <calcite-panel id="weather-panel" class="alert-panel" heading="Regional alerts" heading-level="2" description="Select an alert for source details" hidden>
+      <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
+      <calcite-chip id="list-count" slot="header-actions-end" scale="s" label="Regional alert count">—</calcite-chip>
+      <div slot="content-top" class="list-toolbar"><section id="weather-metrics" class="status-row" aria-label="Regional alert counts" hidden>
+      <div class="count-set"><div class="metric warning"><span class="dot"></span><strong id="count-Warning">—</strong><span>Warnings</span></div><div class="metric watch"><span class="dot"></span><strong id="count-Watch">—</strong><span>Watches</span></div><div class="metric advisory"><span class="dot"></span><strong id="count-Advisory">—</strong><span>Advisories</span></div><div class="metric other"><span class="dot"></span><strong id="count-Other">—</strong><span>Other</span></div></div>
+      <span id="count-context">Alerts intersecting the fixed five-county region</span>
+    </section><calcite-select id="alert-filter" label="Filter the alert list by category" scale="s" width="full"><calcite-option value="All" selected>All categories</calcite-option><calcite-option value="Warning">Warnings</calcite-option><calcite-option value="Watch">Watches</calcite-option><calcite-option value="Advisory">Advisories</calcite-option><calcite-option value="Other">Other products</calcite-option></calcite-select></div>
+      <calcite-list id="alert-list" label="Regional NWS alerts" selection-mode="single-persist" selection-appearance="highlight" scale="m"></calcite-list>
+      <p id="result-change" class="change-note"></p>
+      <section class="details"><h2>Alert details</h2><div id="alert-detail"></div></section>
+      <footer id="weather-footer" class="feed-footer" hidden>
+    <div class="feed-summary"><calcite-chip id="feed-status" scale="s" label="Feed connection status" icon="information">Waiting for NWS</calcite-chip><calcite-button id="refresh" appearance="transparent" scale="s" icon-start="refresh">Refresh now</calcite-button><span id="next-check">Checking now</span><span class="prototype-note">Public-source prototype · no emergency notification delivery</span></div>
+    <div class="time-grid"><div><span>Last successful regional query</span><strong id="last-check">Not available</strong></div><div><span>Newest NWS ingestion in this result</span><strong id="source-ingested">Not available</strong></div><div><span>Last attempt</span><strong id="attempt-time">Not available</strong></div></div>
+    <p id="feed-error" class="feed-error" hidden></p>
+  </footer>
+      <div slot="footer" class="sidebar-footer"><calcite-link href="https://www.weather.gov/hnx/" target="_blank" rel="noopener noreferrer" icon-end="launch">Official forecasts &amp; warnings</calcite-link><span>Clearing a notice does not record a team review.</span></div>
+    </calcite-panel>
+  </calcite-shell-panel>
+  <main id="planning-workspace" class="workspace" tabindex="-1">
+    <calcite-panel id="map-panel" class="map-panel" heading="Fresno County river areas" heading-level="2">
+      <span id="scope-note" slot="description">Fresno river reaches · counts stay fixed when panning</span>
+      <calcite-action id="fit-region" slot="header-actions-end" icon="extent" text="Fit Fresno County" text-enabled disabled></calcite-action>
+      <div slot="content-top" class="map-toolbar-stack">
+        <div class="map-tools"><div class="view-switch" role="group" aria-label="Map dimension"><calcite-button id="mode-2d" scale="s" aria-pressed="true" disabled>2D</calcite-button><calcite-button id="mode-3d" scale="s" appearance="outline" aria-pressed="false" disabled>3D terrain</calcite-button></div><calcite-button id="toggle-cameras" scale="s" appearance="outline" aria-pressed="true" icon-start="camera">Cameras: on</calcite-button><calcite-button id="toggle-fema" scale="s" appearance="outline" aria-pressed="true">FEMA zones: on</calcite-button><calcite-button id="toggle-imagery" scale="s" appearance="outline" aria-pressed="false">Imagery: off</calcite-button></div>
+        <div class="map-tools"><calcite-button id="open-environment" scale="s" appearance="transparent" icon-start="rain">Radar / rainfall</calcite-button><span id="fema-status" role="status">FEMA reference layer loading</span><calcite-link href="https://msc.fema.gov/portal/home" target="_blank" rel="noopener noreferrer" icon-end="launch">FEMA maps</calcite-link></div><span id="environment-map-status" class="environment-map-status" role="status">Atmospheric overlay off</span>
+      </div>
+      <div class="map-wrap"><div id="map" role="region" aria-label="Map of river gauges, reservoirs, weather, cameras, FEMA flood zones and NWS alerts"></div><div id="map-status" role="status">Loading the regional map…</div><div id="scene-controls" class="scene-controls" hidden><calcite-button id="scene-overhead" scale="s" appearance="outline-fill" kind="neutral">Overhead</calcite-button><calcite-button id="scene-tilt" scale="s" appearance="outline-fill" kind="neutral">Tilt terrain</calcite-button></div></div>
+      <div slot="footer" class="legend-stack"><details class="reference-legend"><summary>Gauge, FEMA &amp; alert key</summary><div class="reference-legend-body"><div class="map-legend" aria-label="Map legend"><strong>Weather polygons</strong><span><i class="legend-swatch warning"></i>Warning</span><span><i class="legend-swatch watch"></i>Watch</span><span><i class="legend-swatch advisory"></i>Advisory</span><span><i class="legend-swatch other"></i>Other</span></div><div class="map-legend"><strong>Gauge points</strong><span><i class="gauge-swatch threshold"></i>Threshold cue</span><span><i class="gauge-swatch change"></i>Forecast higher</span><span><i class="gauge-swatch monitor"></i>Monitor</span><span><i class="gauge-swatch gap"></i>Data gap</span></div><div id="fema-legend" class="map-legend"><strong>FEMA reference</strong><span><i class="fema-swatch sfha"></i>1% annual chance</span><span><i class="fema-swatch moderate"></i>0.2% annual chance</span><span><i class="fema-swatch undetermined"></i>Undetermined (D)</span><a href="https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28" target="_blank" rel="noopener noreferrer">Source</a></div><span class="legend-note">Other FEMA zones are not drawn. Unshaded areas are not established as safe.</span><span id="imagery-note" class="legend-note" hidden>Basemap imagery is historical context, not a live image.</span>
+      </div></details><div id="environment-legend" class="environment-legend" hidden><div id="radar-legend" hidden><strong>Radar reflectivity (dBZ)</strong><span>Publisher echo colors · weaker → stronger</span><div class="radar-color-key" aria-hidden="true"></div><small>Qualitative key; use the <a href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">NWS legend</a> for the numerical scale. No echoes can also mean missing coverage.</small></div><div id="qpf-legend" hidden><strong>WPC polygon values · inches liquid equivalent</strong><div id="qpf-band-list"></div><small>Fixed app color groups; click polygons for source values. Unshaded areas are not assumed zero.</small></div></div>
+      <div class="scene-note"><span id="view-mode-status" role="status">2D map</span><span><img src="./assets/camera-pin.svg" alt="" width="16" height="16"> Camera · crossed icon = needs review</span><span><img src="./assets/reservoir-pin.svg" alt="" width="16" height="16"> Reservoir reporting location</span></div></div>
+    </calcite-panel>
+  </main>
+  <calcite-shell-panel id="camera-shell" slot="panel-end" display-mode="dock">
+    <calcite-panel id="camera-panel" class="camera-panel" heading="River-area cameras" heading-level="2" description="Caltrans · highway conditions">
+      <calcite-select id="camera-picker" slot="content-top" label="Choose a river-area camera" scale="s" disabled></calcite-select>
+      <calcite-chip id="camera-count" slot="header-actions-end" scale="s" label="Selected camera count">—</calcite-chip><calcite-action id="camera-close" slot="header-actions-end" text="Close camera panel" icon="x"></calcite-action>
+      <p id="camera-empty" class="camera-empty">Loading the camera selection…</p>
+      <section id="camera-evidence" class="camera-evidence" aria-label="Selected camera conditions" hidden>
+        <span class="eyebrow">VISUAL CONDITIONS</span><h3 id="camera-name"></h3><p id="camera-corridor" class="muted"></p>
+        <p id="camera-review" class="camera-quality" data-tone="gap" hidden></p>
+        <div id="camera-image-wrap" class="camera-image-wrap"><img id="camera-image" alt="Selected Caltrans highway camera" hidden><span class="media-label">Auto-refreshing still image</span></div>
+        <video id="camera-video" controls muted playsinline preload="none" aria-label="Selected Caltrans live video" hidden></video>
+        <p id="camera-video-status" class="camera-video-status" role="status">Video is on demand</p>
+        <div class="camera-media-actions"><calcite-button id="camera-play" scale="s" icon-start="play" disabled>Play live video</calcite-button><calcite-button id="camera-stop" scale="s" appearance="outline" hidden>Stop video</calcite-button><calcite-button id="camera-refresh" scale="s" appearance="outline" icon-start="refresh" disabled>Refresh image</calcite-button></div>
+        <p id="camera-service" class="camera-quality" role="status"></p><p id="camera-image-state" class="camera-quality" role="status">No image loaded</p>
+        <dl class="camera-times"><dt>Still file updated</dt><dd id="camera-image-updated">Unknown</dd><dt>Still loaded in app</dt><dd id="camera-image-loaded">Unknown</dd></dl>
+        <p class="camera-caption">These times describe the still image. File time is a freshness proxy; check the on-image timestamp and content for outage graphics.</p>
+        <div class="camera-map-actions"><calcite-button id="camera-focus" scale="s" appearance="outline" icon-start="extent" disabled>Locate on map</calcite-button><calcite-button id="camera-gauge" scale="s" appearance="outline" hidden>Hwy 41 gauge</calcite-button></div>
+        <p id="camera-location-note" class="camera-caption"></p><calcite-link id="camera-source-image" target="_blank" rel="noopener noreferrer" icon-end="launch" hidden>Publisher image</calcite-link>
+        <details class="camera-more"><summary>Camera update details</summary><p id="camera-cadence"></p><p id="camera-record-time"></p></details>
+      </section>
+      <calcite-block class="camera-selection" heading="Crossings &amp; approaches" heading-level="3" expanded><calcite-list id="camera-list" label="Crossings and approaches" selection-mode="single-persist" selection-appearance="highlight"></calcite-list><p id="camera-coverage-note" class="camera-caption"></p></calcite-block>
+      <div slot="footer" class="sidebar-footer"><span id="camera-feed-status" role="status">Waiting for Caltrans</span><div><calcite-button id="camera-catalog-refresh" appearance="transparent" scale="s" icon-start="refresh">Check catalog</calcite-button><calcite-link href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener noreferrer" icon-end="launch">Caltrans QuickMap</calcite-link></div></div>
+    </calcite-panel>
+  </calcite-shell-panel>
+  <calcite-dialog id="river-dialog" slot="dialogs" heading="Gauge evidence for planning" modal><div class="details river-details"><div id="river-detail"></div></div><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button></calcite-dialog>
+  <calcite-dialog id="sources-dialog" slot="dialogs" heading="Sources &amp; operating notes" modal>
+    <p>Radar comes from the NOAA MRMS time-enabled image service; the selected CONUS frame is locked to its displayed UTC-derived time. WPC QPF supplies fixed 24-, 72- and 168-hour precipitation windows in inches of liquid equivalent. Radar echoes and forecast precipitation do not directly predict river inundation. <a href="./planning.html#weather-reservoirs">Weather and reservoir source details</a>.</p>
+    <p>Millerton/Friant and Pine Flat readings come from CDEC through a public-data collector. Collection targets 15-minute intervals; report timing remains daily for Millerton and hourly for Pine Flat. Millerton river outlet release, spill and total outflow remain separate. No future release schedule is ingested. Source times and failed/overdue collection are shown.</p>
+    <p>Cameras come directly from the <a href="https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm">Caltrans District 6 camera catalog</a>. Eight selected road cameras cover approaches to Fresno County river crossings. Boundary-side cameras retain their Madera or Tulare county label. Their view may not include the river. Still images refresh while visible; live video is on demand and may be unavailable. Images and video are not archived by this app. <a href="https://dot.ca.gov/conditions-of-use">Caltrans conditions of use</a>.</p>
+    <p>The 3D view uses <a href="https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer">Esri World Terrain</a> with no vertical exaggeration. Ground detail varies by location. Gauges, camera locations and FEMA polygons are draped over terrain; they do not show water depth, levee reliability, camera visibility or safe access.</p>
+    <p>River watch uses <a href="https://api.water.noaa.gov/nwps/v1/docs/">NOAA NWPS</a> gauge metadata and stage/flow series. Observation and forecast issuance times remain distinct. The 2-hour observation and 24-hour forecast age checks are prototype review rules, not NWS operating thresholds.</p>
+    <p><a href="https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28">FEMA NFHL</a> shows mapped 1% and 0.2% annual-chance areas and undetermined Zone D at local zoom levels. It is a planning reference, not a real-time inundation forecast. Other FEMA zones are filtered out. <a href="./planning.html">Read planning assumptions and next sources</a>.</p>
+    <p>This prototype uses the official <a href="https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/FeatureServer/1" target="_blank" rel="noopener noreferrer">NWS watches, warnings and advisories layer</a>. The publisher documents a five-minute update frequency. The app polls every five minutes while visible; browser timing may vary.</p>
+    <p>Each check intersects alert polygons with the five fixed county boundaries. Repeated polygons are combined using the NWS identifier and issuance time. Category colors simplify the map; original NWS product names remain in the list.</p>
+    <p>A failed or partial query retains the last successful result. Query time is not weather observation time. NWS ingestion time describes returned records, not an independent service heartbeat. Empty results never establish safe conditions.</p>
+    <p>Clearing a notification changes only this tab. It does not remove a hazard, record team review or close a task. No SMS, email or background escalation is enabled.</p>
+    <p>Boundaries: <a href="https://tigerweb.geo.census.gov/tigerweb/" target="_blank" rel="noopener noreferrer">U.S. Census Bureau, 2026</a>. Interface: <a href="https://developers.arcgis.com/calcite-design-system/components/" target="_blank" rel="noopener noreferrer">Esri Calcite Design System</a>. <a href="./data/source-provenance.json">Source provenance</a>.</p>
+    <calcite-button slot="footer-start" href="./?exercise=1" appearance="outline" kind="neutral">Open fictional exercise</calcite-button><calcite-button slot="footer-end" href="./setup.html" appearance="outline">Setup guide</calcite-button><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button>
+  </calcite-dialog>
+  <calcite-dialog id="signin-help" slot="dialogs" heading="County ArcGIS sign-in" modal>
+    <p>The public NWS view works without an account. Optional county sign-in is prepared in the code but needs a registered ArcGIS OAuth Client ID and the final GitHub Pages address.</p>
+    <p>Once configured, sign-in verifies your ArcGIS identity. This prototype does not yet load private layers or submit team acknowledgements. Account permissions continue to apply.</p><p>No password, client secret or access token belongs in GitHub.</p>
+    <calcite-button slot="footer-start" href="./setup.html#arcgis" appearance="outline">ArcGIS setup steps</calcite-button><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button>
+  </calcite-dialog>
+</calcite-shell>
+  <calcite-tooltip reference-element="view-watch" placement="right">Area watch</calcite-tooltip>
+  <calcite-tooltip reference-element="view-rivers" placement="right">River watch</calcite-tooltip>
+  <calcite-tooltip reference-element="view-environment" placement="right">Weather &amp; reservoirs</calcite-tooltip>
+  <calcite-tooltip reference-element="view-alerts" placement="right">Weather alerts</calcite-tooltip>
+  <calcite-tooltip reference-element="view-map" placement="right">Show map</calcite-tooltip>
+  <calcite-tooltip reference-element="view-cameras" placement="right">River-area cameras</calcite-tooltip>
+<aside id="interface-status" class="interface-status" hidden>Interface components could not load. Reload to retry, or <a href="https://www.weather.gov/hnx/">open NWS Hanford</a>.</aside>
+<noscript><div class="interface-status">JavaScript is required for live updates. <a href="https://www.weather.gov/hnx/">Open NWS Hanford directly</a>.</div></noscript>
+</body></html>

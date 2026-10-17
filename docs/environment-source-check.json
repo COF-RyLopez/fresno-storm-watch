@@ -1,0 +1,314 @@
+{
+  "checked": "2026-10-17T21:40:24.842Z",
+  "radar": [
+    {
+      "id": 256140036,
+      "time": 1792272711000,
+      "ingested": 1792272893000
+    },
+    {
+      "id": 256138036,
+      "time": 1792272353000,
+      "ingested": 1792272472000
+    },
+    {
+      "id": 256136036,
+      "time": 1792271890000,
+      "ingested": 1792272057000
+    },
+    {
+      "id": 256134036,
+      "time": 1792271522000,
+      "ingested": 1792271632000
+    },
+    {
+      "id": 256132036,
+      "time": 1792271055000,
+      "ingested": 1792271212000
+    },
+    {
+      "id": 256130036,
+      "time": 1792270674000,
+      "ingested": 1792270793000
+    },
+    {
+      "id": 256128036,
+      "time": 1792270171000,
+      "ingested": 1792270373000
+    },
+    {
+      "id": 256126036,
+      "time": 1792269832000,
+      "ingested": 1792269953000
+    },
+    {
+      "id": 256124036,
+      "time": 1792269356000,
+      "ingested": 1792269532000
+    },
+    {
+      "id": 256122036,
+      "time": 1792268991000,
+      "ingested": 1792269118000
+    },
+    {
+      "id": 256120036,
+      "time": 1792268511000,
+      "ingested": 1792268692000
+    },
+    {
+      "id": 256118036,
+      "time": 1792268170000,
+      "ingested": 1792268273000
+    },
+    {
+      "id": 256116036,
+      "time": 1792267688000,
+      "ingested": 1792267853000
+    },
+    {
+      "id": 256114036,
+      "time": 1792267327000,
+      "ingested": 1792267432000
+    },
+    {
+      "id": 256112036,
+      "time": 1792266838000,
+      "ingested": 1792267012000
+    },
+    {
+      "id": 256110036,
+      "time": 1792266475000,
+      "ingested": 1792266596000
+    },
+    {
+      "id": 256108036,
+      "time": 1792265957000,
+      "ingested": 1792266174000
+    }
+  ],
+  "qpf": [
+    {
+      "id": 1,
+      "issue": 1792259441000,
+      "start": 1792281600000,
+      "end": 1792368000000,
+      "issueText": "2026-10-17 17:50:41",
+      "startText": "2026-10-18 00:00:00",
+      "endText": "2026-10-19 00:00:00",
+      "hours": 24,
+      "units": "in",
+      "product": "24-hour QPF"
+    },
+    {
+      "id": 9,
+      "issue": 1792260064000,
+      "start": 1792281600000,
+      "end": 1792540800000,
+      "issueText": "2026-10-17 18:01:04",
+      "startText": "2026-10-18 00:00:00",
+      "endText": "2026-10-21 00:00:00",
+      "hours": 72,
+      "units": "in",
+      "product": "72-hour QPF"
+    },
+    {
+      "id": 11,
+      "issue": 1792271019000,
+      "start": 1792281600000,
+      "end": 1792886400000,
+      "issueText": "2026-10-17 21:03:39",
+      "startText": "2026-10-18 00:00:00",
+      "endText": "2026-10-25 00:00:00",
+      "hours": 168,
+      "units": "in",
+      "product": "7-day QPF"
+    }
+  ],
+  "reservoirs": [
+    {
+      "id": "MIL",
+      "lastSuccess": "2026-10-17T21:36:27.955Z",
+      "error": null,
+      "metrics": {
+        "elevation": {
+          "units": "FEET",
+          "latestValid": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 503.36,
+            "flag": "",
+            "units": "FEET"
+          },
+          "latestRecord": {
+            "time": 1792224000000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "FEET"
+          }
+        },
+        "storage": {
+          "units": "AF",
+          "latestValid": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 225664,
+            "flag": "",
+            "units": "AF"
+          },
+          "latestRecord": {
+            "time": 1792224000000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "AF"
+          }
+        },
+        "inflow": {
+          "units": "CFS",
+          "latestValid": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 993,
+            "flag": "",
+            "units": "CFS"
+          },
+          "latestRecord": {
+            "time": 1792224000000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "CFS"
+          }
+        },
+        "release": {
+          "units": "CFS",
+          "latestValid": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 387,
+            "flag": "",
+            "units": "CFS"
+          },
+          "latestRecord": {
+            "time": 1792224000000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "CFS"
+          }
+        },
+        "spill": {
+          "units": "CFS",
+          "latestValid": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 0,
+            "flag": "",
+            "units": "CFS"
+          },
+          "latestRecord": {
+            "time": 1792224000000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "CFS"
+          }
+        },
+        "outflow": {
+          "units": "CFS",
+          "latestValid": {
+            "time": 1792137600000,
+            "reportDate": "2026-10-16",
+            "value": 1484,
+            "flag": "",
+            "units": "CFS"
+          },
+          "latestRecord": {
+            "time": 1792224000000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "CFS"
+          }
+        }
+      }
+    },
+    {
+      "id": "PNF",
+      "lastSuccess": "2026-10-17T21:36:27.955Z",
+      "error": null,
+      "metrics": {
+        "elevation": {
+          "units": "FEET",
+          "latestValid": {
+            "time": 1792263600000,
+            "reportDate": "2026-10-17",
+            "value": 748.85,
+            "flag": "",
+            "units": "FEET"
+          },
+          "latestRecord": {
+            "time": 1792270800000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "FEET"
+          }
+        },
+        "storage": {
+          "units": "AF",
+          "latestValid": {
+            "time": 1792263600000,
+            "reportDate": "2026-10-17",
+            "value": 174072,
+            "flag": "",
+            "units": "AF"
+          },
+          "latestRecord": {
+            "time": 1792270800000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "AF"
+          }
+        },
+        "inflow": {
+          "units": "CFS",
+          "latestValid": {
+            "time": 1792263600000,
+            "reportDate": "2026-10-17",
+            "value": 252,
+            "flag": "",
+            "units": "CFS"
+          },
+          "latestRecord": {
+            "time": 1792270800000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "CFS"
+          }
+        },
+        "outflow": {
+          "units": "CFS",
+          "latestValid": {
+            "time": 1792267200000,
+            "reportDate": "2026-10-17",
+            "value": 252,
+            "flag": "",
+            "units": "CFS"
+          },
+          "latestRecord": {
+            "time": 1792270800000,
+            "reportDate": "2026-10-17",
+            "value": null,
+            "flag": "",
+            "units": "CFS"
+          }
+        }
+      }
+    }
+  ]
+}

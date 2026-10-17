@@ -1,0 +1,229 @@
+{
+  "prepared": "2026-10-17",
+  "application": "Fresno County Storm Watch prototype 0.6.0, river-area review cues",
+  "sources": [
+    {
+      "publisher": "NOAA / National Weather Service",
+      "name": "Watches, warnings and advisories, current layer 1",
+      "url": "https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/FeatureServer/1",
+      "access": "Public; direct browser POST queries; no credentials",
+      "coverage": "Returned polygons intersecting Fresno, Madera, Merced, Kings and Tulare counties",
+      "identity": "cap_id plus issuance; content/geometry changes also notify",
+      "timestamps": [
+        "issuance",
+        "onset",
+        "expiration",
+        "idp_ingestdate"
+      ],
+      "query_crs": "EPSG:4326; output explicitly requested in EPSG:4326",
+      "publisher_update_minutes": 5,
+      "app_poll_minutes": 5,
+      "semantics": "Agency hazard products, not observed water levels or inundation depths. Query success is not an independent publisher heartbeat.",
+      "maintenance_owner": "County GIS maintainer to be assigned"
+    },
+    {
+      "publisher": "U.S. Census Bureau",
+      "name": "TIGERweb State_County county polygons, January 1, 2026 vintage",
+      "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query",
+      "query": {
+        "where": "STATE = '06' AND COUNTY IN ('019','039','047','031','107')",
+        "outFields": "GEOID,NAME,BASENAME,STATE,COUNTY",
+        "outSR": "4326",
+        "returnGeometry": "true",
+        "f": "geojson"
+      },
+      "retrieved": "2026-10-16",
+      "file": "counties.geojson",
+      "sha256": "caca43ac4a58464db728d5e92461ff0fcf03b3ca0a63afc796caa9d2f7f066f2",
+      "crs": "GeoJSON longitude/latitude WGS84, EPSG:4326",
+      "processing": "Byte-identical copy of the validated pilot boundary file. No simplification or repairs. Query adapter copies coordinates and orients rings for Esri polygon convention.",
+      "validation": "county-validation.json; five valid input geometries and valid union",
+      "access": "Public bundled reference data",
+      "maintenance_owner": "County GIS maintainer to be assigned"
+    },
+    {
+      "publisher": "Esri",
+      "name": "ArcGIS Maps SDK for JavaScript 5.1, Calcite, gray/imagery basemaps and World Terrain",
+      "interface_documentation": "https://developers.arcgis.com/calcite-design-system/components/",
+      "sdk_url": "https://js.arcgis.com/5.1/",
+      "basemap_urls": [
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer"
+      ],
+      "access": "Public CDN and basemap endpoints; Esri license/service terms apply",
+      "display_crs": "Web Mercator 2D and global SceneView; no measurements or elevation arithmetic",
+      "attribution": "Rendered by the ArcGIS map attribution component",
+      "imagery_semantics": "Historical basemap imagery, not a current observation."
+    },
+    {
+      "publisher": "NOAA / National Weather Service",
+      "name": "NWPS gauge metadata and stage/flow series",
+      "documentation": "https://api.water.noaa.gov/nwps/v1/docs/",
+      "endpoints": [
+        "https://api.water.noaa.gov/nwps/v1/gauges/{id}",
+        "https://api.water.noaa.gov/nwps/v1/gauges/{id}/stageflow"
+      ],
+      "access": "Public direct browser GET; no credentials",
+      "coverage": "Nine curated Fresno County river and San Joaquin boundary-reach watchpoints; see river-watchlist.json for inclusion roles and excluded neighboring sites.",
+      "identity": "Uppercase NWPS lid; samples keyed by validTime within observed or forecast series",
+      "timestamps": [
+        "observed.data.validTime",
+        "forecast.issuedTime",
+        "forecast.data.validTime",
+        "data.generatedTime",
+        "application retrieval time"
+      ],
+      "units_datum": "Native primary/secondary series units; explicit stage or flow conversion for comparisons. Gauge datum text displayed without inferring reference units. No elevation/depth arithmetic.",
+      "crs": "EPSG:4326 source longitude/latitude",
+      "publisher_update_interval": "Station and forecast dependent; not guaranteed by application polling",
+      "app_poll_minutes": 5,
+      "freshness_rules": "Prototype: observation at most 2 hours old; forecast issue at most 24 hours old; successful station query at most 7 minutes old; source out-of-service/not-current flags suppress cues",
+      "unknowns": "-999 and -9999 numeric sentinels, year-0001 times, absent series and absent categories remain unknown. The nine retained live candidates lacked usable flood thresholds at the 2026-10-17 check.",
+      "maintenance_owner": "County GIS with NWS/operator validation; contacts to be assigned",
+      "checked": "2026-10-17"
+    },
+    {
+      "publisher": "FEMA",
+      "name": "NFHL Flood Hazard Zones",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+      "access": "Public direct ArcGIS FeatureLayer queries",
+      "coverage": "Selected hazard polygons intersecting Fresno County (Census GEOID 06019), using a client-side geometry display filter at local zoom. Whole source polygons retained, not clipped; no completeness or exposure claim.",
+      "identity": "FLD_AR_ID with DFIRM_ID and SOURCE_CIT; object IDs are service query IDs",
+      "timestamps": "Planning reference. Effective study dates must be checked in FEMA Map Service Center; no event forecast or observation time implied.",
+      "crs": "Native EPSG:4269 NAD83; SDK projects for display",
+      "filter": "SFHA_TF = 'T' OR ZONE_SUBTY LIKE '%0.2%' OR FLD_ZONE = 'D'",
+      "drawing": "Shown at 1:100000 or closer; 1% special flood hazard, 0.2% annual chance and undetermined D, separate from gauge cues. Other zones filtered.",
+      "maintenance_owner": "County GIS; FEMA remains authoritative publisher",
+      "checked": "2026-10-17",
+      "display_filter": "FeatureLayerView.filter: Fresno County polygon projected to the view CRS, spatialRelationship intersects. Display simplification can affect border precision."
+    },
+    {
+      "publisher": "Esri and listed elevation contributors",
+      "name": "WorldElevation3D Terrain3D",
+      "url": "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
+      "access": "Public elevation service; Esri service terms apply",
+      "coverage": "Global compilation; no claim of survey-grade county accuracy",
+      "crs": "EPSG:3857 horizontal; source describes orthometric meters from multiple datasets",
+      "resolution": "Variable source resolution; service describes global range 1000 m to 50 cm, not a guarantee at any Fresno location",
+      "processing": "SDK ground display, no vertical exaggeration, hydrologic conditioning, terrain derivatives, viewshed or water surface",
+      "timestamps": "Static/mixed acquisition dates; not event observation or live terrain",
+      "maintenance_owner": "County GIS maintainer to be assigned",
+      "checked": "2026-10-17"
+    },
+    {
+      "publisher": "California Department of Transportation, District 6",
+      "name": "Caltrans CCTV camera catalog and publisher media",
+      "url": "https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json",
+      "documentation": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+      "fields": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv-field-description.htm",
+      "conditions": "https://dot.ca.gov/conditions-of-use",
+      "access": "Public direct HTTPS GET with CORS; no credentials, proxy or media archive",
+      "coverage": "Eight manually curated Fresno river-crossing approaches; see camera-watchlist.json. Madera and Tulare boundary approaches explicitly labeled. Direct river visibility unverified.",
+      "identity": "District + index, checked against expected source locationName and stored coordinates. Duplicate, missing, renamed or moved records are unavailable until reviewed.",
+      "crs": "EPSG:4326 WGS84 source lon/lat. Reported camera elevation is unused.",
+      "timestamps": [
+        "Catalog recordEpoch (record change, not capture time)",
+        "Image Last-Modified response header (file time only)",
+        "Application catalog check and image load times",
+        "On-image timestamp retained visually; no OCR or inferred capture date"
+      ],
+      "publisher_update_interval": "Catalog as necessary; selected images report one-minute update frequency. Video availability and latency vary.",
+      "app_refresh": "Catalog every 5 minutes when tab visible; one selected image at max(60s, publisher interval) when panel/tab visible; video on demand",
+      "freshness_rules": "Catalog overdue after 7 minutes; image file old after max(5 minutes, 3 published intervals); future/absent file times unknown; unsuccessful loads explicitly flagged",
+      "visual_review": "2026-10-17: five selected images showed roadway conditions. Indices 24 (Valley Children's Blvd), 53 (Herndon Avenue) and 35 (Route 201/Kingsburg) served outage graphics despite in-service flags and recent file times. Dated manual warnings are stored in camera-watchlist.json; a maintainer must recheck before clearing. No automatic image-content detection.",
+      "media_hosts": [
+        "cwwp2.dot.ca.gov",
+        "wzmedia.dot.ca.gov"
+      ],
+      "maintenance_owner": "County GIS to be assigned; Caltrans controls cameras and feeds",
+      "checked": "2026-10-17"
+    },
+    {
+      "publisher": "NOAA / National Weather Service",
+      "name": "MRMS radar base reflectivity time imagery",
+      "url": "https://mapservices.weather.noaa.gov/eventdriven/rest/services/radar/radar_base_reflectivity_time/ImageServer",
+      "access": "Direct public browser requests; no credentials",
+      "coverage": "CONUS frames; regional context not clipped to county",
+      "identity": "objectid used only to lock an individual available raster; idp_validtime is source frame time",
+      "query": "idp_subset = 'CONUS'; complete catalog, time descending",
+      "timestamps": [
+        "idp_validtime (UTC epoch ms)",
+        "idp_ingestdate",
+        "application successful check"
+      ],
+      "units": "Rendered RGB echo image; reflectivity dBZ. No raw pixel dBZ or rain-rate conversion.",
+      "crs": "Publisher Web Mercator EPSG:3857, displayed in shared MapView/SceneView",
+      "legend": "Qualitative echo-color key; linked official NWS numerical scale. Publisher RGB bands have no usable dBZ legend in this service metadata.",
+      "app_poll_minutes": 5,
+      "freshness": "Latest frame <=20 min; successful check <=7 min; failed/old checks hide overlay. Historical choice is explicitly labeled and stays selected until unavailable or changed.",
+      "maintenance_owner": "County GIS to be assigned",
+      "checked": "2026-10-17"
+    },
+    {
+      "publisher": "NOAA Weather Prediction Center",
+      "name": "WPC quantitative precipitation forecasts",
+      "url": "https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer",
+      "layers": {
+        "1": "24-hour Day 1",
+        "9": "72-hour Days 1-3",
+        "11": "168-hour Days 1-7"
+      },
+      "access": "Direct public browser FeatureLayer and bounded metadata queries",
+      "coverage": "Publisher national product displayed across Fresno and upstream context; no county clip or basin average",
+      "identity": "product plus issue_time/start_time/end_time and QPF band; object IDs not treated as stable products",
+      "timestamps": [
+        "issue_time (UTC)",
+        "start_time (UTC)",
+        "end_time (UTC)",
+        "application successful check"
+      ],
+      "units": "Inches liquid equivalent, including melted snow/ice. Source polygon value retained.",
+      "crs": "Native publisher GCS_Sphere_EMEP sphere; ArcGIS SDK projection for display, no area calculations",
+      "drawing": "Same six blue groups for every period: 0.01-<0.25, 0.25-<0.50, 0.50-<1, 1-<2, 2-<5, 5+ inches. Below 0.01 omitted; blank is not assumed zero.",
+      "app_poll_minutes": 5,
+      "freshness": "Single coherent cycle required; issue age <=24h, valid period not ended, check <=7 min. Failed/old/mixed cycles hidden.",
+      "maintenance_owner": "County GIS with NWS interpretation to be assigned",
+      "checked": "2026-10-17"
+    },
+    {
+      "publisher": "California DWR CDEC; operator reports from USBR and USACE",
+      "name": "Millerton and Pine Flat reservoir series",
+      "url": "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet",
+      "documentation": "https://cdec.water.ca.gov/dynamicapp/wsSensorData",
+      "selection": "reservoir-watchlist.json",
+      "access": "Public Node collector; source does not supply browser CORS at check. Atomic same-origin JSON output, no credentials.",
+      "coverage": "MIL and PNF only; no complete upstream reservoir inventory",
+      "identity": "stationId + SENSOR_NUM + durCode + obsDate",
+      "timestamps": [
+        "obsDate (PST fixed UTC-08:00)",
+        "date",
+        "station lastAttempt/lastSuccess",
+        "snapshot generatedAt",
+        "browser retrieval"
+      ],
+      "units_datum": "FEET, AF, CFS checked against configured metrics. Elevation datum unspecified in feed; no datum conversion or water surface. Daily report dates preserved.",
+      "crs": "CDEC station metadata lon/lat stored as WGS84 EPSG:4326; 2 input points, 2 retained, no repair/derived geometry",
+      "processing": "Five-day bounded requests; sensor rows reconciled with per-series input/accepted/rejected counts. Future/sentinel/flagged/wrong-unit rows not valid. Conflicting duplicates fail station update. Retain last successful station on fetch failure.",
+      "cadence": "MIL daily; PNF hourly. Collector target 15 min; browser snapshot check 1 min. GitHub schedule/deployment may delay.",
+      "release_meaning": "MIL sensor85 river outlet release,71 spill,23 total outflow shown separately. PNF sensor23 reported outflow. No scheduled release ingestion or inferred river routing.",
+      "freshness": "Snapshot age >45min warns; hourly measurements >3h and daily >72h marked old. Newer missing records shown alongside last valid reading. Prototype rules, not operator triggers.",
+      "maintenance_owner": "County GIS collector owner and backup to be assigned",
+      "checked": "2026-10-17"
+    }
+  ],
+  "exercise": "Explicit ?exercise=1 disables live alerts/gauges/cameras/radar/QPF/reservoir reads. Area-watch has isolated fictional rain/gauge/release fixtures; basemap, terrain and FEMA remain reference context.",
+  "privacy": "Only public boundaries, station identifiers/locations, source metadata and code. No private operational assets, reviews, rosters, fleet locations or credentials.",
+  "applicationVersion": "0.6.0",
+  "areaWatch": {
+    "configuration": "river-areas.json",
+    "points": 11,
+    "groups": 6,
+    "checked": "2026-10-17",
+    "qpf": "Layer 9 WPC Days 1-3, fixed EPSG:4326 point intersections, highest returned label; no basin average. Missing polygons remain unknown.",
+    "associations": "Explicit named-reach source groups; no routing, inundation or staging polygons.",
+    "rules": "site/planning.html#area-watch",
+    "maintenance_owner": "County GIS/NWS/operator review pending"
+  }
+}

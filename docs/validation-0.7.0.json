@@ -1,0 +1,44 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.7.0",
+  "date": "2026-10-17",
+  "previous_validation": "validation-0.6.0.json",
+  "status": "Calcite workspace implemented and verified locally. GitHub deployment and county acceptance remain pending.",
+  "scope": "Interface and pane navigation only. Source/model/map files and region configuration byte-compared with the v0.6.0 release and unchanged.",
+  "automated": {
+    "tests": "77 passed; 0 failed using node --experimental-test-isolation=none --test --test-reporter=dot tests/*.test.mjs",
+    "check": "npm run check passed: syntax, page links, public configuration, data contracts, six-area scope and vendor integrity.",
+    "additional": "Final camera-controller initialization race fix passed node --check. No new analytical logic or model thresholds introduced."
+  },
+  "browser_checks": [
+    "Native Calcite Shell Panels, Action Bar, Blocks and camera List loaded from the unified 5.1 CDN.",
+    "Wide 1366x768 CSS-pixel iframe and compact 756px live app inspected; 390x844 CSS-pixel phone layout inspected. Header overflow fixed with icon actions on phones.",
+    "Native Source evidence block expanded with Enter and exposed QPF/gauge/release source values, times and gaps.",
+    "Map watchpoints switched a compact review pane to the map and focused James Bypass; the map initialized successfully while the review pane was visible.",
+    "Camera action opened the pane. Native List selection changed Avenue 9 to Friant Road and updated the dropdown, image, timestamps, location notes and source URL.",
+    "Weather & reservoirs showed native Blocks, source units, daily/hourly timestamps and flagged values. Rainfall forecast controls showed the publisher cycle and 72-hour window.",
+    "Weather alerts retained separate NWS and river-area notices. The zero-alert result retained its no-all-clear wording.",
+    "ArcGIS sign-in help opened and closed through the new native Action. No authentication or permission change performed.",
+    "The documented Action aria API conveys selected/pressed state to internal buttons. Covered map controls are inert in compact work-pane view.",
+    "A transient FEMA load error was logged during an earlier reload; later views showed its normal zoom-level status. In-app message-channel errors were also logged. No new Calcite/application exception observed."
+  ],
+  "evidence": [
+    "Calcite-Workspace-v0.7.0.png",
+    "Calcite-Phone-v0.7.0.png"
+  ],
+  "evidence_location": "outputs/fresno-storm-pages, outside the deployed public site",
+  "limitations": [
+    "Review categories are prototype readiness cues, not approved action triggers, risk scores, flood probabilities, inundation boundaries, travel times or deployment recommendations. A positive change at display precision may be very small; magnitudes remain visible.",
+    "No county action thresholds, staging sites, safe access routes, equipment quantities, decision owners or response lead times are configured. NWS and responsible operators must validate these before operational adoption.",
+    "Rainfall is sampled at the existing eleven stations; it is not complete upstream basin coverage. The three-day cue window intentionally does not change when the operator displays the seven-day layer.",
+    "Gauge forecasts may already incorporate precipitation and operations. Combining them does not create independent corroboration or a calibrated multi-source forecast.",
+    "Reported releases are observations; future schedules are not ingested. Basin connectivity, diversions and bypass operation are not routed. No below-Pine-Flat gauge is connected.",
+    "Foreground refresh only. No push notifications, SMS/email, saved review history, team acknowledgement, background paging or automatic assignments.",
+    "Fault cases were verified with model tests and isolated browser fixtures. Every real-world network outage/browser/GPU combination has not been fault-injected.",
+    "Phone verification used a simulated viewport; physical-device, full keyboard and assistive-technology acceptance remain county tasks.",
+    "GitHub Pages remains undeployed and OAuth Client ID unconfigured. Existing public-source prototype and Experience Builder pilot remain separate."
+  ],
+  "operator_instructions": "README.txt and site/setup.html",
+  "rollback": "Restore Fresno-Storm-Watch-Area-Review-v0.6.0.zip. No hosted operational data was modified.",
+  "experience_builder": "Unchanged"
+}

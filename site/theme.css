@@ -1,0 +1,77 @@
+/* Application evidence colors supplement Calcite's native light/dark component tokens.
+   Gauge and alert colors are also read by map.js, keeping the legend and map in sync. */
+:root {
+  color-scheme: light;
+  --app-canvas: #f8f8f8;
+  --app-surface: #ffffff;
+  --app-text: #242424;
+  --app-muted: #515b62;
+  --app-link: #00619b;
+  --app-border: #d4d4d4;
+  --app-map-background: #e8ecee;
+  --warning: #b43f35;
+  --watch: #986006;
+  --advisory: #216a99;
+  --other: #655c84;
+  --gauge-threshold: #a73332;
+  --gauge-change: #9a650c;
+  --gauge-monitor: #246c91;
+  --gauge-gap: #707b86;
+  --caution-text: #78520b;
+  --caution-surface: #fff8e9;
+  --failure-text: #913e2d;
+  --failure-surface: #fff0eb;
+  --chart-background: #f9fbfc;
+  --chart-grid: #dfe7eb;
+  --chart-text: #526a77;
+  --chart-now: #76848c;
+  --chart-observed: #246c91;
+  --chart-forecast: #76559a;
+  --chart-missing: #737b82;
+  --map-county: #1e5c6a;
+  --map-neighbor: #687a84;
+  --map-label: #203c48;
+  --map-halo: #ffffff;
+  --map-selection: #132d3b;
+}
+:root.calcite-mode-dark {
+  color-scheme: dark;
+  --calcite-color-brand: #69bee9;
+  --calcite-color-brand-hover: #8bd1f4;
+  --calcite-color-brand-press: #50addc;
+  --calcite-color-text-link: #77c6f2;
+  --calcite-color-text-1: #e3e6e8;
+  --calcite-color-focus: #77c6f2;
+  --app-canvas: #15191c;
+  --app-surface: #24282c;
+  --app-text: #e3e6e8;
+  --app-muted: #b7c0c6;
+  --app-link: #77c6f2;
+  --app-border: #50575d;
+  --app-map-background: #202427;
+  --warning: #ef8d87;
+  --watch: #e0b663;
+  --advisory: #75bddd;
+  --other: #b8a8d7;
+  --gauge-threshold: #ef8d87;
+  --gauge-change: #e0b663;
+  --gauge-monitor: #75bddd;
+  --gauge-gap: #a5afb8;
+  --caution-text: #e0bd79;
+  --caution-surface: #332d22;
+  --failure-text: #f0aaa0;
+  --failure-surface: #382725;
+  --chart-background: #202427;
+  --chart-grid: #424a50;
+  --chart-text: #b7c0c6;
+  --chart-now: #a5afb8;
+  --chart-observed: #75bddd;
+  --chart-forecast: #bea5e4;
+  --chart-missing: #a5afb8;
+  --map-county: #86c6d6;
+  --map-neighbor: #9eabb4;
+  --map-label: #e3e6e8;
+  --map-halo: #202427;
+  --map-selection: #f0e1ac;
+}
+html { background: var(--app-canvas); color: var(--app-text); }

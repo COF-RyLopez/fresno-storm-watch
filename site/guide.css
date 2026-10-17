@@ -1,0 +1,22 @@
+:root { font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; font-size: 16px; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--app-canvas); color: var(--app-text); }
+a { color: var(--app-link); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--app-link); outline-offset: 4px; }
+.app-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px max(20px, calc((100vw - 1040px) / 2)); background: var(--app-surface); border-bottom: 1px solid var(--app-border); }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand h1 { font-size: 22px; margin: 4px 0 0; }
+.eyebrow { font-size: 11px; letter-spacing: .04em; color: var(--app-muted); }
+nav { display: flex; align-items: center; gap: 20px; font-size: 14px; }
+#theme-toggle { padding: 8px 12px; font: inherit; color: var(--app-text); background: var(--app-surface); border: 1px solid var(--app-border); border-radius: 3px; cursor: pointer; }
+.guide { max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px; line-height: 1.75; overflow-wrap: anywhere; }
+.guide h1 { font-size: 28px; line-height: 1.3; }
+.guide h2 { font-size: 22px; margin-top: 40px; line-height: 1.4; }
+.guide h3 { font-size: 18px; margin-top: 28px; }
+.guide li { margin-bottom: 12px; }
+.guide pre { overflow: auto; padding: 20px; background: var(--app-surface); border: 1px solid var(--app-border); border-radius: 4px; }
+.guide code { font-size: .9em; }
+.guide table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.guide th, .guide td { padding: 12px; text-align: left; border: 1px solid var(--app-border); vertical-align: top; }
+.guide th { background: var(--app-surface); }
+@media (max-width: 600px) { .guide { padding-top: 20px; } .guide h1 { font-size: 24px; } }

@@ -1,0 +1,58 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.3.1",
+  "date": "2026-10-17",
+  "status": "Fresno river scope correction; local prototype. GitHub publication and OAuth acceptance pending.",
+  "previous_validation": "validation-0.3.0.json",
+  "scope": {
+    "input_watchpoints": 12,
+    "retained": 9,
+    "excluded": [
+      "CHBC1",
+      "ELNC1",
+      "KWRC1"
+    ],
+    "retained_boundary_stations": [
+      "GVAC1",
+      "SJXC1",
+      "SJMC1",
+      "RJQC1",
+      "RSBC1"
+    ],
+    "method": "Curated Fresno river relevance checked against the bundled 2026 Census boundary and original NWPS coordinates/names. Publisher county labels are retained; station points near the administrative boundary are not treated as legal jurisdiction findings.",
+    "river_map": "Fresno County initial/fit extent and county outline in river mode. Five-county outlines and extent return in weather mode.",
+    "weather_alerts": "Original fixed five-county queries unchanged.",
+    "fema": "Client-side display filter retains hazard polygons intersecting Fresno County; not clipped geometry or an exposure calculation."
+  },
+  "automated": {
+    "npm_test": "40 passed; 0 failed",
+    "npm_run_check": "Passed syntax, existing five-county weather geometry, nine Fresno watchpoints, page links and public configuration",
+    "final_map_syntax": "Passed node --check after hiding neighboring county outlines in river mode"
+  },
+  "browser_checks": [
+    "River header and map heading identify Fresno County; list has nine stations and no Kaweah/El Nido/Ripperdan entries",
+    "Live query returned seven current observations, four usable forecasts and nine unknown thresholds at Oct 17 1:27 PM PDT",
+    "Switching to weather restored the five-county scope label and map heading; river station count stayed separate",
+    "Prior release source-value, failure, mobile and symbol checks are preserved in validation-0.3.0.json; source calculations and symbology unchanged",
+    "Final river map draws only Fresno County’s outline and label, retaining nine gauge markers",
+    "Highway 41 station detail explicitly identifies a Fresno boundary river reach while preserving publisher county Madera"
+  ],
+  "limitations": [
+    "No GitHub repository or published Pages URL has been created; workflow has not run on GitHub",
+    "OAuth Client ID remains blank; real sign-in, sign-out, cancellation and second-account tests are pending",
+    "Private maps, team acknowledgement and vendor integrations are not part of this prototype",
+    "Mobile layout was checked at a simulated CSS viewport, not on a physical phone",
+    "Full keyboard, screen-reader, EOC display and county acceptance testing remain necessary",
+    "Notifications are session-local while the application is open, with no background delivery guarantee",
+    "Successful queries cannot independently establish NOAA publication-pipeline freshness",
+    "Candidate watchlist is not complete watershed, channel, gate or gauge coverage",
+    "Two-hour observation and 24-hour forecast age checks are prototype rules needing operator review",
+    "No county action thresholds, staging recommendations, routing, hydraulic model or forecast-to-inundation/asset join implemented",
+    "3D views, camera snapshots/streams, DuckDB, cloud-data benchmarks and role-specific EOC workflows are future increments",
+    "Color-vision check was a qualitative palette simulation, not a full assistive-technology certification",
+    "FEMA can fail independently of NWPS; inspect the layer status and official source. The overlay is filtered planning reference, not event inundation or complete coverage evidence."
+  ],
+  "experience_builder": "Existing hosted pilot and local implementation package were not modified",
+  "user_acceptance_steps": "site/setup.html#verify",
+  "planning_guide": "site/planning.html"
+}

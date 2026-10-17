@@ -1,0 +1,84 @@
+{
+  "checked": 1792275448790,
+  "method": "WPC layer 9, 11 fixed EPSG:4326 point intersections, highest intersecting label, no area average",
+  "cycle": {
+    "issue": 1792260064000,
+    "start": 1792281600000,
+    "end": 1792540800000,
+    "issueText": "2026-10-17 18:01:04",
+    "startText": "2026-10-18 00:00:00",
+    "endText": "2026-10-21 00:00:00",
+    "hours": 72,
+    "units": "in",
+    "product": "72-hour QPF"
+  },
+  "points": {
+    "GVAC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "KREC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "JAMC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "LTDC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "NFCC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "MIL": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "RSBC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "PNF": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "RJQC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "SJMC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    },
+    "SJXC1": {
+      "value": null,
+      "labels": [],
+      "reason": "No forecast polygon returned; amount unknown",
+      "error": null
+    }
+  },
+  "error": null
+}

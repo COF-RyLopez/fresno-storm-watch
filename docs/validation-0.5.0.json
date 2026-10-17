@@ -1,0 +1,50 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.5.0",
+  "date": "2026-10-17",
+  "status": "Weather radar, WPC precipitation forecasts and two-reservoir CDEC increment implemented and checked locally. GitHub publication and OAuth acceptance pending.",
+  "previous_validation": "validation-0.4.0.json",
+  "scope": {
+    "radar": "Official NOAA CONUS radar image service. Latest and selectable recent frames with explicit image time; surrounding weather context.",
+    "precipitation_forecast": "Official WPC Day 1, Days 1-3 and Days 1-7 liquid-equivalent QPF. Fixed publisher windows, issue times, inches and six fixed sequential color groups.",
+    "reservoirs": "Millerton/Friant (MIL, San Joaquin) and Pine Flat (PNF, Kings). Other upstream reservoirs are not included.",
+    "release_meaning": "MIL daily sensor 85 river outlet release and sensor 71 spillway are separate from sensor 23 total reservoir outflow. PNF sensor 23 is reported hourly outflow. No future operating schedule is ingested.",
+    "time_basis": "CDEC unzoned timestamps use fixed PST UTC-08:00 year-round. Hourly measurements display in America/Los_Angeles; daily records retain the PST report date. WPC UTC values display with a named local time zone.",
+    "existing_layers": "Nine river watchpoints, eight selected river-approach cameras, Fresno-intersection FEMA reference and regional NWS alerts retained. See previous validation for coverage and limitations."
+  },
+  "automated": {
+    "tests": "62 passed; 0 failed using node --experimental-test-isolation=none --test --test-reporter=dot tests/*.test.mjs. Normal isolated npm test could not spawn child processes in the sandbox; this is an execution limitation, not a test failure.",
+    "source_contract_tests": "14 new tests cover fixed PST, invalid dates/numbers, radar completeness and recency, coherent QPF cycles, period/unit checks, CDEC identity/units/flags/duplicates/missing values, collector partial failures and preservation of original measurement times.",
+    "npm_run_check": "Passed syntax, county/watchpoint geometry, eight camera IDs, two reservoir contracts/snapshot, pinned HLS integrity, page links and public configuration. Check required approved execution outside the child-process restriction.",
+    "source_probe": "docs/environment-source-check.json records public API checks of radar catalog, three WPC periods, CDEC source measurements and missing values. CDEC did not return browser CORS permission; the app reads the collected public JSON snapshot."
+  },
+  "browser_checks": [
+    "All three WPC periods display the publisher's issue time and fixed 24/72/168-hour windows; selecting a different period updates the map and legend.",
+    "Seven-day QPF rendered in both 2D and 3D over Fresno with gauges, camera and reservoir symbols. A selected polygon returned 0.25 inches and matching UTC issue/start/end fields.",
+    "Latest radar and historical frame selection loaded. Manual refresh preserves the selected historical frame and its visible label after the Calcite option-selection repair.",
+    "Millerton daily values and separate river outlet/spillway/total outflow labels matched the collected source. Pine Flat hourly levels, storage and flows matched the source with correct PST-to-local conversion.",
+    "Newer missing CDEC records display the last valid value with a missing/flagged note and original source time. Download time is separate from measurement time.",
+    "A 1366 by 1000 CSS-pixel QA iframe and a 390 by 844 mobile iframe were visually inspected. Panels and source labels were readable without internal horizontal cutoff.",
+    "The final 1280 by 720 desktop preview scrolls vertically to preserve usable map height. Collapsed base legend and visible QPF key leave room for the forecast map, reservoir card and camera together.",
+    "The local CDEC collector successfully refreshed the public snapshot. The GitHub schedule is prepared but has not been deployed or exercised."
+  ],
+  "evidence": [
+    "Weather-Reservoirs-Desktop-v0.5.0.png",
+    "Weather-Reservoirs-Mobile-v0.5.0.png"
+  ],
+  "evidence_location": "Adjacent outputs/fresno-storm-pages directory; screenshots are not included in the public site deployment",
+  "limitations": [
+    "This is a planning prototype. QPF is liquid-equivalent precipitation, not basin-average rainfall, runoff, flood depth, routed inflow, arrival time or a staging recommendation.",
+    "Reservoir values are published observations, not planned releases. MIL daily and PNF hourly publication do not become real-time measurements when the collector runs every 15 minutes.",
+    "The release ZIP contains a dated public reservoir snapshot. It updates locally only while the collector runs, or on GitHub after the supplied workflow is deployed. GitHub scheduled execution can be delayed or disabled; overdue collection is shown in the app.",
+    "Full blocked-service, stopped-collector and expired-session operator acceptance remains in site/setup.html. Parser and partial-failure behavior have automated coverage; not every browser failure state was fault-injected end-to-end.",
+    "Radar is the publisher's rendered image product. Its displayed gradient is qualitative; the numerical NWS legend is linked. No pixel-based rain rates or rainfall accumulation are calculated. No echoes do not establish zero precipitation or complete radar coverage.",
+    "The in-app browser logged SDK terrain texture-compression errors while the checked 3D map rendered. It also logged browser message-channel listener errors. No application exception was observed; alternative hardware/browser acceptance is still required and 2D remains available.",
+    "Physical phones, county EOC screens, full keyboard and assistive-technology acceptance have not been completed. Mobile verification used a simulated viewport.",
+    "GitHub Pages is not deployed and the OAuth Client ID remains blank. Public feeds need no sign-in. Private operational integrations and acknowledgements remain outside this static prototype.",
+    "No DEM, gauge or reservoir elevation datum arithmetic, flood routing, flood-space percentage, safe access route or inundation prediction is performed. See prior validation for existing river, camera and FEMA limitations."
+  ],
+  "experience_builder": "Existing hosted pilot and local implementation package were not modified",
+  "user_acceptance_steps": "site/setup.html#verify",
+  "planning_guide": "site/planning.html#weather-reservoirs"
+}

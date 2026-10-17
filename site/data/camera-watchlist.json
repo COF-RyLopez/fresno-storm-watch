@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "checked": "2026-10-17",
+  "publisher": "California Department of Transportation, District 6",
+  "feedUrl": "https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json",
+  "documentationUrl": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+  "coordinateReference": "EPSG:4326 WGS84; source coordinates preserved. Camera elevations are not used.",
+  "selection": "Eight manually curated highway cameras at approaches to Fresno County San Joaquin and Kings River reaches. Boundary-side Madera and Tulare records are explicitly labeled. No distance buffer or viewshed is claimed.",
+  "coverageGaps": "This first selection has no camera at Friant Dam, James Bypass, Mendota or the upstream gauge sites. No camera field of view is verified as a direct river view.",
+  "accounting": {
+    "districtRecords": 128,
+    "included": 8,
+    "excluded": 120
+  },
+  "cameras": [
+    {
+      "id": "caltrans-d6-89",
+      "index": "89",
+      "name": "SR-41 \u00b7 Avenue 9",
+      "sourceName": "MAD-41-AT AVE 9",
+      "corridor": "San Joaquin \u00b7 SR-41",
+      "scopeRole": "Boundary approach",
+      "note": "North approach to the Fresno\u2013Madera San Joaquin crossing. Camera field of view may face the roadway; river visibility is unverified.",
+      "gaugeId": "SJXC1",
+      "county": "Madera",
+      "route": "SR-41",
+      "longitude": -119.793146,
+      "latitude": 36.880665,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": false,
+        "result": "road-conditions-visible",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-22",
+      "index": "22",
+      "name": "SR-41 \u00b7 Friant Road",
+      "sourceName": "FRE-41-AT FRIANT RD",
+      "corridor": "San Joaquin \u00b7 SR-41",
+      "scopeRole": "Fresno approach",
+      "note": "South approach to the San Joaquin crossing and Friant Road access. A road camera, not a river-level measurement.",
+      "gaugeId": "SJXC1",
+      "county": "Fresno",
+      "route": "SR-41",
+      "longitude": -119.789528,
+      "latitude": 36.854807,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": false,
+        "result": "road-conditions-visible",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-24",
+      "index": "24",
+      "name": "SR-41 \u00b7 Valley Children\u2019s Blvd",
+      "sourceName": "MAD-41-AT VALLEY CHILDRENS BLVD",
+      "corridor": "San Joaquin \u00b7 SR-41",
+      "scopeRole": "Boundary approach",
+      "note": "Madera-side approach north of the Fresno boundary river crossing. Catalog county is preserved.",
+      "gaugeId": "SJXC1",
+      "county": "Madera",
+      "route": "SR-41",
+      "longitude": -119.793455,
+      "latitude": 36.893003,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": true,
+        "result": "publisher-placeholder",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-53",
+      "index": "53",
+      "name": "SR-99 \u00b7 Herndon Avenue",
+      "sourceName": "FRE-99-AT HERNDON AVE",
+      "corridor": "San Joaquin \u00b7 SR-99",
+      "scopeRole": "Fresno approach",
+      "note": "Fresno-side road approach to the SR-99 San Joaquin crossing. River visibility is unverified.",
+      "gaugeId": null,
+      "county": "Fresno",
+      "route": "SR-99",
+      "longitude": -119.917525,
+      "latitude": 36.832008,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": true,
+        "result": "publisher-placeholder",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-90",
+      "index": "90",
+      "name": "SR-99 \u00b7 Avenue 7",
+      "sourceName": "MAD-99-AT AVE 7",
+      "corridor": "San Joaquin \u00b7 SR-99",
+      "scopeRole": "Boundary approach",
+      "note": "Madera-side road approach to the SR-99 San Joaquin crossing. Catalog county is preserved.",
+      "gaugeId": null,
+      "county": "Madera",
+      "route": "SR-99",
+      "longitude": -119.946844,
+      "latitude": 36.85156,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": false,
+        "result": "road-conditions-visible",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-35",
+      "index": "35",
+      "name": "SR-99 \u00b7 Route 201 / Kingsburg",
+      "sourceName": "FRE-99-AT RTE 201",
+      "corridor": "Kings \u00b7 SR-99",
+      "scopeRole": "Fresno approach",
+      "note": "Kingsburg approach north of the Kings River county-boundary crossing. Road conditions do not establish crossing safety.",
+      "gaugeId": null,
+      "county": "Fresno",
+      "route": "SR-99",
+      "longitude": -119.56135,
+      "latitude": 36.518117,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": true,
+        "result": "publisher-placeholder",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-34",
+      "index": "34",
+      "name": "SR-99 \u00b7 South of 18th Avenue",
+      "sourceName": "TUL-99-S/O 18TH AVE",
+      "corridor": "Kings \u00b7 SR-99",
+      "scopeRole": "Boundary approach",
+      "note": "Tulare-side approach south of the Kings River crossing into Fresno County. Included only for this Fresno boundary crossing.",
+      "gaugeId": null,
+      "county": "Tulare",
+      "route": "SR-99",
+      "longitude": -119.543668,
+      "latitude": 36.503413,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": false,
+        "result": "road-conditions-visible",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    },
+    {
+      "id": "caltrans-d6-121",
+      "index": "121",
+      "name": "SR-180 \u00b7 Reed Avenue",
+      "sourceName": "FRE-180-AT REED AVE",
+      "corridor": "Kings \u00b7 SR-180",
+      "scopeRole": "Fresno approach",
+      "note": "Road approach near the Kings River and Minkler. Camera direction and river visibility require operator verification.",
+      "gaugeId": null,
+      "county": "Fresno",
+      "route": "SR-180",
+      "longitude": -119.455833,
+      "latitude": 36.724255,
+      "imageReview": {
+        "checked": "2026-10-17",
+        "needsReview": false,
+        "result": "road-conditions-visible",
+        "method": "Visual inspection of publisher image in browser; not an automated availability detector. Recheck after conditions change."
+      }
+    }
+  ]
+}

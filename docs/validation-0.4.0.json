@@ -1,0 +1,66 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.4.0",
+  "date": "2026-10-17",
+  "status": "3D terrain and river-area camera increment implemented and checked locally. GitHub publication and OAuth acceptance pending.",
+  "previous_validation": "validation-0.3.1.json",
+  "scope": {
+    "river_watchpoints": 9,
+    "camera_catalog_records": 128,
+    "cameras_selected": 8,
+    "cameras_excluded": 120,
+    "camera_geography": "Fresno river-crossing approaches: SR-41 and SR-99 San Joaquin crossings, SR-99 Kings crossing, SR-180 Reed Avenue. Madera and Tulare boundary approaches retain publisher county labels.",
+    "camera_visibility": "Highway condition views; direct river field of view unverified. No selected camera at Friant Dam, James Bypass, Mendota or the upstream watchpoints.",
+    "weather_alerts": "Existing fixed five-county scope unchanged.",
+    "fema": "Existing Fresno-intersection filter and 1:100000 local scale limit retained in both views. Whole polygons, not a clipped or modeled inundation surface.",
+    "terrain": "Public Esri World Terrain, no vertical exaggeration, depth, datum arithmetic or hydraulic modeling."
+  },
+  "automated": {
+    "npm_test": "48 passed; 0 failed, including eight camera source-contract tests and 40 existing weather/river tests",
+    "npm_run_check": "Passed syntax, public configuration, county/watchpoint geometry, eight unique camera IDs and pinned HLS file hash",
+    "source_probe": "docs/camera-source-check.json: eight image endpoints returned HTTP 200; six HLS masters returned HTTP 200 and two HTTP 404. Successful response alone is not playback or image-content availability."
+  },
+  "browser_checks": [
+    "2D and lazy 3D SceneView render gauges, camera icons and Fresno-filtered FEMA polygons together at the SR-41 San Joaquin crossing.",
+    "Imagery, Overhead and Tilt terrain controls render; returning to 2D preserves the center and layer-toggle choices.",
+    "Avenue 9 HLS video played with visible roadway motion and advancing time; readyState 4, paused false, no media error.",
+    "Valley Children's HLS 404 falls back to a labeled still-image view without blocking gauges or map.",
+    "Changing cameras clears previous imagery and stops video; closing the panel clears video src and pauses playback. Reopening leaves video stopped until Play is pressed.",
+    "All eight selected still images visually inspected: five showed roadway conditions and three showed publisher outage graphics despite recent file times/in-service flags.",
+    "Outage-graphic records 24, 35 and 53 have dated manual review warnings and crossed camera markers; media remains available for a recovery recheck.",
+    "Camera county/identity and timestamps remain explicit; image timestamp is unobscured; file freshness is distinct from app retrieval time.",
+    "Simulated 390 by 844 CSS pixel mobile layout stacks panels with readable camera image and controls and no horizontal overflow."
+  ],
+  "visual_review": {
+    "date": "2026-10-17",
+    "roadway_images": 5,
+    "outage_graphics": 3,
+    "outage_sites": [
+      "SR-41 Valley Children's Blvd",
+      "SR-99 Herndon Avenue",
+      "SR-99 Route 201 / Kingsburg"
+    ],
+    "method": "Human visual check of the publisher image through the app. Manual dated flags require maintainer recheck; no automatic outage-graphic detection.",
+    "capture_time": "HTTP Last-Modified is file time only. Publisher overlay remains visible; no parsed or inferred frame timestamp."
+  },
+  "evidence": [
+    "Fresno-3D-Cameras-v0.4.0.png",
+    "Fresno-Cameras-Mobile-v0.4.0.png"
+  ],
+  "evidence_location": "Adjacent outputs/fresno-storm-pages directory; not included in the public site deployment",
+  "limitations": [
+    "GitHub Pages is not deployed; OAuth Client ID remains blank. Public sources need no account. Private maps, acknowledgements and vendor integrations remain outside this prototype.",
+    "Live playback was verified at Avenue 9; other HLS endpoints were probed, not all played. Publisher availability, codecs, buffering and latency vary.",
+    "Video is on demand and stops when panel/tab is hidden. There is no media archive, background guarantee or automated camera-content monitoring.",
+    "3D was checked in the in-app Chromium browser; physical phones, EOC displays and alternative browser/GPU combinations still need county acceptance.",
+    "The browser logged a terrain texture-compression warning while rendering the checked scene successfully. Hardware-dependent 3D performance is not certified; 2D remains available.",
+    "Camera views do not establish river visibility, water depth, bridge clearance or a safe staging location. Terrain, basemap imagery and FEMA are planning references, not current inundation.",
+    "FEMA and camera services can fail independently of NWPS. Missing thresholds stay unknown; no county action thresholds, asset exposure, routing or staging recommendations have been implemented.",
+    "Full keyboard/screen-reader testing and operator validation remain necessary. Mobile check used a simulated viewport, not physical hardware.",
+    "Foreground refresh intervals are application checks, not publisher freshness or delivery guarantees. See prior validation for unchanged source-model limitations.",
+    "DuckDB/cloud-native file querying and role-specific EOC workflows remain future increments."
+  ],
+  "experience_builder": "Existing hosted pilot and local implementation package were not modified",
+  "user_acceptance_steps": "site/setup.html#verify",
+  "planning_guide": "site/planning.html"
+}

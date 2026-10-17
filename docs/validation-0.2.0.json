@@ -1,0 +1,63 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.2.0",
+  "date": "2026-10-17",
+  "status": "Local prototype; GitHub deployment and configured OAuth acceptance remain pending",
+  "environment": {
+    "node": "22.22.3",
+    "npm": "11.6.3",
+    "operating_system": "Windows",
+    "browser": "ChatGPT in-app Chromium browser",
+    "viewports": [
+      "1280 x 720 desktop exercise",
+      "756 x 877 live view",
+      "390 x 844 CSS-pixel iframe layout check"
+    ]
+  },
+  "automated": {
+    "npm_test": "23 passed; 0 failed",
+    "npm_run_check": "Passed JavaScript syntax, five-county geometry, local index links and public configuration checks",
+    "coverage": [
+      "Source geometry hash, county completeness, ring orientation and invalid geometry rejection",
+      "Timestamp parsing and Pacific daylight-saving display",
+      "Deduplication across counties and repeated polygons",
+      "New/revised content notification, clear-notice semantics, source removal and expiration",
+      "Failure retention and distinct initial, overdue and empty-result states",
+      "Pagination, incomplete results, wrong coordinate reference, HTTP errors and timeouts",
+      "Bounded regional query concurrency and atomic commit only after all five counties succeed"
+    ]
+  },
+  "live_source_checks": {
+    "regional": "Browser completed queries for all five counties and rendered an empty regional result with no all-clear claim",
+    "automatic_refresh": "Calcite live view advanced from Oct 17 12:19:05 PM PDT to 12:24:07 PM PDT without a page reload",
+    "nonempty_contract_probe": {
+      "time_utc": "2026-10-17T19:05:48.923Z",
+      "scope": "Two public NATIONAL records, solely to validate the source contract; not evidence of Fresno-region alerts",
+      "result": "Two Flood Advisory features normalized; EPSG:4326, timezone-qualified source timestamps and NWS alert record URL verified",
+      "source_semantics": "msg_type was FLS, a product code; this field is not used as a cancellation flag"
+    }
+  },
+  "browser_checks": [
+    "Calcite Shell, Navigation, Panel, Notice, List, Select, Action, Button, Chip and Dialog render from the unified SDK entry",
+    "Clear notification retains displayed hazards; Add warning and New revision produce fresh notifications",
+    "Repeated polygons do not inflate regional counts or create a new notification after clearing",
+    "Failure retains last successful alerts and timestamp; expired/empty scenarios do not imply safety",
+    "List category filter and map navigation do not alter fixed regional counts or the banner",
+    "Selecting a Calcite list row displays matching source details and an alert outline",
+    "Sources and sign-in setup dialogs open and close",
+    "Mobile notice action wraps below its message; panels stack and map legend remains outside the map",
+    "Initial extent and Fit region include all five counties with attribution clearance; alert zoom and regional reset work after the layout correction",
+    "Deployment guide anchors scroll to GitHub and ArcGIS instructions"
+  ],
+  "limitations": [
+    "No GitHub repository or published Pages URL has been created; workflow has not run on GitHub",
+    "OAuth Client ID remains blank; real sign-in, sign-out, cancellation and second-account tests are pending",
+    "Private maps, team acknowledgement and vendor integrations are not part of this prototype",
+    "Mobile layout was checked at a simulated CSS viewport, not on a physical phone",
+    "Full keyboard, screen-reader, EOC display and county acceptance testing remain necessary",
+    "Notifications are session-local while the application is open, with no background delivery guarantee",
+    "Successful queries cannot independently establish NOAA publication-pipeline freshness"
+  ],
+  "experience_builder": "Existing hosted pilot and local implementation package were not modified",
+  "user_acceptance_steps": "site/setup.html#verify"
+}

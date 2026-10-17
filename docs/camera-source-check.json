@@ -1,0 +1,195 @@
+{
+  "checked": "2026-10-17T20:48:37.524Z",
+  "catalog": "https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json",
+  "accounting": {
+    "input": 128,
+    "selected": 8,
+    "excluded": 120
+  },
+  "cameras": [
+    {
+      "id": "caltrans-d6-121",
+      "name": "SR-180 · Reed Avenue",
+      "county": "Fresno",
+      "longitude": -119.455833,
+      "latitude": 36.724255,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:47:15 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 200,
+        "available": true,
+        "lastModified": null,
+        "cors": "*",
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-22",
+      "name": "SR-41 · Friant Road",
+      "county": "Fresno",
+      "longitude": -119.789528,
+      "latitude": 36.854807,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:47:14 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 200,
+        "available": true,
+        "lastModified": null,
+        "cors": "*",
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-24",
+      "name": "SR-41 · Valley Children’s Blvd",
+      "county": "Madera",
+      "longitude": -119.793455,
+      "latitude": 36.893003,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:47:22 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 404,
+        "available": false,
+        "lastModified": null,
+        "cors": null,
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-34",
+      "name": "SR-99 · South of 18th Avenue",
+      "county": "Tulare",
+      "longitude": -119.543668,
+      "latitude": 36.503413,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:47:17 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 200,
+        "available": true,
+        "lastModified": null,
+        "cors": "*",
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-35",
+      "name": "SR-99 · Route 201 / Kingsburg",
+      "county": "Fresno",
+      "longitude": -119.56135,
+      "latitude": 36.518117,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:48:09 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 200,
+        "available": true,
+        "lastModified": null,
+        "cors": "*",
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-53",
+      "name": "SR-99 · Herndon Avenue",
+      "county": "Fresno",
+      "longitude": -119.917525,
+      "latitude": 36.832008,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:46:57 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 404,
+        "available": false,
+        "lastModified": null,
+        "cors": null,
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-89",
+      "name": "SR-41 · Avenue 9",
+      "county": "Madera",
+      "longitude": -119.793146,
+      "latitude": 36.880665,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:47:22 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 200,
+        "available": true,
+        "lastModified": null,
+        "cors": "*",
+        "kind": "HLS playlist (playback not proven)"
+      }
+    },
+    {
+      "id": "caltrans-d6-90",
+      "name": "SR-99 · Avenue 7",
+      "county": "Madera",
+      "longitude": -119.946844,
+      "latitude": 36.85156,
+      "error": null,
+      "inService": true,
+      "image": {
+        "status": 200,
+        "available": true,
+        "lastModified": "Sat, 17 Oct 2026 20:47:30 GMT",
+        "cors": "*",
+        "kind": "Image headers (capture time unverified)"
+      },
+      "video": {
+        "status": 200,
+        "available": true,
+        "lastModified": null,
+        "cors": "*",
+        "kind": "HLS playlist (playback not proven)"
+      }
+    }
+  ]
+}

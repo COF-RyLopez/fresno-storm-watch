@@ -1,0 +1,119 @@
+{
+  "version": 2,
+  "checked": "2026-10-17",
+  "publisher": "NOAA National Water Prediction Service",
+  "scope": "Nine candidate watchpoints for river reaches within Fresno County and its San Joaquin boundary river; not a complete channel or gauge inventory",
+  "selection": "Fresno County focus requested by the user. Retain Fresno San Joaquin boundary reaches, Little Dry Creek, James Bypass and Kings River sites. Source county labels are preserved; boundary stations are not excluded solely because NWS labels the station Madera.",
+  "coordinateReference": "EPSG:4326 longitude, latitude; source coordinates preserved",
+  "catalogUrl": "https://api.water.noaa.gov/nwps/v1/gauges?bbox.xmin=-121&bbox.ymin=35.7&bbox.xmax=-118.3&bbox.ymax=38&srid=EPSG_4326",
+  "stations": [
+    {
+      "id": "GVAC1",
+      "name": "San Joaquin River above Gravelly Ford",
+      "basin": "San Joaquin",
+      "county": "Fresno",
+      "longitude": -120.16,
+      "latitude": 36.797778,
+      "note": "Candidate planning watchpoint; local action thresholds and linked assets remain unassigned. Monitors a San Joaquin reach on Fresno County’s boundary; the publisher county label is retained.",
+      "scopeRole": "Fresno boundary river reach"
+    },
+    {
+      "id": "SJXC1",
+      "name": "San Joaquin River near HWY 41",
+      "basin": "San Joaquin",
+      "county": "Madera",
+      "longitude": -119.79333333333,
+      "latitude": 36.876111111111,
+      "note": "Candidate planning watchpoint; local action thresholds and linked assets remain unassigned. Monitors a San Joaquin reach on Fresno County’s boundary; the publisher county label is retained.",
+      "scopeRole": "Fresno boundary river reach"
+    },
+    {
+      "id": "SJMC1",
+      "name": "San Joaquin River near Mendota",
+      "basin": "San Joaquin",
+      "county": "Fresno",
+      "longitude": -120.3782256,
+      "latitude": 36.8105046,
+      "note": "CNRFC identifies this as an unofficial location. Reconcile thresholds with NWS Hanford; no CNRFC thresholds have been substituted. Monitors a San Joaquin reach on Fresno County’s boundary; the publisher county label is retained.",
+      "scopeRole": "Fresno boundary river reach"
+    },
+    {
+      "id": "JAMC1",
+      "name": "James Bypass at James Bypass",
+      "basin": "Bypasses",
+      "county": "Fresno",
+      "longitude": -120.180278,
+      "latitude": 36.6525,
+      "note": "Bypass operations and routing require operator confirmation; stage changes alone do not establish an affected area.",
+      "scopeRole": "Fresno County river reach"
+    },
+    {
+      "id": "LTDC1",
+      "name": "Little Dry Creek below Friant",
+      "basin": "San Joaquin tributaries",
+      "county": "Fresno",
+      "longitude": -119.729557,
+      "latitude": 36.934193,
+      "note": "Candidate planning watchpoint; local action thresholds and linked assets remain unassigned.",
+      "scopeRole": "Fresno County river reach"
+    },
+    {
+      "id": "RJQC1",
+      "name": "San Joaquin River below Redinger Lake",
+      "basin": "San Joaquin upstream",
+      "county": "Fresno",
+      "longitude": -119.455076,
+      "latitude": 37.144361,
+      "note": "Candidate planning watchpoint; local action thresholds and linked assets remain unassigned. Monitors a San Joaquin reach on Fresno County’s boundary; the publisher county label is retained.",
+      "scopeRole": "Fresno boundary river reach"
+    },
+    {
+      "id": "RSBC1",
+      "name": "San Joaquin River below HWY 145",
+      "basin": "San Joaquin",
+      "county": "Madera",
+      "longitude": -120.08833333333,
+      "latitude": 36.822777777778,
+      "note": "Candidate planning watchpoint; local action thresholds and linked assets remain unassigned. Monitors a San Joaquin reach on Fresno County’s boundary; the publisher county label is retained.",
+      "scopeRole": "Fresno boundary river reach"
+    },
+    {
+      "id": "KREC1",
+      "name": "Kings River (CA) near Trimmer",
+      "basin": "Kings",
+      "county": "Fresno",
+      "longitude": -119.140833,
+      "latitude": 36.874722222222,
+      "note": "Upstream Kings River context. This is not the release below Pine Flat Dam.",
+      "scopeRole": "Fresno County river reach"
+    },
+    {
+      "id": "NFCC1",
+      "name": "North Fork Kings River at Cliff Camp",
+      "basin": "Kings",
+      "county": "Fresno",
+      "longitude": -118.98055555556,
+      "latitude": 36.993888888889,
+      "note": "Upstream Kings River context. This is not the release below Pine Flat Dam.",
+      "scopeRole": "Fresno County river reach"
+    }
+  ],
+  "focusCountyGeoid": "06019",
+  "excludedStations": [
+    {
+      "id": "CHBC1",
+      "name": "Chowchilla Bypass at Ripperdan",
+      "reason": "Chowchilla Bypass station outside Fresno County; omitted from this county-focused river view."
+    },
+    {
+      "id": "ELNC1",
+      "name": "Eastside Bypass at El Nido",
+      "reason": "Eastside Bypass at El Nido is outside Fresno County."
+    },
+    {
+      "id": "KWRC1",
+      "name": "Kaweah River at McKay Point",
+      "reason": "Kaweah River at McKay Point is in Tulare County."
+    }
+  ]
+}

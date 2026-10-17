@@ -1,0 +1,121 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.3.0",
+  "date": "2026-10-17",
+  "status": "Local prototype; GitHub deployment, optional OAuth and county acceptance pending. FEMA service availability is intermittent in this environment.",
+  "environment": {
+    "node": "22.22.3",
+    "npm": "11.6.3",
+    "operating_system": "Windows",
+    "browser": "ChatGPT in-app Chromium browser",
+    "viewports": [
+      "1280 x 720 desktop exercise",
+      "756 x 877 live view",
+      "390 x 844 CSS-pixel iframe layout check"
+    ]
+  },
+  "automated": {
+    "npm_test": "40 passed; 0 failed",
+    "npm_run_check": "Passed syntax, five-county geometry, twelve candidate watchpoints, three local HTML pages and public configuration checks",
+    "coverage": [
+      "Source geometry hash, county completeness, ring orientation and invalid geometry rejection",
+      "Timestamp parsing and Pacific daylight-saving display",
+      "Deduplication across counties and repeated polygons",
+      "New/revised content notification, clear-notice semantics, source removal and expiration",
+      "Failure retention and distinct initial, overdue and empty-result states",
+      "Pagination, incomplete results, wrong coordinate reference, HTTP errors and timeouts",
+      "Bounded regional query concurrency and atomic commit only after all five counties succeed",
+      "Missing timestamps never fall back to the current application clock",
+      "NWPS sentinel values, zero and negative stage, units and dimensional conversions",
+      "Identity, coordinates, conflicting timestamps and missing hydrograph schemas",
+      "24/48/72-hour forecast-window selection, no extrapolation, repeated maximum times and sample-bracketed threshold crossings",
+      "Unknown and contradictory thresholds, obsolete/failed/out-of-service data and future-issued forecasts",
+      "Three captured publisher fixtures: Gravelly Ford, Trimmer and Little Dry Creek",
+      "Per-station failures and duplicate watchlist IDs"
+    ]
+  },
+  "live_source_checks": {
+    "river_coverage": "Browser returned 12 stations: 10 current observations, 6 usable forecasts, 12 without usable thresholds at the initial Oct 17 checks. Counts are time-sensitive.",
+    "river_refresh": "Visible browser advanced automatically from Oct 17 1:02:35 PM PDT to 1:07:41 PM PDT; station failures did not appear. Additional source-time spot checks recorded below.",
+    "publisher_probe_utc": "2026-10-17T20:13:55.869Z",
+    "publisher_probe": [
+      {
+        "id": "GVAC1",
+        "observed": 3.2,
+        "units": "ft",
+        "observed_utc": "2026-10-17T19:15:00Z",
+        "flow": 0.208,
+        "flow_units": "kcfs",
+        "forecast_high_72h": 3.24,
+        "forecast_high_first_utc": "2026-10-20T18:00:00Z",
+        "forecast_issued_utc": "2026-10-17T13:59:00Z"
+      },
+      {
+        "id": "KREC1",
+        "observed": 2.32,
+        "units": "ft",
+        "observed_utc": "2026-10-17T19:00:00Z",
+        "flow": 0.216,
+        "flow_units": "kcfs",
+        "forecast_high_72h": null
+      },
+      {
+        "id": "LTDC1",
+        "observed": null,
+        "forecast_high_72h": 4.6,
+        "units": "ft",
+        "forecast_high_first_utc": "2026-10-17T21:00:00Z",
+        "forecast_issued_utc": "2026-10-17T13:59:00Z"
+      }
+    ],
+    "fema": "Layer 28 metadata/fields verified. Initial polygons rendered near Gravelly Ford; later browser/Node loads failed and the UI displayed FEMA unavailable. Service recovered by 2026-10-17T20:19:51Z. Browser popup Zone A, SFHA T and study 06019C matched the direct FEMA query; the query also returned neighboring Madera study 06039C. Reload recovery observed.",
+    "weather": "Live five-county alert query returned no alerts without an all-clear claim. Existing 0.2.0 verification preserved in validation-0.2.0.json.",
+    "fema_recovery_probe_utc": "2026-10-17T20:19:51.705Z",
+    "fema_sample": [
+      {
+        "FLD_ZONE": "A",
+        "SFHA_TF": "T",
+        "DFIRM_ID": "06019C",
+        "FLD_AR_ID": "06019C_1458",
+        "SOURCE_CIT": "06019C_FIS1"
+      },
+      {
+        "FLD_ZONE": "A",
+        "SFHA_TF": "T",
+        "DFIRM_ID": "06039C",
+        "FLD_AR_ID": "06039C_271",
+        "SOURCE_CIT": "06039C_FIS1"
+      }
+    ]
+  },
+  "browser_checks": [
+    "Gravelly Ford displayed 3.2 ft, 0.208 kcfs, 3.24 ft forecast high and correct Pacific issuance/sample times; matches direct publisher probe",
+    "Trimmer displayed 2.32 ft, 0.216 kcfs and unknown forecast/high time; matches publisher probe",
+    "Little Dry Creek displayed no observation or observation time, 4.6 ft forecast high and correct issue time; matches publisher probe",
+    "Fictional threshold crossing produced a threshold cue and prior/first-exceedance sample times without an interpolated crossing time",
+    "Old river data suppressed current observation/forecast cue eligibility; station failure retained prior records with marked gaps",
+    "Kings group reduced list to two rows while twelve-site counts and threshold banner stayed global; 24-hour window changed forecast high",
+    "Weather alert view, clear notification and new-warning exercise remain functional; tab now reports total count separately from pending new/revised count",
+    "390 x 844 CSS-pixel iframe: river controls stack, notice wraps, list scrolls, map/legends and attribution remain visible",
+    "Gauge categories use triangle, square, circle and diamond plus list text. Qualitative full-severity protanopia/deuteranopia/tritanopia palette simulation found similar hues in some categories; shapes/text preserve identity.",
+    "River-map controls became enabled while FEMA metadata was still loading; map startup no longer waits for publisher layer updates."
+  ],
+  "limitations": [
+    "No GitHub repository or published Pages URL has been created; workflow has not run on GitHub",
+    "OAuth Client ID remains blank; real sign-in, sign-out, cancellation and second-account tests are pending",
+    "Private maps, team acknowledgement and vendor integrations are not part of this prototype",
+    "Mobile layout was checked at a simulated CSS viewport, not on a physical phone",
+    "Full keyboard, screen-reader, EOC display and county acceptance testing remain necessary",
+    "Notifications are session-local while the application is open, with no background delivery guarantee",
+    "Successful queries cannot independently establish NOAA publication-pipeline freshness",
+    "Candidate watchlist is not complete watershed, channel, gate or gauge coverage",
+    "Two-hour observation and 24-hour forecast age checks are prototype rules needing operator review",
+    "No county action thresholds, staging recommendations, routing, hydraulic model or forecast-to-inundation/asset join implemented",
+    "3D views, camera snapshots/streams, DuckDB, cloud-data benchmarks and role-specific EOC workflows are future increments",
+    "Color-vision check was a qualitative palette simulation, not a full assistive-technology certification",
+    "FEMA can fail independently of NWPS; inspect the layer status and official source. The overlay is filtered planning reference, not event inundation or complete coverage evidence."
+  ],
+  "experience_builder": "Existing hosted pilot and local implementation package were not modified",
+  "user_acceptance_steps": "site/setup.html#verify",
+  "planning_guide": "site/planning.html"
+}

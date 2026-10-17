@@ -1,0 +1,60 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.6.0",
+  "date": "2026-10-17",
+  "previous_validation": "validation-0.5.0.json",
+  "status": "Fixed-area review banner implemented and tested locally; GitHub deployment and county operational acceptance pending.",
+  "scope": {
+    "areas": 6,
+    "gaugePoints": 9,
+    "reservoirPoints": 2,
+    "rainfallPeriod": "WPC Days 1-3, layer 9, fixed publisher 72-hour window, independent of selected map layer",
+    "gaugeHorizon": "Rolling next 72 hours, independent of gauge-panel filter",
+    "releaseMetrics": "MIL 85 river outlet and 71 spill; PNF 23 reported outflow. MIL total outflow excluded.",
+    "spatialMethod": "Eleven explicit EPSG:4326 point intersections. Highest intersecting source polygon label per point; source issue and window must match national cycle. Missing polygons remain unknown. No basin or exposure aggregation.",
+    "associations": "Six explicit named-reach groups in site/data/river-areas.json. Upstream Kings and below-Pine-Flat groups remain separate; no downstream Kings gauge substituted."
+  },
+  "automated": {
+    "tests": "77 passed; 0 failed. node --experimental-test-isolation=none --test --test-reporter=dot tests/*.test.mjs. Non-isolated runner avoids this environment's child-process restriction.",
+    "newTests": 15,
+    "check": "npm run check passed with approved child-process execution; syntax, public links/configuration, source/watchlist contracts, six areas/eleven points and pinned vendor integrity verified.",
+    "coverage": "Combined cues and unique-area counts; NWS threshold priority; rain-only monitor; stale/missing source suppression; independent gauge cue despite rain failure; expired/future/old rainfall checks; zero values; consecutive release comparisons, sensor identity, intervening gaps and newer missing records; fixed scope/horizon; explicit source CRS and bounded concurrency."
+  },
+  "browser_checks": [
+    "Live review cards showed source magnitudes: James Bypass forecast +1.83 ft above observation; the San Joaquin group showed small +0.01 ft observed and +0.04/+0.01 ft forecast differences. Values matched separately queried public NWPS records.",
+    "WPC point query completed for all eleven stations with no returned polygon amounts in this cycle. Each stayed unknown, rather than zero. Source issue and fixed valid period are shown in evidence.",
+    "MIL last valid release/spill values remained visible but were excluded from change cues because newer records were missing. Current PNF release was 252 cfs with zero change and did not generate an increase cue.",
+    "Combined fictional rain/rise/release produced one unique San Joaquin review area. Published NWS threshold took precedence. Stale and missing fixtures suppressed active cues; No change removed change cues and retained coverage gaps.",
+    "Area-watch exercise updates the displayed gauge map/list using the same fixture entries. Live source callbacks cannot overwrite the fictional area fixture.",
+    "Switching map QPF to seven days, changing gauge horizon to 24 hours and opening Weather alerts preserved the six-area banner. Official weather alerts remained separately visible.",
+    "Evidence disclosure exposes source amounts, timestamps, changes, missing data and association notes. Disclosure controls have expanded state and keep focus after toggling.",
+    "Map watchpoints navigated to James Bypass in 2D, enabling local-scale FEMA display, and in 3D. An SDK Extent object replaced the ignored plain-object target; the same correction was applied to regional weather fit.",
+    "Desktop 1280px and tablet 741px layouts were inspected; 390 by 844 CSS-pixel iframe layout showed readable banner and stacked panels without horizontal cutoff.",
+    "Browser logs contained message-channel listener errors from the in-app browser; no area-watch application exception was observed. Existing hardware-dependent 3D caveats remain in prior validation."
+  ],
+  "evidence": [
+    "Area-Watch-Live-v0.6.0.png",
+    "Area-Watch-Mobile-v0.6.0.png",
+    "Area-Watch-Exercise-v0.6.0.png"
+  ],
+  "evidence_location": "Adjacent outputs/fresno-storm-pages directory, outside the deployed public site",
+  "source_checks": [
+    "docs/planning-source-check.json",
+    "docs/area-watch-source-check.json"
+  ],
+  "limitations": [
+    "Review categories are prototype readiness cues, not approved action triggers, risk scores, flood probabilities, inundation boundaries, travel times or deployment recommendations. A positive change at display precision may be very small; magnitudes remain visible.",
+    "No county action thresholds, staging sites, safe access routes, equipment quantities, decision owners or response lead times are configured. NWS and responsible operators must validate these before operational adoption.",
+    "Rainfall is sampled at the existing eleven stations; it is not complete upstream basin coverage. The three-day cue window intentionally does not change when the operator displays the seven-day layer.",
+    "Gauge forecasts may already incorporate precipitation and operations. Combining them does not create independent corroboration or a calibrated multi-source forecast.",
+    "Reported releases are observations; future schedules are not ingested. Basin connectivity, diversions and bypass operation are not routed. No below-Pine-Flat gauge is connected.",
+    "Foreground refresh only. No push notifications, SMS/email, saved review history, team acknowledgement, background paging or automatic assignments.",
+    "Fault cases were verified with model tests and isolated browser fixtures. Every real-world network outage/browser/GPU combination has not been fault-injected.",
+    "Phone verification used a simulated viewport; physical-device, full keyboard and assistive-technology acceptance remain county tasks.",
+    "GitHub Pages remains undeployed and OAuth Client ID unconfigured. Existing public-source prototype and Experience Builder pilot remain separate."
+  ],
+  "operator_instructions": "site/planning.html#area-watch",
+  "acceptance": "site/setup.html#area-watch-check",
+  "rollback": "Restore v0.5.0 archive or revert the release commit in the future GitHub repository; no hosted operational data was modified.",
+  "experience_builder": "Unchanged"
+}

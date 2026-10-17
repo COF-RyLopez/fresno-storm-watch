@@ -1,0 +1,215 @@
+/* Application layout uses Calcite Shell/Panel/Block; custom rules format source evidence. */
+:root {
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-size: 16px;
+  color: var(--calcite-color-text-1, var(--app-text));
+  background: var(--app-canvas);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+[hidden] { display: none !important; }
+h1, h2, h3, h4, p { margin: 0; }
+a { color: var(--calcite-color-text-link, #00619b); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--calcite-color-brand, #007ac2); outline-offset: 3px; }
+.muted, .watch-context { color: var(--calcite-color-text-2, #4a4a4a); }
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .05em; }
+.skip-link { position: fixed; top: -80px; left: 12px; background: var(--app-surface); padding: 12px; z-index: 1000; }
+.skip-link:focus { top: 4px; }
+#storm-shell { position: relative; height: 100dvh; width: 100%; }
+.shell-header { border-top: 3px solid var(--calcite-color-brand, #007ac2); max-height: 52dvh; overflow: auto; }
+.navigation-actions { display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+.scope-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 16px; font-size: 12px; background: var(--calcite-color-surface-3, var(--app-surface)); color: var(--calcite-color-text-2, #4a4a4a); }
+.scope-bar > div { display: flex; gap: 12px; align-items: center; }
+#eyebrow { font-weight: 600; font-size: 11px; letter-spacing: .04em; }
+.notification-wrap { padding: 0; }
+.banner-heading { display: flex; flex-direction: column; gap: 4px; }
+.banner-heading .eyebrow { color: var(--calcite-color-text-2, #4a4a4a); }
+#banner-title, #river-title { font-size: 18px; font-weight: 600; line-height: 1.35; }
+#banner-detail, #river-summary { font-size: 13px; line-height: 1.5; }
+#banner, #river-banner { --calcite-notice-corner-radius: 0; --calcite-notice-shadow: none; }
+#review-areas, #clear-notice { align-self: center; }
+#tools-shell { --calcite-shell-panel-width: 370px; --calcite-shell-panel-max-width: calc(100vw - 49px); }
+#camera-shell { --calcite-shell-panel-width: 320px; --calcite-shell-panel-max-width: calc(100vw - 49px); }
+#workspace-actions { width: 49px; min-width: 49px; max-width: 49px; }
+#workspace-actions calcite-action-group { width: 100%; min-width: 0; }
+#workspace-actions calcite-action { width: 100%; }
+calcite-shell-panel > calcite-panel, #map-panel { height: 100%; min-height: 0; min-width: 0; }
+calcite-panel {
+  --calcite-panel-space: 0;
+  --calcite-panel-content-top-space: 12px 16px;
+  --calcite-panel-footer-space: 12px 16px;
+}
+.workspace { width: 100%; height: 100%; min-width: 0; min-height: 0; }
+/* Keep a measurable map container during SDK initialization, without exposing covered controls. */
+.workspace.map-covered { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+.watch-intro { font-size: 13px; line-height: 1.5; }
+.watch-intro p { margin-bottom: 6px; }
+.sidebar-footer { display: flex; flex-direction: column; gap: 8px; width: 100%; font-size: 12px; }
+.sidebar-footer > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sidebar-footer span { color: var(--calcite-color-text-2, #4a4a4a); font-size: 11px; line-height: 1.5; }
+.status-row { margin-bottom: 12px; font-size: 12px; }
+.count-set { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.metric { display: flex; gap: 6px; align-items: center; }
+.metric strong { font-size: 22px; font-weight: 600; }
+.metric > span { color: var(--calcite-color-text-2, #4a4a4a); font-size: 12px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--other); }
+.warning .dot, .legend-swatch.warning { background: var(--warning); }
+.watch .dot, .legend-swatch.watch { background: var(--watch); }
+.advisory .dot, .legend-swatch.advisory { background: var(--advisory); }
+.other .dot, .legend-swatch.other { background: var(--other); }
+#count-context { display: block; margin-top: 8px; color: var(--calcite-color-text-2, #4a4a4a); }
+.river-toolbar, .list-toolbar { width: 100%; }
+.river-tools { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.alert-card, .river-item { border-inline-start: 3px solid var(--other); }
+.alert-card.warning { border-color: var(--warning); --calcite-list-icon-color: var(--warning); }
+.alert-card.watch { border-color: var(--watch); --calcite-list-icon-color: var(--watch); }
+.alert-card.advisory { border-color: var(--advisory); --calcite-list-icon-color: var(--advisory); }
+.river-item { border-color: var(--gauge-monitor); }
+.river-threshold { border-color: var(--gauge-threshold); --calcite-list-icon-color: var(--gauge-threshold); }
+.river-change { border-color: var(--gauge-change); --calcite-list-icon-color: var(--gauge-change); }
+.river-gap { border-color: var(--gauge-gap); --calcite-list-icon-color: var(--gauge-gap); }
+.alert-meta, .river-mini { font-size: 12px; line-height: 1.65; color: var(--calcite-color-text-2, #4a4a4a); padding-top: 4px; }
+.empty-state { padding: 28px 20px; text-align: center; }
+.empty-state calcite-icon { margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; }
+.empty-state p { font-size: 13px; line-height: 1.65; color: var(--calcite-color-text-2, #4a4a4a); }
+.details { padding: 16px; border-top: 1px solid var(--calcite-color-border-3, #dedede); }
+.details > h2 { font-size: 14px; margin-bottom: 12px; }
+.details h3 { font-size: 18px; margin: 12px 0; }
+.details h4 { font-size: 14px; margin: 16px 0 8px; }
+.details p { font-size: 13px; line-height: 1.65; }
+.details dl { display: grid; grid-template-columns: 105px 1fr; gap: 8px; font-size: 13px; line-height: 1.5; }
+.details dt { color: var(--calcite-color-text-2, #4a4a4a); }
+.details dd { margin: 0; overflow-wrap: anywhere; }
+.detail-actions, .environment-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.quality, .change-note, .watch-gap { font-size: 12px; line-height: 1.6; color: var(--caution-text); }
+.change-note { padding: 12px 16px; background: var(--caution-surface); }
+.change-note:empty { display: none; }
+.area-watch-card { --calcite-block-content-space: 16px; }
+.area-watch-card[data-tone=review] { --calcite-block-icon-start-color: var(--watch); }
+.area-watch-card[data-tone=threshold] { --calcite-block-icon-start-color: var(--gauge-threshold); --calcite-block-description-text-color: var(--gauge-threshold); }
+.area-watch-card[data-tone=gap] { --calcite-block-icon-start-color: var(--gauge-gap); }
+.area-watch-card[data-tone=monitor] { --calcite-block-icon-start-color: var(--gauge-monitor); }
+.area-watch-summary { font-size: 14px; line-height: 1.6; }
+.area-watch-evidence { margin-top: 12px; --calcite-block-content-space: 12px; --calcite-block-header-background-color: var(--calcite-color-surface-3, var(--app-surface)); }
+.area-watch-evidence p, .area-watch-evidence a { font-size: 13px; line-height: 1.65; margin: 8px 0; }
+.area-watch-evidence h4 { font-size: 14px; margin: 20px 0 8px; }
+.watch-evidence-source { border-top: 1px solid var(--calcite-color-border-3, #dedede); padding-top: 12px; margin: 12px 0; font-size: 13px; }
+.watch-threshold { color: var(--gauge-threshold); }
+.watch-review-step { font-size: 12px; line-height: 1.6; padding: 12px; background: var(--caution-surface); color: var(--caution-text); }
+.map-toolbar-stack { display: flex; flex-direction: column; width: 100%; gap: 8px; }
+.map-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; }
+.view-switch { display: flex; gap: 2px; }
+.map-tools > span { font-size: 12px; color: var(--calcite-color-text-2, #4a4a4a); }
+.map-tools calcite-link { font-size: 12px; }
+.environment-map-status { font-size: 12px; line-height: 1.5; }
+.environment-map-status[data-tone=gap] { color: var(--caution-text); }
+#scope-note { font-size: 12px; line-height: 1.5; }
+.map-wrap { position: relative; width: 100%; height: 100%; min-height: 0; background: var(--app-map-background); }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; }
+#map-status { position: absolute; top: 12px; left: 55px; right: 12px; padding: 12px; background: var(--app-surface); border: 1px solid var(--app-border); font-size: 13px; z-index: 2; }
+#map-status[data-failed=true] { background: var(--failure-surface); color: var(--failure-text); }
+.scene-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; z-index: 1; }
+.legend-stack, .reference-legend-body { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.reference-legend summary { font-size: 13px; cursor: pointer; }
+.reference-legend-body { padding: 12px 0 4px; }
+.map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 12px; }
+.map-legend strong { width: 100%; }
+.map-legend span, .scene-note > span { display: flex; align-items: center; gap: 5px; }
+.legend-note { font-size: 11px; line-height: 1.5; color: var(--calcite-color-text-2, #4a4a4a); }
+.legend-swatch { display: inline-block; width: 12px; height: 10px; border: 1px solid #0002; }
+.gauge-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.gauge-swatch.threshold { background: var(--gauge-threshold); border-radius: 0; clip-path: polygon(50% 0,100% 100%,0 100%); }
+.gauge-swatch.change { background: var(--gauge-change); border-radius: 0; }
+.gauge-swatch.monitor { background: var(--gauge-monitor); }
+.gauge-swatch.gap { background: var(--gauge-gap); border-radius: 0; transform: rotate(45deg); }
+.fema-swatch { display: inline-block; width: 12px; height: 10px; }
+.fema-swatch.sfha { background: #8f6fbe; }
+.fema-swatch.moderate { background: #dba64f; }
+.fema-swatch.undetermined { background: repeating-linear-gradient(45deg,#aeb6bd,#aeb6bd 2px,var(--app-surface) 2px,var(--app-surface) 4px); }
+.scene-note { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11px; line-height: 1.5; color: var(--calcite-color-text-2, #4a4a4a); }
+#view-mode-status { font-weight: 600; }
+.environment-section { --calcite-block-content-space: 16px; }
+.environment-section h3 { font-size: 16px; margin: 12px 0; }
+.environment-section a { font-size: 13px; }
+.environment-time, .environment-times { font-size: 13px; line-height: 1.6; margin: 12px 0; }
+.environment-times dt { font-size: 12px; color: var(--calcite-color-text-2, #4a4a4a); margin-top: 8px; }
+.environment-times dd { margin: 0; }
+.environment-health, .environment-note, .environment-details { font-size: 12px; line-height: 1.65; margin: 10px 0; color: var(--calcite-color-text-2, #4a4a4a); }
+.environment-health[data-tone=gap] { padding: 10px; color: var(--caution-text); background: var(--caution-surface); border-left: 3px solid var(--watch); }
+.environment-details summary { cursor: pointer; }
+.environment-details p { margin: 10px 0; }
+.reservoir-card { margin-top: 16px; --calcite-block-content-space: 0; }
+.reservoir-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; margin: 16px 0; }
+.reservoir-metric dt { font-size: 12px; line-height: 1.5; color: var(--calcite-color-text-2, #4a4a4a); }
+.reservoir-metric dd { font-size: 18px; line-height: 1.4; font-weight: 600; margin: 4px 0; }
+.reservoir-metric small { display: block; font-size: 11px; line-height: 1.6; color: var(--calcite-color-text-2, #4a4a4a); }
+.reservoir-metric[data-tone=gap] .metric-state { color: var(--caution-text); }
+.environment-legend { font-size: 12px; line-height: 1.5; }
+.environment-legend strong { display: block; margin-bottom: 5px; }
+.environment-legend small { display: block; font-size: 11px; margin-top: 6px; }
+#qpf-band-list { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+#qpf-band-list > span { display: flex; align-items: center; gap: 4px; }
+#qpf-band-list i { display: inline-block; width: 16px; height: 10px; border: 1px solid #0002; }
+.radar-color-key { width: 220px; max-width: 100%; height: 7px; margin-top: 4px; background: linear-gradient(to right,#00c8f8,#00c800,#ffff00,#ff8800,#ff0000,#ff00ff); }
+.camera-empty, .camera-evidence { padding: 16px; font-size: 13px; line-height: 1.6; }
+.camera-evidence h3 { font-size: 18px; margin: 6px 0; }
+#camera-corridor { font-size: 12px; margin-bottom: 12px; }
+.camera-image-wrap { position: relative; background: var(--app-map-background); min-height: 120px; overflow: hidden; }
+.camera-image-wrap img { display: block; width: 100%; height: auto; aspect-ratio: 16/9; object-fit: contain; }
+.media-label { display: block; padding: 5px 8px; background: var(--calcite-color-surface-3, var(--app-surface)); font-size: 11px; }
+#camera-video { width: 100%; aspect-ratio: 16/9; background: #152b36; }
+.camera-media-actions, .camera-map-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.camera-quality, .camera-video-status, .camera-caption, .camera-more { font-size: 12px; line-height: 1.6; margin: 10px 0; color: var(--calcite-color-text-2, #4a4a4a); }
+.camera-quality[data-tone=gap] { color: var(--caution-text); padding: 8px; background: var(--caution-surface); }
+.camera-quality[data-tone=unknown] { color: var(--caution-text); }
+.camera-times { display: grid; grid-template-columns: 110px 1fr; font-size: 12px; gap: 8px; line-height: 1.5; }
+.camera-times dd { margin: 0; }
+.camera-more summary { cursor: pointer; }
+.camera-more p { margin: 10px 0; }
+.camera-selection { --calcite-block-content-space: 0; }
+#camera-coverage-note { padding: 0 16px; }
+.feed-footer { padding: 16px; border-top: 1px solid var(--calcite-color-border-3, #dedede); font-size: 12px; }
+.feed-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.prototype-note { display: none; }
+.time-grid { display: grid; gap: 8px; margin-top: 8px; }
+.time-grid > div { display: flex; flex-direction: column; gap: 3px; }
+.time-grid strong { font-size: 12px; font-weight: 400; }
+.feed-error { font-size: 12px; color: var(--failure-text); padding: 8px; background: var(--failure-surface); }
+calcite-dialog { --calcite-dialog-content-space: 20px; --calcite-dialog-size-x: 650px; }
+calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
+.river-details { border: 0; padding: 0; }
+.river-chart { margin: 20px 0; }
+.river-chart svg { width: 100%; height: auto; background: var(--chart-background); border: 1px solid var(--app-border); }
+.river-chart figcaption { font-size: 12px; line-height: 1.6; margin-top: 8px; }
+.interface-status { position: fixed; inset: 0 0 auto; padding: 20px; background: var(--caution-surface); color: var(--caution-text); z-index: 2000; }
+.exercise-controls, .river-exercise { padding: 10px 16px; background: var(--caution-surface); }
+.exercise-controls strong, .river-exercise strong { display: block; width: 100%; font-size: 12px; margin-bottom: 8px; }
+.exercise-controls > div, .river-exercise { display: flex; flex-wrap: wrap; gap: 6px; }
+.exercise-mode .shell-header { border-top-color: var(--watch); }
+@media (min-width: 901px) and (max-width: 1279px) {
+  #tools-shell { --calcite-shell-panel-width: 340px; }
+}
+@media (max-width: 900px) {
+  #tools-shell, #camera-shell { --calcite-shell-panel-width: calc(100vw - 49px); }
+  .official-link { display: none; }
+  .navigation-actions { gap: 4px; padding: 0 10px; }
+  #identity-status { display: none; }
+  .scope-bar { padding: 8px 12px; }
+  .area-watch-card { --calcite-block-content-space: 16px; }
+}
+@media (max-width: 600px) {
+  .navigation-actions { padding: 6px; gap: 2px; }
+  #eyebrow { display: none; }
+  .scope-bar { font-size: 11px; padding: 6px 12px; }
+  .banner-heading .eyebrow { display: none; }
+  #river-title, #banner-title { font-size: 15px; }
+  #river-summary, #banner-detail { font-size: 12px; }
+  #review-areas { max-width: 40px; }
+  #river-banner, #banner { --calcite-notice-content-space: 12px; }
+  .scene-note { font-size: 10px; }
+  #scope-note { font-size: 11px; }
+  .map-toolbar-stack { gap: 5px; }
+  .map-tools { gap: 5px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
