@@ -6,7 +6,7 @@
   "status": "Private AGOL exercise workspace configured and owner workflow verified. Ordinary operator and two-account acceptance remain pending.",
   "automated": {
     "javascript": "102 tests passed",
-    "python": "18 publisher contract tests passed during publisher repair; no code change since that check",
+    "python": "18 publisher contract tests passed locally during publisher repair and in the GitHub deployment checks",
     "check": "Syntax, local links, existing source contracts and pinned vendor checks passed"
   },
   "server_checks": {
@@ -22,7 +22,8 @@
     "Selected-evidence briefing snapshot saved and separate exercise approval persisted",
     "Reload restored incident, period, confirmed report and approved snapshot from AGOL",
     "Oversized briefing rejected without truncation; category-specific evidence inclusion/exclusion tested",
-    "Sign-out cleared private incident, form contents and cached briefing/print text; activation returned to unconfirmed"
+    "Sign-out cleared private incident, form contents and cached briefing/print text; activation returned to unconfirmed",
+    "Published GitHub Pages OAuth returned to the workspace and loaded the saved private exercise records"
   ],
   "pending": [
     "Administrator confirms eligible named accounts and assigns isolated exercise groups",
@@ -34,7 +35,9 @@
   "private_storage": "Enabled only for the exercise environment. Private records stay in county AGOL and session memory. GitHub contains the public application shell and identifiers only. No memberships changed.",
   "rollback": "Redeploy 69d8a9e to return the private app to its disabled configuration. Preserve hosted exercise records and item inventory.",
   "deployment": {
-    "status": "local verification complete; deployment pending",
+    "status": "success",
+    "application_commit": "0df176e8bfd56741ab97f62ff8240e30c229337f",
+    "run": "https://github.com/COF-RyLopez/fresno-storm-watch/actions/runs/39091786472",
     "private_workspace_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html",
     "fictional_tabletop_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html?exercise=1",
     "guide_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc-guide.html#access"
