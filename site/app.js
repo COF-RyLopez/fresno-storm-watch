@@ -10,6 +10,7 @@ import { createCameraWatch } from './lib/camera-ui.js';
 import { createEnvironmentWatch } from './lib/environment-ui.js';
 import { createPlanningWatch } from './lib/planning-ui.js';
 import { createWorkspace } from './lib/workspace-ui.js';
+import { createRoadWatch } from './lib/roads-ui.js';
 
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
@@ -27,6 +28,7 @@ let rivers;
 let cameras;
 let environment;
 let planning;
+let roads;
 let planningExerciseEntries=null;
 let riverView=true;
 const workspace=createWorkspace({onCameraChange:open=>cameras?.setOpen(open)});
@@ -44,6 +46,7 @@ function planningView(showRivers) {
   riverView=showRivers;
   $('environment-panel').hidden=true;
   $('watch-panel').hidden=true;
+  $('roads-panel').hidden=true;
   for(const id of ['river-panel','river-metrics']) $(id).hidden=!showRivers;
   for(const id of ['weather-panel','weather-banner-wrap','weather-metrics','weather-footer']) $(id).hidden=showRivers;
   workspace.showPanel(showRivers?'rivers':'alerts');
@@ -61,10 +64,15 @@ function openPlanning(){
   workspace.showPanel('watch');
 }
 $('view-watch').addEventListener('click',openPlanning);
+function openRoads(){planningView(true);$('river-panel').hidden=true;$('roads-panel').hidden=false;workspace.showPanel('roads');}
+$('view-roads').addEventListener('click',openRoads);
+roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
+$('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
 planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onExercise:entries=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);}});
 environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onReservoirData:data=>planning.setReservoirData(data)});
 if(new URLSearchParams(location.search).get('view')==='conditions')openEnvironment();
 if(new URLSearchParams(location.search).get('view')==='watch')openPlanning();
+if(new URLSearchParams(location.search).get('view')==='roads')openRoads();
 void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onData:data=>planning.setRiverData(data)}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
 void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen);if(map)cameras.setMap(map);});
 
@@ -253,12 +261,13 @@ try {
   counties = await loadCounties(new URL('./data/counties.geojson', import.meta.url));
   // Fetches run even if the SDK, graphics driver, or basemap fails.
   void refresh();
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id)).then(controller => {
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key)).then(controller => {
     map = controller;
     map.setScope(riverView?'fresno':'regional');
     rivers?.setMap(map);
     cameras?.setMap(map);
     planning.setMap(map);
+    roads.setMap(map);
     void environment.setMap(map);
     map.update(state.alerts);
     map.select(state.alerts.find(a => a.key === selectedKey));

@@ -46,14 +46,22 @@
         <calcite-action id="view-rivers" text="River watch" icon="water-drop" active aria-pressed="true"></calcite-action>
         <calcite-action id="view-environment" text="Weather &amp; reservoirs" icon="rain" aria-pressed="false"></calcite-action>
         <calcite-action id="view-alerts" text="Weather alerts" icon="bell" aria-pressed="false"></calcite-action>
+        <calcite-action id="view-roads" text="County roads" icon="road-sign"></calcite-action>
       </calcite-action-group>
       <calcite-action-group label="Map and cameras">
+        <calcite-action id="eoc-link" href="./eoc.html" text="EOC workspace" icon="organization"></calcite-action>
         <calcite-action id="view-map" text="Show map" icon="map" aria-pressed="false"></calcite-action>
         <calcite-action id="view-cameras" text="River-area cameras" icon="camera" aria-pressed="false"></calcite-action>
       </calcite-action-group>
     </calcite-action-bar>
 
 
+    <calcite-panel id="roads-panel" class="alert-panel" heading="County roads &amp; access" heading-level="2" description="Official records · field confirmation separate" hidden>
+      <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
+      <div class="road-intro"><p id="road-health" role="status">Waiting for county service</p><p id="road-times"></p><p>Orange × road block · orange line closure · cyan dashed detour · gray reported inactive. A record or elapsed end date does not establish safe access.</p><label><input type="checkbox" id="roads-all"> Include elapsed-date and inactive records (not confirmed open)</label><p id="road-count"></p><calcite-button id="roads-refresh" scale="s" icon-start="refresh">Refresh county records</calcite-button></div>
+      <div id="road-list"></div>
+      <div slot="footer" class="sidebar-footer"><a id="county-roads-link" target="_blank" rel="noopener noreferrer">County official road map</a><a id="county-evac-link" target="_blank" rel="noopener noreferrer">County official evacuation map</a><span>Evacuation features do not provide individual update timestamps. Verify current orders with the county.</span><a href="./eoc.html">Open EOC workspace</a><a href="./eoc-guide.html">County plan &amp; workspace setup</a></div>
+    </calcite-panel>
     <calcite-panel id="watch-panel" class="alert-panel watch-panel" heading="Fresno river-area review" heading-level="2" description="Possible prepositioning · evidence first" hidden>
       <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
       <div slot="content-top" class="watch-intro"><p id="watch-rule-summary">Loading the fixed river-area inventory.</p><a href="./planning.html#area-watch">How review cues work</a></div>
@@ -104,7 +112,7 @@
       <calcite-action id="fit-region" slot="header-actions-end" icon="extent" text="Fit Fresno County" text-enabled disabled></calcite-action>
       <div slot="content-top" class="map-toolbar-stack">
         <div class="map-tools"><div class="view-switch" role="group" aria-label="Map dimension"><calcite-button id="mode-2d" scale="s" aria-pressed="true" disabled>2D</calcite-button><calcite-button id="mode-3d" scale="s" appearance="outline" aria-pressed="false" disabled>3D terrain</calcite-button></div><calcite-button id="toggle-cameras" scale="s" appearance="outline" aria-pressed="true" icon-start="camera">Cameras: on</calcite-button><calcite-button id="toggle-fema" scale="s" appearance="outline" aria-pressed="true">FEMA zones: on</calcite-button><calcite-button id="toggle-imagery" scale="s" appearance="outline" aria-pressed="false">Imagery: off</calcite-button></div>
-        <div class="map-tools"><calcite-button id="open-environment" scale="s" appearance="transparent" icon-start="rain">Radar / rainfall</calcite-button><calcite-button id="open-photorealistic" scale="s" appearance="transparent" icon-end="launch">County 3D</calcite-button><span id="fema-status" role="status">FEMA reference layer loading</span><calcite-link href="https://msc.fema.gov/portal/home" target="_blank" rel="noopener noreferrer" icon-end="launch">FEMA maps</calcite-link></div><span id="environment-map-status" class="environment-map-status" role="status">Atmospheric overlay off</span>
+        <div class="map-tools"><calcite-button id="toggle-roads" scale="s" appearance="outline" aria-pressed="true">County roads: on</calcite-button><calcite-button id="open-environment" scale="s" appearance="transparent" icon-start="rain">Radar / rainfall</calcite-button><calcite-button id="open-photorealistic" scale="s" appearance="transparent" icon-end="launch">County 3D</calcite-button><span id="fema-status" role="status">FEMA reference layer loading</span><calcite-link href="https://msc.fema.gov/portal/home" target="_blank" rel="noopener noreferrer" icon-end="launch">FEMA maps</calcite-link></div><span id="environment-map-status" class="environment-map-status" role="status">Atmospheric overlay off</span>
       </div>
       <div class="map-wrap"><div id="map" role="region" aria-label="Map of river gauges, reservoirs, weather, cameras, FEMA flood zones and NWS alerts"></div><div id="map-status" role="status">Loading the regional map…</div><div id="scene-controls" class="scene-controls" hidden><calcite-button id="scene-overhead" scale="s" appearance="outline-fill" kind="neutral">Overhead</calcite-button><calcite-button id="scene-tilt" scale="s" appearance="outline-fill" kind="neutral">Tilt terrain</calcite-button></div></div>
       <div slot="footer" class="legend-stack"><details class="reference-legend"><summary>Gauge, FEMA &amp; alert key</summary><div class="reference-legend-body"><div class="map-legend" aria-label="Map legend"><strong>Weather polygons</strong><span><i class="legend-swatch warning"></i>Warning</span><span><i class="legend-swatch watch"></i>Watch</span><span><i class="legend-swatch advisory"></i>Advisory</span><span><i class="legend-swatch other"></i>Other</span></div><div class="map-legend"><strong>Gauge points</strong><span><i class="gauge-swatch threshold"></i>Threshold cue</span><span><i class="gauge-swatch change"></i>Forecast higher</span><span><i class="gauge-swatch monitor"></i>Monitor</span><span><i class="gauge-swatch gap"></i>Data gap</span></div><div id="fema-legend" class="map-legend"><strong>FEMA reference</strong><span><i class="fema-swatch sfha"></i>1% annual chance</span><span><i class="fema-swatch moderate"></i>0.2% annual chance</span><span><i class="fema-swatch undetermined"></i>Undetermined (D)</span><a href="https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28" target="_blank" rel="noopener noreferrer">Source</a></div><span class="legend-note">Other FEMA zones are not drawn. Unshaded areas are not established as safe.</span><span id="imagery-note" class="legend-note" hidden>Basemap imagery is historical context, not a live image.</span>
@@ -158,9 +166,10 @@
     <p><a href="./setup.html#photorealistic" target="_blank" rel="noopener noreferrer">County setup and coverage checks</a> · <a href="https://www.esri.com/arcgis-blog/products/arcgis-online/3d-gis/experience-the-google-photorealistic-3d-basemap-in-arcgis-online" target="_blank" rel="noopener noreferrer">Esri availability</a></p>
     <calcite-button id="open-scene-companion" slot="footer-start" target="_blank" rel="noopener noreferrer" icon-end="launch" disabled>Open county 3D companion</calcite-button><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button>
   </calcite-dialog>
+  <calcite-dialog id="road-dialog" slot="dialogs" heading="County road record" modal><div id="road-detail"></div><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button></calcite-dialog>
   <calcite-dialog id="signin-help" slot="dialogs" heading="County ArcGIS sign-in" modal>
     <p>The public NWS view works without an account. Optional county sign-in is prepared in the code but needs a registered ArcGIS OAuth Client ID and the final GitHub Pages address.</p>
-    <p>Once configured, sign-in verifies your ArcGIS identity. This prototype does not yet load private layers or submit team acknowledgements. Account permissions continue to apply.</p><p>No password, client secret or access token belongs in GitHub.</p>
+    <p>The EOC workspace connects to separate private exercise datasets after administrator setup. Named-account permissions apply on the server; changing the displayed role grants no access.</p><p>No password, client secret or access token belongs in GitHub.</p><p><a href="./eoc-guide.html">Private workspace setup &amp; acceptance checks</a></p>
     <calcite-button slot="footer-start" href="./setup.html#arcgis" appearance="outline">ArcGIS setup steps</calcite-button><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button>
   </calcite-dialog>
 </calcite-shell>
@@ -168,6 +177,8 @@
   <calcite-tooltip reference-element="view-rivers" placement="right">River watch</calcite-tooltip>
   <calcite-tooltip reference-element="view-environment" placement="right">Weather &amp; reservoirs</calcite-tooltip>
   <calcite-tooltip reference-element="view-alerts" placement="right">Weather alerts</calcite-tooltip>
+  <calcite-tooltip reference-element="view-roads" placement="right">County roads</calcite-tooltip>
+  <calcite-tooltip reference-element="eoc-link" placement="right">EOC workspace</calcite-tooltip>
   <calcite-tooltip reference-element="view-map" placement="right">Show map</calcite-tooltip>
   <calcite-tooltip reference-element="view-cameras" placement="right">River-area cameras</calcite-tooltip>
 <aside id="interface-status" class="interface-status" hidden>Interface components could not load. Reload to retry, or <a href="https://www.weather.gov/hnx/">open NWS Hanford</a>.</aside>

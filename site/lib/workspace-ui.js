@@ -22,7 +22,7 @@ export function createWorkspace({onCameraChange}) {
     element('planning-workspace').classList.toggle('map-covered',covered);
     element('planning-workspace').inert=covered;
     for(const id of ['review-areas','about','sign-in','theme-toggle'])element(id).toggleAttribute('text-enabled',!phone.matches);
-    for(const name of ['watch','rivers','environment','alerts']){
+    for(const name of ['watch','rivers','environment','alerts','roads']){
       activate(`view-${name}`,panelOpen&&section===name);
     }
     activate('view-map',!panelOpen&&!camerasOpen);

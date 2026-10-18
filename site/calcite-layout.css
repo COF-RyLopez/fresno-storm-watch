@@ -217,3 +217,5 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
   .map-tools { gap: 5px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+.road-intro,.road-card {padding:16px;border-bottom:1px solid var(--app-border);font-size:13px;line-height:1.6;}
+.road-card p {margin:7px 0;}

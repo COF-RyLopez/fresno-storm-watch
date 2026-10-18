@@ -1,61 +1,29 @@
 import { loadSdk } from './map.js';
-
-/** @param {object} config @param {boolean} exercise @returns {Promise<void>} OAuth scaffold; no private layers or write permissions requested. */
-export async function setupAuth(config, exercise) {
-  const button = document.querySelector('#sign-in');
-  const label=text=>button.setAttribute('text',text);
-  const status = document.querySelector('#identity-status');
-  if (!config.clientId || exercise) {
-    label(exercise ? 'Public exercise view' : 'ArcGIS sign-in setup');
-    button.addEventListener('click', () => document.querySelector('#signin-help').setAttribute('open', ''));
-    return;
-  }
-  button.setAttribute('disabled', '');
+/** Shared PKCE sign-in. Private controllers clear memory before sign-out or expiry. */
+export async function setupAuth(config,exercise,onChange=()=>{}) {
+  const button=document.querySelector('#sign-in'),status=document.querySelector('#identity-status');
+  const label=text=>button.setAttribute('text',text),help=()=>document.querySelector('#signin-help')?.setAttribute('open','');
+  if(!config.clientId||exercise){label(exercise?'Exercise only':'ArcGIS sign-in setup');button.addEventListener('click',help);onChange(null);return {check:async()=>false,invalidate:()=>onChange(null)};}
+  button.setAttribute('disabled','');
+  let portal=null,identity=null,checking=null,generation=0;
+  const clear=(message='Signed out · private workspace cleared')=>{generation++;portal=null;onChange(null);label('County ArcGIS sign-in');status.textContent=message;};
   try {
-    const sdk = await loadSdk();
-    const [OAuthInfo, identity, Portal] = await sdk.import([
-      '@arcgis/core/identity/OAuthInfo.js', '@arcgis/core/identity/IdentityManager.js', '@arcgis/core/portal/Portal.js'
-    ]);
-    const info = new OAuthInfo({ appId: config.clientId, portalUrl: config.portalUrl,
-      flowType: 'authorization-code', popup: false, authNamespace: config.authNamespace });
-    identity.registerOAuthInfos([info]);
-    let signedIn = false;
-    const update = async () => {
-      try {
+    const sdk=await loadSdk(),[OAuthInfo,manager,Portal]=await sdk.import(['@arcgis/core/identity/OAuthInfo.js','@arcgis/core/identity/IdentityManager.js','@arcgis/core/portal/Portal.js']);identity=manager;
+    identity.registerOAuthInfos([new OAuthInfo({appId:config.clientId,portalUrl:config.portalUrl,flowType:'authorization-code',popup:false,authNamespace:config.authNamespace})]);
+    const check=async()=>{
+      if(checking)return checking;const epoch=generation;
+      checking=(async()=>{try{
         await identity.checkSignInStatus(`${config.portalUrl}/sharing`);
-        const portal = new Portal({ url: config.portalUrl, authMode: 'immediate' });
-        await portal.load();
-        signedIn = true;
-        status.textContent = `Signed in as ${portal.user.username} · public NWS view`;
-        label('Sign out');
-      } catch {
-        signedIn = false;
-        status.textContent = 'Public NWS view';
-        label('County ArcGIS sign-in');
-      }
+        if(epoch!==generation)return false;
+        if(!portal){const p=new Portal({url:config.portalUrl,authMode:'immediate'});await p.load();if(epoch!==generation)return false;portal=p;onChange({portal,username:p.user.username});}
+        status.textContent=`Signed in as ${portal.user.username}`;label('Sign out');return true;
+      }catch{if(epoch===generation)clear('Sign-in required · private workspace cleared');return false;}finally{checking=null;}})();return checking;
     };
-    await update();
-    button.removeAttribute('disabled');
-    button.addEventListener('click', async () => {
-      button.setAttribute('disabled', '');
-      try {
-        if (signedIn) {
-          identity.destroyCredentials();
-          signedIn = false;
-          status.textContent = 'Public NWS view';
-          label('County ArcGIS sign-in');
-        } else {
-          await identity.getCredential(`${config.portalUrl}/sharing`);
-          await update();
-        }
-      } catch {
-        status.textContent = 'Sign-in did not complete. Public alerts remain available.';
-      } finally { button.removeAttribute('disabled'); }
-    });
-  } catch {
-    status.textContent = 'ArcGIS sign-in unavailable. Public alerts remain available.';
-    label('Sign-in setup');
-    button.removeAttribute('disabled');
-    button.addEventListener('click', () => document.querySelector('#signin-help').setAttribute('open', ''));
-  }
+    await check();button.removeAttribute('disabled');
+    button.onclick=async()=>{button.setAttribute('disabled','');try{if(portal){clear();identity.destroyCredentials();}else{await identity.getCredential(`${config.portalUrl}/sharing`);await check();}}catch{clear('Sign-in did not complete');}finally{button.removeAttribute('disabled');}};
+    setInterval(()=>{if(portal)void check();},30000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&portal)void check();});
+    window.addEventListener('pagehide',()=>clear());
+    return {check,invalidate:()=>{clear('Session unavailable · sign in again');identity.destroyCredentials();}};
+  }catch{clear('ArcGIS sign-in unavailable');label('Sign-in setup');button.removeAttribute('disabled');button.onclick=help;return {check:async()=>false,invalidate:()=>clear()};}
 }
