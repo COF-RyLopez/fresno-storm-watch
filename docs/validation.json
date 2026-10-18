@@ -1,51 +1,42 @@
 {
   "application": "Fresno County Storm Watch",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "date": "2026-10-17",
-  "previous_validation": "validation-0.9.1.json",
-  "status": "Public-source increment and fictional tabletop implemented. Private AGOL provisioning and named-account acceptance pending.",
+  "previous_validation": "validation-0.10.0.json",
+  "status": "Private AGOL exercise workspace configured and owner workflow verified. Ordinary operator and two-account acceptance remain pending.",
   "automated": {
-    "javascript": "99 tests passed",
-    "python": "4 publisher contract tests passed; no hosted mutations",
-    "check": "Syntax, local page links, existing source contracts and pinned vendor checks passed"
+    "javascript": "102 tests passed",
+    "python": "18 publisher contract tests passed during publisher repair; no code change since that check",
+    "check": "Syntax, local links, existing source contracts and pinned vendor checks passed"
   },
-  "source_probe": {
-    "checked": "2026-10-18T01:07:23Z",
-    "road_records": 479,
-    "default_display_records": 38,
-    "elapsed_active_conflicts": 271,
-    "meaning": "Historical contradictions are a separate verification backlog, never a road-open inference. WGS84 geometry requested explicitly."
+  "server_checks": {
+    "provisioning": "User's in-Pro run verified all 11 exercise collections and generated the public configuration",
+    "anonymous_queries": "All 22 configured private read/write table views denied unauthenticated queries",
+    "memberships_changed": false,
+    "credentials": "Public OAuth Client ID only; no client secret or token in application configuration"
   },
   "browser_checks": [
-    "Operational period saves while activation remains unconfirmed",
-    "Field report starts unverified; designated exercise verifier can confirm an exact revision",
-    "Draft briefing and separate approval preserve saved version/digest",
-    "Official county roads load in browser with source/editor dates and historical filter",
-    "390px phone layout and scrollable field form inspected",
-    "Source acknowledgement leaves cue visible; revised source returns to awaiting review",
-    "Fictional Level 3 record displays the decision authority and time; no system activation occurs",
-    "Clearing exercise removes in-memory records and restores activation unconfirmed",
-    "Public map EOC navigation opens the locked private setup state",
-    "Live EOC source summary loaded county roads, NWS, NWPS, WPC and CDEC with independent query health",
-    "Published GitHub Pages exercise opens with FROG branding, dark Calcite UI, unconfirmed activation and explicit in-memory exercise label"
+    "Authorized owner sign-in completed through county AGOL OAuth",
+    "Private incident and operational period saved with server editor tracking",
+    "Field report began unverified; a separate verification confirmed its exact revision",
+    "Selected-evidence briefing snapshot saved and separate exercise approval persisted",
+    "Reload restored incident, period, confirmed report and approved snapshot from AGOL",
+    "Oversized briefing rejected without truncation; category-specific evidence inclusion/exclusion tested",
+    "Sign-out cleared private incident, form contents and cached briefing/print text; activation returned to unconfirmed"
   ],
   "pending": [
-    "Run guarded publisher inside county AGOL Pro session; standalone session failed the organization preflight without writes",
-    "Register user OAuth and apply public item-ID configuration",
-    "Administrator assigns eligible named accounts to isolated exercise groups",
-    "Two-account and anonymous read/create/update/delete acceptance",
+    "Administrator confirms eligible named accounts and assigns isolated exercise groups",
+    "Two-account read/create/update/delete permission matrix and tabletop acceptance",
     "County OES plan amendments, authorities, operating practice and templates",
     "Road Maintenance field meanings and status reconciliation",
     "Engage access and supported interface confirmation"
   ],
-  "private_storage": "Disabled. No private datasets or memberships modified. No private records in the repository or deployment. Fictional data exists only in browser memory.",
-  "rollback": "Redeploy 660089fb39136ba72f54e7db1df47f0968e27479. Do not delete or overwrite hosted records during rollback.",
-  "runtime_blocker": "Standalone GIS(pro) resolved gisportal.co.fresno.ca.us as rylopez; preflight refused to create AGOL items.",
+  "private_storage": "Enabled only for the exercise environment. Private records stay in county AGOL and session memory. GitHub contains the public application shell and identifiers only. No memberships changed.",
+  "rollback": "Redeploy 69d8a9e to return the private app to its disabled configuration. Preserve hosted exercise records and item inventory.",
   "deployment": {
-    "status": "success",
-    "application_commit": "e880398ababc354611a5b1b61842b967b04b7868",
-    "run": "https://github.com/COF-RyLopez/fresno-storm-watch/actions/runs/39085965675",
-    "exercise_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html?exercise=1",
-    "guide_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc-guide.html"
+    "status": "local verification complete; deployment pending",
+    "private_workspace_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html",
+    "fictional_tabletop_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html?exercise=1",
+    "guide_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc-guide.html#access"
   }
 }

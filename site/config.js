@@ -39,7 +39,7 @@ export const CONFIG = Object.freeze({
     // Set true only after the county enables the basemap and verifies the saved scene.
     photorealisticVerified: false,
     // Fill with the public Client ID of an OAuth credential for USER authentication.
-    clientId: '',
+    clientId: 'e28Weknl3iEXyQsF',
     authNamespace: 'fresno-storm-watch-prototype-v1'
   }
 });

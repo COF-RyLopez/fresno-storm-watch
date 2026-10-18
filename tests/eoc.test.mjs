@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyRecords,makeEvent,heads,current,reportStatus,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,validatePayload,safeLink,changeSummary} from '../site/lib/eoc-model.js';
-import {createExerciseStore,createPrivateStore} from '../site/lib/eoc-store.js';
+import {createExerciseStore,createPrivateStore,privateObjectIds} from '../site/lib/eoc-store.js';
 import {normalizeRoad,normalizeRoads,fetchRoads,roadInCurrentView,roadHealth,missingRoadRecords} from '../site/lib/roads.js';
 const now=Date.now(),incident='test-incident';
 const report=(condition='Overtopping reported')=>({location:'FICTIONAL crossing',observed:now-60000,condition,evidence:'FICTIONAL radio report',requestedFollowup:'Verify with exercise road owner',latitude:null,longitude:null});
@@ -63,6 +63,20 @@ test('invalid activation, staging confirmation, period and unsafe reference inpu
   assert.equal(safeLink('javascript:alert(1)'),null);assert.equal(safeLink('https://user:secret@example.com'),null);
 });
 test('private configuration fails closed before loading SDK or records',async()=>{await assert.rejects(createPrivateStore({enabled:false},{}),/not enabled/);await assert.rejects(createPrivateStore({enabled:true,environment:'exercise',orgId:'county'},{portal:{id:'other'}}),/county organization/);});
+test('null private table IDs require a separate successful zero count',async()=>{
+  let counts=0;
+  assert.deepEqual(await privateObjectIds({objectIds:null},async()=>{counts++;return {count:0};}),[]);
+  assert.equal(counts,1);
+  for(const result of [{count:1},{count:'0'},{},{count:0,error:{code:499}},{count:0,exceededTransferLimit:true}])await assert.rejects(privateObjectIds({objectIds:null},async()=>result),/could not be verified/);
+});
+test('empty ID arrays and populated inventories are accepted without a count request',async()=>{
+  const unused=()=>{throw new Error('unexpected count');};
+  assert.deepEqual(await privateObjectIds({objectIds:[]},unused),[]);
+  assert.deepEqual(await privateObjectIds({objectIds:[1,4,7]},unused),[1,4,7]);
+});
+test('private inventory rejects missing, repeated, truncated or malformed IDs',async()=>{
+  for(const result of [{},{objectIds:undefined},{objectIds:[1,1]},{objectIds:['1']},{objectIds:[-1]},{objectIds:[],error:{code:403}},{objectIds:[],exceededTransferLimit:true}])await assert.rejects(privateObjectIds(result,()=>({count:0})));
+});
 test('clearing an exercise removes records and prevents later writes',async()=>{const s=createExerciseStore(),data=emptyRecords();await add(s,data,'reports',report());s.close();await assert.rejects(s.load(incident),/closed/);await assert.rejects(s.append(makeEvent('reports',report(),{incident}),data),/closed/);});
 const road=(fields={})=>({attributes:{globalid:'{abc}',blocknm:'Test Road',active:'Yes',startdate:now-1000,enddate:now+10000,last_edited_date:now,...fields},geometry:{x:-119.8,y:36.8}});
 test('county GlobalID deduplicates repeated records, never ObjectID',()=>{const r=road();assert.equal(normalizeRoads([{layer:0,features:[r,{...r,attributes:{...r.attributes,objectid:99}}]}]).length,1);assert.throws(()=>normalizeRoad(road({globalid:null}),0),/GlobalID/);});

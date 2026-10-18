@@ -1,5 +1,5 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.9.1 | October 17, 2026 | Saved county ArcGIS 3D companion
+Version 0.10.1 | October 17, 2026 | Private AGOL exercise workspace
 
 EOC PILOT LINKS
 App: https://cof-rylopez.github.io/fresno-storm-watch/?view=watch
@@ -7,7 +7,7 @@ Testing and setup guide: https://cof-rylopez.github.io/fresno-storm-watch/setup.
 Repository: https://github.com/COF-RyLopez/fresno-storm-watch
 Deployment runs: https://github.com/COF-RyLopez/fresno-storm-watch/actions/workflows/pages.yml
 The app is ready to share only after its Pages deployment succeeds. This is a
-public-source prototype; testers do not need GitHub or ArcGIS accounts. It does
+public-source prototype; public-map testers do not need GitHub or ArcGIS accounts. The private EOC exercise requires an authorized county ArcGIS account. It does
 not provide private operational records, shared acknowledgements or assignments.
 For a manual reservoir refresh/deployment: Actions -> Verify and deploy Storm
 Watch -> Run workflow -> main. Normal collection targets 15-minute intervals;
@@ -165,10 +165,12 @@ No credentials or npm package installation is required. A ZIP alone is not a run
 collector. See site/setup.html and site/planning.html#weather-reservoirs.
 
 AUTHENTICATION
-Public NWS alerts, NWPS gauges, FEMA zones, terrain and Caltrans cameras need no account. Optional OAuth code is present but Client ID
-is intentionally blank. Registration, redirect URL, and real sign-in/out tests
-remain necessary. Sign-in currently displays identity only. It does not load
-private maps, grant permissions or submit team reviews. No client secret required.
+Public NWS alerts, NWPS gauges, FEMA zones, terrain and Caltrans cameras need no account.
+County user OAuth and the private AGOL EXERCISE views are configured in v0.10.1.
+The EOC workspace loads private records after sign-in; ordinary group membership
+and AGOL view permissions control access. No client secret is used. Private records
+stay out of GitHub and persistent app-owned browser storage. Pilot group assignments
+and two-account permission acceptance remain pending; see site/eoc-guide.html#access.
 
 BEHAVIOR AND LIMITS
 Clear notification affects only this tab's memory. Reloading starts a new session.
