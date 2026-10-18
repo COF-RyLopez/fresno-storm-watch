@@ -8,3 +8,5 @@ work/
 .DS_Store
 Thumbs.db
 *.zip
+__pycache__/
+*.pyc

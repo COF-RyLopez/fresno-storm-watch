@@ -1,32 +1,44 @@
 {
   "application": "Fresno County Storm Watch",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "date": "2026-10-17",
-  "previous_validation": "validation-0.9.0.json",
-  "status": "Saved county companion connected and locally verified. Photorealistic activation and second-user acceptance remain pending.",
-  "scope": "One new AGOL Web Scene with public references, restricted to existing pilot viewers. Launcher configuration, truthful pending state and handoff documentation updated. Experience Builder and data-source calculations unchanged.",
+  "previous_validation": "validation-0.9.1.json",
+  "status": "Public-source increment and fictional tabletop implemented. Private AGOL provisioning and named-account acceptance pending.",
   "automated": {
-    "tests": "82 passed, 0 failed; includes saved terrain scene readiness and invalid configuration handling",
-    "check": "Syntax, internal links, source contracts and vendor integrity passed",
-    "anonymousAccess": "County REST item request without credentials returned 403"
+    "javascript": "99 tests passed",
+    "python": "4 publisher contract tests passed; no hosted mutations",
+    "check": "Syntax, local page links, existing source contracts and pinned vendor checks passed"
+  },
+  "source_probe": {
+    "checked": "2026-10-18T01:07:23Z",
+    "road_records": 479,
+    "default_display_records": 38,
+    "elapsed_active_conflicts": 271,
+    "meaning": "Historical contradictions are a separate verification backlog, never a road-open inference. WGS84 geometry requested explicitly."
   },
   "browser_checks": [
-    "Scene saved under rylopez_cofgisonline and moved to Storm Operations 2026-27",
-    "Sharing UI confirms only Storm Operations 2026-27 - Authorized viewers",
-    "Item notes saved with source, planning limitations and remaining administrator tasks",
-    "Saved scene loaded FEMA polygons and Terrain3D near the Highway 41 river reach",
-    "Local County 3D dialog displays connected terrain/FEMA status and explicitly says photorealistic imagery is not active",
-    "Local launcher URL contains the saved item ID and current camera, without credentials"
+    "Operational period saves while activation remains unconfirmed",
+    "Field report starts unverified; designated exercise verifier can confirm an exact revision",
+    "Draft briefing and separate approval preserve saved version/digest",
+    "Official county roads load in browser with source/editor dates and historical filter",
+    "390px phone layout and scrollable field form inspected",
+    "Source acknowledgement leaves cue visible; revised source returns to awaiting review",
+    "Fictional Level 3 record displays the decision authority and time; no system activation occurs",
+    "Clearing exercise removes in-memory records and restores activation unconfirmed",
+    "Public map EOC navigation opens the locked private setup state",
+    "Live EOC source summary loaded county roads, NWS, NWPS, WPC and CDEC with independent query health"
   ],
   "pending": [
-    "County basemap enablement and entitlement confirmation",
-    "Photorealistic mesh coverage, imagery currency and overlay checks",
-    "Second pilot member sign-in/access acceptance"
+    "Verify GitHub Pages deployment",
+    "Run guarded publisher inside county AGOL Pro session; standalone session failed the organization preflight without writes",
+    "Register user OAuth and apply public item-ID configuration",
+    "Administrator assigns eligible named accounts to isolated exercise groups",
+    "Two-account and anonymous read/create/update/delete acceptance",
+    "County OES plan amendments, authorities, operating practice and templates",
+    "Road Maintenance field meanings and status reconciliation",
+    "Engage access and supported interface confirmation"
   ],
-  "references": [
-    "https://www.esri.com/arcgis-blog/products/arcgis-online/3d-gis/experience-the-google-photorealistic-3d-basemap-in-arcgis-online",
-    "https://doc.arcgis.com/en/arcgis-online/administer/configure-map.htm",
-    "https://doc.arcgis.com/en/arcgis-online/reference/use-url-parameters-scenes.htm"
-  ],
-  "rollback": "Revert the v0.9.1 app commit and push main. The separate county Web Scene remains saved; no source data or existing Experience Builder item was edited."
+  "private_storage": "Disabled. No private datasets or memberships modified. No private records in the repository or deployment. Fictional data exists only in browser memory.",
+  "rollback": "Redeploy 660089fb39136ba72f54e7db1df47f0968e27479. Do not delete or overwrite hosted records during rollback.",
+  "runtime_blocker": "Standalone GIS(pro) resolved gisportal.co.fresno.ca.us as rylopez; preflight refused to create AGOL items."
 }

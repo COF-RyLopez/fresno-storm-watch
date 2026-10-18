@@ -1,5 +1,5 @@
 {
-  "version": "0.9.1",
+  "version": "0.10.0",
   "design_system": "Esri Calcite Design System, supplied by unified https://js.arcgis.com/5.1/ entry",
   "documentation_checked": "2026-10-17",
   "reference": "https://developers.arcgis.com/calcite-design-system/components/",
@@ -46,10 +46,21 @@
     "https://developers.arcgis.com/javascript/latest/building-your-ui/"
   ],
   "branding": {
-    "name": "F.R.O.G. — Flood Response Operations Group",
+    "name": "F.R.O.G. \u2014 Flood Response Operations Group",
     "asset": "site/assets/frog-logo.png",
     "source": "User-provided FROG.png",
     "sha256": "482852e84f8bd5a6ac99dd1894341fb4f0428e95227baec483ebe8e4218f0460",
     "imageEditing": "None; original bytes copied and scaled by CSS. Application header, guides and browser icons updated. Publisher attribution preserved."
+  },
+  "eoc_workspace": {
+    "page": "eoc.html",
+    "mode": "Named-account exercise storage disabled pending setup; separate in-memory fictional tabletop",
+    "roles": [
+      "Management",
+      "Planning / Intelligence",
+      "Operations"
+    ],
+    "permissions": "Role selection is display only; separate AGOL query/add-only views enforce access",
+    "brand": "Existing FROG logo and dark theme retained"
   }
 }
