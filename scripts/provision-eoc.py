@@ -22,6 +22,11 @@ TAG = "frog-eoc-exercise-v1"
 GROUPS = ["viewers", "reporters", "reviewers", "coordinators", "recorders", "approvers"]
 WRITERS = {"incidents": "recorders", "periods": "coordinators", "reports": "reporters", "verifications": "reviewers", "coordination": "coordinators", "checklists": "coordinators", "staging": "reviewers", "briefings": "coordinators", "approvals": "approvers", "references": "coordinators", "reviews": "reporters"}
 TRACK = {"creatorField": "created_user", "creationDateField": "created_date", "editorField": "last_edited_user", "editDateField": "last_edited_date"}
+# ArcGIS may include these alongside Create. They do not replace the explicit
+# CRUD permissions; Update, Delete, Append, Sync and unknown capabilities fail.
+# https://developers.arcgis.com/rest/services-reference/enterprise/layer-feature-service/
+# https://developers.arcgis.com/rest/services-reference/enterprise/feature-service/
+CREATE_CAPABILITY_LABELS = frozenset({"Editing", "Uploads"})
 REDIRECTS = ["https://cof-rylopez.github.io/fresno-storm-watch/", "https://cof-rylopez.github.io/fresno-storm-watch/index.html", "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html", "http://127.0.0.1:8777/", "http://127.0.0.1:8777/eoc.html"]
 
 
@@ -52,6 +57,40 @@ def validate_table(properties: Any) -> None:
     tracking = properties.get("editFieldsInfo", {})
     if not all(tracking.get(k) for k in TRACK):
         raise RuntimeError("Server editor tracking is incomplete.")
+
+
+def validate_capabilities(properties: Any, expected: str, label: str) -> None:
+    """Require explicit read/add permissions, allowing ArcGIS's derived labels.
+
+    Query-only views cannot advertise editing labels. Append-only resources
+    must explicitly include Create and Query, and must not expose any other
+    operation. This function only inspects metadata; it never changes access.
+    """
+    required = {value.strip() for value in expected.split(",") if value.strip()}
+    if required not in ({"Query"}, {"Query", "Create"}):
+        raise ValueError("Only Query or Query,Create is supported by the exercise publisher.")
+    raw = properties.get("capabilities")
+    if not isinstance(raw, str) or not raw.strip():
+        raise RuntimeError(f"{label} did not advertise capabilities; setup stopped before sharing.")
+    actual = {value.strip() for value in raw.split(",") if value.strip()}
+    allowed = required | CREATE_CAPABILITY_LABELS if "Create" in required else required
+    missing = required - actual
+    unexpected = actual - allowed
+    if missing or unexpected:
+        raise RuntimeError(
+            f"{label} capabilities are {','.join(sorted(actual))}; "
+            f"expected {','.join(sorted(required))} "
+            f"(missing: {','.join(sorted(missing)) or 'none'}; "
+            f"unexpected: {','.join(sorted(unexpected)) or 'none'}). "
+            "Setup stopped before sharing; the recorded item will be reused on retry."
+        )
+
+
+def validate_collection_capabilities(collection: Any, expected: str, label: str) -> None:
+    """Check service and table permissions, including possible table overrides."""
+    validate_capabilities(collection.properties, expected, f"{label} service")
+    for table in collection.tables:
+        validate_capabilities(table.properties, expected, f"{label} table {table.properties.get('id', '?')}")
 
 
 def anonymous_denied(url: str) -> bool:
@@ -156,8 +195,7 @@ def provision(gis: Any) -> dict[str, Any]:
         indexes = table.properties.get("indexes", [])
         if not any(i.get("isUnique") and i.get("fields", "").lower() == "event_id" for i in indexes):
             raise RuntimeError("Unique event_id index missing; idempotent submissions are not safe.")
-        if set(collection.properties.capabilities.split(",")) != {"Query", "Create"}:
-            raise RuntimeError("Parent capabilities must be Query,Create only.")
+        validate_collection_capabilities(collection, "Query,Create", f"{name} parent")
         config["collections"][name] = {}
         for mode, capabilities, group_role in [("read", "Query", "viewers"), ("write", "Query,Create", role)]:
             def create_view(service_name: str, marker: str) -> Any:
@@ -170,8 +208,7 @@ def provision(gis: Any) -> dict[str, Any]:
             definition = view_collection.tables[0].manager.properties.get("adminLayerInfo", {}).get("viewLayerDefinition", {})
             if definition.get("sourceServiceName") != parent.url.rstrip("/").split("/")[-2] or definition.get("sourceLayerId") != table.properties.id:
                 raise RuntimeError("View source does not match the recorded private parent.")
-            if set(view_collection.properties.capabilities.split(",")) != set(capabilities.split(",")):
-                raise RuntimeError(f"Unexpected {mode} view editing capabilities.")
+            validate_collection_capabilities(view_collection, capabilities, f"{name} {mode} view")
             # New groups contain only the owner; this does not grant access to any operator.
             permitted_group = state["groups"][group_role]
             shared_groups = {g.id for g in view.sharing.groups.list()}

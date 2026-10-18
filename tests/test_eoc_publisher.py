@@ -35,6 +35,64 @@ class EocPublisherContract(unittest.TestCase):
         self.assertEqual(roles["verifications"], "reviewers")
         self.assertNotEqual(roles["reports"], roles["incidents"])
 
+    def test_append_only_accepts_arcgis_derived_labels(self):
+        for capabilities in (
+            "Query,Create", "Create,Query,Editing", "Create,Query,Uploads,Editing",
+            " Create, Query, Editing, Uploads ", "Query,Create,Query",
+        ):
+            with self.subTest(capabilities=capabilities):
+                publisher["validate_capabilities"]({"capabilities": capabilities}, "Query,Create", "parent")
+
+    def test_append_only_rejects_mutation_sync_and_unknown_operations(self):
+        for extra in ("Update", "Delete", "Append", "Sync", "Extract", "ChangeTracking", "FutureCapability"):
+            with self.subTest(extra=extra):
+                with self.assertRaisesRegex(RuntimeError, "unexpected: " + extra):
+                    publisher["validate_capabilities"](
+                        {"capabilities": "Create,Query,Editing,Uploads," + extra}, "Query,Create", "write view"
+                    )
+
+    def test_read_view_must_remain_query_only(self):
+        publisher["validate_capabilities"]({"capabilities": " Query "}, "Query", "read view")
+        for extra in ("Create", "Update", "Delete", "Editing", "Uploads", "Sync"):
+            with self.subTest(extra=extra):
+                with self.assertRaisesRegex(RuntimeError, "read view capabilities"):
+                    publisher["validate_capabilities"]({"capabilities": "Query," + extra}, "Query", "read view")
+
+    def test_missing_explicit_permissions_fail(self):
+        for capabilities in (None, "", "  ", ["Query", "Create"], "Query", "Create", "Editing,Uploads"):
+            with self.subTest(capabilities=capabilities):
+                with self.assertRaises(RuntimeError):
+                    publisher["validate_capabilities"]({"capabilities": capabilities}, "Query,Create", "parent")
+
+    def test_table_override_cannot_expand_service_permissions(self):
+        for expected, extra in (("Query", "Create"), ("Query,Create", "Update"), ("Query,Create", "Delete")):
+            with self.subTest(expected=expected, extra=extra):
+                collection = SimpleNamespace(
+                    properties={"capabilities": expected},
+                    tables=[SimpleNamespace(properties={"id": 0, "capabilities": expected + "," + extra})],
+                )
+                with self.assertRaisesRegex(RuntimeError, "table 0 capabilities"):
+                    publisher["validate_collection_capabilities"](collection, expected, "exercise")
+
+    def test_service_permissions_cannot_exceed_table_permissions(self):
+        collection = SimpleNamespace(
+            properties={"capabilities": "Create,Query,Update"},
+            tables=[SimpleNamespace(properties={"id": 0, "capabilities": "Create,Query"})],
+        )
+        with self.assertRaisesRegex(RuntimeError, "service capabilities"):
+            publisher["validate_collection_capabilities"](collection, "Query,Create", "exercise")
+
+    def test_service_and_table_can_return_different_derived_labels(self):
+        collection = SimpleNamespace(
+            properties={"capabilities": "Create,Query,Editing,Uploads"},
+            tables=[SimpleNamespace(properties={"id": 0, "capabilities": "Create,Query,Editing"})],
+        )
+        publisher["validate_collection_capabilities"](collection, "Query,Create", "exercise")
+
+    def test_unsupported_expected_policy_is_a_programming_error(self):
+        with self.assertRaises(ValueError):
+            publisher["validate_capabilities"]({"capabilities": "Query,Update"}, "Query,Update", "parent")
+
 
 if __name__ == "__main__":
     unittest.main()
