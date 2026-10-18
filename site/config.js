@@ -33,6 +33,9 @@ export const CONFIG = Object.freeze({
   },
   arcgis: {
     portalUrl: 'https://cofgisonline.maps.arcgis.com',
+    // Optional saved Web Scene in the official county Scene Viewer. Public item ID only.
+    // Esri's photorealistic preview is not yet supported inside this custom app.
+    photorealisticSceneId: '',
     // Fill with the public Client ID of an OAuth credential for USER authentication.
     clientId: '',
     authNamespace: 'fresno-storm-watch-prototype-v1'

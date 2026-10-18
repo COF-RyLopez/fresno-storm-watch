@@ -1,5 +1,5 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.8.0 | October 17, 2026 | Dark Calcite workspace
+Version 0.9.0 | October 17, 2026 | F.R.O.G. branding and ArcGIS 3D companion
 
 EOC PILOT LINKS
 App: https://cof-rylopez.github.io/fresno-storm-watch/?view=watch
@@ -29,6 +29,23 @@ pilot is untouched. NWS layer 1 queries intersect the complete Fresno, Madera,
 Merced, Kings and Tulare county polygons. Five-minute foreground polling;
 atomic updates, duplicate handling, new/revised-alert banner, explicit failure
 and overdue-query states, Pacific timestamps, source links, and exercise mode.
+
+F.R.O.G. AND PHOTOREALISTIC 3D (v0.9.0)
+The user-provided F.R.O.G. PNG replaces the placeholder header and browser icons
+in the app and both guides. Original image bytes are preserved. Required Esri
+and data-provider map attribution remains visible.
+Photorealistic 3D in the map toolbar opens a setup dialog and official county
+Scene Viewer link at the current map area. The baseline app remains anonymous.
+Esri's hosted photorealistic preview requires an enabled organization and named
+ArcGIS account; it is not yet available inside custom apps. The county gallery
+did not expose this basemap on October 17. No org settings or entitlements changed.
+After administrator enablement, save a separate reviewed Web Scene and configure
+arcgis.photorealisticSceneId. Without an ID the link opens a draft with full FEMA
+reference, not Storm Watch's selected-zone/county filter. No gauge records, camera
+media, alert state or credentials are passed. No mesh is loaded by the Pages app.
+See site/setup.html#photorealistic for exact tasks, coverage checks and the separate
+Google Maps Platform option for future direct integration. Live mesh rendering
+and named-user companion acceptance remain unverified until access is configured.
 
 DARK MODE (v0.8.0)
 Dark mode is the default for new browser sessions. Use Light mode in the top

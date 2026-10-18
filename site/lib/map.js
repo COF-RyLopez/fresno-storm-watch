@@ -228,6 +228,14 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   document.querySelector('#scene-tilt').addEventListener('click',()=>void navigate({tilt:55,heading:0}));
   modeStatus();for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).removeAttribute('disabled');
   return {
+    sceneViewpoint:()=>{
+      const point=view.type==='3d'?view.camera.position:view.center;
+      // Approximate the 2D ground height with a 55-degree vertical camera field of view.
+      const overheadHeight=view.extent?.height*Math.cos((point?.latitude??36.8)*Math.PI/180)/(2*Math.tan(27.5*Math.PI/180));
+      return {longitude:point?.longitude,latitude:point?.latitude,
+        altitude:view.type==='3d'?point?.z:Math.min(20_000_000,Math.max(1000,overheadHeight)),
+        heading:view.type==='3d'?view.camera.heading:0,tilt:view.type==='3d'?view.camera.tilt:0};
+    },
     addEnvironmentLayers:(overlays,reservoirs)=>{map.addMany(overlays,1);map.add(reservoirs);},
     onViewChanged:listener=>{viewListeners.add(listener);},
     clearEnvironmentPopup:()=>view.closePopup(),

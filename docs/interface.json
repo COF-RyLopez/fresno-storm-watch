@@ -1,5 +1,5 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "design_system": "Esri Calcite Design System, supplied by unified https://js.arcgis.com/5.1/ entry",
   "documentation_checked": "2026-10-17",
   "reference": "https://developers.arcgis.com/calcite-design-system/components/",
@@ -31,7 +31,8 @@
     "rainfall": "Six fixed sequential blue classes, original numeric value and UTC window in popup; no basin aggregation.",
     "area_watch": "Persistent fixed six-area banner, separate from official weather alerts. Area panel exposes quantitative gauge/release changes, fixed WPC Days 1-3 sample values, source times and gaps. No risk score or affected-area polygon; Map watchpoints fits publisher points only. Native Blocks replace custom article cards; source evidence is keyboard-expandable; readiness guidance is stated once in the panel footer.",
     "styles": "Native Calcite dark mode by default, with a persistent Light/Dark action; responsive layout in calcite-layout.css, shared semantic palette in theme.css, early preference/controller in theme.js. Guides use guide.css.",
-    "theme": "Calcite mode class and pinned SDK core stylesheet switch together. Gray base/reference layers follow the theme in 2D and 3D. Historical imagery remains selected across a theme change. County labels, alert polygons, selected outlines and gauge points read the same semantic palette as their legends. SVG hydrographs use inherited CSS variables. Camera pixels, FEMA classes, radar and QPF colors remain unchanged."
+    "theme": "Calcite mode class and pinned SDK core stylesheet switch together. Gray base/reference layers follow the theme in 2D and 3D. Historical imagery remains selected across a theme change. County labels, alert polygons, selected outlines and gauge points read the same semantic palette as their legends. SVG hydrographs use inherited CSS variables. Camera pixels, FEMA classes, radar and QPF colors remain unchanged.",
+    "photorealistic": "Official county Scene Viewer companion, opened in a separate tab via documented camera/scene parameters. Missing scene configuration shows explicit setup state and a draft FEMA service link. County photorealistic access, coverage and saved scene remain pending. The Pages app itself does not request Google tiles."
   },
   "scope": "River view scoped to Fresno County and its San Joaquin boundary reaches; regional weather scope remains five counties. Experience Builder untouched.",
   "accessibility": "Text accompanies every hazard color. Count/status chips have dynamic accessible labels. Calcite provides component keyboard interaction; full assistive-technology and physical-device acceptance remains a county test task.",
@@ -43,5 +44,12 @@
     "https://developers.arcgis.com/calcite-design-system/components/action/",
     "https://developers.arcgis.com/calcite-design-system/tutorials/build-a-dark-mode-switch/",
     "https://developers.arcgis.com/javascript/latest/building-your-ui/"
-  ]
+  ],
+  "branding": {
+    "name": "F.R.O.G. — Flood Response Operations Group",
+    "asset": "site/assets/frog-logo.png",
+    "source": "User-provided FROG.png",
+    "sha256": "482852e84f8bd5a6ac99dd1894341fb4f0428e95227baec483ebe8e4218f0460",
+    "imageEditing": "None; original bytes copied and scaled by CSS. Application header, guides and browser icons updated. Publisher attribution preserved."
+  }
 }

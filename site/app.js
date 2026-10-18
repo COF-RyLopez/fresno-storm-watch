@@ -3,6 +3,7 @@ import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, 
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { createMap } from './lib/map.js';
 import { setupAuth } from './lib/auth.js';
+import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
 import { createRiverWatch } from './lib/river-ui.js';
 import { createCameraWatch } from './lib/camera-ui.js';
@@ -246,6 +247,7 @@ if (exercise) {
   }));
 }
 void setupAuth(CONFIG.arcgis, exercise);
+setupSceneCompanion(CONFIG.arcgis, () => map?.sceneViewpoint(), exercise);
 renderBanner(); renderList(); renderDetail();
 try {
   counties = await loadCounties(new URL('./data/counties.geojson', import.meta.url));

@@ -1,44 +1,33 @@
 {
   "application": "Fresno County Storm Watch",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "date": "2026-10-17",
-  "previous_validation": "validation-0.7.0.json",
-  "status": "Dark Calcite theme implemented and verified locally. GitHub deployment and county acceptance remain pending.",
-  "scope": "Appearance, basemap choice, display symbols and hydrograph colors. Source and decision models, fetchers, inventories, thresholds and refresh settings unchanged.",
+  "previous_validation": "validation-0.8.0.json",
+  "status": "Logo and companion launcher implemented; publication verification pending. Photorealistic mesh access remains pending county setup.",
+  "scope": "Branding and explicit ArcGIS companion launch only. Existing source models, refresh timing and Experience Builder unchanged.",
   "automated": {
-    "tests": "77 passed; 0 failed using node --experimental-test-isolation=none --test --test-reporter=dot tests/*.test.mjs",
-    "check": "npm run check passed: syntax, page links, public configuration, data contracts, six-area scope and vendor integrity.",
-    "additional": "Dark evidence text/foreground contrast: normal text 11.84:1, secondary text 8.04:1, caution 7.62:1, error 7.38:1, chart labels 8.46:1. Native dark link on #353535 is 6.51:1, outline button text 5.92:1, solid button text 8.90:1. This is a targeted palette check, not a complete accessibility audit."
+    "tests": "82 passed, 0 failed",
+    "check": "Syntax, internal links, data contracts and vendor integrity passed. Final map syntax checked after camera-height adjustment.",
+    "logo": "SHA-256 matches original supplied PNG; 1024x1024 RGBA, 818566 bytes."
   },
   "browser_checks": [
-    "Dark default and Light mode action loaded in the actual local app. Both light and dark preferences survived reloads; light then dark switching preserved the displayed map context.",
-    "Theme updates propagated to other open app tabs. Local setup guide inherited dark mode and presented its matching theme control.",
-    "Wide 1366x768 and phone 390x844 CSS-pixel iframe layouts inspected, plus the 756px actual app. No header control overlap observed. Phone header actions retain accessible labels.",
-    "James Bypass gauge details displayed a dark hydrograph with solid blue observed and dashed purple forecast lines, readable labels, source values, units and times.",
-    "The selected James Bypass square remained distinct from monitor circles; FEMA purple mapped hazard and county cyan outline were visible on the dark map. Gauge shape/classification logic is unchanged.",
-    "3D terrain opened with dark controls and dark gray context. Imagery stayed selected while switching to light mode; restoring dark and turning imagery off returned to dark gray context. Returned to 2D successfully.",
-    "Caltrans Avenue 9 still image remained in original colors beside dark camera controls and source timestamps in the wide layout.",
-    "Dark gauge palette inspected under full-severity protanopia, deuteranopia and tritanopia simulations. Some hues converge; triangle/square/circle/diamond shapes and category text are retained, so color is not the sole cue.",
-    "SDK WebGL texture-compression errors were logged during the 3D test, although the scene and imagery rendered and returned to 2D. This browser/GPU result does not establish all-device 3D compatibility."
+    "Local application shows F.R.O.G. logo with accessible alternative text.",
+    "390px phone layout inspected: header identity and actions fit without overlap.",
+    "Companion dialog explicitly reports unconfigured status and separates historical imagery from live conditions.",
+    "Generated county Scene Viewer URL loaded NFHL - Flood Hazard Zones and Esri Terrain3D at a geographic camera.",
+    "Signed-in county basemap gallery contained standard 3D basemaps but no Google Photorealistic 3D entry. No organization setting was changed.",
+    "1366x768 desktop layout inspected in a local iframe: logo, source panels, map and camera panel remained usable.",
+    "Existing 3D terrain view opened successfully; companion link serialized its geographic camera, altitude, heading and 55-degree tilt."
   ],
-  "evidence": [
-    "Dark-Workspace-v0.8.0.png",
-    "Dark-Phone-v0.8.0.png",
-    "Dark-Hydrograph-v0.8.0.png"
+  "pending": [
+    "Enable or confirm county Google Photorealistic 3D entitlement and session allowance.",
+    "Create/share the county companion Web Scene and configure its item ID.",
+    "Verify named-user access, detailed mesh coverage, image currency and layer alignment."
   ],
-  "evidence_location": "outputs/fresno-storm-pages, outside the deployed public site",
-  "limitations": [
-    "Review categories are prototype readiness cues, not approved action triggers, risk scores, flood probabilities, inundation boundaries, travel times or deployment recommendations. A positive change at display precision may be very small; magnitudes remain visible.",
-    "No county action thresholds, staging sites, safe access routes, equipment quantities, decision owners or response lead times are configured. NWS and responsible operators must validate these before operational adoption.",
-    "Rainfall is sampled at the existing eleven stations; it is not complete upstream basin coverage. The three-day cue window intentionally does not change when the operator displays the seven-day layer.",
-    "Gauge forecasts may already incorporate precipitation and operations. Combining them does not create independent corroboration or a calibrated multi-source forecast.",
-    "Reported releases are observations; future schedules are not ingested. Basin connectivity, diversions and bypass operation are not routed. No below-Pine-Flat gauge is connected.",
-    "Foreground refresh only. No push notifications, SMS/email, saved review history, team acknowledgement, background paging or automatic assignments.",
-    "Fault cases were verified with model tests and isolated browser fixtures. Every real-world network outage/browser/GPU combination has not been fault-injected.",
-    "Phone verification used a simulated viewport; physical-device, full keyboard and assistive-technology acceptance remain county tasks.",
-    "GitHub Pages remains undeployed and OAuth Client ID unconfigured. Existing public-source prototype and Experience Builder pilot remain separate."
+  "references": [
+    "https://www.esri.com/arcgis-blog/products/arcgis-online/3d-gis/experience-the-google-photorealistic-3d-basemap-in-arcgis-online",
+    "https://doc.arcgis.com/en/arcgis-online/administer/configure-map.htm",
+    "https://doc.arcgis.com/en/arcgis-online/reference/use-url-parameters-scenes.htm"
   ],
-  "operator_instructions": "README.txt and site/setup.html",
-  "rollback": "Restore Fresno-Storm-Watch-Calcite-v0.7.0.zip. No hosted operational data was modified.",
-  "experience_builder": "Unchanged"
+  "rollback": "Revert the v0.9.0 commit and push main. No hosted ArcGIS data was changed."
 }
