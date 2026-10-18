@@ -29,7 +29,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{}}={}) {
     const link=el('a','County official road map');link.href=ROAD_MAP;link.target='_blank';link.rel='noopener noreferrer';d.append(link);
     document.getElementById('road-dialog').setAttribute('heading',`${row.kind} · ${row.name}`);document.getElementById('road-dialog').setAttribute('open','');map?.focusRoad(row.key);
   }
-  async function refresh(){if(busy||exercise)return;busy=true;document.getElementById('roads-refresh').setAttribute('loading','');try{snapshot=await fetchRoads();error=null;}catch{error=true;}finally{busy=false;document.getElementById('roads-refresh').removeAttribute('loading');render();}}
+  async function refresh(){if(busy||exercise)return;busy=true;document.getElementById('roads-refresh').setAttribute('loading','');try{snapshot=await fetchRoads();error=null;}catch(cause){error=cause;}finally{busy=false;document.getElementById('roads-refresh').removeAttribute('loading');render();}}
   document.getElementById('roads-refresh').onclick=()=>void refresh();document.getElementById('roads-all').addEventListener('change',render);
   for(const [id,url] of [['county-roads-link',ROAD_MAP],['county-evac-link',EVAC_MAP]])document.getElementById(id).setAttribute('href',url);
   document.getElementById('toggle-roads').onclick=()=>{const b=document.getElementById('toggle-roads'),visible=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(visible));b.textContent=`County roads: ${visible?'on':'off'}`;map?.setRoadsVisible(visible);};

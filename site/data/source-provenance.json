@@ -1,7 +1,25 @@
 {
   "prepared": "2026-10-17",
-  "application": "Fresno County Storm Watch prototype 0.6.0, river-area review cues",
+  "application": "Fresno County Storm Watch prototype 0.10.2",
   "sources": [
+    {
+      "publisher": "County of Fresno",
+      "name": "Road blocks, closures and detours",
+      "url": "https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Fresno_County_Road_Closures_Public/FeatureServer",
+      "query_service": "https://utility.arcgis.com/usrsvcs/servers/d3081a918b7f41219077449bcaa9146d/rest/services/Hosted/Fresno_County_Road_Closures/FeatureServer",
+      "publisher_item": "https://www.arcgis.com/home/item.html?id=d3081a918b7f41219077449bcaa9146d",
+      "official_map": "https://gisportal.co.fresno.ca.us/portal/apps/webappviewer/index.html?id=f972a2f1457f4115b964019f8c914fba",
+      "access": "Existing county-published public service connection; anonymous /query only in this app, credentials omitted. No new service or permissions.",
+      "identity": "Layer ID + GlobalID; complete ObjectID inventory reconciled in batches of 200",
+      "comparison": "479 records and all selected attribute/geometry revisions matched the official public view on 2026-10-17. These include history, not 479 active closures.",
+      "crs": "Request and verify EPSG:4326; preserve missing geometry as an information gap, no inferred road shape",
+      "timestamps": ["lastupdate", "last_edited_date", "startdate", "enddate", "successful application query"],
+      "app_poll_minutes": 5,
+      "freshness": "Query age >7 min marked stale. Failed/partial updates retain prior snapshot and show failure. Old per-record dates remain visible. No date/absence/flag is a road-open inference.",
+      "transport": "One bounded retry for transient connection/server errors. No browser local-network permission or TLS exception required.",
+      "maintenance_owner": "County GIS and Road Maintenance; publisher item owned by chuvang. Backup owner and source-status definitions to confirm.",
+      "checked": "2026-10-17"
+    },
     {
       "publisher": "NOAA / National Weather Service",
       "name": "Watches, warnings and advisories, current layer 1",
@@ -215,7 +233,7 @@
   ],
   "exercise": "Explicit ?exercise=1 disables live alerts/gauges/cameras/radar/QPF/reservoir reads. Area-watch has isolated fictional rain/gauge/release fixtures; basemap, terrain and FEMA remain reference context.",
   "privacy": "Only public boundaries, station identifiers/locations, source metadata and code. No private operational assets, reviews, rosters, fleet locations or credentials.",
-  "applicationVersion": "0.6.0",
+  "applicationVersion": "0.10.2",
   "areaWatch": {
     "configuration": "river-areas.json",
     "points": 11,

@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-10-18T03:16:32.566Z",
+  "publisher": "County of Fresno",
+  "publisherItem": "https://www.arcgis.com/home/item.html?id=d3081a918b7f41219077449bcaa9146d",
+  "source": "https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Fresno_County_Road_Closures_Public/FeatureServer",
+  "queryService": "https://utility.arcgis.com/usrsvcs/servers/d3081a918b7f41219077449bcaa9146d/rest/services/Hosted/Fresno_County_Road_Closures/FeatureServer",
+  "readOnly": true,
+  "crs": "EPSG:4326",
+  "rows": 479,
+  "byLayer": [
+    {
+      "layer": 0,
+      "count": 74
+    },
+    {
+      "layer": 1,
+      "count": 273
+    },
+    {
+      "layer": 2,
+      "count": 132
+    }
+  ],
+  "defaultVisible": 38,
+  "elapsedActiveConflicts": 271,
+  "contentSha256": "c92465c7a9789ac8bc31a20ee254658cc99157119c09cdda9b4d3fe4bc29cb42",
+  "upstreamComparison": "Every GlobalID, selected attribute and geometry revision matched the official public view.",
+  "durationMs": 733,
+  "diagnosis": {
+    "observed": "The upstream hostname resolves to a private RFC1918 address on the county workstation; public DNS returns a public address. Local queries succeeded while queries from the published app failed.",
+    "inference": "Browser public-to-private network restrictions are consistent with this split-DNS behavior.",
+    "reference": "https://developer.chrome.com/blog/local-network-access",
+    "repair": "Use the existing county-published ArcGIS Online route for read-only browser queries. No DNS, TLS, browser permission or service-sharing setting changed."
+  },
+  "adminFollowup": "The existing route advertises Create/Update/Delete capabilities. No write request was attempted. County GIS should review its effective permissions and connection ownership separately; the app only queries the same selected public fields."
+}

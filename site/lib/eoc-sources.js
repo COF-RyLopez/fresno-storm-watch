@@ -1,4 +1,4 @@
-import {fetchRoads,roadInCurrentView,roadConflictBacklog,missingRoadRecords,ROAD_MAP} from './roads.js';
+import {fetchRoads,roadInCurrentView,roadConflictBacklog,missingRoadRecords,roadFailureReason,ROAD_MAP} from './roads.js';
 import {loadCounties,fetchRegionalAlerts} from './nws.js';
 import {fetchRiverWatch} from './nwps.js';
 import {environmentalJson} from './environment-data.js';
@@ -36,11 +36,11 @@ export function createEocSources(config,onChange){
         notifications.push({key:`area:${r.area.id}`,revision:await digest(evidence),category:'Planning review cues',location:r.area.name,change:changes.join(' · '),sourceTime:dates.length?Math.max(...dates):null,verification:'Planning cue; no county action threshold or safe-access inference',link:'./?view=watch',evidence});
       }
     }
-    const status=[...health.values()].map(h=>({...h,status:h.error?'FAILED — retained evidence needs verification':now-h.checked>420000?'STALE — refresh overdue':h.detail||'Query succeeded'}));
+    const status=[...health.values()].map(h=>({...h,status:h.error?`FAILED — retained evidence needs verification${h.detail?' · '+h.detail:''}`:now-h.checked>420000?'STALE — refresh overdue':h.detail||'Query succeeded'}));
     for(const h of status)if(h.error||now-h.checked>420000)notifications.push({key:`health:${h.key}`,revision:canonical([h.error||'stale',h.checked]),category:'Data failures',location:h.name,change:h.status,sourceTime:h.checked,verification:'Source coverage incomplete',nextReview:'Open publisher source and assign a verification follow-up'});
     onChange({notifications,health:status,checked:now});
   };
-  async function check(key,name,fn){try{values[key]=await fn();health.set(key,{key,name,checked:Date.now(),error:null});}catch{const old=health.get(key);health.set(key,{key,name,checked:old?.checked||null,error:true});}}
+  async function check(key,name,fn){try{values[key]=await fn();health.set(key,{key,name,checked:Date.now(),error:null});}catch(error){const old=health.get(key);health.set(key,{key,name,checked:old?.checked||null,error:true,detail:key==='roads'?roadFailureReason(error):null});}}
   async function refresh(){if(busy)return;busy=true;try{
     if(!inventory){const [areas,gauges,reservoirs,counties]=await Promise.all([environmentalJson('./data/river-areas.json'),environmentalJson('./data/river-watchlist.json'),environmentalJson('./data/reservoir-watchlist.json'),loadCounties('./data/counties.geojson')]);inventory={areas,gauges,reservoirs,counties,points:planningPoints(areas,gauges.stations,reservoirs.stations)};}
     await Promise.allSettled([

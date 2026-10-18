@@ -1,0 +1,45 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.10.1",
+  "date": "2026-10-17",
+  "previous_validation": "validation-0.10.0.json",
+  "status": "Private AGOL exercise workspace configured and owner workflow verified. Ordinary operator and two-account acceptance remain pending.",
+  "automated": {
+    "javascript": "102 tests passed",
+    "python": "18 publisher contract tests passed locally during publisher repair and in the GitHub deployment checks",
+    "check": "Syntax, local links, existing source contracts and pinned vendor checks passed"
+  },
+  "server_checks": {
+    "provisioning": "User's in-Pro run verified all 11 exercise collections and generated the public configuration",
+    "anonymous_queries": "All 22 configured private read/write table views denied unauthenticated queries",
+    "memberships_changed": false,
+    "credentials": "Public OAuth Client ID only; no client secret or token in application configuration"
+  },
+  "browser_checks": [
+    "Authorized owner sign-in completed through county AGOL OAuth",
+    "Private incident and operational period saved with server editor tracking",
+    "Field report began unverified; a separate verification confirmed its exact revision",
+    "Selected-evidence briefing snapshot saved and separate exercise approval persisted",
+    "Reload restored incident, period, confirmed report and approved snapshot from AGOL",
+    "Oversized briefing rejected without truncation; category-specific evidence inclusion/exclusion tested",
+    "Sign-out cleared private incident, form contents and cached briefing/print text; activation returned to unconfirmed",
+    "Published GitHub Pages OAuth returned to the workspace and loaded the saved private exercise records"
+  ],
+  "pending": [
+    "Administrator confirms eligible named accounts and assigns isolated exercise groups",
+    "Two-account read/create/update/delete permission matrix and tabletop acceptance",
+    "County OES plan amendments, authorities, operating practice and templates",
+    "Road Maintenance field meanings and status reconciliation",
+    "Engage access and supported interface confirmation"
+  ],
+  "private_storage": "Enabled only for the exercise environment. Private records stay in county AGOL and session memory. GitHub contains the public application shell and identifiers only. No memberships changed.",
+  "rollback": "Redeploy 69d8a9e to return the private app to its disabled configuration. Preserve hosted exercise records and item inventory.",
+  "deployment": {
+    "status": "success",
+    "application_commit": "0df176e8bfd56741ab97f62ff8240e30c229337f",
+    "run": "https://github.com/COF-RyLopez/fresno-storm-watch/actions/runs/39091786472",
+    "private_workspace_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html",
+    "fictional_tabletop_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html?exercise=1",
+    "guide_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc-guide.html#access"
+  }
+}

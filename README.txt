@@ -1,5 +1,5 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.10.1 | October 17, 2026 | Private AGOL exercise workspace
+Version 0.10.2 | October 17, 2026 | County road-feed connection repair
 
 EOC PILOT LINKS
 App: https://cof-rylopez.github.io/fresno-storm-watch/?view=watch
@@ -7,8 +7,9 @@ Testing and setup guide: https://cof-rylopez.github.io/fresno-storm-watch/setup.
 Repository: https://github.com/COF-RyLopez/fresno-storm-watch
 Deployment runs: https://github.com/COF-RyLopez/fresno-storm-watch/actions/workflows/pages.yml
 The app is ready to share only after its Pages deployment succeeds. This is a
-public-source prototype; public-map testers do not need GitHub or ArcGIS accounts. The private EOC exercise requires an authorized county ArcGIS account. It does
-not provide private operational records, shared acknowledgements or assignments.
+public-source prototype; public-map testers do not need GitHub or ArcGIS accounts.
+The separate private EOC exercise requires an authorized county ArcGIS account;
+group assignments and two-account acceptance remain pending.
 For a manual reservoir refresh/deployment: Actions -> Verify and deploy Storm
 Watch -> Run workflow -> main. Normal collection targets 15-minute intervals;
 GitHub scheduling can be delayed. Check source and collection times in the app.
@@ -29,6 +30,27 @@ pilot is untouched. NWS layer 1 queries intersect the complete Fresno, Madera,
 Merced, Kings and Tulare county polygons. Five-minute foreground polling;
 atomic updates, duplicate handling, new/revised-alert banner, explicit failure
 and overdue-query states, Pacific timestamps, source links, and exercise mode.
+
+COUNTY ROAD FEED (v0.10.2)
+The road map and EOC queue read through the county's existing public ArcGIS Online
+route: https://www.arcgis.com/home/item.html?id=d3081a918b7f41219077449bcaa9146d
+The upstream hostname resolves to a private address on county workstations;
+requests from the public Pages app failed there while local queries succeeded.
+The ArcGIS Online route avoids that browser-to-private-network dependency. All
+479 records matched the official public view by layer/GlobalID, selected fields
+and geometry on October 17. This includes historical records, not 479 active closures.
+No copying schedule, new service, browser security exception or credential change
+is needed. Both app workspaces use the same reader, with credentials omitted.
+Queries repeat every five minutes. Temporary connection/server failures retry
+once; incomplete inventories, duplicate IDs and unexpected geometry CRS fail
+closed. Failed refreshes retain the last successful records and source timestamps.
+An empty response, expired end date or absent record never means a road is open.
+The route's metadata advertises editing capabilities. This app calls only /query;
+no write capability was tested or changed. County GIS should review the existing
+route's effective permissions and maintain its stored-service connection.
+Run npm run check:roads for a read-only count/geometry diagnostic. Add
+-- --compare-source to compare against the original public view. Neither command
+prints record contents or changes the service. See docs/roads-source-check.json.
 
 F.R.O.G. AND PHOTOREALISTIC 3D (v0.9.0)
 The user-provided F.R.O.G. PNG replaces the placeholder header and browser icons
