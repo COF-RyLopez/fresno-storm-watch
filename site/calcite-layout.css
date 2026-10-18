@@ -219,3 +219,9 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 .road-intro,.road-card {padding:16px;border-bottom:1px solid var(--app-border);font-size:13px;line-height:1.6;}
 .road-card p {margin:7px 0;}
+.scheduled-releases {border-top:1px solid var(--app-border);margin-top:16px;padding-top:12px;font-size:13px;line-height:1.55;overflow-wrap:anywhere;}
+.scheduled-releases h5 {font-size:14px;line-height:1.45;margin:0 0 10px;}
+.scheduled-releases p {margin:8px 0;}
+.scheduled-release-list {margin:8px 0 14px;padding-inline-start:20px;max-height:360px;overflow:auto;}
+.scheduled-release-list li {margin-block:10px;}
+.scheduled-releases .environment-note {color:var(--calcite-color-text-2);font-size:12px;}

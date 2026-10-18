@@ -1,6 +1,6 @@
 {
   "prepared": "2026-10-17",
-  "application": "Fresno County Storm Watch prototype 0.10.2",
+  "application": "Fresno County Storm Watch prototype 0.11.0",
   "sources": [
     {
       "publisher": "County of Fresno",
@@ -13,7 +13,13 @@
       "identity": "Layer ID + GlobalID; complete ObjectID inventory reconciled in batches of 200",
       "comparison": "479 records and all selected attribute/geometry revisions matched the official public view on 2026-10-17. These include history, not 479 active closures.",
       "crs": "Request and verify EPSG:4326; preserve missing geometry as an information gap, no inferred road shape",
-      "timestamps": ["lastupdate", "last_edited_date", "startdate", "enddate", "successful application query"],
+      "timestamps": [
+        "lastupdate",
+        "last_edited_date",
+        "startdate",
+        "enddate",
+        "successful application query"
+      ],
       "app_poll_minutes": 5,
       "freshness": "Query age >7 min marked stale. Failed/partial updates retain prior snapshot and show failure. Old per-record dates remain visible. No date/absence/flag is a road-open inference.",
       "transport": "One bounded retry for transient connection/server errors. No browser local-network permission or TLS exception required.",
@@ -223,17 +229,41 @@
       ],
       "units_datum": "FEET, AF, CFS checked against configured metrics. Elevation datum unspecified in feed; no datum conversion or water surface. Daily report dates preserved.",
       "crs": "CDEC station metadata lon/lat stored as WGS84 EPSG:4326; 2 input points, 2 retained, no repair/derived geometry",
-      "processing": "Five-day bounded requests; sensor rows reconciled with per-series input/accepted/rejected counts. Future/sentinel/flagged/wrong-unit rows not valid. Conflicting duplicates fail station update. Retain last successful station on fetch failure.",
+      "processing": "Five-day bounded observation requests; daily reports end at previous completed PST day. Normalize padded/unpadded calendar fields; identical timestamps deduplicated. Conflicting timestamps quarantined without freezing other readings; invalid timestamps remain gaps. Reconcile input/accepted/rejected/duplicate/conflict counts. Retain prior published data on request failure.",
       "cadence": "MIL daily; PNF hourly. Collector target 15 min; browser snapshot check 1 min. GitHub schedule/deployment may delay.",
-      "release_meaning": "MIL sensor85 river outlet release,71 spill,23 total outflow shown separately. PNF sensor23 reported outflow. No scheduled release ingestion or inferred river routing.",
+      "release_meaning": "MIL sensor85 river outlet release,71 spill,23 total outflow remain separate. PNF sensor23 reported outflow. Separate event sensor7 scheduled releases for both stations; no inferred routing or downstream arrival.",
       "freshness": "Snapshot age >45min warns; hourly measurements >3h and daily >72h marked old. Newer missing records shown alongside last valid reading. Prototype rules, not operator triggers.",
       "maintenance_owner": "County GIS collector owner and backup to be assigned",
-      "checked": "2026-10-17"
+      "checked": "2026-10-18"
+    },
+    {
+      "publisher": "California DWR CDEC; operator-reported USBR / USACE schedules",
+      "name": "Millerton and Pine Flat scheduled release notices",
+      "url": "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet",
+      "documentation": "https://cdec.water.ca.gov/reportapp/javareports?name=WebRTAppsAPIDocs.pdf",
+      "referencePages": [
+        15,
+        16,
+        23
+      ],
+      "officialNotices": [
+        "https://cdec.water.ca.gov/dynamicapp/QueryRES?s=MIL",
+        "https://cdec.water.ca.gov/dynamicapp/QueryRES?s=PNF"
+      ],
+      "contract": "stationId MIL/PNF; SENSOR_NUM 7; durCode E; CFS; obsDate effective time, fixed PST UTC-08:00; issuance timestamp absent",
+      "selection": "31-day lookback and seven-day future horizon; filter normalized effective times, deduplicate; conflicting/flagged notices remain unknown",
+      "cadence": "Same 15-minute target collector, independent success/failure from observed conditions; app checks each minute while open",
+      "banner": "Upcoming changes within seven days and recently effective changes within 24h; compare previous valid schedule only; include unknown baseline; no repeated unchanged schedule cue. MIL -> Friant-Mendota; PNF -> Kings below Pine Flat.",
+      "identity": "station + sensor + duration + normalized effective time; content revision excludes fetch time",
+      "limitations": "Absence/removal is not proof of no change/cancellation; operator verification required. No downstream arrival, modeled flood depth or automatic deployment. No full revision archive.",
+      "access": "Public source only; no credentials",
+      "maintenance_owner": "County GIS collector owner and backup to be assigned",
+      "checked": "2026-10-18"
     }
   ],
   "exercise": "Explicit ?exercise=1 disables live alerts/gauges/cameras/radar/QPF/reservoir reads. Area-watch has isolated fictional rain/gauge/release fixtures; basemap, terrain and FEMA remain reference context.",
   "privacy": "Only public boundaries, station identifiers/locations, source metadata and code. No private operational assets, reviews, rosters, fleet locations or credentials.",
-  "applicationVersion": "0.10.2",
+  "applicationVersion": "0.11.0",
   "areaWatch": {
     "configuration": "river-areas.json",
     "points": 11,

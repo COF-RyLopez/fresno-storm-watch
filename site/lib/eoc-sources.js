@@ -6,7 +6,7 @@ import {validateReservoirSnapshot} from './environment-model.js';
 import {planningPoints,evaluateAreas} from './planning-model.js';
 import {fetchPlanningRain} from './planning-data.js';
 import {digest,canonical} from './eoc-model.js';
-import {COUNTIES} from './model.js';
+import {COUNTIES,formatTime} from './model.js';
 
 export function exerciseSources(now=Date.now()){
   return {health:[{name:'Fictional tabletop sources',status:'Exercise only — no live measurements',checked:now}],notifications:[
@@ -28,19 +28,24 @@ export function createEocSources(config,onChange){
     for(const {row,detected} of missingRoads.values())notifications.push({key:`missing:${row.key}`,revision:String(detected),category:'Verification queue',location:row.location,change:'Previously returned county road record is absent — verify disposition; road access is not confirmed',sourceTime:row.sourceTime||row.edited,verification:'Disappearance detected during this open session',link:ROAD_MAP,evidence:{lastRecord:row.key,detected,lastActive:row.active,start:row.start,end:row.end}});
     if(inventory){
       const entries=new Map((values.gauges||[]).map(g=>[g.id,{gauge:g.gauge,error:g.error}]));
-      const rows=evaluateAreas({areas:inventory.areas.areas,points:inventory.points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs:{selection:inventory.reservoirs,snapshot:values.reservoirs,error:health.get('reservoirs')?.error,checked:health.get('reservoirs')?.checked},rain:values.rain?{...values.rain,error:health.get('rain')?.error}:null,environmentConfig:config.environment},now);
+      const rows=evaluateAreas({areas:inventory.areas.areas,points:inventory.points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs:{selection:inventory.reservoirs,snapshot:values.reservoirs,error:health.get('reservoirs')?.queryFailed,checked:health.get('reservoirs')?.checked},rain:values.rain?{...values.rain,error:health.get('rain')?.error}:null,environmentConfig:config.environment},now);
       for(const r of rows){
         const evidence={status:r.status,gaps:r.gaps,rain:{issue:r.rainfall.cycle?.issue,start:r.rainfall.cycle?.start,end:r.rainfall.cycle?.end,samples:r.rainfall.samples},gauges:r.gauges.map(g=>({id:g.id,observed:g.assessment.observed,units:g.gauge?.observed.units,forecastUnits:g.gauge?.forecast.units,forecastIssued:g.gauge?.forecast.issued,peak:g.assessment.peak,trend:g.assessment.trend,usable:g.assessment.current&&g.assessment.forecastUsable,thresholds:g.assessment.crossings})),releases:r.releases.map(s=>({station:s.station,label:s.label,value:s.sample?.value,time:s.sample?.time,units:'cfs',delta:s.delta,hours:s.hours,current:s.current,reason:s.reason,source:s.source}))};
         const dates=[r.rainfall.cycle?.issue,...r.gauges.map(g=>g.assessment.observed?.time),...r.releases.map(s=>s.sample?.time)].filter(Number.isFinite);
         const changes=[r.status,...r.rising.map(g=>`${g.id} +${g.assessment.trend.delta.toFixed(2)} ${g.gauge.observed.units} / ${g.assessment.trend.hours.toFixed(1)} h`),...r.increased.map(s=>`${s.station} ${s.label} +${s.delta.toFixed(0)} cfs / ${s.hours.toFixed(1)} h`),r.rainfall.maximum===null?'Rain amount unknown':`Rain sample max ${r.rainfall.maximum.toFixed(2)} in / 72 h`,`${r.gaps.length} information gaps`];
         notifications.push({key:`area:${r.area.id}`,revision:await digest(evidence),category:'Planning review cues',location:r.area.name,change:changes.join(' · '),sourceTime:dates.length?Math.max(...dates):null,verification:'Planning cue; no county action threshold or safe-access inference',link:'./?view=watch',evidence});
       }
+      const notices=new Map();
+      for(const r of rows)for(const n of r.scheduled)notices.set(n.key,{...n,location:r.area.name});
+      for(const n of notices.values())notifications.push({key:n.key,revision:n.revision+':'+n.phase,category:'Planning review cues',location:n.location,change:`${n.station}: ${n.direction} to ${n.value} cfs${n.delta===null?' (previous schedule unknown)':` (${n.delta>0?'+':''}${n.delta} cfs)`}; effective ${formatTime(n.time,config.timeZone)} · ${n.phase==='upcoming'?'upcoming':'effective time passed — verify actual release'}`,sourceTime:null,verification:'Operator-reported schedule; issuance time not supplied. Effective time is not downstream arrival.',link:n.source,evidence:{station:n.station,effectiveTime:n.time,scheduledCfs:n.value,previousSchedule:n.prior,deltaCfs:n.delta,phase:n.phase,source:n.source},nextReview:'Confirm effective time and current release with the reservoir operator; review affected river reach and access before staging'});
+      const schedules=rows.flatMap(r=>r.schedules);
+      if(schedules.length)health.set('schedules',{key:'schedules',name:'CDEC scheduled release notices',checked:health.get('reservoirs')?.checked,error:schedules.some(s=>!s.current||s.pending.length),detail:schedules.filter(s=>!s.current||s.pending.length).map(s=>`${s.station}: ${s.pending.length?'flagged/conflicting notice':s.reason}`).join('; ')||'Schedules checked; absence of a notice does not rule out unscheduled changes'});
     }
     const status=[...health.values()].map(h=>({...h,status:h.error?`FAILED — retained evidence needs verification${h.detail?' · '+h.detail:''}`:now-h.checked>420000?'STALE — refresh overdue':h.detail||'Query succeeded'}));
     for(const h of status)if(h.error||now-h.checked>420000)notifications.push({key:`health:${h.key}`,revision:canonical([h.error||'stale',h.checked]),category:'Data failures',location:h.name,change:h.status,sourceTime:h.checked,verification:'Source coverage incomplete',nextReview:'Open publisher source and assign a verification follow-up'});
     onChange({notifications,health:status,checked:now});
   };
-  async function check(key,name,fn){try{values[key]=await fn();health.set(key,{key,name,checked:Date.now(),error:null});}catch(error){const old=health.get(key);health.set(key,{key,name,checked:old?.checked||null,error:true,detail:key==='roads'?roadFailureReason(error):null});}}
+  async function check(key,name,fn){try{values[key]=await fn();health.set(key,{key,name,checked:Date.now(),error:null,queryFailed:false});}catch(error){const old=health.get(key);health.set(key,{key,name,checked:old?.checked||null,error:true,queryFailed:true,detail:key==='roads'?roadFailureReason(error):null});}}
   async function refresh(){if(busy)return;busy=true;try{
     if(!inventory){const [areas,gauges,reservoirs,counties]=await Promise.all([environmentalJson('./data/river-areas.json'),environmentalJson('./data/river-watchlist.json'),environmentalJson('./data/reservoir-watchlist.json'),loadCounties('./data/counties.geojson')]);inventory={areas,gauges,reservoirs,counties,points:planningPoints(areas,gauges.stations,reservoirs.stations)};}
     await Promise.allSettled([

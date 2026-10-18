@@ -1,5 +1,6 @@
 import { exerciseRivers } from './river-exercise.js';
 import { HOUR } from './river-model.js';
+import {scheduledRecords} from './release-model.js';
 
 /** @param {object[]} gauges @param {object[]} points @param {object} selection @param {string} scenario @param {number} now @returns {object} Isolated, explicitly fictional cue fixtures. */
 export function planningExercise(gauges,points,selection,scenario,now){
@@ -21,5 +22,10 @@ export function planningExercise(gauges,points,selection,scenario,now){
     const prior={...sample,time:priorTime,value:m.key==='release'?400:value,reportDate:new Date(priorTime-8*HOUR).toISOString().slice(0,10)};
     return [m.key,{sensor:m.sensor,duration:m.duration,units:m.units,lastValid:sample,latest:sample,samples:[prior,sample]}];
   }))}))};
+  for(const station of snapshot.stations){
+    const row=(offset,value)=>({stationId:station.id,durCode:'E',SENSOR_NUM:7,units:'CFS',value,dataFlag:' ',obsDate:new Date(now+offset*HOUR-8*HOUR).toISOString().slice(0,16).replace('T',' ')});
+    const records=scenario==='scheduled'?[row(-48,400),row(6,station.id==='MIL'?650:550),row(18,300)]:[];
+    station.scheduled={...scheduledRecords(records,station.id,now),lastAttempt:new Date(now).toISOString(),lastSuccess:new Date(now).toISOString(),error:scenario==='missing'?'Fictional schedule failure':null};
+  }
   return {entries,rain,reservoirs:{selection,snapshot,checked:now,error:scenario==='missing'?'Fictional collection failure':null}};
 }

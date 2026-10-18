@@ -1,5 +1,5 @@
 {
-  "checked": "2026-10-17",
+  "checked": "2026-10-18",
   "scope": "Two primary reservoir controls for Fresno County river planning. This is not a complete upstream reservoir inventory.",
   "crs": "EPSG:4326; CDEC station metadata coordinates, no geometry repair or derived catchment",
   "sourceTimeZone": "CDEC web service documents Pacific Standard Time year-round (UTC-08:00). Daily report dates remain dates; hourly times display in America/Los_Angeles.",
@@ -8,7 +8,7 @@
       "id": "MIL", "name": "Millerton / Friant Dam", "river": "San Joaquin River", "operator": "US Bureau of Reclamation", "longitude": -119.705, "latitude": 37.001,
       "metadata": "https://cdec.water.ca.gov/dynamicapp/staMeta?station_id=MIL",
       "source": "https://cdec.water.ca.gov/dynamicapp/QueryDaily?s=MIL",
-      "note": "Daily CDEC reports. River outlet release (sensor 85) and spill (71) are distinct from total reservoir outflow (23), which must not be treated as San Joaquin river release. No planned release schedule is ingested.",
+      "note": "Completed-day CDEC reports. River outlet release (sensor 85) and spill (71) are distinct from total reservoir outflow (23), which must not be treated as San Joaquin river release. Operator-reported scheduled releases (sensor 7, event duration) are displayed separately; confirm with USBR before acting.",
       "metrics": [
         {"key":"elevation","label":"Pool elevation","sensor":6,"duration":"D","units":"FEET","displayUnits":"ft","decimals":2,"maxAgeHours":72},
         {"key":"storage","label":"Storage","sensor":15,"duration":"D","units":"AF","displayUnits":"acre-ft","decimals":0,"maxAgeHours":72},
@@ -23,7 +23,7 @@
       "metadata": "https://cdec.water.ca.gov/dynamicapp/staMeta?station_id=PNF",
       "source": "https://cdec.water.ca.gov/dynamicapp/QueryF?s=PNF",
       "releaseNotices": "https://www.spk-wc.usace.army.mil/fcgi-bin/release.py?report=pnf",
-      "note": "Hourly CDEC reports supplied by USACE. Outflow is a reported observation, not a future operating commitment. Check the separately linked USACE release notices for announced changes. No release schedule is ingested.",
+      "note": "Hourly CDEC reports supplied by USACE. Outflow is a reported observation. Operator-reported scheduled releases (sensor 7, event duration) are displayed separately; verify with the linked USACE release notices and the operator. Unscheduled changes can occur.",
       "metrics": [
         {"key":"elevation","label":"Pool elevation","sensor":6,"duration":"H","units":"FEET","displayUnits":"ft","decimals":2,"maxAgeHours":3},
         {"key":"storage","label":"Storage","sensor":15,"duration":"H","units":"AF","displayUnits":"acre-ft","decimals":0,"maxAgeHours":3},

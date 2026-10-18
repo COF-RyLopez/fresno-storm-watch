@@ -1,6 +1,7 @@
 /** Explainable review cues; no flood model, risk score or staging-site selection. */
 import { assessGauge, HOUR } from './river-model.js';
 import { qpfCycle, realNumber, reservoirMetricState } from './environment-model.js';
+import {scheduleEvidence} from './release-model.js';
 
 /** @param {object} areaConfig @param {object[]} gauges @param {object[]} reservoirs @returns {object[]} Validate associations before any source queries. */
 export function planningPoints(areaConfig,gauges,reservoirs){
@@ -74,18 +75,21 @@ export function evaluateAreas(input,now=Date.now()){
     });
     const rainfall=rainfallEvidence(rain,area,points,environmentConfig,now);
     const releases=area.releases.map(a=>releaseEvidence({...reservoirs,config:environmentConfig},a,now));
+    const schedules=[...new Set(area.releases.map(a=>a.station))].map(id=>scheduleEvidence({...reservoirs,config:environmentConfig},id,now));
+    const scheduled=schedules.flatMap(s=>s.cues);
     const threshold=gauges.some(g=>g.assessment.tone==='threshold');
     const rising=gauges.filter(g=>g.assessment.current&&positiveChange(g.assessment.trend?.delta,g.gauge.observed.units));
     const higher=gauges.filter(g=>positiveChange(g.assessment.delta,g.gauge?.forecast.units));
     const increased=releases.filter(r=>r.increasing);
-    const change=!!(rising.length||higher.length||increased.length);
+    const change=!!(rising.length||higher.length||increased.length||scheduled.length);
     const gaps=[];
     if(!gauges.length)gaps.push('No downstream gauge connected');
     for(const g of gauges)if(!g.assessment.current||!g.assessment.forecastUsable)gaps.push(`${g.id}: ${!g.assessment.current?'observation unavailable/old':'forecast unavailable/old'}`);
     if(rainfall.gaps)gaps.push(`${rainfall.gaps}/${rainfall.samples.length} rainfall sample amounts unknown`);
     for(const r of releases)if(!r.current||r.delta===null)gaps.push(`${r.station} ${r.label}: ${r.reason}`);
+    for(const s of schedules){if(!s.current)gaps.push(`${s.station} release notices: ${s.reason}`);else if(s.pending.length)gaps.push(`${s.station}: ${s.pending.length} release notice(s) need verification`);}
     const rank=threshold?4:change?3:rainfall.positive?2:gaps.length?1:0;
-    const status=threshold?'Published NWS threshold cue':change?(rainfall.positive?'Rain + river change — review':'River change — review'):rainfall.positive?'Rain forecast — monitor':gaps.length?'Incomplete evidence':'No current change cue';
-    return {area,gauges,rainfall,releases,rising,higher,increased,gaps,rank,status,review:rank>=3,threshold,unknownThresholds:gauges.filter(g=>!g.assessment.thresholdKnown).length};
+    const status=threshold?'Published NWS threshold cue':scheduled.length?'Scheduled release — review':change?(rainfall.positive?'Rain + river change — review':'River change — review'):rainfall.positive?'Rain forecast — monitor':gaps.length?'Incomplete evidence':'No current change cue';
+    return {area,gauges,rainfall,releases,schedules,scheduled,rising,higher,increased,gaps,rank,status,review:rank>=3,threshold,unknownThresholds:gauges.filter(g=>!g.assessment.thresholdKnown).length};
   }).sort((a,b)=>b.rank-a.rank||a.area.name.localeCompare(b.area.name));
 }

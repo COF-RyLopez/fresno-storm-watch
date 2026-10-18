@@ -1,0 +1,77 @@
+Reservoir observations and scheduled releases - version 0.11.0
+Checked 2026-10-18
+
+Sources and scope
+Public CDEC JSONDataServlet: https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet
+Time documentation: https://cdec.water.ca.gov/dynamicapp/wsSensorData
+Metadata: https://cdec.water.ca.gov/dynamicapp/staMeta?station_id=MIL
+Metadata: https://cdec.water.ca.gov/dynamicapp/staMeta?station_id=PNF
+Notices: https://cdec.water.ca.gov/dynamicapp/QueryRES?s=MIL
+Notices: https://cdec.water.ca.gov/dynamicapp/QueryRES?s=PNF
+Public publisher records; no credentials or private operational data collected.
+
+Observed feed repair
+Pine Flat supplied one-digit morning hours (for example 2026-10-18 5:00).
+The old strict parser rejected those hours, making readings appear stale.
+Normalize year/month/day/hour fields with calendar validation and fixed PST.
+Identical readings deduplicate at normalized station/sensor/duration/time.
+Conflicting readings quarantine only that timestamp as unknown; never pick an
+arbitrary value or freeze every metric. Quality counts remain in the snapshot.
+Millerton daily requests end at the previous completed source-calendar day.
+An earlier published Millerton conflict was not present in the current source
+sample; regression fixtures explicitly test recurring conflicts and recovery.
+
+Schedule contract
+Sensor 7, event duration E, units CFS, operator-reported scheduled release.
+31-day lookback; retain future effective times through the next seven days.
+JSON effective times use fixed PST, converted to America/Los_Angeles in UI.
+Checked against notice-page examples: MIL 2026-10-16 13:00 PST = 14:00 PDT;
+PNF 2026-10-05 04:00 PST = 05:00 PDT. Do not parse HTML page wall times as JSON.
+Issuance/revision time is absent; show it as not supplied, never fetch time.
+Compare to preceding valid scheduled amount, never to measured total outflow.
+Upcoming changes and newly effective changes in the past 24 hours invite
+review, including decreases and unknown baselines. Unchanged repeats do not.
+Source flags/conflicts and overdue checks suppress cues while preserving
+dated evidence. Empty/removed notices do not prove no change or cancellation.
+An effective time is at the reservoir, not downstream arrival.
+MIL is associated only with Friant-Mendota; PNF only with Kings below Pine Flat.
+Stable notice IDs use station and effective time. Content and comparison
+revisions, plus transition to effective, require fresh private EOC review.
+No automatic activation, dispatch or unattended notification is implemented.
+
+Refresh and recovery
+The existing GitHub Actions job targets 15 minutes, subject to GitHub delays.
+Four bounded CDEC requests per run: observations and schedules per station.
+The app polls the published snapshot each visible minute; 45-minute collector
+and seven-minute app-check freshness gates remain in force. Measurement age
+is separate. Failed observations and schedules retain their own success time.
+CI retrieves the last published public snapshot before collecting, so a clean
+checkout does not replace recent retained evidence with an old repository seed.
+Local preview runs the existing --watch collector with --use-system-ca.
+Inspect Actions collection output for station errors, notice errors, counts
+and conflicts; use publisher links and coordinate with USBR/USACE during gaps.
+No complete notice-revision archive; approved private briefings remain the
+separate snapshot/handoff workflow. Maintainer and backup still need assignment.
+
+Verification
+Node regression suite: 128 passed; syntax/source checks passed.
+Private AGOL publisher contract suite: 18 passed, without remote changes.
+Fresh source collection: both observation and schedule requests succeeded.
+No upcoming MIL/PNF notices were returned at the source check.
+UI: live reservoir cards, dated historical schedules, fictional future increase
+and decrease banner, downstream-only counts, 390px phone banner/navigation.
+No changes to AGOL storage, road editing or Experience Builder items.
+
+Operator test
+Open Weather & reservoirs to compare report dates and schedule effective times.
+Open ?exercise=1&view=watch and select Scheduled releases: two downstream areas
+and four fictional notices should appear. This does not write operational data.
+Use Source evidence for the full schedule, previous amount and official link.
+
+Rollback
+Revert the 0.11.0 feature commit and let the existing Pages workflow redeploy.
+Do not reset or delete operator records. If reverting the collector, restart
+the local --watch process so it does not keep the previous code in memory.
+The older parser's morning-hour limitation would return; keep publisher links
+available until a corrected version is deployed. Confirm the served version
+in data/source-provenance.json after deployment.

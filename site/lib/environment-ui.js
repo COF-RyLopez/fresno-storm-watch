@@ -2,6 +2,8 @@ import { loadSdk } from './map.js';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
+import {scheduleEvidence} from './release-model.js';
+import {appendScheduledReleases} from './release-ui.js';
 
 const $=id=>document.getElementById(id);
 /** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Source content is text, never executable markup. */
@@ -86,11 +88,12 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     const status=$('reservoir-status'),now=Date.now();
     const generation=snapshot?Date.parse(snapshot.generatedAt):null;
     const overdue=generation!==null&&(now-generation>config.collectorMaxAgeMs||generation>now+120_000);
-    status.textContent=exercise?'Reservoir feeds disabled in exercise':snapshotError?`Snapshot check failed · ${snapshotError}`:!snapshot?'Waiting for collected CDEC data':overdue?'Reservoir collection is overdue · values may be old':`${snapshot.stations.some(s=>s.error)?'Collection incomplete':'Collected'} ${time(generation)}`;
-    status.dataset.tone=snapshotError||overdue?'gap':'normal';
+    status.textContent=exercise?'Reservoir feeds disabled in exercise':snapshotError?`Snapshot check failed · ${snapshotError}`:!snapshot?'Waiting for collected CDEC data':overdue?'Reservoir collection is overdue · values may be old':`${snapshot.stations.some(s=>s.error||s.scheduled?.error)?'Collection incomplete':'Collected'} ${time(generation)}`;
+    status.dataset.tone=snapshotError||overdue||snapshot?.stations.some(s=>s.error||s.scheduled?.error)?'gap':'normal';
     $('reservoir-read-time').textContent=snapshotRead?`App checked ${time(snapshotRead)} · collector target 15 min`:'Collector target 15 min · app checks each minute';
     if(!selection)return;
-    const key=JSON.stringify([snapshot,snapshotError,overdue,selection.stations.map(s=>s.metrics.map(m=>reservoirMetricState(snapshot?.stations.find(r=>r.id===s.id)?.metrics?.[m.key],m,now).label))]);
+    const schedules=selection.stations.map(s=>scheduleEvidence({selection,snapshot,error:snapshotError,checked:snapshotRead,config},s.id,now));
+    const key=JSON.stringify([snapshot,snapshotError,overdue,schedules,selection.stations.map(s=>s.metrics.map(m=>reservoirMetricState(snapshot?.stations.find(r=>r.id===s.id)?.metrics?.[m.key],m,now).label))]);
     if(key===reservoirRenderKey)return;reservoirRenderKey=key;
     const list=$('reservoir-list');list.replaceChildren();
     for(const station of selection.stations){
@@ -106,6 +109,9 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
         cell.append(el('small',assessment.label,'metric-state'));grid.append(cell);
       }
       card.append(grid);
+      const conflicts=Object.values(row?.metrics||{}).reduce((n,m)=>n+(m.conflicts||0),0);
+      if(conflicts)card.append(el('p',`${conflicts} conflicting source timestamp${conflicts===1?'':'s'} excluded; unaffected readings remain available.`,'watch-gap'));
+      appendScheduledReleases(card,schedules.find(s=>s.station===station.id),time);
       const actions=el('div','','environment-actions');actions.append(newButton('Locate dam',()=>{onMap();map?.focusEnvironment(station.longitude,station.latitude);}),link('CDEC source',station.source));
       if(station.releaseNotices)actions.append(link('Release notices',station.releaseNotices));card.append(actions);
       const details=el('details','','environment-details');details.append(el('summary','Release meaning & source details'),el('p',station.note),el('p',`Last successful collection: ${time(row?.lastSuccess?Date.parse(row.lastSuccess):null)}. Pool elevation uses the publisher reference; datum is not specified in this feed.`),link('Station metadata',station.metadata));card.append(details);list.append(card);
@@ -139,7 +145,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   if(exercise){for(const id of ['env-radar','env-qpf','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
   void environmentalJson(new URL('../data/reservoir-watchlist.json',import.meta.url)).then(s=>{selection=s;renderReservoirs();}).catch(error=>{snapshotError=error.message;renderReservoirs();});
   void refreshWeather();void refreshReservoirs();renderWeather();renderReservoirs();
-  const tick=()=>{if(document.hidden)return;renderWeather();if(!exercise&&Date.now()>=nextWeather)void refreshWeather();if(!exercise&&Date.now()>=nextReservoir)void refreshReservoirs();};
+  const tick=()=>{if(document.hidden)return;renderWeather();renderReservoirs();if(!exercise&&Date.now()>=nextWeather)void refreshWeather();if(!exercise&&Date.now()>=nextReservoir)void refreshReservoirs();};
   setInterval(tick,30_000);document.addEventListener('visibilitychange',tick);
   window.addEventListener('online',()=>{nextWeather=0;nextReservoir=0;tick();});
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});

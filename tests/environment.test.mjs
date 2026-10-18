@@ -14,6 +14,8 @@ const selection={stations:[{id:'MIL',metrics:[{...metric,duration:'D'}]},{id:'PN
 
 test('CDEC fixed PST and NOAA UTC parsing are independent of browser daylight saving',()=>{
   assert.equal(sourceTime('2026-10-17 12:00','-08:00'),Date.parse('2026-10-17T20:00:00Z'));
+  assert.equal(sourceTime('2026-10-18 5:00','-08:00'),Date.parse('2026-10-18T13:00:00Z'));
+  assert.equal(sourceTime('2026-9-7 0:00','-08:00'),Date.parse('2026-09-07T08:00:00Z'));
   assert.equal(sourceTime('2026-10-17 18:00:00'),Date.parse('2026-10-17T18:00:00Z'));
   for(const s of ['2026-02-30 12:00','2026-10-17 24:00','yesterday',''])assert.equal(sourceTime(s),null);
 });
@@ -53,9 +55,24 @@ test('zero release is a measured zero; negative inflow is allowed only for an in
 });
 test('flagged/wrong-unit values, future samples and conflicting duplicates cannot look current',()=>{
   for(const a of [row({dataFlag:'M'}),row({units:'CMS'}),row({obsDate:'2026-10-18 12:00'})])assert.equal(cdecSeries([a],'PNF',metric,now).lastValid,null);
-  assert.throws(()=>cdecSeries([row(),row({value:253})],'PNF',metric,now),/Conflicting/);
+  const conflict=cdecSeries([row(),row({value:253})],'PNF',metric,now);
+  assert.equal(conflict.lastValid,null);assert.equal(conflict.conflicts,1);assert.equal(conflict.latest.flag,'CONFLICT');
   const deduplicated=cdecSeries([row(),row(),row({obsDate:'2026-10-18 12:00'})],'PNF',metric,now);
   assert.equal(deduplicated.duplicates,1);assert.equal(deduplicated.input,deduplicated.accepted+deduplicated.rejected+deduplicated.duplicates);
+});
+test('historical duplicate conflicts do not freeze later valid readings and are order independent',()=>{
+  const rows=[row({obsDate:'2026-10-17 9:00',value:100}),row({obsDate:'2026-10-17 09:00',value:101}),row({obsDate:'2026-10-17 9:00',value:100}),row()];
+  const a=cdecSeries(rows,'PNF',metric,now),b=cdecSeries([...rows].reverse(),'PNF',metric,now);
+  assert.deepEqual(a,b);assert.equal(a.lastValid.value,252);assert.equal(a.conflicts,1);assert.equal(a.duplicates,2);
+  assert.equal(a.input,a.accepted+a.rejected+a.duplicates);
+  assert.equal(reservoirMetricState(a,metric,now).tone,'normal');
+});
+test('morning readings survive CDEC unpadded hours and genuinely malformed times remain conspicuous',()=>{
+  const time=Date.parse('2026-10-18T13:30:00Z');
+  const series=cdecSeries([row({obsDate:'2026-10-18 5:00'})],'PNF',metric,time);
+  assert.equal(series.rejected,0);assert.equal(reservoirMetricState(series,metric,time).tone,'normal');
+  const bad=cdecSeries([row(),row({obsDate:'unrecognized'})],'PNF',metric,now);
+  assert.match(reservoirMetricState(bad,metric,now).label,/Unrecognized/);
 });
 test('recent snapshot collection does not refresh the age of a reservoir measurement',()=>{
   const series=cdecSeries([row({obsDate:'2026-10-16 12:00'})],'PNF',metric,now);
@@ -76,6 +93,16 @@ test('collector partial failure retains the failed station with its old successf
   assert.match(snapshot.stations[0].error,/unavailable/);assert.equal(snapshot.stations[0].lastSuccess,previous.stations[0].lastSuccess);
   assert.equal(snapshot.stations[0].metrics.outflow.lastValid.value,387);assert.equal(snapshot.stations[1].metrics.outflow.lastValid.value,252);
   validateReservoirSnapshot(snapshot);
+});
+test('collector requests completed daily reports and keeps independent metrics despite one historical conflict',async()=>{
+  const snapshot=await collectReservoirs({selection,now,fetchImpl:async url=>{
+    const stationId=url.searchParams.get('Stations'),durCode=url.searchParams.get('dur_code');
+    if(durCode==='E')return {ok:true,json:async()=>[]};
+    if(durCode==='D')assert.equal(url.searchParams.get('End'),'2026-10-16');
+    return {ok:true,json:async()=>[row({stationId,durCode,obsDate:'2026-10-15 0:00',value:250}),row({stationId,durCode,obsDate:'2026-10-15 00:00',value:251}),row({stationId,durCode,obsDate:'2026-10-16 0:00',value:252})]};
+  }});
+  assert.equal(snapshot.stations[0].error,null);assert.equal(snapshot.stations[0].metrics.outflow.conflicts,1);assert.equal(snapshot.stations[0].metrics.outflow.lastValid.value,252);
+  assert.equal(snapshot.stations[0].scheduled.error,null);
 });
 test('collector marks unexpected station responses failed rather than silently discarding them',async()=>{
   const snapshot=await collectReservoirs({selection,now,fetchImpl:async()=>({ok:true,json:async()=>[row({stationId:'OTHER'})]})});

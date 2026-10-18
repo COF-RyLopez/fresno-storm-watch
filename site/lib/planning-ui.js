@@ -4,6 +4,7 @@ import { fetchPlanningRain } from './planning-data.js';
 import { planningExercise } from './planning-exercise.js';
 import { formatTime } from './model.js';
 import { riverValue } from './river-model.js';
+import {appendScheduledReleases,noticeSummary} from './release-ui.js';
 
 const $=id=>document.getElementById(id);
 /** @param {string} tag @param {string} text @param {string} css @returns {HTMLElement} */
@@ -18,7 +19,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
   const time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Unknown';
   const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.addEventListener('click',fn);return b;};
   const reportTime=(sample,duration)=>duration==='D'?`Report date ${sample?.reportDate||'unknown'} · PST`:time(sample?.time);
-  function cueSummary(r){return [r.threshold?'NWS threshold met/forecast':null,...r.rising.map(g=>`${g.id} observed +${riverValue(g.assessment.trend.delta,g.gauge.observed.units)} / ${g.assessment.trend.hours.toFixed(1)} h`),...r.higher.map(g=>`${g.id} forecast +${riverValue(g.assessment.delta,g.gauge.forecast.units)} above observation`),...r.increased.map(s=>`${s.station} ${s.label} +${riverValue(s.delta,'cfs')} / ${s.hours.toFixed(1)} h`),r.rainfall.maximum!==null?`Rain sample max ${r.rainfall.maximum.toFixed(2)} in`:'Rain amount unknown'].filter(Boolean).join(' · ');}
+  function cueSummary(r){return [r.threshold?'NWS threshold met/forecast':null,...r.scheduled.map(n=>noticeSummary(n,time)),...r.rising.map(g=>`${g.id} observed +${riverValue(g.assessment.trend.delta,g.gauge.observed.units)} / ${g.assessment.trend.hours.toFixed(1)} h`),...r.higher.map(g=>`${g.id} forecast +${riverValue(g.assessment.delta,g.gauge.forecast.units)} above observation`),...r.increased.map(s=>`${s.station} ${s.label} +${riverValue(s.delta,'cfs')} / ${s.hours.toFixed(1)} h`),r.rainfall.maximum!==null?`Rain sample max ${r.rainfall.maximum.toFixed(2)} in`:'Rain amount unknown'].filter(Boolean).join(' · ');}
   function renderEvidence(r,host){
     host.append(el('p',r.area.note,'watch-context'));
     host.append(el('h4','Rainfall forecast · WPC Days 1–3'));
@@ -46,6 +47,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
       host.append(el('p',release.delta===null?release.reason:`Change ${release.delta>=0?'+':''}${riverValue(release.delta,'cfs')} over ${release.hours.toFixed(1)} h; previous ${riverValue(release.prior.value,'cfs')} · ${reportTime(release.prior,release.duration)}`));
       if(release.source)host.append(link('CDEC source',release.source));
     }
+    for(const schedule of r.schedules)appendScheduledReleases(host,schedule,time);
     if(r.gaps.length){host.append(el('h4','Coverage gaps'));for(const gap of r.gaps)host.append(el('p',gap,'watch-gap'));}
     host.append(el('p','County action thresholds are not configured. Small positive changes are review cues, not rapid-rise or flood-severity categories. Forecasts and observations may be related; they are not independent votes.','watch-context'));
   }
@@ -54,13 +56,14 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     const rows=evaluateAreas({areas:areaConfig.areas,points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs,rain,environmentConfig:config.environment});
     const reviews=rows.filter(r=>r.review),gaps=rows.filter(r=>r.gaps.length),rainOnly=rows.filter(r=>r.rank===2);
     const threshold=reviews.some(r=>r.threshold);
+    const scheduleCues=[...new Map(rows.flatMap(r=>r.scheduled).map(n=>[n.key,n])).values()].sort((a,b)=>Number(b.phase==='upcoming')-Number(a.phase==='upcoming')||a.time-b.time);
     const title=reviews.length?`${reviews.length} river area${reviews.length===1?'':'s'} to review for possible prepositioning`:rainOnly.length?`${rainOnly.length} river area${rainOnly.length===1?' has':'s have'} forecast precipitation`:!rain?'Checking river-area evidence':gaps.length?'River-area review · evidence incomplete':'River-area review · no current change cue';
     const key=JSON.stringify([title,busy,rain,entries,reservoirs.snapshot?.generatedAt,reservoirs.error,rows.map(r=>[r.area.id,r.status,cueSummary(r),r.gaps,r.gauges.map(g=>[g.assessment.current,g.assessment.forecastUsable,g.assessment.observed,g.assessment.peak]),r.releases.map(s=>[s.sample,s.delta,s.current])])]);
     $('watch-check-time').textContent=`${exercise?'Fictional exercise · ':''}Evaluated ${time(Date.now())} · fixed six-area scope`;
     $('watch-refresh').toggleAttribute('loading',busy);$('watch-refresh').toggleAttribute('disabled',busy||exercise);
     if(key===signature)return;signature=key;
     $('river-title').textContent=(exercise?'EXERCISE · ':'')+title;
-    $('river-summary').textContent=`${reviews.length?reviews.slice(0,2).map(r=>r.area.name).join(' · ')+(reviews.length>2?` · +${reviews.length-2} more`:'')+' — ':''}${gaps.length}/6 areas have evidence gaps. Review cues are not deployment instructions. County action thresholds remain unset.`;
+    $('river-summary').textContent=`${scheduleCues.length?`${scheduleCues.length} scheduled release notice${scheduleCues.length===1?'':'s'} to review. ${noticeSummary(scheduleCues[0],time)}. `:''}${reviews.length?reviews.slice(0,2).map(r=>r.area.name).join(' · ')+(reviews.length>2?` · +${reviews.length-2} more`:'')+' — ':''}${gaps.length}/6 areas have evidence gaps. Review cues are not deployment instructions. County action thresholds remain unset.`;
     $('river-banner').setAttribute('kind',threshold?'danger':reviews.length||gaps.length?'warning':'info');
     $('review-areas').setAttribute('text',`Review areas${reviews.length?' ('+reviews.length+')':''}`);
     $('view-watch').setAttribute('text',reviews.length?`Area watch · ${reviews.length}`:'Area watch');

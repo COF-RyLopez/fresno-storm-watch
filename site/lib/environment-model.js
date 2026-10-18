@@ -24,11 +24,13 @@ export function realNumber(value) {
 
 /** @param {unknown} value @param {string} offset @returns {number|null} Parse publisher wall-clock text with an explicit source offset. */
 export function sourceTime(value,offset='Z') {
-  if(typeof value!=='string'||!/^\d{4}-\d\d-\d\d \d\d:\d\d(?::\d\d)?$/.test(value))return null;
-  const t=Date.parse(value.replace(' ','T')+offset);
+  const parts=typeof value==='string'&&value.match(/^(\d{4})-(\d{1,2})-(\d{1,2}) (\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(!parts||!['Z','-08:00'].includes(offset))return null;
+  const normalized=`${parts[1]}-${parts[2].padStart(2,'0')}-${parts[3].padStart(2,'0')} ${parts[4].padStart(2,'0')}:${parts[5]}${parts[6]?':'+parts[6]:''}`;
+  const t=Date.parse(normalized.replace(' ','T')+offset);
   if(!Number.isFinite(t))return null;
-  const wall=new Date(t+(offset==='-08:00'?-8*3_600_000:0)).toISOString().slice(0,value.length).replace('T',' ');
-  return wall===value?t:null;
+  const wall=new Date(t+(offset==='-08:00'?-8*3_600_000:0)).toISOString().slice(0,normalized.length).replace('T',' ');
+  return wall===normalized?t:null;
 }
 
 /** @param {object} payload @param {number} now @returns {object[]} Latest CONUS frames; never use another region's timestamp. */
@@ -57,27 +59,36 @@ export function qpfCycle(payload,hours,now=Date.now()) {
 }
 
 /** @param {object[]} rows @param {string} station @param {object} metric @param {number} now @returns {object} Preserve missing/flagged records and report dates without turning them into zeros. */
-export function cdecSeries(rows,station,metric,now=Date.now()) {
+export function cdecSeries(rows,station,metric,now=Date.now(),{through=now+120_000}={}) {
   if(!Array.isArray(rows))throw new Error('CDEC response is not a record array.');
   const matching=rows.filter(r=>r.stationId===station&&r.durCode===metric.duration&&Number(r.SENSOR_NUM)===metric.sensor);
-  const byTime=new Map();let rejected=0,duplicates=0;
+  const byTime=new Map();let rejected=0,duplicates=0,conflicts=0,invalidTimes=0;
   for(const row of matching){
     const time=sourceTime(row.obsDate,'-08:00');
-    if(time===null||time>now+120_000){rejected++;continue;}
+    if(time===null||time>through){rejected++;if(time===null)invalidTimes++;continue;}
     const flag=String(row.dataFlag??'').trim(), value=realNumber(row.value);
     const valid=row.units===metric.units&&value!==null&&(metric.allowNegative||value>=0)&&!flag;
-    const sample={time,reportDate:String(row.obsDate).slice(0,10),value:valid?value:null,flag,units:row.units};
-    if(byTime.has(time)){if(JSON.stringify(byTime.get(time))!==JSON.stringify(sample))throw new Error(`Conflicting CDEC records for ${station} sensor ${metric.sensor}.`);duplicates++;}
-    byTime.set(time,sample);
+    const reportDate=new Date(time-8*3_600_000).toISOString().slice(0,10);
+    const sample={time,reportDate,value:valid?value:null,flag,units:row.units};
+    if(byTime.has(time)){
+      duplicates++;
+      const prior=byTime.get(time);
+      if(prior.conflict)continue;
+      if(JSON.stringify(prior)!==JSON.stringify(sample)){
+        // No publisher revision ordering exists: quarantine this timestamp, not the whole reservoir.
+        byTime.set(time,{time,reportDate,value:null,flag:'CONFLICT',units:metric.units,conflict:true});conflicts++;
+      }
+    }else byTime.set(time,sample);
   }
   const samples=[...byTime.values()].sort((a,b)=>a.time-b.time);
   const latest=samples.at(-1)||null,lastValid=samples.filter(r=>r.value!==null).at(-1)||null;
-  return {sensor:metric.sensor,duration:metric.duration,units:metric.units,latest,lastValid,samples,input:matching.length,accepted:samples.length,rejected,duplicates};
+  return {sensor:metric.sensor,duration:metric.duration,units:metric.units,latest,lastValid,samples,input:matching.length,accepted:samples.length,rejected,duplicates,conflicts,invalidTimes};
 }
 
 /** @param {object|null} series @param {object} metric @param {number} now @returns {object} Age and gaps are independent of collector/browser fetch success. */
 export function reservoirMetricState(series,metric,now=Date.now()) {
   const value=series?.lastValid;
+  if(series?.invalidTimes)return {tone:'gap',label:'Unrecognized source timestamp · verify CDEC',sample:value||null};
   if(!value||!Number.isFinite(value.time)||realNumber(value.value)===null||series.units!==metric.units)return {tone:'gap',label:'Unavailable',sample:null};
   if(value.time>now+120_000)return {tone:'gap',label:'Source time is in the future',sample:null};
   const age=now-value.time;
