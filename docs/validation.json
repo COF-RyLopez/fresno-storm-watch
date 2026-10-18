@@ -3,10 +3,10 @@
   "version": "0.10.2",
   "date": "2026-10-17",
   "previous_validation": "validation-0.10.1.json",
-  "status": "Road-feed transport repaired; local browser and source parity checks passed; published browser verification pending.",
+  "status": "County road-feed repair deployed and verified in the live GitHub Pages map and EOC workspace.",
   "automated": {
     "javascript": "110 tests passed",
-    "python": "Unchanged private publisher; 18 tests will run in the deployment workflow",
+    "python": "18 unchanged private publisher tests passed in the deployment workflow",
     "check": "Syntax, local links and source/vendor contracts passed"
   },
   "source_probe": {
@@ -49,21 +49,27 @@
     "Local road list loaded all three road types: 38 records in the default filter; 479 with history enabled",
     "Displayed road-block, closure and detour details matched publisher IDs, status and dates",
     "Source update, editor timestamp and application check remain separate",
-    "Local EOC source health shows County road records: Query succeeded"
+    "Local EOC source health shows County road records: Query succeeded",
+    "Published map loaded 38 default-visible / 479 total county records via the public ArcGIS Online route",
+    "Published manual refresh completed successfully and advanced the application check time",
+    "Published map displayed road geometry with existing legend and source-status distinctions",
+    "Published EOC source health showed County road records: Query succeeded"
   ],
   "pending": [
-    "Verify the deployed road map and EOC queue use the public route",
     "Administrator confirms eligible named accounts and assigns isolated exercise groups",
     "Two-account read/create/update/delete permission matrix and tabletop acceptance",
     "County OES plan amendments, authorities, operating practice and templates",
     "Road Maintenance field meanings and status reconciliation",
-    "Engage access and supported interface confirmation"
+    "Engage access and supported interface confirmation",
+    "County GIS review of the existing public route's advertised edit capabilities and maintenance ownership; no write operation attempted"
   ],
   "private_storage": "Enabled only for the exercise environment. Private records stay in county AGOL and session memory. GitHub contains the public application shell and identifiers only. No memberships changed.",
   "rollback": "Redeploy f085a83 if necessary. It restores the prior app but also restores the browser road-feed failure on county split-DNS networks. No hosted records or sharing settings need rollback.",
   "deployment": {
-    "status": "pending",
+    "status": "success",
     "roads_url": "https://cof-rylopez.github.io/fresno-storm-watch/?view=roads",
-    "eoc_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html"
+    "eoc_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html",
+    "application_commit": "87fa752f055ef5d7d10475a787abdc42162e000d",
+    "run": "https://github.com/COF-RyLopez/fresno-storm-watch/actions/runs/39093118013"
   }
 }
