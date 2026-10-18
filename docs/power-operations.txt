@@ -1,0 +1,55 @@
+Power / PSPS increment — 0.13.0, 2026-10-18
+
+Runtime: existing Node >=22, Calcite / ArcGIS SDK 5.1. No new packages,
+accounts, secrets, proxy servers or paid services. Experience Builder and
+private AGOL datasets are unchanged.
+
+Run npm run collect:power for a local snapshot. The Pages workflow collects
+both utilities before deployment on the existing 07/22/37/52-minute schedule.
+Runs may be delayed. The app polls the public snapshot each minute and also
+queries PG&E directly each five minutes while visible. SCE uses the snapshot
+because its public GIS service does not return CORS access for this app.
+The local SCE preview needs another collector run after 45 minutes; it does
+not start a new unattended background process.
+
+Collection uses allowlisted fields. Do not change to outFields=*; utility
+schemas include subscription and customer-category fields that this public
+app does not need. Only public current outages/PSPS information is used.
+No meter, customer address, Medical Baseline or partner-only data is stored.
+
+Layer inventory, count reconciliation, WGS84 and stable-ID checks fail the
+affected category if incomplete. Other categories continue. Last successful
+records stay dated and marked as retained after failure. In workflow logs,
+power-collection contains duration, records, and per-layer envelope/returned/
+county/outside-county counts. Failed checks are explicit in the UI; no email
+or unattended notification is implemented.
+
+County bounds are only a coarse server filter. Exact point/ring intersection
+against the existing Fresno polygon removes outside records. Touching the
+boundary counts as intersection. The utility footprint is not clipped and
+its customer estimate is never prorated or summed. One incident represented
+by multiple points/polygons counts once by utility ID. PG&E notice polygons
+lack a stable individual polygon ID: EventID + TimePeriod + footprint hash is
+used; source geometry revisions intentionally appear as new notice areas.
+
+For a reported feed problem:
+1. Check source retrieval times and utility record times independently.
+2. Check the official utility map and confirm with the utility liaison.
+3. Run collector and inspect its per-category errors/accounting.
+4. Compare the configured schema with official map configuration. Do not
+   map unfamiliar status codes to active, cancelled or restored by guessing.
+5. Re-run npm test / npm run check before publishing a connector change.
+
+Use ?exercise=1&view=power for fictional PSPS warning, active shutoff,
+restoration/cancellation and failed-feed checks. Test records are memory-only.
+Map filters do not change the fixed-county banner. Clear change badges does
+not acknowledge on behalf of a team or establish restoration.
+
+SCE outage change/estimated-restoration strings lack an explicit timezone.
+Preserve them verbatim and label the uncertainty; do not parse them as UTC.
+PG&E and SCE PSPS date fields are displayed only when their epoch/offset is
+known. SCE circuit-level customer estimates can overcount across counties.
+
+Rollback: revert the power feature commit and redeploy Pages. No source data,
+existing publisher service, private record or external permission was changed.
+Keep published snapshot data out of private-workspace exports and vice versa.

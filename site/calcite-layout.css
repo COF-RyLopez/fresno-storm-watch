@@ -247,3 +247,19 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .scheduled-release-list {margin:8px 0 14px;padding-inline-start:20px;max-height:360px;overflow:auto;}
 .scheduled-release-list li {margin-block:10px;}
 .scheduled-releases .environment-note {color:var(--calcite-color-text-2);font-size:12px;}
+.power-intro,.power-empty{padding:0.8rem 1rem;}
+.power-intro p{font-size:0.85rem;line-height:1.5;}
+.power-actions{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.8rem;}
+.power-card{padding:1rem;border-bottom:1px solid var(--calcite-color-border-2);border-left:4px solid var(--power-color);}
+.power-card h3{font-size:1rem;margin:0.6rem 0;}
+.power-card p{font-size:0.85rem;line-height:1.45;overflow-wrap:anywhere;}
+.power-card>strong{color:var(--power-color);font-size:0.9rem;}
+.power-new{display:inline-block;padding:0.15rem 0.4rem;background:var(--calcite-color-foreground-3);font-size:0.75rem;}
+.power-gap{color:var(--calcite-color-status-warning);font-weight:600;}
+.power-source{display:grid;gap:0.3rem;padding:0.7rem 0;border-bottom:1px solid var(--calcite-color-border-2);}
+.power-source[data-tone="gap"]>span{color:var(--calcite-color-status-warning);}
+#power-detail{padding:0.25rem;line-height:1.5;overflow-wrap:anywhere;}
+#power-detail dt{font-weight:700;margin-top:0.7rem;}
+#power-detail dd{margin:0.15rem 0 0.5rem;}
+#power-detail>a{display:block;margin:1rem 0;}
+@media(max-width:600px){.power-banner-wrap calcite-action{max-width:46px;}.power-banner-wrap{font-size:0.8rem;}}

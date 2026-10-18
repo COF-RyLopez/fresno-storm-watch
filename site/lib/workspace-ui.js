@@ -21,8 +21,8 @@ export function createWorkspace({onCameraChange}) {
     const covered=compact.matches&&(panelOpen||camerasOpen);
     element('planning-workspace').classList.toggle('map-covered',covered);
     element('planning-workspace').inert=covered;
-    for(const id of ['review-areas','about','sign-in','theme-toggle'])element(id).toggleAttribute('text-enabled',!phone.matches);
-    for(const name of ['watch','rivers','environment','alerts','roads']){
+    for(const id of ['review-areas','review-power','about','sign-in','theme-toggle'])element(id).toggleAttribute('text-enabled',!phone.matches);
+    for(const name of ['watch','rivers','environment','alerts','roads','power']){
       activate(`view-${name}`,panelOpen&&section===name);
     }
     activate('view-map',!panelOpen&&!camerasOpen);

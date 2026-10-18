@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
-import { createMap } from './lib/map.js';
+import { createMap } from './lib/map.js?v=0.13.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -9,7 +9,8 @@ import { createRiverWatch } from './lib/river-ui.js';
 import { createCameraWatch } from './lib/camera-ui.js';
 import { createEnvironmentWatch } from './lib/environment-ui.js';
 import { createPlanningWatch } from './lib/planning-ui.js';
-import { createWorkspace } from './lib/workspace-ui.js';
+import { createWorkspace } from './lib/workspace-ui.js?v=0.13.0';
+import { createPowerWatch } from './lib/power-ui.js';
 import { createRoadWatch } from './lib/roads-ui.js';
 import { createReleaseTrends } from './lib/release-trend-ui.js';
 
@@ -36,6 +37,7 @@ const workspace=createWorkspace({onCameraChange:open=>cameras?.setOpen(open)});
 
 /** @returns {void} Keep the river geography distinct from the weather-alert query region. */
 function renderScope() {
+  if(!$('power-panel').hidden){$('scope-label').textContent='Fresno County · utility power status';$('map-panel').setAttribute('heading',`Fresno power & river conditions${exercise?' · EXERCISE':''}`);$('fit-region').setAttribute('text','Fit Fresno County');$('scope-note').textContent='Power counts stay fixed when panning · approximate utility locations';return;}
   $('scope-label').textContent=riverView?'Fresno County · boundary river reaches':'Fresno · Madera · Merced · Kings · Tulare';
   $('map-panel').setAttribute('heading',`${riverView?'Fresno County river areas':'Five-county weather overview'}${exercise?' · EXERCISE':''}`);
   $('fit-region').setAttribute('text',riverView?'Fit Fresno County':'Fit region');
@@ -48,6 +50,7 @@ function planningView(showRivers) {
   $('environment-panel').hidden=true;
   $('watch-panel').hidden=true;
   $('roads-panel').hidden=true;
+  $('power-panel').hidden=true;
   for(const id of ['river-panel','river-metrics']) $(id).hidden=!showRivers;
   for(const id of ['weather-panel','weather-banner-wrap','weather-metrics','weather-footer']) $(id).hidden=showRivers;
   workspace.showPanel(showRivers?'rivers':'alerts');
@@ -67,6 +70,9 @@ function openPlanning(){
 $('view-watch').addEventListener('click',openPlanning);
 function openRoads(){planningView(true);$('river-panel').hidden=true;$('roads-panel').hidden=false;workspace.showPanel('roads');}
 $('view-roads').addEventListener('click',openRoads);
+function openPower(){planningView(true);$('river-panel').hidden=true;$('power-panel').hidden=false;workspace.showPanel('power');renderScope();}
+$('view-power').addEventListener('click',openPower);
+const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap});
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
@@ -75,6 +81,7 @@ environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.ti
 if(new URLSearchParams(location.search).get('view')==='conditions')openEnvironment();
 if(new URLSearchParams(location.search).get('view')==='watch')openPlanning();
 if(new URLSearchParams(location.search).get('view')==='roads')openRoads();
+if(new URLSearchParams(location.search).get('view')==='power')openPower();
 void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onTrends:(id,gauge)=>releaseTrends.open(id,gauge),onData:data=>{planning.setRiverData(data);releaseTrends.setRiverData(data);}}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
 void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen);if(map)cameras.setMap(map);});
 
@@ -263,13 +270,15 @@ try {
   counties = await loadCounties(new URL('./data/counties.geojson', import.meta.url));
   // Fetches run even if the SDK, graphics driver, or basemap fails.
   void refresh();
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key)).then(controller => {
+  power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key)).then(controller => {
     map = controller;
     map.setScope(riverView?'fresno':'regional');
     rivers?.setMap(map);
     cameras?.setMap(map);
     planning.setMap(map);
     roads.setMap(map);
+    power.setMap(map);
     void environment.setMap(map);
     map.update(state.alerts);
     map.select(state.alerts.find(a => a.key === selectedKey));

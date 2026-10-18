@@ -1,4 +1,5 @@
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
+import { POWER_COLORS } from './power-model.js';
 import { RIVER_COLORS } from './river-model.js';
 
 let sdkPromise;
@@ -9,7 +10,7 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   const sdk = await loadSdk();
@@ -25,6 +26,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const labels = new GraphicsLayer({ title: 'County labels', elevationInfo:{mode:'relative-to-ground'} });
   const gauges = new GraphicsLayer({ title: 'NWS river watchpoints', elevationInfo:{mode:'relative-to-ground'} });
   const cameras = new GraphicsLayer({ title: 'Caltrans river-area highway cameras', elevationInfo:{mode:'relative-to-ground'} });
+  const power = new GraphicsLayer({title:'Utility PSPS / outage records — approximate',elevationInfo:{mode:'on-the-ground'}});
   const roads = new GraphicsLayer({title:'County road records — verify access',elevationInfo:{mode:'on-the-ground'}});
   const fema = new FeatureLayer({
     url:'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28',
@@ -49,7 +51,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Reference/MapServer`
     })] });
   };
-  const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, roads, selectedLayer, labels, gauges, cameras] });
+  const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras] });
   let imageryBasemap=null,imagery=false;
   document.querySelector('#toggle-imagery').addEventListener('click',()=>{
     imagery=!imagery;
@@ -165,13 +167,15 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }));
     targetView.on('click',async event=>{
       try{
-        const hit=await targetView.hitTest(event,{include:[cameras,gauges,roads,alertLayer]});
+        const hit=await targetView.hitTest(event,{include:[cameras,gauges,roads,power,alertLayer]});
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
         const cameraId=hit.results.find(r=>r.graphic?.attributes?.cameraId)?.graphic.attributes.cameraId;
         if(cameraId){onCameraSelect(cameraId);return;}
         const gaugeId=hit.results.find(r=>r.graphic?.attributes?.gaugeId)?.graphic.attributes.gaugeId;
         if(gaugeId){onGaugeSelect(gaugeId);return;}
+        const powerKey=hit.results.find(r=>r.graphic?.attributes?.powerKey)?.graphic.attributes.powerKey;
+        if(powerKey){onPowerSelect(powerKey);return;}
         const key=hit.results.find(r=>r.graphic?.attributes?.alertKey)?.graphic.attributes.alertKey;
         if(key)onSelect(key);
       }catch{const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map selection unavailable; select a record in the list.';}
@@ -231,6 +235,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   document.querySelector('#scene-tilt').addEventListener('click',()=>void navigate({tilt:55,heading:0}));
   modeStatus();for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).removeAttribute('disabled');
   return {
+    setPower:rows=>{power.removeAll();for(const r of rows){for(const g of r.geometries){const shade=POWER_COLORS[r.status],ended=['restored','cancelled'].includes(r.status),unknown=!!r.health||r.status==='unknown',polygon=!!g.rings;power.add(new Graphic({attributes:{powerKey:r.key},geometry:{...g,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',color:shade,style:unknown?'diagonal-cross':ended?'none':'backward-diagonal',outline:{color:shade,width:1.5,style:unknown?'dash':'solid'}}:{type:'simple-marker',style:unknown?'diamond':ended?'circle':['warning','consideration'].includes(r.status)?'triangle':'square',size:12,color:ended?[0,0,0,0]:shade,outline:{color:darkMode()?'#f3f3f3':'#252525',width:1.5}}}));}}},
+    setPowerVisible:visible=>{power.visible=visible;},
+    focusPower:key=>{const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;power.visible=true;document.querySelector('#power-map-toggle').checked=true;return navigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:25000}:{})});}},
     setRoads:rows=>{roads.removeAll();for(const r of rows){if(!r.geometry)continue;const inactive=r.active==='no',shade=inactive?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';roads.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||inactive?'dash':'solid'}}));}},
     setRoadsVisible:visible=>{roads.visible=visible;},
     focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;return navigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:22000}:{})});}},
