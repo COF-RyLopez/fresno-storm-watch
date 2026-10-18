@@ -26,10 +26,10 @@
     "Fictional Level 3 record displays the decision authority and time; no system activation occurs",
     "Clearing exercise removes in-memory records and restores activation unconfirmed",
     "Public map EOC navigation opens the locked private setup state",
-    "Live EOC source summary loaded county roads, NWS, NWPS, WPC and CDEC with independent query health"
+    "Live EOC source summary loaded county roads, NWS, NWPS, WPC and CDEC with independent query health",
+    "Published GitHub Pages exercise opens with FROG branding, dark Calcite UI, unconfirmed activation and explicit in-memory exercise label"
   ],
   "pending": [
-    "Verify GitHub Pages deployment",
     "Run guarded publisher inside county AGOL Pro session; standalone session failed the organization preflight without writes",
     "Register user OAuth and apply public item-ID configuration",
     "Administrator assigns eligible named accounts to isolated exercise groups",
@@ -40,5 +40,12 @@
   ],
   "private_storage": "Disabled. No private datasets or memberships modified. No private records in the repository or deployment. Fictional data exists only in browser memory.",
   "rollback": "Redeploy 660089fb39136ba72f54e7db1df47f0968e27479. Do not delete or overwrite hosted records during rollback.",
-  "runtime_blocker": "Standalone GIS(pro) resolved gisportal.co.fresno.ca.us as rylopez; preflight refused to create AGOL items."
+  "runtime_blocker": "Standalone GIS(pro) resolved gisportal.co.fresno.ca.us as rylopez; preflight refused to create AGOL items.",
+  "deployment": {
+    "status": "success",
+    "application_commit": "e880398ababc354611a5b1b61842b967b04b7868",
+    "run": "https://github.com/COF-RyLopez/fresno-storm-watch/actions/runs/39085965675",
+    "exercise_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html?exercise=1",
+    "guide_url": "https://cof-rylopez.github.io/fresno-storm-watch/eoc-guide.html"
+  }
 }
