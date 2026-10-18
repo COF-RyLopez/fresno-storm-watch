@@ -29,6 +29,9 @@ jobs:
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published
+      - name: Collect public PG&E and SCE power records
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npm run collect:power -- --published
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5

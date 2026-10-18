@@ -1,6 +1,6 @@
 {
   "name": "fresno-storm-watch-prototype",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -12,6 +12,7 @@
     "check": "node scripts/check.mjs",
     "check:roads": "node --use-system-ca scripts/check-roads.mjs",
     "collect:reservoirs": "node --use-system-ca scripts/collect-reservoirs.mjs",
-    "watch:reservoirs": "node --use-system-ca scripts/collect-reservoirs.mjs --watch"
+    "watch:reservoirs": "node --use-system-ca scripts/collect-reservoirs.mjs --watch",
+    "collect:power": "node --use-system-ca scripts/collect-power.mjs"
   }
 }

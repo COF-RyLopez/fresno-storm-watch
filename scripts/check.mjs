@@ -6,6 +6,7 @@ import { validateCounties } from '../site/lib/model.js';
 import { createHash } from 'node:crypto';
 import { validateReservoirSnapshot } from '../site/lib/environment-model.js';
 import { planningPoints } from '../site/lib/planning-model.js';
+import {validatePowerSnapshot} from '../site/lib/power-model.js';
 
 const root = new URL('../', import.meta.url);
 for (const folder of ['site/', 'site/lib/', 'scripts/']) {
@@ -35,6 +36,7 @@ const reservoirSettings=JSON.parse(await readFile(new URL('site/data/reservoir-w
 assert.deepEqual(reservoirSettings.stations.map(s=>s.id),['MIL','PNF']);
 for(const station of reservoirSettings.stations)assert(station.longitude>-121&&station.longitude<-118&&station.latitude>36&&station.latitude<38&&station.metrics.every(m=>['D','H'].includes(m.duration)&&['CFS','FEET','AF'].includes(m.units)),'Reservoir geography or metric contract changed');
 validateReservoirSnapshot(JSON.parse(await readFile(new URL('site/data/reservoir-latest.json',root),'utf8')));
+validatePowerSnapshot(JSON.parse(await readFile(new URL('site/data/power-latest.json',root),'utf8')));
 const areaSettings=JSON.parse(await readFile(new URL('site/data/river-areas.json',root),'utf8'));
 assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,11);
 const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
