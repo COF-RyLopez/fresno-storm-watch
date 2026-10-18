@@ -28,7 +28,7 @@ export async function collectScheduledReleases({station,now,old,fetchImpl}){
 /** @param {object} options @returns {Promise<object>} Bounded requests; retain explicitly dated previous data on a station failure. */
 export async function collectReservoirs({fetchImpl=fetch,now=Date.now(),previous=null,selection}={}) {
   selection??=JSON.parse(await readFile(selectionUrl,'utf8'));
-  const start=pstDate(now-5*DAY),end=pstDate(now+DAY);
+  const start=pstDate(now-8*DAY),end=pstDate(now+DAY);
   const stations=[];
   for(const station of selection.stations){
     const old=previous?.stations?.find(s=>s.id===station.id);

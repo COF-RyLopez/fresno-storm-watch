@@ -17,10 +17,11 @@ export function planningExercise(gauges,points,selection,scenario,now){
   const rain={cycle,checked:scenario==='stale'?now-HOUR:now,error:null,points:Object.fromEntries(points.map(p=>[p.id,{value:scenario==='missing'?null:['combined','threshold'].includes(scenario)&&['MIL','SJXC1','RSBC1','GVAC1','SJMC1'].includes(p.id)?1.25:0,labels:[],reason:scenario==='missing'?'Fictional missing polygon':'Fictional forecast sample',error:null}]))};
   const snapshot={schemaVersion:1,generatedAt:new Date(scenario==='stale'?now-2*HOUR:now).toISOString(),stations:selection.stations.map(s=>({id:s.id,error:null,lastSuccess:new Date(now).toISOString(),metrics:Object.fromEntries(s.metrics.map(m=>{
     const value=s.id==='MIL'&&m.key==='release'&&scenario==='combined'?600:m.key==='spill'?0:400;
-    const time=now-HOUR,priorTime=time-(m.duration==='D'?24:1)*HOUR;
+    const time=m.duration==='D'?Date.parse(new Date(now-8*HOUR-24*HOUR).toISOString().slice(0,10)+'T00:00:00-08:00'):now-HOUR,priorTime=time-(m.duration==='D'?24:1)*HOUR;
     const sample={time,value,flag:'',units:m.units,reportDate:new Date(time-8*HOUR).toISOString().slice(0,10)};
     const prior={...sample,time:priorTime,value:m.key==='release'?400:value,reportDate:new Date(priorTime-8*HOUR).toISOString().slice(0,10)};
-    return [m.key,{sensor:m.sensor,duration:m.duration,units:m.units,lastValid:sample,latest:sample,samples:[prior,sample]}];
+    const older=Array.from({length:m.duration==='D'?6:71},(_,i)=>{const t=priorTime-(i+1)*(m.duration==='D'?24:1)*HOUR;return {...prior,time:t,reportDate:new Date(t-8*HOUR).toISOString().slice(0,10)};}).reverse();
+    return [m.key,{sensor:m.sensor,duration:m.duration,units:m.units,lastValid:sample,latest:sample,samples:[...older,prior,sample]}];
   }))}))};
   for(const station of snapshot.stations){
     const row=(offset,value)=>({stationId:station.id,durCode:'E',SENSOR_NUM:7,units:'CFS',value,dataFlag:' ',obsDate:new Date(now+offset*HOUR-8*HOUR).toISOString().slice(0,16).replace('T',' ')});

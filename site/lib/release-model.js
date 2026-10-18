@@ -45,5 +45,5 @@ export function scheduleEvidence(input,stationId,now=Date.now()){
   const cues=current?[...upcoming,...recent].filter(r=>r.valid&&(r.delta===null||Math.round(r.delta)!==0)):[];
   const last=notices.filter(r=>r.time<=now).at(-1)||null;
   const reason=!contract||!unique?'Scheduled-release data unavailable or invalid':input.error||schedule.error?'Scheduled-release check failed; retained notices need verification':!fresh?'Scheduled-release collection overdue':'Schedule checked';
-  return {station:stationId,name:station?.name||stationId,source:releaseSource(stationId),current,reason,collected,windowEnd:schedule?.windowEnd,upcoming,recent,last,pending,cues};
+  return {station:stationId,name:station?.name||stationId,source:releaseSource(stationId),current,reason,collected,windowEnd:schedule?.windowEnd,notices,upcoming,recent,last,pending,cues};
 }

@@ -3,12 +3,13 @@ import { fetchRiverWatch } from './nwps.js';
 import { assessGauge, riverValue, formatRiverTime } from './river-model.js';
 import { riverChart } from './river-chart.js';
 import { exerciseRivers } from './river-exercise.js';
+import { TREND_REACHES } from './release-trend-model.js';
 
 const $=id=>document.getElementById(id);
 /** @param {string} tag @param {string} text @param {object} attributes @returns {HTMLElement} */
 function el(tag,text='',attributes={}) { const n=document.createElement(tag);n.textContent=text;for(const[k,v]of Object.entries(attributes))if(v!==false&&v!==null)n.setAttribute(k,v===true?'':String(v));return n; }
 /** @param {object} options @returns {Promise<object>} River feed is independent from the weather-alert feed and map. */
-export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onData=()=>{}}) {
+export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onData=()=>{}}) {
   let stations=[], entries=new Map(), busy=false, map=null, selected=null, timer, next=null, lastAttempt=null, scenario='baseline', horizon=config.defaultHorizonHours, basin='All';
   const exerciseClock=Date.now();
   const time=value=>formatRiverTime(value,timeZone);
@@ -29,6 +30,9 @@ export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()
     const zoom=el('calcite-button','Inspect FEMA vicinity',{scale:'s',appearance:'outline',disabled:!map,'icon-start':'extent'});
     zoom.addEventListener('click',()=>{$('river-dialog').removeAttribute('open');onMap();map?.focusGauge(s.id);});
     host.append(zoom);
+    if(TREND_REACHES.MIL.gauges.includes(s.id)){
+      const trends=el('calcite-button','Compare with Millerton releases',{scale:'s',appearance:'outline'});trends.addEventListener('click',()=>onTrends('MIL',s.id));host.append(trends);
+    }
     if(!g){
       host.append(el('p',a.error||'No successful data query for this station.',{class:'quality'}));
       if(!exercise)host.append(el('calcite-button','Open official NWS gauge',{scale:'s',appearance:'outline',href:`https://water.noaa.gov/gauges/${s.id.toLowerCase()}`,target:'_blank',rel:'noopener noreferrer','icon-end':'launch'}));

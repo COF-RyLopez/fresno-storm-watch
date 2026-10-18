@@ -13,7 +13,7 @@ function el(tag,text='',css=''){const n=document.createElement(tag);n.textConten
 function link(text,href){const n=el('a',text);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Fixed-area review banner; separate from official NWS alerts and team acknowledgements. */
-export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onExercise=()=>{}}){
+export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onTrends=()=>{},onExercise=()=>{}}){
   let areaConfig=null,points=[],gaugeSettings=[],reservoirSettings=null,entries=new Map(),reservoirs={},rain=null,busy=false,next=0,map=null,signature='',scenario='combined';
   const expanded=new Set(),clock=Date.now();
   const time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Unknown';
@@ -78,6 +78,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
       const actions=el('div','','environment-actions');
       const mapButton=button('Map watchpoints',()=>{onMap();map?.focusPlanningPoints(points.filter(p=>r.area.rainPoints.includes(p.id)));});mapButton.setAttribute('icon-start','extent');mapButton.toggleAttribute('disabled',!map);
       actions.append(mapButton);
+      if(r.area.id==='san-joaquin-lower'||r.area.id==='kings-lower')actions.append(button('Release & gauge trends',()=>onTrends(r.area.id==='san-joaquin-lower'?'MIL':'PNF')));
       card.append(actions);
       const evidence=el('calcite-block','','area-watch-evidence');evidence.id=`evidence-${r.area.id}`;
       evidence.setAttribute('heading','Source evidence');evidence.setAttribute('heading-level','4');evidence.setAttribute('description',`${r.gaps.length} evidence gap${r.gaps.length===1?'':'s'} · values, times and sources`);evidence.setAttribute('collapsible','');evidence.toggleAttribute('expanded',expanded.has(r.area.id));
@@ -92,7 +93,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     try{rain=await fetchPlanningRain(points);}catch(error){rain={...rain,error:error.message};}
     finally{busy=false;next=Date.now()+config.environment.pollMs;render();}
   }
-  function applyExercise(){const fixture=planningExercise(gaugeSettings,points,reservoirSettings,scenario,clock);entries=fixture.entries;rain=fixture.rain;reservoirs=fixture.reservoirs;onExercise(entries);render();}
+  function applyExercise(){const fixture=planningExercise(gaugeSettings,points,reservoirSettings,scenario,clock);entries=fixture.entries;rain=fixture.rain;reservoirs=fixture.reservoirs;onExercise(entries,reservoirs);render();}
   $('review-areas').addEventListener('click',onOpen);
   $('watch-refresh').addEventListener('click',()=>void refreshRain());
   $('watch-conditions').addEventListener('click',onConditions);

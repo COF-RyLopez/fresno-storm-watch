@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-18T15:47:16.093Z",
+  "generatedAt": "2026-10-18T20:46:57.372Z",
   "collector": "CDEC public JSON · 15-minute target, not guaranteed",
   "sourceTimeZone": "PST (UTC-08:00) year-round",
   "stations": [
     {
       "id": "MIL",
-      "lastAttempt": "2026-10-18T15:47:16.093Z",
-      "lastSuccess": "2026-10-18T15:47:16.093Z",
+      "lastAttempt": "2026-10-18T20:46:57.372Z",
+      "lastSuccess": "2026-10-18T20:46:57.372Z",
       "error": null,
       "metrics": {
         "elevation": {
@@ -29,6 +29,27 @@
             "units": "FEET"
           },
           "samples": [
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 505.61,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 505.46,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 505.06,
+              "flag": "",
+              "units": "FEET"
+            },
             {
               "time": 1791878400000,
               "reportDate": "2026-10-13",
@@ -65,8 +86,8 @@
               "units": "FEET"
             }
           ],
-          "input": 5,
-          "accepted": 5,
+          "input": 8,
+          "accepted": 8,
           "rejected": 0,
           "duplicates": 0,
           "conflicts": 0,
@@ -91,6 +112,27 @@
             "units": "AF"
           },
           "samples": [
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 232529,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 232067,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 230837,
+              "flag": "",
+              "units": "AF"
+            },
             {
               "time": 1791878400000,
               "reportDate": "2026-10-13",
@@ -127,8 +169,8 @@
               "units": "AF"
             }
           ],
-          "input": 5,
-          "accepted": 5,
+          "input": 8,
+          "accepted": 8,
           "rejected": 0,
           "duplicates": 0,
           "conflicts": 0,
@@ -153,6 +195,27 @@
             "units": "CFS"
           },
           "samples": [
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 1215,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 905,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 677,
+              "flag": "",
+              "units": "CFS"
+            },
             {
               "time": 1791878400000,
               "reportDate": "2026-10-13",
@@ -189,8 +252,8 @@
               "units": "CFS"
             }
           ],
-          "input": 5,
-          "accepted": 5,
+          "input": 8,
+          "accepted": 8,
           "rejected": 0,
           "duplicates": 0,
           "conflicts": 0,
@@ -215,6 +278,27 @@
             "units": "CFS"
           },
           "samples": [
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 380,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 380,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 380,
+              "flag": "",
+              "units": "CFS"
+            },
             {
               "time": 1791878400000,
               "reportDate": "2026-10-13",
@@ -251,8 +335,8 @@
               "units": "CFS"
             }
           ],
-          "input": 5,
-          "accepted": 5,
+          "input": 8,
+          "accepted": 8,
           "rejected": 0,
           "duplicates": 0,
           "conflicts": 0,
@@ -277,6 +361,27 @@
             "units": "CFS"
           },
           "samples": [
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 0,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 0,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 0,
+              "flag": "",
+              "units": "CFS"
+            },
             {
               "time": 1791878400000,
               "reportDate": "2026-10-13",
@@ -313,8 +418,8 @@
               "units": "CFS"
             }
           ],
-          "input": 5,
-          "accepted": 5,
+          "input": 8,
+          "accepted": 8,
           "rejected": 0,
           "duplicates": 0,
           "conflicts": 0,
@@ -339,6 +444,27 @@
             "units": "CFS"
           },
           "samples": [
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 1138,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 1116,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 1274,
+              "flag": "",
+              "units": "CFS"
+            },
             {
               "time": 1791878400000,
               "reportDate": "2026-10-13",
@@ -375,8 +501,8 @@
               "units": "CFS"
             }
           ],
-          "input": 5,
-          "accepted": 5,
+          "input": 8,
+          "accepted": 8,
           "rejected": 0,
           "duplicates": 0,
           "conflicts": 0,
@@ -384,18 +510,18 @@
         }
       },
       "requests": [
-        "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet?Stations=MIL&SensorNums=6%2C15%2C76%2C85%2C71%2C23&dur_code=D&Start=2026-10-13&End=2026-10-17"
+        "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet?Stations=MIL&SensorNums=6%2C15%2C76%2C85%2C71%2C23&dur_code=D&Start=2026-10-10&End=2026-10-17"
       ],
       "scheduled": {
-        "lastAttempt": "2026-10-18T15:47:16.093Z",
-        "lastSuccess": "2026-10-18T15:47:16.093Z",
+        "lastAttempt": "2026-10-18T20:46:57.372Z",
+        "lastSuccess": "2026-10-18T20:46:57.372Z",
         "error": null,
         "request": "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet?Stations=MIL&SensorNums=7&dur_code=E&Start=2026-09-17&End=2026-10-26",
         "sensor": 7,
         "duration": "E",
         "units": "CFS",
-        "windowStart": 1789660036093,
-        "windowEnd": 1792943236093,
+        "windowStart": 1789678017372,
+        "windowEnd": 1792961217372,
         "records": [
           {
             "time": 1789714800000,
@@ -589,8 +715,8 @@
     },
     {
       "id": "PNF",
-      "lastAttempt": "2026-10-18T15:47:16.093Z",
-      "lastSuccess": "2026-10-18T15:47:16.093Z",
+      "lastAttempt": "2026-10-18T20:46:57.372Z",
+      "lastSuccess": "2026-10-18T20:46:57.372Z",
       "error": null,
       "metrics": {
         "elevation": {
@@ -598,20 +724,524 @@
           "duration": "H",
           "units": "FEET",
           "latest": {
-            "time": 1792335600000,
+            "time": 1792353600000,
             "reportDate": "2026-10-18",
             "value": null,
             "flag": "",
             "units": "FEET"
           },
           "lastValid": {
-            "time": 1792328400000,
+            "time": 1792350000000,
             "reportDate": "2026-10-18",
-            "value": 749.17,
+            "value": 749.29,
             "flag": "",
             "units": "FEET"
           },
           "samples": [
+            {
+              "time": 1791615600000,
+              "reportDate": "2026-10-09",
+              "value": 746.22,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 746.25,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791622800000,
+              "reportDate": "2026-10-10",
+              "value": 746.27,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791626400000,
+              "reportDate": "2026-10-10",
+              "value": 746.3,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791630000000,
+              "reportDate": "2026-10-10",
+              "value": 746.33,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791633600000,
+              "reportDate": "2026-10-10",
+              "value": 746.36,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791637200000,
+              "reportDate": "2026-10-10",
+              "value": 746.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791640800000,
+              "reportDate": "2026-10-10",
+              "value": 746.42,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791644400000,
+              "reportDate": "2026-10-10",
+              "value": 746.45,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791648000000,
+              "reportDate": "2026-10-10",
+              "value": 746.47,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791651600000,
+              "reportDate": "2026-10-10",
+              "value": 746.5,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791655200000,
+              "reportDate": "2026-10-10",
+              "value": 746.51,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791658800000,
+              "reportDate": "2026-10-10",
+              "value": 746.53,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791662400000,
+              "reportDate": "2026-10-10",
+              "value": 746.54,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791666000000,
+              "reportDate": "2026-10-10",
+              "value": 746.54,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791669600000,
+              "reportDate": "2026-10-10",
+              "value": 746.54,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791673200000,
+              "reportDate": "2026-10-10",
+              "value": 746.54,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791676800000,
+              "reportDate": "2026-10-10",
+              "value": 746.54,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791680400000,
+              "reportDate": "2026-10-10",
+              "value": 746.53,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791684000000,
+              "reportDate": "2026-10-10",
+              "value": 746.53,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791687600000,
+              "reportDate": "2026-10-10",
+              "value": 746.54,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791691200000,
+              "reportDate": "2026-10-10",
+              "value": 746.57,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791694800000,
+              "reportDate": "2026-10-10",
+              "value": 746.6,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791698400000,
+              "reportDate": "2026-10-10",
+              "value": 746.63,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791702000000,
+              "reportDate": "2026-10-10",
+              "value": 746.66,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 746.69,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791709200000,
+              "reportDate": "2026-10-11",
+              "value": 746.71,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791712800000,
+              "reportDate": "2026-10-11",
+              "value": 746.74,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791716400000,
+              "reportDate": "2026-10-11",
+              "value": 746.77,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791720000000,
+              "reportDate": "2026-10-11",
+              "value": 746.8,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791723600000,
+              "reportDate": "2026-10-11",
+              "value": 746.82,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791727200000,
+              "reportDate": "2026-10-11",
+              "value": 746.84,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791730800000,
+              "reportDate": "2026-10-11",
+              "value": 746.87,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791734400000,
+              "reportDate": "2026-10-11",
+              "value": 746.9,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791738000000,
+              "reportDate": "2026-10-11",
+              "value": 746.92,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791741600000,
+              "reportDate": "2026-10-11",
+              "value": 746.95,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791745200000,
+              "reportDate": "2026-10-11",
+              "value": 746.97,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791748800000,
+              "reportDate": "2026-10-11",
+              "value": 746.98,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791752400000,
+              "reportDate": "2026-10-11",
+              "value": 746.98,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791756000000,
+              "reportDate": "2026-10-11",
+              "value": 746.98,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791759600000,
+              "reportDate": "2026-10-11",
+              "value": 746.97,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791763200000,
+              "reportDate": "2026-10-11",
+              "value": 746.98,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791766800000,
+              "reportDate": "2026-10-11",
+              "value": 746.97,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791770400000,
+              "reportDate": "2026-10-11",
+              "value": 746.96,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791774000000,
+              "reportDate": "2026-10-11",
+              "value": 746.96,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791777600000,
+              "reportDate": "2026-10-11",
+              "value": 746.98,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791781200000,
+              "reportDate": "2026-10-11",
+              "value": 747.01,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791784800000,
+              "reportDate": "2026-10-11",
+              "value": 747.04,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791788400000,
+              "reportDate": "2026-10-11",
+              "value": 747.07,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 747.09,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791795600000,
+              "reportDate": "2026-10-12",
+              "value": 747.13,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791799200000,
+              "reportDate": "2026-10-12",
+              "value": 747.16,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791802800000,
+              "reportDate": "2026-10-12",
+              "value": 747.18,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791806400000,
+              "reportDate": "2026-10-12",
+              "value": 747.21,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791810000000,
+              "reportDate": "2026-10-12",
+              "value": 747.24,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791813600000,
+              "reportDate": "2026-10-12",
+              "value": 747.26,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791817200000,
+              "reportDate": "2026-10-12",
+              "value": 747.29,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791820800000,
+              "reportDate": "2026-10-12",
+              "value": 747.31,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791824400000,
+              "reportDate": "2026-10-12",
+              "value": 747.33,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791828000000,
+              "reportDate": "2026-10-12",
+              "value": 747.36,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791831600000,
+              "reportDate": "2026-10-12",
+              "value": 747.38,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791835200000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791838800000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791842400000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791846000000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791849600000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791853200000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791856800000,
+              "reportDate": "2026-10-12",
+              "value": 747.39,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791860400000,
+              "reportDate": "2026-10-12",
+              "value": 747.4,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791864000000,
+              "reportDate": "2026-10-12",
+              "value": 747.43,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791867600000,
+              "reportDate": "2026-10-12",
+              "value": 747.46,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1791871200000,
+              "reportDate": "2026-10-12",
+              "value": 747.49,
+              "flag": "",
+              "units": "FEET"
+            },
             {
               "time": 1791874800000,
               "reportDate": "2026-10-12",
@@ -1504,21 +2134,56 @@
             {
               "time": 1792332000000,
               "reportDate": "2026-10-18",
-              "value": null,
+              "value": 749.19,
               "flag": "",
               "units": "FEET"
             },
             {
               "time": 1792335600000,
               "reportDate": "2026-10-18",
+              "value": 749.22,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1792339200000,
+              "reportDate": "2026-10-18",
+              "value": 749.25,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1792342800000,
+              "reportDate": "2026-10-18",
+              "value": 749.27,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1792346400000,
+              "reportDate": "2026-10-18",
+              "value": 749.29,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1792350000000,
+              "reportDate": "2026-10-18",
+              "value": 749.29,
+              "flag": "",
+              "units": "FEET"
+            },
+            {
+              "time": 1792353600000,
+              "reportDate": "2026-10-18",
               "value": null,
               "flag": "",
               "units": "FEET"
             }
           ],
-          "input": 145,
-          "accepted": 129,
-          "rejected": 16,
+          "input": 217,
+          "accepted": 206,
+          "rejected": 11,
           "duplicates": 0,
           "conflicts": 0,
           "invalidTimes": 0
@@ -1528,20 +2193,524 @@
           "duration": "H",
           "units": "AF",
           "latest": {
-            "time": 1792335600000,
+            "time": 1792353600000,
             "reportDate": "2026-10-18",
             "value": null,
             "flag": "",
             "units": "AF"
           },
           "lastValid": {
-            "time": 1792328400000,
+            "time": 1792350000000,
             "reportDate": "2026-10-18",
-            "value": 174822,
+            "value": 175103,
             "flag": "",
             "units": "AF"
           },
           "samples": [
+            {
+              "time": 1791615600000,
+              "reportDate": "2026-10-09",
+              "value": 167978,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 168047,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791622800000,
+              "reportDate": "2026-10-10",
+              "value": 168093,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791626400000,
+              "reportDate": "2026-10-10",
+              "value": 168162,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791630000000,
+              "reportDate": "2026-10-10",
+              "value": 168231,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791633600000,
+              "reportDate": "2026-10-10",
+              "value": 168300,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791637200000,
+              "reportDate": "2026-10-10",
+              "value": 168369,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791640800000,
+              "reportDate": "2026-10-10",
+              "value": 168438,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791644400000,
+              "reportDate": "2026-10-10",
+              "value": 168507,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791648000000,
+              "reportDate": "2026-10-10",
+              "value": 168553,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791651600000,
+              "reportDate": "2026-10-10",
+              "value": 168622,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791655200000,
+              "reportDate": "2026-10-10",
+              "value": 168645,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791658800000,
+              "reportDate": "2026-10-10",
+              "value": 168691,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791662400000,
+              "reportDate": "2026-10-10",
+              "value": 168714,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791666000000,
+              "reportDate": "2026-10-10",
+              "value": 168714,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791669600000,
+              "reportDate": "2026-10-10",
+              "value": 168714,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791673200000,
+              "reportDate": "2026-10-10",
+              "value": 168714,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791676800000,
+              "reportDate": "2026-10-10",
+              "value": 168714,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791680400000,
+              "reportDate": "2026-10-10",
+              "value": 168691,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791684000000,
+              "reportDate": "2026-10-10",
+              "value": 168691,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791687600000,
+              "reportDate": "2026-10-10",
+              "value": 168714,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791691200000,
+              "reportDate": "2026-10-10",
+              "value": 168783,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791694800000,
+              "reportDate": "2026-10-10",
+              "value": 168852,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791698400000,
+              "reportDate": "2026-10-10",
+              "value": 168921,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791702000000,
+              "reportDate": "2026-10-10",
+              "value": 168990,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 169059,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791709200000,
+              "reportDate": "2026-10-11",
+              "value": 169105,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791712800000,
+              "reportDate": "2026-10-11",
+              "value": 169174,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791716400000,
+              "reportDate": "2026-10-11",
+              "value": 169243,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791720000000,
+              "reportDate": "2026-10-11",
+              "value": 169312,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791723600000,
+              "reportDate": "2026-10-11",
+              "value": 169359,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791727200000,
+              "reportDate": "2026-10-11",
+              "value": 169405,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791730800000,
+              "reportDate": "2026-10-11",
+              "value": 169474,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791734400000,
+              "reportDate": "2026-10-11",
+              "value": 169543,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791738000000,
+              "reportDate": "2026-10-11",
+              "value": 169589,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791741600000,
+              "reportDate": "2026-10-11",
+              "value": 169658,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791745200000,
+              "reportDate": "2026-10-11",
+              "value": 169705,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791748800000,
+              "reportDate": "2026-10-11",
+              "value": 169728,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791752400000,
+              "reportDate": "2026-10-11",
+              "value": 169728,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791756000000,
+              "reportDate": "2026-10-11",
+              "value": 169728,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791759600000,
+              "reportDate": "2026-10-11",
+              "value": 169705,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791763200000,
+              "reportDate": "2026-10-11",
+              "value": 169728,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791766800000,
+              "reportDate": "2026-10-11",
+              "value": 169705,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791770400000,
+              "reportDate": "2026-10-11",
+              "value": 169681,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791774000000,
+              "reportDate": "2026-10-11",
+              "value": 169681,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791777600000,
+              "reportDate": "2026-10-11",
+              "value": 169728,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791781200000,
+              "reportDate": "2026-10-11",
+              "value": 169797,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791784800000,
+              "reportDate": "2026-10-11",
+              "value": 169866,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791788400000,
+              "reportDate": "2026-10-11",
+              "value": 169935,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 169982,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791795600000,
+              "reportDate": "2026-10-12",
+              "value": 170074,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791799200000,
+              "reportDate": "2026-10-12",
+              "value": 170143,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791802800000,
+              "reportDate": "2026-10-12",
+              "value": 170190,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791806400000,
+              "reportDate": "2026-10-12",
+              "value": 170259,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791810000000,
+              "reportDate": "2026-10-12",
+              "value": 170328,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791813600000,
+              "reportDate": "2026-10-12",
+              "value": 170374,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791817200000,
+              "reportDate": "2026-10-12",
+              "value": 170444,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791820800000,
+              "reportDate": "2026-10-12",
+              "value": 170490,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791824400000,
+              "reportDate": "2026-10-12",
+              "value": 170536,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791828000000,
+              "reportDate": "2026-10-12",
+              "value": 170606,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791831600000,
+              "reportDate": "2026-10-12",
+              "value": 170652,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791835200000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791838800000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791842400000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791846000000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791849600000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791853200000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791856800000,
+              "reportDate": "2026-10-12",
+              "value": 170675,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791860400000,
+              "reportDate": "2026-10-12",
+              "value": 170698,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791864000000,
+              "reportDate": "2026-10-12",
+              "value": 170768,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791867600000,
+              "reportDate": "2026-10-12",
+              "value": 170837,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1791871200000,
+              "reportDate": "2026-10-12",
+              "value": 170907,
+              "flag": "",
+              "units": "AF"
+            },
             {
               "time": 1791874800000,
               "reportDate": "2026-10-12",
@@ -2434,21 +3603,56 @@
             {
               "time": 1792332000000,
               "reportDate": "2026-10-18",
-              "value": null,
+              "value": 174869,
               "flag": "",
               "units": "AF"
             },
             {
               "time": 1792335600000,
               "reportDate": "2026-10-18",
+              "value": 174939,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1792339200000,
+              "reportDate": "2026-10-18",
+              "value": 175009,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1792342800000,
+              "reportDate": "2026-10-18",
+              "value": 175056,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1792346400000,
+              "reportDate": "2026-10-18",
+              "value": 175103,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1792350000000,
+              "reportDate": "2026-10-18",
+              "value": 175103,
+              "flag": "",
+              "units": "AF"
+            },
+            {
+              "time": 1792353600000,
+              "reportDate": "2026-10-18",
               "value": null,
               "flag": "",
               "units": "AF"
             }
           ],
-          "input": 145,
-          "accepted": 129,
-          "rejected": 16,
+          "input": 217,
+          "accepted": 206,
+          "rejected": 11,
           "duplicates": 0,
           "conflicts": 0,
           "invalidTimes": 0
@@ -2458,20 +3662,524 @@
           "duration": "H",
           "units": "CFS",
           "latest": {
-            "time": 1792335600000,
+            "time": 1792353600000,
             "reportDate": "2026-10-18",
             "value": null,
             "flag": "",
             "units": "CFS"
           },
           "lastValid": {
-            "time": 1792328400000,
+            "time": 1792350000000,
             "reportDate": "2026-10-18",
-            "value": 1111,
+            "value": 197,
             "flag": "",
             "units": "CFS"
           },
           "samples": [
+            {
+              "time": 1791615600000,
+              "reportDate": "2026-10-09",
+              "value": 1075,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791622800000,
+              "reportDate": "2026-10-10",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791626400000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791630000000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791633600000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791637200000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791640800000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791644400000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791648000000,
+              "reportDate": "2026-10-10",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791651600000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791655200000,
+              "reportDate": "2026-10-10",
+              "value": 530,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791658800000,
+              "reportDate": "2026-10-10",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791662400000,
+              "reportDate": "2026-10-10",
+              "value": 530,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791666000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791669600000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791673200000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791676800000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791680400000,
+              "reportDate": "2026-10-10",
+              "value": -26,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791684000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791687600000,
+              "reportDate": "2026-10-10",
+              "value": 530,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791691200000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791694800000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791698400000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791702000000,
+              "reportDate": "2026-10-10",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791709200000,
+              "reportDate": "2026-10-11",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791712800000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791716400000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791720000000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791723600000,
+              "reportDate": "2026-10-11",
+              "value": 821,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791727200000,
+              "reportDate": "2026-10-11",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791730800000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791734400000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791738000000,
+              "reportDate": "2026-10-11",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791741600000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791745200000,
+              "reportDate": "2026-10-11",
+              "value": 821,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791748800000,
+              "reportDate": "2026-10-11",
+              "value": 530,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791752400000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791756000000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791759600000,
+              "reportDate": "2026-10-11",
+              "value": -26,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791763200000,
+              "reportDate": "2026-10-11",
+              "value": 530,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791766800000,
+              "reportDate": "2026-10-11",
+              "value": -26,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791770400000,
+              "reportDate": "2026-10-11",
+              "value": -39,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791774000000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791777600000,
+              "reportDate": "2026-10-11",
+              "value": 821,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791781200000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791784800000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791788400000,
+              "reportDate": "2026-10-11",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 821,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791795600000,
+              "reportDate": "2026-10-12",
+              "value": 1365,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791799200000,
+              "reportDate": "2026-10-12",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791802800000,
+              "reportDate": "2026-10-12",
+              "value": 821,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791806400000,
+              "reportDate": "2026-10-12",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791810000000,
+              "reportDate": "2026-10-12",
+              "value": 1087,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791813600000,
+              "reportDate": "2026-10-12",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791817200000,
+              "reportDate": "2026-10-12",
+              "value": 1099,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791820800000,
+              "reportDate": "2026-10-12",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791824400000,
+              "reportDate": "2026-10-12",
+              "value": 808,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791828000000,
+              "reportDate": "2026-10-12",
+              "value": 1096,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791831600000,
+              "reportDate": "2026-10-12",
+              "value": 900,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791835200000,
+              "reportDate": "2026-10-12",
+              "value": 529,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791838800000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791842400000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791846000000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791849600000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791853200000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791856800000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791860400000,
+              "reportDate": "2026-10-12",
+              "value": 528,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791864000000,
+              "reportDate": "2026-10-12",
+              "value": 1096,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791867600000,
+              "reportDate": "2026-10-12",
+              "value": 1084,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791871200000,
+              "reportDate": "2026-10-12",
+              "value": 1096,
+              "flag": "",
+              "units": "CFS"
+            },
             {
               "time": 1791874800000,
               "reportDate": "2026-10-12",
@@ -3364,21 +5072,56 @@
             {
               "time": 1792332000000,
               "reportDate": "2026-10-18",
-              "value": null,
+              "value": 821,
               "flag": "",
               "units": "CFS"
             },
             {
               "time": 1792335600000,
               "reportDate": "2026-10-18",
+              "value": 1099,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792339200000,
+              "reportDate": "2026-10-18",
+              "value": 1083,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792342800000,
+              "reportDate": "2026-10-18",
+              "value": 782,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792346400000,
+              "reportDate": "2026-10-18",
+              "value": 772,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792350000000,
+              "reportDate": "2026-10-18",
+              "value": 197,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792353600000,
+              "reportDate": "2026-10-18",
               "value": null,
               "flag": "",
               "units": "CFS"
             }
           ],
-          "input": 145,
-          "accepted": 129,
-          "rejected": 16,
+          "input": 217,
+          "accepted": 206,
+          "rejected": 11,
           "duplicates": 0,
           "conflicts": 0,
           "invalidTimes": 0
@@ -3388,20 +5131,524 @@
           "duration": "H",
           "units": "CFS",
           "latest": {
-            "time": 1792335600000,
+            "time": 1792353600000,
             "reportDate": "2026-10-18",
-            "value": null,
+            "value": 194,
             "flag": "",
             "units": "CFS"
           },
           "lastValid": {
-            "time": 1792332000000,
+            "time": 1792353600000,
             "reportDate": "2026-10-18",
-            "value": 252,
+            "value": 194,
             "flag": "",
             "units": "CFS"
           },
           "samples": [
+            {
+              "time": 1791615600000,
+              "reportDate": "2026-10-09",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791619200000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791622800000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791626400000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791630000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791633600000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791637200000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791640800000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791644400000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791648000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791651600000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791655200000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791658800000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791662400000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791666000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791669600000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791673200000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791676800000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791680400000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791684000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791687600000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791691200000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791694800000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791698400000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791702000000,
+              "reportDate": "2026-10-10",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791705600000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791709200000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791712800000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791716400000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791720000000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791723600000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791727200000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791730800000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791734400000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791738000000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791741600000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791745200000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791748800000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791752400000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791756000000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791759600000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791763200000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791766800000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791770400000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791774000000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791777600000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791781200000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791784800000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791788400000,
+              "reportDate": "2026-10-11",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791792000000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791795600000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791799200000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791802800000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791806400000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791810000000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791813600000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791817200000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791820800000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791824400000,
+              "reportDate": "2026-10-12",
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791828000000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791831600000,
+              "reportDate": "2026-10-12",
+              "value": 343,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791835200000,
+              "reportDate": "2026-10-12",
+              "value": 251,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791838800000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791842400000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791846000000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791849600000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791853200000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791856800000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791860400000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791864000000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791867600000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1791871200000,
+              "reportDate": "2026-10-12",
+              "value": 249,
+              "flag": "",
+              "units": "CFS"
+            },
             {
               "time": 1791874800000,
               "reportDate": "2026-10-12",
@@ -4301,32 +6548,67 @@
             {
               "time": 1792335600000,
               "reportDate": "2026-10-18",
-              "value": null,
+              "value": 252,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792339200000,
+              "reportDate": "2026-10-18",
+              "value": 236,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792342800000,
+              "reportDate": "2026-10-18",
+              "value": 213,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792346400000,
+              "reportDate": "2026-10-18",
+              "value": 203,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792350000000,
+              "reportDate": "2026-10-18",
+              "value": 197,
+              "flag": "",
+              "units": "CFS"
+            },
+            {
+              "time": 1792353600000,
+              "reportDate": "2026-10-18",
+              "value": 194,
               "flag": "",
               "units": "CFS"
             }
           ],
-          "input": 145,
-          "accepted": 129,
-          "rejected": 16,
+          "input": 217,
+          "accepted": 206,
+          "rejected": 11,
           "duplicates": 0,
           "conflicts": 0,
           "invalidTimes": 0
         }
       },
       "requests": [
-        "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet?Stations=PNF&SensorNums=6%2C15%2C76%2C23&dur_code=H&Start=2026-10-13&End=2026-10-19"
+        "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet?Stations=PNF&SensorNums=6%2C15%2C76%2C23&dur_code=H&Start=2026-10-10&End=2026-10-19"
       ],
       "scheduled": {
-        "lastAttempt": "2026-10-18T15:47:16.093Z",
-        "lastSuccess": "2026-10-18T15:47:16.093Z",
+        "lastAttempt": "2026-10-18T20:46:57.372Z",
+        "lastSuccess": "2026-10-18T20:46:57.372Z",
         "error": null,
         "request": "https://cdec.water.ca.gov/dynamicapp/req/JSONDataServlet?Stations=PNF&SensorNums=7&dur_code=E&Start=2026-09-17&End=2026-10-26",
         "sensor": 7,
         "duration": "E",
         "units": "CFS",
-        "windowStart": 1789660036093,
-        "windowEnd": 1792943236093,
+        "windowStart": 1789678017372,
+        "windowEnd": 1792961217372,
         "records": [
           {
             "time": 1789689600000,

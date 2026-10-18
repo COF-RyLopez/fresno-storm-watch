@@ -67,7 +67,7 @@ test('missing newer release record blocks increase while retaining dated last va
   assert.equal(r.increasing,false);assert.equal(r.sample.value,600);assert.match(r.reason,/missing/);
 });
 test('release comparisons reject gaps, identity changes and failed collection',()=>{
-  for(const mutate of [x=>x.reservoirs.snapshot.stations[0].metrics.release.samples[0].value=null,x=>x.reservoirs.snapshot.stations[0].metrics.release.samples[0].time-=24*HOUR,x=>x.reservoirs.snapshot.stations[0].metrics.release.sensor=23,x=>x.reservoirs.error='failed',x=>x.reservoirs.checked=now-8*60000]){
+  for(const mutate of [x=>x.reservoirs.snapshot.stations[0].metrics.release.samples.at(-2).value=null,x=>x.reservoirs.snapshot.stations[0].metrics.release.samples.at(-2).time-=24*HOUR,x=>x.reservoirs.snapshot.stations[0].metrics.release.sensor=23,x=>x.reservoirs.error='failed',x=>x.reservoirs.checked=now-8*60000]){
     const x=input();mutate(x);const r=releaseEvidence({...x.reservoirs,config:CONFIG.environment},{station:'MIL',metric:'release'},now);assert.equal(r.increasing,false);assert.equal(r.delta,null);
   }
 });

@@ -78,7 +78,7 @@
         <div class="environment-actions"><calcite-button id="environment-extent" scale="s" appearance="outline" icon-start="extent" disabled>Sierra &amp; river approaches</calcite-button><calcite-button id="environment-refresh" scale="s" appearance="transparent" icon-start="refresh">Check weather</calcite-button></div>
       </calcite-block>
       <calcite-block class="environment-section reservoir-section" heading="Reservoir conditions" heading-level="3" description="CDEC · observations and scheduled releases" expanded><p id="reservoir-status" class="environment-health" role="status">Waiting for CDEC snapshot</p><p id="reservoir-read-time" class="environment-note"></p><div id="reservoir-list"></div><p class="environment-note">Initial coverage: Millerton/Friant and Pine Flat. Other upstream reservoirs are not included. Scheduled releases are operator-reported plans; observations show measured/reported conditions. No routing, downstream arrival time or safe staging location is inferred.</p></calcite-block>
-      <div slot="footer" class="sidebar-footer"><div><calcite-button id="reservoir-refresh" scale="s" appearance="transparent" icon-start="refresh">Check collected data</calcite-button><calcite-link href="./planning.html#weather-reservoirs">Source &amp; refresh rules</calcite-link></div><span>Collection and measurement times are separate.</span></div>
+      <div slot="footer" class="sidebar-footer"><div><calcite-button id="open-release-trends" scale="s" appearance="outline">Release &amp; gauge trends</calcite-button><calcite-button id="reservoir-refresh" scale="s" appearance="transparent" icon-start="refresh">Check collected data</calcite-button><calcite-link href="./planning.html#weather-reservoirs">Source &amp; refresh rules</calcite-link></div><span>Collection and measurement times are separate.</span></div>
     </calcite-panel>
     <calcite-panel id="river-panel" class="alert-panel river-panel" heading="Fresno river watchpoints" heading-level="2" description="County and boundary river reaches">
       <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
@@ -144,6 +144,17 @@
     </calcite-panel>
   </calcite-shell-panel>
   <calcite-dialog id="river-dialog" slot="dialogs" heading="Gauge evidence for planning" modal><div class="details river-details"><div id="river-detail"></div></div><calcite-button slot="footer-end" data-close-dialog>Close</calcite-button></calcite-dialog>
+  <calcite-dialog id="release-trend-dialog" slot="dialogs" heading="Releases &amp; downstream gauges" modal>
+    <div class="trend-controls">
+      <calcite-label scale="s">Reservoir<calcite-select id="trend-reservoir" label="Reservoir for trend comparison" scale="s"><calcite-option value="MIL" selected>Millerton / Friant</calcite-option><calcite-option value="PNF">Pine Flat</calcite-option></calcite-select></calcite-label>
+      <calcite-label scale="s">Downstream gauge<calcite-select id="trend-gauge" label="Downstream comparison gauge" scale="s"></calcite-select></calcite-label>
+      <calcite-label scale="s">Gauge measure<calcite-select id="trend-measure" label="Gauge chart measure" scale="s"><calcite-option value="flow" selected>Flow · cfs</calcite-option><calcite-option value="stage">Stage · ft</calcite-option></calcite-select></calcite-label>
+      <calcite-label scale="s">History<calcite-select id="trend-history" label="Trend history window" scale="s"><calcite-option value="72">Past 3 days</calcite-option><calcite-option value="168" selected>Past 7 days</calcite-option></calcite-select></calcite-label>
+      <calcite-label scale="s">Look ahead<calcite-select id="trend-future" label="Trend future window" scale="s"><calcite-option value="72" selected>Next 3 days</calcite-option><calcite-option value="168">Next 7 days</calcite-option></calcite-select></calcite-label>
+    </div>
+    <div id="release-trend-content" aria-live="off"></div>
+    <calcite-button slot="footer-end" data-close-dialog>Close</calcite-button>
+  </calcite-dialog>
   <calcite-dialog id="sources-dialog" slot="dialogs" heading="Sources &amp; operating notes" modal>
     <p>Radar comes from the NOAA MRMS time-enabled image service; the selected CONUS frame is locked to its displayed UTC-derived time. WPC QPF supplies fixed 24-, 72- and 168-hour precipitation windows in inches of liquid equivalent. Radar echoes and forecast precipitation do not directly predict river inundation. <a href="./planning.html#weather-reservoirs">Weather and reservoir source details</a>.</p>
     <p>Millerton/Friant and Pine Flat readings come from CDEC through a public-data collector. Collection targets 15-minute intervals; observations remain completed-day reports for Millerton and hourly reports for Pine Flat. River outlet release, spill and total outflow remain separate. Operator-reported schedules are shown separately with a seven-day look-ahead and a 24-hour handoff window. Source times and failed/overdue collection are shown; a schedule is not downstream arrival or proof of safe access.</p>

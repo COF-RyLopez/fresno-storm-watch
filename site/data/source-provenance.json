@@ -1,6 +1,6 @@
 {
   "prepared": "2026-10-17",
-  "application": "Fresno County Storm Watch prototype 0.11.0",
+  "application": "Fresno County Storm Watch prototype 0.12.0",
   "sources": [
     {
       "publisher": "County of Fresno",
@@ -229,7 +229,7 @@
       ],
       "units_datum": "FEET, AF, CFS checked against configured metrics. Elevation datum unspecified in feed; no datum conversion or water surface. Daily report dates preserved.",
       "crs": "CDEC station metadata lon/lat stored as WGS84 EPSG:4326; 2 input points, 2 retained, no repair/derived geometry",
-      "processing": "Five-day bounded observation requests; daily reports end at previous completed PST day. Normalize padded/unpadded calendar fields; identical timestamps deduplicated. Conflicting timestamps quarantined without freezing other readings; invalid timestamps remain gaps. Reconcile input/accepted/rejected/duplicate/conflict counts. Retain prior published data on request failure.",
+      "processing": "Eight-day bounded observation requests support seven-day charts; daily reports end at previous completed PST day. Normalize padded/unpadded calendar fields; identical timestamps deduplicated. Conflicting timestamps quarantined without freezing other readings; invalid timestamps remain gaps. Reconcile input/accepted/rejected/duplicate/conflict counts. Retain prior published data on request failure.",
       "cadence": "MIL daily; PNF hourly. Collector target 15 min; browser snapshot check 1 min. GitHub schedule/deployment may delay.",
       "release_meaning": "MIL sensor85 river outlet release,71 spill,23 total outflow remain separate. PNF sensor23 reported outflow. Separate event sensor7 scheduled releases for both stations; no inferred routing or downstream arrival.",
       "freshness": "Snapshot age >45min warns; hourly measurements >3h and daily >72h marked old. Newer missing records shown alongside last valid reading. Prototype rules, not operator triggers.",
@@ -263,7 +263,16 @@
   ],
   "exercise": "Explicit ?exercise=1 disables live alerts/gauges/cameras/radar/QPF/reservoir reads. Area-watch has isolated fictional rain/gauge/release fixtures; basemap, terrain and FEMA remain reference context.",
   "privacy": "Only public boundaries, station identifiers/locations, source metadata and code. No private operational assets, reviews, rosters, fleet locations or credentials.",
-  "applicationVersion": "0.11.0",
+  "applicationVersion": "0.12.0",
+  "releaseTrends": {
+    "checked": "2026-10-18",
+    "sources": ["CDEC JSONDataServlet MIL sensor85 D CFS", "CDEC JSONDataServlet PNF sensor23 H CFS", "CDEC MIL/PNF sensor7 E CFS", "NWPS gauges/{lid}/stageflow"],
+    "window": "Past 3 or 7 days; next 3 or 7 days; common clock and time axis. Browser reuses existing source controllers; no new polling or storage.",
+    "mapping": "MIL -> SJXC1, RSBC1, GVAC1, SJMC1; PNF -> explicit unconnected downstream gauge gap. No upstream Kings, Redinger or tributary substitution.",
+    "semantics": "MIL daily dots at midpoint of fixed-PST report date; source date retained in readout/table. PNF hourly line. Flow kcfs -> cfs x1000; shared zero-inclusive cfs scale. Stage ft uses a separate focused scale. Missing values and gaps break lines; forecasts are publisher samples only. Schedule hollow markers and time guides show reservoir effective time, never downstream arrival.",
+    "coverageEvidence": ["https://api.water.noaa.gov/nwps/v1/gauges?bbox.xmin=-121&bbox.ymin=35.7&bbox.xmax=-118.3&bbox.ymax=38&srid=EPSG_4326", "https://waterdata.usgs.gov/monitoring-location/USGS-11221500/", "https://cdec.water.ca.gov/dynamicapp/staMeta?station_id=KGF"],
+    "coverageDecision": "USGS 11221500 has no current continuous series. CDEC KGF lists full natural flow and seasonal estimates; those are not observed downstream release and are excluded. Existing Kings NWPS sites are upstream."
+  },
   "areaWatch": {
     "configuration": "river-areas.json",
     "points": 11,

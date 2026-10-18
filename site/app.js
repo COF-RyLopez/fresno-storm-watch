@@ -11,6 +11,7 @@ import { createEnvironmentWatch } from './lib/environment-ui.js';
 import { createPlanningWatch } from './lib/planning-ui.js';
 import { createWorkspace } from './lib/workspace-ui.js';
 import { createRoadWatch } from './lib/roads-ui.js';
+import { createReleaseTrends } from './lib/release-trend-ui.js';
 
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
@@ -67,13 +68,14 @@ $('view-watch').addEventListener('click',openPlanning);
 function openRoads(){planningView(true);$('river-panel').hidden=true;$('roads-panel').hidden=false;workspace.showPanel('roads');}
 $('view-roads').addEventListener('click',openRoads);
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
+const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
-planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onExercise:entries=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);}});
-environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onReservoirData:data=>planning.setReservoirData(data)});
+planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onTrends:id=>releaseTrends.open(id),onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
+environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onTrends:id=>releaseTrends.open(id),onReservoirData:data=>{planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);}});
 if(new URLSearchParams(location.search).get('view')==='conditions')openEnvironment();
 if(new URLSearchParams(location.search).get('view')==='watch')openPlanning();
 if(new URLSearchParams(location.search).get('view')==='roads')openRoads();
-void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onData:data=>planning.setRiverData(data)}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
+void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onTrends:(id,gauge)=>releaseTrends.open(id,gauge),onData:data=>{planning.setRiverData(data);releaseTrends.setRiverData(data);}}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
 void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen);if(map)cameras.setMap(map);});
 
 /** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Publisher values are always text, never HTML. */

@@ -1,0 +1,50 @@
+Release and downstream gauge comparison — version 0.12.0
+
+Open Weather & reservoirs > Release & gauge trends, the same button on either
+reservoir card, or the lower San Joaquin / Kings Area watch card. San Joaquin
+gauge details also provide a Millerton comparison link.
+Direct links: ?view=conditions&trends=MIL or &trends=PNF.
+
+Inputs and transformations
+- Existing CDEC collector now requests eight observation days to cover seven
+  displayed days. No credential or new scheduled task is required.
+- MIL sensor 85 daily river outlet reports; neither sensor 23 total reservoir
+  outflow nor sensor 71 spill is substituted. Spill remains separately visible
+  in the reservoir card. Daily dots use noon PST on the original report date;
+  they are summaries, not instantaneous measurements or an hourly curve.
+- PNF sensor 23 hourly reported outflow.
+- CDEC sensor 7 event records are scheduled reservoir effective times. Existing
+  notice validation and freshness rules also apply to chart markers.
+- NWPS stageflow is reused from the existing river controller. Source primary
+  or secondary Flow is converted from kcfs to cfs where needed. Stage is a
+  separate ft measure with a separate axis; no stage/discharge conversion.
+- Aligned x domains: now minus 3/7 days to now plus 3/7 days. Release and gauge
+  flow share a zero-inclusive y domain. Stage uses a labeled focused domain.
+- No interpolation across missing observations, >2h observation gaps or >6h
+  forecast gaps. Daily values are points only. No extrapolation, curve fitting,
+  carry-forward release line, routing model or inferred travel time.
+- Amber hollow diamonds and dotted time guides are schedules; dashed purple
+  is NWS forecast. Stale schedules/forecasts are grey and explicitly flagged.
+  Each chart supports pointer / arrow-key inspection and an exact-value table.
+
+Coverage checked 2026-10-18
+MIL is paired only with SJXC1, RSBC1, GVAC1 and SJMC1. The app excludes Redinger,
+Little Dry Creek and James Bypass from this reservoir comparison.
+PNF has no connected current downstream Kings gauge. The NWPS regional catalog
+contains upstream Kings sites; these are not substitutions. USGS 11221500 lists
+no continuous series and daily historical data ending in 1994. CDEC KGF exposes
+full natural flow / seasonal values rather than a current downstream release
+observation. Display this gap, link the official USACE basin report, and obtain
+an operator-confirmed current downstream gauge before expanding the pairing.
+Exact official URLs and transformation contracts are in source-provenance.json.
+
+Verification / operations
+Run npm test and npm run check. Test both reservoirs, all four San Joaquin gauge
+choices, ft/cfs, both windows, mouse/keyboard data inspection and phone layout.
+In ?exercise=1&view=watch, choose Scheduled releases then Release & gauge trends.
+The fictional increase/decrease markers must retain reservoir effective times;
+neither the banner nor chart is an activation/dispatch instruction.
+Source failures must retain original times and show unknown or unverified data.
+No changes to private AGOL datasets or existing Experience Builder app.
+Rollback: revert the 0.12.0 application commit and redeploy Pages; public source
+collection remains compatible with the version-1 snapshot contract.

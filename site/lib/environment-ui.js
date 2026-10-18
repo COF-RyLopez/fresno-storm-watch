@@ -12,7 +12,7 @@ function el(tag,text='',className=''){const n=document.createElement(tag);n.text
 function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Independent public weather/reservoir controller. */
-export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onReservoirData=()=>{}}){
+export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{}}){
   let map=null,layers=null,selection=null,snapshot=null,snapshotError=null,snapshotRead=null;
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
   let overlay='off',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
@@ -112,7 +112,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
       const conflicts=Object.values(row?.metrics||{}).reduce((n,m)=>n+(m.conflicts||0),0);
       if(conflicts)card.append(el('p',`${conflicts} conflicting source timestamp${conflicts===1?'':'s'} excluded; unaffected readings remain available.`,'watch-gap'));
       appendScheduledReleases(card,schedules.find(s=>s.station===station.id),time);
-      const actions=el('div','','environment-actions');actions.append(newButton('Locate dam',()=>{onMap();map?.focusEnvironment(station.longitude,station.latitude);}),link('CDEC source',station.source));
+      const actions=el('div','','environment-actions');actions.append(newButton('Release & gauge trends',()=>onTrends(station.id)),newButton('Locate dam',()=>{onMap();map?.focusEnvironment(station.longitude,station.latitude);}),link('CDEC source',station.source));
       if(station.releaseNotices)actions.append(link('Release notices',station.releaseNotices));card.append(actions);
       const details=el('details','','environment-details');details.append(el('summary','Release meaning & source details'),el('p',station.note),el('p',`Last successful collection: ${time(row?.lastSuccess?Date.parse(row.lastSuccess):null)}. Pool elevation uses the publisher reference; datum is not specified in this feed.`),link('Station metadata',station.metadata));card.append(details);list.append(card);
     }
