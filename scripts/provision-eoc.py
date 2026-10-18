@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from pathlib import Path
+from time import sleep
 from typing import Any
 from urllib.request import urlopen
 from urllib.error import HTTPError
@@ -27,6 +29,9 @@ TRACK = {"creatorField": "created_user", "creationDateField": "created_date", "e
 # https://developers.arcgis.com/rest/services-reference/enterprise/layer-feature-service/
 # https://developers.arcgis.com/rest/services-reference/enterprise/feature-service/
 CREATE_CAPABILITY_LABELS = frozenset({"Editing", "Uploads"})
+# create_view in the installed ArcGIS API starts add_to_definition asynchronously
+# and returns the item before the table is ready. Reload metadata, never recreate.
+VIEW_READY_DELAYS = (0, 2, 3, 5, 10, 10, 10, 10)
 REDIRECTS = ["https://cof-rylopez.github.io/fresno-storm-watch/", "https://cof-rylopez.github.io/fresno-storm-watch/index.html", "https://cof-rylopez.github.io/fresno-storm-watch/eoc.html", "http://127.0.0.1:8777/", "http://127.0.0.1:8777/eoc.html"]
 
 
@@ -91,6 +96,51 @@ def validate_collection_capabilities(collection: Any, expected: str, label: str)
     validate_capabilities(collection.properties, expected, f"{label} service")
     for table in collection.tables:
         validate_capabilities(table.properties, expected, f"{label} table {table.properties.get('id', '?')}")
+
+
+def wait_for_table_view(
+    load: Callable[[], Any],
+    label: str,
+    *,
+    delays: tuple[float, ...] = VIEW_READY_DELAYS,
+    pause: Callable[[float], None] = sleep,
+    report: Callable[[str], None] = print,
+) -> Any:
+    """Reload a journaled view until its asynchronous table creation finishes.
+
+    Only metadata reads are retried. Authentication/network failures and a
+    wrong service shape stop immediately. Missing tables/schema get a bounded
+    wait, then a diagnostic error; no duplicate or repair write is attempted.
+    """
+    pending = "metadata unavailable"
+    for attempt, delay in enumerate(delays):
+        if delay:
+            pause(delay)
+        collection = load()
+        is_view = collection.properties.get("isView")
+        table_count = len(collection.tables)
+        layer_count = len(collection.layers)
+        if layer_count or table_count > 1 or (table_count and is_view is False):
+            raise RuntimeError(
+                f"{label} has an unexpected service shape: isView={is_view!r}, "
+                f"tables={table_count}, layers={layer_count}. "
+                "Setup stopped before sharing; inspect the recorded item."
+            )
+        pending = f"isView={is_view!r}, tables={table_count}, layers={layer_count}"
+        if is_view is True and table_count == 1:
+            try:
+                validate_table(collection.tables[0].properties)
+            except RuntimeError as error:
+                pending = str(error)
+            else:
+                return collection
+        if attempt == 0:
+            report(f"Waiting for AGOL to finish {label}; keeping the existing item.")
+    raise RuntimeError(
+        f"{label} was not ready after {len(delays)} metadata checks ({pending}). "
+        "No duplicate was created. Keep the journal and retry after AGOL finishes, "
+        "or inspect this item if the problem persists."
+    )
 
 
 def anonymous_denied(url: str) -> bool:
@@ -201,10 +251,10 @@ def provision(gis: Any) -> dict[str, Any]:
             def create_view(service_name: str, marker: str) -> Any:
                 return collection.manager.create_view(name=service_name, view_layers=[], view_tables=[table], capabilities=capabilities, allow_schema_changes=False, tags=marker, folder=FOLDER)
             view = item(name + "_" + mode, create_view)
-            view_collection = FeatureLayerCollection.fromitem(view)
-            if not view_collection.properties.get("isView") or len(view_collection.tables) != 1:
-                raise RuntimeError("Expected a nonspatial hosted table view.")
-            validate_table(view_collection.tables[0].properties)
+            view_collection = wait_for_table_view(
+                lambda: FeatureLayerCollection.fromitem(gis.content.get(view.id)),
+                f"{name} {mode} view ({view.id})",
+            )
             definition = view_collection.tables[0].manager.properties.get("adminLayerInfo", {}).get("viewLayerDefinition", {})
             if definition.get("sourceServiceName") != parent.url.rstrip("/").split("/")[-2] or definition.get("sourceLayerId") != table.properties.id:
                 raise RuntimeError("View source does not match the recorded private parent.")

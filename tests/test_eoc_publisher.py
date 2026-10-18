@@ -3,6 +3,7 @@ import runpy
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 publisher = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts" / "provision-eoc.py"))
 
@@ -92,6 +93,62 @@ class EocPublisherContract(unittest.TestCase):
     def test_unsupported_expected_policy_is_a_programming_error(self):
         with self.assertRaises(ValueError):
             publisher["validate_capabilities"]({"capabilities": "Query,Update"}, "Query,Update", "parent")
+
+    def test_ready_view_returns_without_waiting(self):
+        view = SimpleNamespace(properties={"isView": True}, tables=[SimpleNamespace(properties=publisher["schema"]())], layers=[])
+        load, pause, report = Mock(return_value=view), Mock(), Mock()
+        result = publisher["wait_for_table_view"](load, "report view", pause=pause, report=report)
+        self.assertIs(result, view)
+        load.assert_called_once()
+        pause.assert_not_called()
+        report.assert_not_called()
+
+    def test_async_view_reloads_until_the_table_and_schema_are_ready(self):
+        empty = SimpleNamespace(properties={"isView": True}, tables=[], layers=[])
+        partial = SimpleNamespace(properties={"isView": True}, tables=[SimpleNamespace(properties={"fields": []})], layers=[])
+        ready = SimpleNamespace(properties={"isView": True}, tables=[SimpleNamespace(properties=publisher["schema"]())], layers=[])
+        load, pause, report = Mock(side_effect=[empty, partial, ready]), Mock(), Mock()
+        result = publisher["wait_for_table_view"](load, "report view", delays=(0, 1, 2), pause=pause, report=report)
+        self.assertIs(result, ready)
+        self.assertEqual(load.call_count, 3)
+        self.assertEqual([call.args[0] for call in pause.call_args_list], [1, 2])
+        report.assert_called_once()
+
+    def test_view_timeout_preserves_the_existing_item_and_has_diagnostics(self):
+        empty = SimpleNamespace(properties={"isView": True}, tables=[], layers=[])
+        load, pause = Mock(return_value=empty), Mock()
+        with self.assertRaisesRegex(RuntimeError, r"reports read .*tables=0.*No duplicate"):
+            publisher["wait_for_table_view"](load, "reports read (existing-id)", delays=(0, 1, 2), pause=pause, report=Mock())
+        self.assertEqual(load.call_count, 3)
+        self.assertEqual(pause.call_count, 2)
+
+    def test_wrong_view_shape_fails_immediately(self):
+        table = SimpleNamespace(properties=publisher["schema"]())
+        cases = (
+            SimpleNamespace(properties={"isView": True}, tables=[table], layers=[object()]),
+            SimpleNamespace(properties={"isView": True}, tables=[table, table], layers=[]),
+            SimpleNamespace(properties={"isView": False}, tables=[table], layers=[]),
+        )
+        for view in cases:
+            with self.subTest(properties=view.properties, tables=len(view.tables), layers=len(view.layers)):
+                load, pause = Mock(return_value=view), Mock()
+                with self.assertRaisesRegex(RuntimeError, "unexpected service shape"):
+                    publisher["wait_for_table_view"](load, "report view", pause=pause, report=Mock())
+                load.assert_called_once()
+                pause.assert_not_called()
+
+    def test_auth_or_network_failure_is_not_hidden_as_pending_creation(self):
+        load, pause = Mock(side_effect=RuntimeError("sign-in expired")), Mock()
+        with self.assertRaisesRegex(RuntimeError, "sign-in expired"):
+            publisher["wait_for_table_view"](load, "report view", pause=pause, report=Mock())
+        load.assert_called_once()
+        pause.assert_not_called()
+
+    def test_default_view_retry_budget_is_bounded(self):
+        delays = publisher["VIEW_READY_DELAYS"]
+        self.assertEqual(delays[0], 0)
+        self.assertLessEqual(sum(delays), 60)
+        self.assertTrue(all(delay >= 0 for delay in delays))
 
 
 if __name__ == "__main__":
