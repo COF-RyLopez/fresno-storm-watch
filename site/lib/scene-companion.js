@@ -45,9 +45,11 @@ export function setupSceneCompanion(config, getCamera, exercise = false) {
       link.setAttribute('href', sceneCompanionUrl(config, getCamera()));
       link.removeAttribute('disabled');
       link.textContent = configured ? 'Open county 3D companion' : 'Open county Scene Viewer';
-      status.textContent = configured
-        ? 'A county scene is connected. Your ArcGIS account and organization basemap access still apply.'
-        : 'County setup needed: a photorealistic scene is not connected yet. Scene Viewer opens with FEMA reference at your current map area; select the Google basemap after your administrator enables it.';
+      status.textContent = !configured
+        ? 'County setup needed: a photorealistic scene is not connected yet. Scene Viewer opens with FEMA reference at your current map area; select the Google basemap after your administrator enables it.'
+        : config.photorealisticVerified === true
+          ? 'The county photorealistic scene is connected. Your ArcGIS account and organization basemap access still apply; coverage varies by location.'
+          : 'County 3D companion connected with terrain and FEMA reference. Photorealistic imagery is not active yet; county administrator enablement and coverage checks are pending.';
     } catch {
       status.textContent = 'The county scene configuration is invalid. Use the setup guide; the Storm Watch map and feeds remain available.';
     }

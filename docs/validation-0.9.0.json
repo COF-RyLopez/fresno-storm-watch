@@ -1,0 +1,33 @@
+{
+  "application": "Fresno County Storm Watch",
+  "version": "0.9.0",
+  "date": "2026-10-17",
+  "previous_validation": "validation-0.8.0.json",
+  "status": "Logo and companion launcher implemented; publication verification pending. Photorealistic mesh access remains pending county setup.",
+  "scope": "Branding and explicit ArcGIS companion launch only. Existing source models, refresh timing and Experience Builder unchanged.",
+  "automated": {
+    "tests": "82 passed, 0 failed",
+    "check": "Syntax, internal links, data contracts and vendor integrity passed. Final map syntax checked after camera-height adjustment.",
+    "logo": "SHA-256 matches original supplied PNG; 1024x1024 RGBA, 818566 bytes."
+  },
+  "browser_checks": [
+    "Local application shows F.R.O.G. logo with accessible alternative text.",
+    "390px phone layout inspected: header identity and actions fit without overlap.",
+    "Companion dialog explicitly reports unconfigured status and separates historical imagery from live conditions.",
+    "Generated county Scene Viewer URL loaded NFHL - Flood Hazard Zones and Esri Terrain3D at a geographic camera.",
+    "Signed-in county basemap gallery contained standard 3D basemaps but no Google Photorealistic 3D entry. No organization setting was changed.",
+    "1366x768 desktop layout inspected in a local iframe: logo, source panels, map and camera panel remained usable.",
+    "Existing 3D terrain view opened successfully; companion link serialized its geographic camera, altitude, heading and 55-degree tilt."
+  ],
+  "pending": [
+    "Enable or confirm county Google Photorealistic 3D entitlement and session allowance.",
+    "Create/share the county companion Web Scene and configure its item ID.",
+    "Verify named-user access, detailed mesh coverage, image currency and layer alignment."
+  ],
+  "references": [
+    "https://www.esri.com/arcgis-blog/products/arcgis-online/3d-gis/experience-the-google-photorealistic-3d-basemap-in-arcgis-online",
+    "https://doc.arcgis.com/en/arcgis-online/administer/configure-map.htm",
+    "https://doc.arcgis.com/en/arcgis-online/reference/use-url-parameters-scenes.htm"
+  ],
+  "rollback": "Revert the v0.9.0 commit and push main. No hosted ArcGIS data was changed."
+}

@@ -1,33 +1,32 @@
 {
   "application": "Fresno County Storm Watch",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "date": "2026-10-17",
-  "previous_validation": "validation-0.8.0.json",
-  "status": "Logo and companion launcher implemented; publication verification pending. Photorealistic mesh access remains pending county setup.",
-  "scope": "Branding and explicit ArcGIS companion launch only. Existing source models, refresh timing and Experience Builder unchanged.",
+  "previous_validation": "validation-0.9.0.json",
+  "status": "Saved county companion connected and locally verified. Photorealistic activation and second-user acceptance remain pending.",
+  "scope": "One new AGOL Web Scene with public references, restricted to existing pilot viewers. Launcher configuration, truthful pending state and handoff documentation updated. Experience Builder and data-source calculations unchanged.",
   "automated": {
-    "tests": "82 passed, 0 failed",
-    "check": "Syntax, internal links, data contracts and vendor integrity passed. Final map syntax checked after camera-height adjustment.",
-    "logo": "SHA-256 matches original supplied PNG; 1024x1024 RGBA, 818566 bytes."
+    "tests": "82 passed, 0 failed; includes saved terrain scene readiness and invalid configuration handling",
+    "check": "Syntax, internal links, source contracts and vendor integrity passed",
+    "anonymousAccess": "County REST item request without credentials returned 403"
   },
   "browser_checks": [
-    "Local application shows F.R.O.G. logo with accessible alternative text.",
-    "390px phone layout inspected: header identity and actions fit without overlap.",
-    "Companion dialog explicitly reports unconfigured status and separates historical imagery from live conditions.",
-    "Generated county Scene Viewer URL loaded NFHL - Flood Hazard Zones and Esri Terrain3D at a geographic camera.",
-    "Signed-in county basemap gallery contained standard 3D basemaps but no Google Photorealistic 3D entry. No organization setting was changed.",
-    "1366x768 desktop layout inspected in a local iframe: logo, source panels, map and camera panel remained usable.",
-    "Existing 3D terrain view opened successfully; companion link serialized its geographic camera, altitude, heading and 55-degree tilt."
+    "Scene saved under rylopez_cofgisonline and moved to Storm Operations 2026-27",
+    "Sharing UI confirms only Storm Operations 2026-27 - Authorized viewers",
+    "Item notes saved with source, planning limitations and remaining administrator tasks",
+    "Saved scene loaded FEMA polygons and Terrain3D near the Highway 41 river reach",
+    "Local County 3D dialog displays connected terrain/FEMA status and explicitly says photorealistic imagery is not active",
+    "Local launcher URL contains the saved item ID and current camera, without credentials"
   ],
   "pending": [
-    "Enable or confirm county Google Photorealistic 3D entitlement and session allowance.",
-    "Create/share the county companion Web Scene and configure its item ID.",
-    "Verify named-user access, detailed mesh coverage, image currency and layer alignment."
+    "County basemap enablement and entitlement confirmation",
+    "Photorealistic mesh coverage, imagery currency and overlay checks",
+    "Second pilot member sign-in/access acceptance"
   ],
   "references": [
     "https://www.esri.com/arcgis-blog/products/arcgis-online/3d-gis/experience-the-google-photorealistic-3d-basemap-in-arcgis-online",
     "https://doc.arcgis.com/en/arcgis-online/administer/configure-map.htm",
     "https://doc.arcgis.com/en/arcgis-online/reference/use-url-parameters-scenes.htm"
   ],
-  "rollback": "Revert the v0.9.0 commit and push main. No hosted ArcGIS data was changed."
+  "rollback": "Revert the v0.9.1 app commit and push main. The separate county Web Scene remains saved; no source data or existing Experience Builder item was edited."
 }

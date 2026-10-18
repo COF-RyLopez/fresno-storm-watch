@@ -1,5 +1,5 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.9.0 | October 17, 2026 | F.R.O.G. branding and ArcGIS 3D companion
+Version 0.9.1 | October 17, 2026 | Saved county ArcGIS 3D companion
 
 EOC PILOT LINKS
 App: https://cof-rylopez.github.io/fresno-storm-watch/?view=watch
@@ -34,18 +34,21 @@ F.R.O.G. AND PHOTOREALISTIC 3D (v0.9.0)
 The user-provided F.R.O.G. PNG replaces the placeholder header and browser icons
 in the app and both guides. Original image bytes are preserved. Required Esri
 and data-provider map attribution remains visible.
-Photorealistic 3D in the map toolbar opens a setup dialog and official county
-Scene Viewer link at the current map area. The baseline app remains anonymous.
+County 3D in the map toolbar opens the saved county Scene Viewer companion at
+the current map area. The baseline app remains anonymous.
 Esri's hosted photorealistic preview requires an enabled organization and named
 ArcGIS account; it is not yet available inside custom apps. The county gallery
 did not expose this basemap on October 17. No org settings or entitlements changed.
-After administrator enablement, save a separate reviewed Web Scene and configure
-arcgis.photorealisticSceneId. Without an ID the link opens a draft with full FEMA
-reference, not Storm Watch's selected-zone/county filter. No gauge records, camera
+The saved companion c01a4396e54448e59b83cfb4bf40ebd7 is in Storm Operations 2026-27,
+shared with Storm Operations 2026-27 - Authorized viewers. It currently uses
+topographic mapping, Terrain3D and full FEMA reference, not Storm Watch's selected
+zone/county filter. After administrator enablement, update this existing scene,
+verify mesh coverage and named-user access, then set arcgis.photorealisticVerified
+to true. The current false setting explicitly reports pending imagery. No gauge records, camera
 media, alert state or credentials are passed. No mesh is loaded by the Pages app.
 See site/setup.html#photorealistic for exact tasks, coverage checks and the separate
 Google Maps Platform option for future direct integration. Live mesh rendering
-and named-user companion acceptance remain unverified until access is configured.
+and second-user companion acceptance remain unverified until access is configured.
 
 DARK MODE (v0.8.0)
 Dark mode is the default for new browser sessions. Use Light mode in the top

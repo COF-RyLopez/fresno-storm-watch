@@ -1,0 +1,41 @@
+{
+  "version": "0.9.1",
+  "created": "2026-10-17",
+  "title": "F.R.O.G. — Fresno River Context 2026–27",
+  "itemId": "c01a4396e54448e59b83cfb4bf40ebd7",
+  "itemUrl": "https://cofgisonline.maps.arcgis.com/home/item.html?id=c01a4396e54448e59b83cfb4bf40ebd7",
+  "sceneUrl": "https://cofgisonline.maps.arcgis.com/home/webscene/viewer.html?webscene=c01a4396e54448e59b83cfb4bf40ebd7",
+  "owner": "rylopez_cofgisonline",
+  "folder": "Storm Operations 2026-27",
+  "sharing": {
+    "public": false,
+    "organization": false,
+    "groups": [
+      "Storm Operations 2026-27 - Authorized viewers"
+    ],
+    "anonymousRestCheck": "403; item not readable without authentication"
+  },
+  "layers": [
+    {
+      "title": "NFHL - Flood Hazard Zones",
+      "publisher": "FEMA",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+      "scope": "Full publisher layer at local scale; separate from Storm Watch filters and styles"
+    },
+    {
+      "title": "Terrain3D",
+      "publisher": "Esri",
+      "url": "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer"
+    }
+  ],
+  "basemap": "Esri Topographic with World Hillshade",
+  "photorealisticVerified": false,
+  "handoff": "County administrator confirms entitlement/session allowance and enables Google Photorealistic 3D. Owner then selects basemap, checks Fresno river coverage and overlay alignment, saves existing item, tests a second pilot member, and sets config readiness only after verification.",
+  "limitations": [
+    "Historical reference, not live flood imagery or a hydraulic surface",
+    "No live feed or acknowledgement synchronization",
+    "Camera passed once at launch",
+    "FEMA source legend contains repeated entries for distinct source attributes; styling remains publisher default",
+    "Scene author access verified; second group-member access pending"
+  ]
+}

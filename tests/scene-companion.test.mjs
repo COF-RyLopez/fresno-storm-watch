@@ -56,6 +56,18 @@ test('UI clearly reports setup and config errors while retaining a working close
     assert.ok(nodes.get('#open-scene-companion').attrs.href.startsWith(config.portalUrl));
     assert.equal(nodes.get('#scene-exercise-note').hidden,false);
     assert.equal(nodes.get('#photorealistic-help').attrs.open,'');
+    const saved={...config,photorealisticSceneId:'0123456789abcdef0123456789abcdef'};
+    // A saved terrain scene alone must never claim photorealistic imagery is active.
+    for (const photorealisticVerified of [undefined,false,'true']) {
+      setupSceneCompanion({...saved,photorealisticVerified},()=>null);
+      nodes.get('#open-photorealistic').events.click();
+      assert.match(nodes.get('#scene-companion-status').textContent,/Photorealistic imagery is not active yet/);
+      assert.equal(nodes.get('#open-scene-companion').textContent,'Open county 3D companion');
+      assert.equal(new URL(nodes.get('#open-scene-companion').attrs.href).searchParams.get('webscene'),saved.photorealisticSceneId);
+    }
+    setupSceneCompanion({...saved,photorealisticVerified:true},()=>null);
+    nodes.get('#open-photorealistic').events.click();
+    assert.match(nodes.get('#scene-companion-status').textContent,/county photorealistic scene is connected/);
     setupSceneCompanion({...config,photorealisticSceneId:'bad'},()=>null);
     nodes.get('#open-photorealistic').events.click();
     assert.match(nodes.get('#scene-companion-status').textContent,/configuration is invalid/);
