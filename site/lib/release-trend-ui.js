@@ -19,13 +19,13 @@ export function releaseTrendChart(series,model,domain,release,zone,selectionKey=
   chart.append(svg('rect',{x:x(model.now),y:top,width:right-x(model.now),height:bottom-top,fill:'var(--chart-forecast)',opacity:'.05'}));
   for(let i=0;i<3;i++){
     const v=domain[0]+i*(domain[1]-domain[0])/2;
-    chart.append(svg('line',{x1:left,x2:right,y1:y(v),y2:y(v),stroke:'var(--chart-grid)'}),svg('text',{x:left-7,y:y(v)+4,'text-anchor':'end',fill:'var(--chart-text)','font-size':12},new Intl.NumberFormat('en-US',{maximumFractionDigits:series.units==='ft'?2:0}).format(v)));
+    chart.append(svg('line',{x1:left,x2:right,y1:y(v),y2:y(v),stroke:'var(--chart-grid)'}),svg('text',{x:left-7,y:y(v)+4,'text-anchor':'end',fill:'var(--chart-text)','font-size':14},new Intl.NumberFormat('en-US',{maximumFractionDigits:series.units==='ft'?2:0}).format(v)));
   }
-  chart.append(svg('text',{x:left,y:16,fill:'var(--chart-text)','font-size':13},series.units));
+  chart.append(svg('text',{x:left,y:16,fill:'var(--chart-text)','font-size':14},series.units));
   const date=new Intl.DateTimeFormat('en-US',{timeZone:zone,month:'short',day:'numeric'}),hour=new Intl.DateTimeFormat('en-US',{timeZone:zone,hour:'numeric',minute:'2-digit'});
   for(const t of [model.start,model.now,model.end]){
     const anchor=t===model.start?'start':t===model.end?'end':'middle';
-    chart.append(svg('text',{x:x(t),y:198,'text-anchor':anchor,fill:'var(--chart-text)','font-size':12},date.format(t)),svg('text',{x:x(t),y:216,'text-anchor':anchor,fill:'var(--chart-text)','font-size':11},hour.format(t)));
+    chart.append(svg('text',{x:x(t),y:198,'text-anchor':anchor,fill:'var(--chart-text)','font-size':14},date.format(t)),svg('text',{x:x(t),y:216,'text-anchor':anchor,fill:'var(--chart-text)','font-size':13},hour.format(t)));
   }
   chart.append(svg('line',{x1:x(model.now),x2:x(model.now),y1:top,y2:bottom,stroke:'var(--chart-now)','stroke-dasharray':'3 3'}),svg('text',{x:x(model.now),y:16,'text-anchor':'middle','font-size':12,fill:'var(--chart-text)'},'Now'));
   for(const notice of model.markers){
