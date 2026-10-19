@@ -269,6 +269,7 @@ try {
     map.select(state.alerts.find(a => a.key === selectedKey));
     $('map-status').hidden = true;
     $('fit-region').removeAttribute('disabled');
+    void setupInundation(map);
     renderDetail();
   }).catch(error => {
     console.error('Storm Watch map initialization:', error.name, error.message, error.stack);
@@ -280,4 +281,18 @@ try {
   $('map-status').textContent = 'County scope unavailable. Reload this page to retry.';
   $('refresh').setAttribute('disabled', '');
   renderBanner(); renderList();
+}
+
+// Inundation layers: scenarios listed in data/flood-scenarios/index.json (unless main_map is false) fly the map to their maximum depth.
+async function setupInundation(map){
+  const root='./data/flood-scenarios/',index=await fetch(root+'index.json').then(r=>r.json()),group=$('inundation-options');
+  for(const s of index.scenarios.filter(s=>s.main_map!==false)){const item=document.createElement('calcite-dropdown-item');item.dataset.scenario=s.id;item.textContent=s.label;group.append(item);}
+  $('inundation-open').removeAttribute('disabled');
+  $('inundation-menu').addEventListener('calciteDropdownSelect',async e=>{
+    const id=e.target.selectedItems[0]?.dataset.scenario||'',link=$('inundation-playback');
+    link.hidden=!id;link.href=`./flood-scenario.html?scenario=${encodeURIComponent(id)}`;
+    $('inundation-open').appearance=id?'solid':'outline';
+    try{await map.showInundation(root+id+'/',id?await fetch(`${root}${id}/scenario.json`).then(r=>r.json()):null);}
+    catch(error){link.hidden=true;console.warn('Inundation layer:',error.message);}
+  });
 }
