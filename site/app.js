@@ -14,7 +14,7 @@ import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
 import { createPowerWatch } from './lib/power-ui.js?v=0.19.0';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.19.0';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.19.0';
-import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.20.0';
+import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.21.0';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
 
 const $ = id => document.getElementById(id);

@@ -1,14 +1,17 @@
 import {validateBriefingSnapshot,briefingState,BRIEFING_CHECK_MAX_AGE,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF} from './briefing-model.js';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
+import {PARTNER_BRIEFING} from './briefing-impact-model.js?v=0.21.0';
+import {createBriefingImpactView} from './briefing-impact-ui.js?v=0.21.0';
 const $=id=>document.getElementById(id);
-const ARCHIVE={url:'./data/briefings/nws-hanford-2026-10-19.pdf',sha256:'28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4',bytes:6247407};
+const ARCHIVE=PARTNER_BRIEFING;
 /** @param {string} tag @param {string} text @returns {HTMLElement} All source metadata is displayed as text. */
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Public documents only; update markers live in memory and are not team acknowledgements. */
 export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{}}){
   let snapshot=null,error=null,busy=false,baseline=null,updated=false,pdfBlob=null,generation=0,initialLinkHandled=false,pages=[],pageIndex=0,pdfController=null;
   const time=t=>formatTime(Number.isFinite(Date.parse(t))?Date.parse(t):null,timeZone),state=()=>briefingState(error?{...snapshot,error}:snapshot);
+  const impacts=createBriefingImpactView({exercise,onOpen:(...args)=>void show(...args)});
   const cardViews=new WeakMap();
   function cardView(host){
     if(cardViews.has(host))return cardViews.get(host);
@@ -31,14 +34,18 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{}})
     $('hanford-briefing-open').disabled=exercise||!doc;
     if(!exercise)reportHealth('hnx-briefing','NWS Hanford public briefing',{checked:doc?Date.parse(snapshot.lastSuccessAt||doc.collectedAt):null,error:health.tone==='gap'?health.reason:null,maxAgeMs:BRIEFING_CHECK_MAX_AGE});
     onUpdate(updated);
+    impacts.update(error?{...snapshot,error}:snapshot);
   }
   function clearViewer(){generation++;pdfController?.abort();pdfController=null;$('hanford-page-image').removeAttribute('src');$('hanford-pdf-open').removeAttribute('href');if(pdfBlob)URL.revokeObjectURL(pdfBlob);pdfBlob=null;}
   function pageView(){const page=pages[pageIndex];$('hanford-page-image').hidden=!page;$('hanford-page-controls').hidden=!pages.length;$('hanford-page-label').textContent=`Page ${pageIndex+1} of ${pages.length}`;$('hanford-page-before').disabled=pageIndex===0;$('hanford-page-after').disabled=pageIndex>=pages.length-1;if(page){$('hanford-page-image').src=page.path;$('hanford-page-open').href=page.path;$('hanford-page-image').alt=`NWS Hanford briefing · page ${pageIndex+1} of ${pages.length}. Open the PDF for its text layer and full resolution.`;}}
-  async function show(kind){
+  async function show(kind,pageNumber=1,expectedHash=null){
     clearViewer();const request=generation,archive=kind==='archive',doc=snapshot?.document;
+    if(expectedHash&&expectedHash!==(archive?ARCHIVE.sha256:doc?.sha256)){
+      $('hanford-dialog').heading='Briefing revision changed';$('hanford-document-note').textContent='The source changed after this summary was displayed. Its page citation cannot be applied to the new PDF. Read the current briefing and request a new summary review.';$('hanford-pdf-status').textContent='Previous summary withheld.';$('hanford-pdf-open').disabled=true;$('hanford-publisher-link').href=HNX_BRIEFING_PAGE;$('hanford-publisher-link').textContent='Current NWS Hanford source';pages=[];pageView();$('hanford-dialog').open=true;return;
+    }
     $('hanford-dialog').heading=archive?'NWS Hanford · October 19 partner slides':'NWS Hanford · public briefing';
     $('hanford-document-note').textContent=archive?'Dated October 19, 2026 · 19 NWS Hanford partner slides · supplied by Fresno County OES. Static archive; read the forecast periods in the slides.':doc?`NWS page updated ${time(doc.sourceUpdatedAt)} · PDF saved ${time(doc.collectedAt)}; source checked ${time(snapshot.lastSuccessAt||doc.collectedAt)}. ${state().label}.`:'No verified public briefing is available.';
-    $('hanford-pdf-status').textContent='Checking the saved PDF…';$('hanford-pdf-open').disabled=true;pages=archive?Array.from({length:19},(_,i)=>({path:`./data/briefing-previews/${ARCHIVE.sha256}/${i+1}.webp`})):(doc?.previews||[]);pageIndex=0;pageView();$('hanford-dialog').open=true;
+    $('hanford-pdf-status').textContent='Checking the saved PDF…';$('hanford-pdf-open').disabled=true;pages=archive?Array.from({length:19},(_,i)=>({path:`./data/briefing-previews/${ARCHIVE.sha256}/${i+1}.webp`})):(doc?.previews||[]);pageIndex=Math.max(0,Math.min(pages.length-1,Number.isInteger(pageNumber)?pageNumber-1:0));pageView();$('hanford-dialog').open=true;
     $('hanford-publisher-link').href=archive?HNX_BRIEFING_PAGE:HNX_BRIEFING_PDF;$('hanford-publisher-link').textContent=archive?'NWS Hanford briefing page':'Original NWS public PDF';
     try{
       if(!archive&&!doc)throw new Error('Open the NWS page while the public briefing is unavailable.');

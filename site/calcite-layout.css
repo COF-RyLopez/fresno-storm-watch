@@ -387,3 +387,14 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 #hanford-document-note,#hanford-pdf-status{font-size:13px;line-height:1.5;margin-bottom:10px;}
 #hanford-page-image{display:block;width:100%;max-width:1200px;height:auto;align-self:flex-start;justify-self:start;}
 #hanford-page-controls{position:sticky;top:0;background:var(--calcite-color-surface-1);z-index:1;padding:6px 0;}
+
+.briefing-impact{padding-block:14px;border-top:1px solid var(--calcite-color-border-2);}
+.briefing-impact h3{font-size:14px;line-height:1.4;margin:0 0 6px;}
+.briefing-impact dl{font-size:12px;line-height:1.5;margin:8px 0;}
+.briefing-impact dt{font-weight:600;margin-top:7px;color:var(--calcite-color-text-1);}
+.briefing-impact dd{margin:0;color:var(--calcite-color-text-2);overflow-wrap:anywhere;}
+.briefing-impact-status{font-weight:600;}
+.briefing-impact-qualification{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;}
+#briefing-impacts> a,.briefing-impact> a{display:block;margin-block:8px;font-size:12px;}
+#briefing-impacts>calcite-notice{margin-bottom:8px;}
+.briefing-impact calcite-accordion{margin-block:10px;}

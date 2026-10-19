@@ -1,0 +1,49 @@
+{
+  "release": "0.21.0",
+  "checked": "2026-10-19",
+  "scope": "Fresno-relevant NWS Hanford briefing context in Area Watch, without map, attention-rule, private-storage or permission changes.",
+  "sources": {
+    "publicPage": "https://www.weather.gov/hnx/briefing",
+    "publicPdf": "https://www.weather.gov/media/hnx/smokeImages/partneremail.pdf",
+    "publicRevision": "cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7",
+    "publicPagesReviewed": [1, 2],
+    "partnerRevision": "28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4",
+    "partnerPageReviewed": 2,
+    "method": "Read source text and visually inspect original page previews. Paraphrases, source probabilities and confidence remain separate from app planning questions. This is not county approval of resource assignments."
+  },
+  "automated": {
+    "javascriptTests": 231,
+    "privatePublisherContractTests": 18,
+    "pdfRendererTests": 3,
+    "syntaxGeometryLinksPublicConfig": "Passed",
+    "newCases": [
+      "Exact source revision and page identity",
+      "Changed or missing public revision withholds its previous summaries",
+      "Dated partner context is independently labeled",
+      "Failed and overdue source checks qualify retained evidence",
+      "Pacific calendar forecast windows become past-period context without download renewal",
+      "Invalid dates, pages, duplicate IDs and alternate URLs fail validation",
+      "Confidence categories are not inferred from probabilities"
+    ]
+  },
+  "browser": {
+    "verifiedLocally": [
+      "Compact Calcite area headings expose impact, timing and confidence",
+      "Expanded cards include source probabilities, scope and responsible-team review prompts",
+      "Snow citation opens verified public PDF at page 2 of 4",
+      "Foothill citation opens verified partner slides at page 2 of 19",
+      "Cards and review prompts wrap at 390x844 without horizontal overflow",
+      "Existing area-review and power counts remain independent of briefing reads"
+    ],
+    "publishedProof": "Save deployment result and screenshots under ignored work/qa-0.21.0 after Pages completes."
+  },
+  "limits": [
+    "Fresno applicability is a regional text interpretation; no new impact geometry or site-specific probabilities",
+    "Kern-only wind and heavy rain are excluded; Tioga Pass is explicitly outside Fresno",
+    "Source-specific confidence and probabilities are not blended across documents",
+    "A new public PDF requires a maintainer to read and update its summary register before summaries resume",
+    "The October 19 partner deck is a dated archive, not a live feed",
+    "No automatic dispatch, flood prediction, team acknowledgement or county activation"
+  ],
+  "rollback": "Redeploy ccce131337edc76698e42f71eec334f17416b5f5 (0.20.0); no data migration or AGOL changes."
+}

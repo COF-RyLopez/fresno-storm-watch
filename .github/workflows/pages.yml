@@ -45,7 +45,7 @@ jobs:
           work/briefing-render-env/bin/python -m pip install --disable-pip-version-check -r scripts/briefing-render-requirements.txt
           work/briefing-render-env/bin/python scripts/render-briefing.py
           work/briefing-render-env/bin/python -m unittest discover -s tests -p 'test_briefing_renderer.py'
-          node --test tests/briefing.test.mjs
+          node --test tests/briefing.test.mjs tests/briefing-impacts.test.mjs
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
