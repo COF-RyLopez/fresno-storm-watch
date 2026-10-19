@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
+import { clockLabel } from './lib/flood-scenario-model.js';
 import { createMap } from './lib/map.js?v=0.22.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
@@ -283,16 +284,39 @@ try {
   renderBanner(); renderList();
 }
 
-// Inundation layers: scenarios listed in data/flood-scenarios/index.json (unless main_map is false) fly the map to their maximum depth.
+// Inundation layers: scenarios listed in data/flood-scenarios/index.json (unless main_map is false).
+// Choosing one flies the map to it and opens a player over the map; the playback page adds buildings and statistics.
 async function setupInundation(map){
   const root='./data/flood-scenarios/',index=await fetch(root+'index.json').then(r=>r.json()),group=$('inundation-options');
   for(const s of index.scenarios.filter(s=>s.main_map!==false)){const item=document.createElement('calcite-dropdown-item');item.dataset.scenario=s.id;item.textContent=s.label;group.append(item);}
   $('inundation-open').removeAttribute('disabled');
+  let player=null,chosen='',t=0,playing=false,last=0;
+  const render=next=>{
+    t=Math.min(Math.max(next,player.hours[0]),player.hours.at(-1));player.setTime(t);$('inundation-clock').textContent=clockLabel(t);
+    if(Math.abs(Number($('inundation-time').value)-t)>0.01)$('inundation-time').value=Number(t.toFixed(2));
+  };
+  const tick=now=>{
+    if(!playing)return;if(last)render(t+((now-last)/1000)*(Number($('inundation-speed').value)||1));last=now;
+    if(t>=player.hours.at(-1))setPlaying(false);else requestAnimationFrame(tick);
+  };
+  const setPlaying=on=>{
+    playing=on&&!!player;last=0;$('inundation-play').iconStart=playing?'pause':'play';$('inundation-play').textContent=playing?'Pause':'Play';
+    if(playing){if(t>=player.hours.at(-1))render(player.hours[0]);requestAnimationFrame(tick);}
+  };
+  $('inundation-play').addEventListener('click',()=>setPlaying(!playing));
+  $('inundation-time').addEventListener('calciteSliderInput',e=>{setPlaying(false);if(player)render(Number(e.target.value));});
   $('inundation-menu').addEventListener('calciteDropdownSelect',async e=>{
-    const id=e.target.selectedItems[0]?.dataset.scenario||'',link=$('inundation-playback');
+    const id=e.target.selectedItems[0]?.dataset.scenario||'',link=$('inundation-playback');chosen=id;
+    setPlaying(false);player=null;$('inundation-player').hidden=true;
     link.hidden=!id;link.href=`./flood-scenario.html?scenario=${encodeURIComponent(id)}`;
     $('inundation-open').appearance=id?'solid':'outline';
-    try{await map.showInundation(root+id+'/',id?await fetch(`${root}${id}/scenario.json`).then(r=>r.json()):null);}
-    catch(error){link.hidden=true;console.warn('Inundation layer:',error.message);}
+    try{
+      const scenario=id?await fetch(`${root}${id}/scenario.json`).then(r=>r.json()):null,next=await map.showInundation(root+id+'/',scenario);
+      if(!next||chosen!==id)return;
+      player=next;$('inundation-title').textContent=scenario.title;
+      $('inundation-time').min=player.hours[0];$('inundation-time').max=player.hours.at(-1);
+      // Open on the first hour with water, as the playback page does.
+      render(player.hours[Math.max(scenario.frames.findIndex(f=>f.wet_acres>0)-1,0)]);$('inundation-player').hidden=false;
+    }catch(error){link.hidden=true;console.warn('Inundation layer:',error.message);}
   });
 }

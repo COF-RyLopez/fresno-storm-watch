@@ -2,6 +2,7 @@ import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
+import { blend } from './flood-scenario-model.js';
 import { installMapContext } from './map-context.js?v=0.19.0';
 import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.22.0';
 
@@ -311,7 +312,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }).catch(error=>{workspaceSwitching=false;document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Workspace map could not restore. Use Fit workspace or the evidence list.';console.warn('Workspace restore:',error.message);});return transition;
   }
   syncControls();
-  // Flood scenario overlay: the frame with the most wet acres, drawn under the operational graphics.
+  // Flood scenario overlay: every model frame, cross-faded by setTime(hour); drawn under the operational graphics.
   let inundation=null,inundationVersion=0;
   async function showInundation(base,scenario){
     const version=++inundationVersion;if(inundation){map.remove(inundation);inundation.destroy();inundation=null;}
@@ -319,12 +320,15 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     const [MediaLayer,ImageElement,ExtentAndRotationGeoreference]=await sdk.import(['@arcgis/core/layers/MediaLayer.js','@arcgis/core/layers/support/ImageElement.js','@arcgis/core/layers/support/ExtentAndRotationGeoreference.js']);
     if(version!==inundationVersion)return;
     const {wkid,...bounds}=scenario.extent; // an unknown 'wkid' key zeroes the Extent
-    const extent=new Extent({...bounds,spatialReference:{wkid}}),peak=scenario.frames.reduce((a,f)=>f.wet_acres>a.wet_acres?f:a);
-    inundation=new MediaLayer({title:`${scenario.title} · maximum modeled depth`,opacity:0.85,source:[new ImageElement({image:base+peak.image,georeference:new ExtentAndRotationGeoreference({extent})})]});
+    const extent=new Extent({...bounds,spatialReference:{wkid}}),hours=scenario.frames.map(f=>f.hour);
+    const elements=scenario.frames.map(f=>new ImageElement({image:base+f.image,opacity:0,georeference:new ExtentAndRotationGeoreference({extent})}));
+    inundation=new MediaLayer({title:`${scenario.title} · modeled depth`,opacity:0.85,source:elements});
     map.add(inundation,1);
+    const setTime=t=>{const {i0,i1,w}=blend(t,hours);elements.forEach((e,i)=>{e.opacity=i===i0?1-w:i===i1&&i1!==i0?w:0;});};
     const target=view.type==='3d'?{target:extent,tilt:35,heading:0}:extent.clone().expand(1.1),workspace=workspaceVersion;
-    await transition;if(version!==inundationVersion||workspace!==workspaceVersion)return;followRegion=false;
-    return view.goTo(target,{duration:1500}).catch(error=>{if(error.name!=='AbortError')console.warn('Inundation fly-to:',error.message);});
+    void transition.then(()=>{if(version!==inundationVersion||workspace!==workspaceVersion)return;followRegion=false;
+      return view.goTo(target,{duration:1500}).catch(error=>{if(error.name!=='AbortError')console.warn('Inundation fly-to:',error.message);});});
+    return {hours,setTime};
   }
   return {
     registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,
