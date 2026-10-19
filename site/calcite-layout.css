@@ -381,3 +381,9 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 }
 #tools-shell #river-title{font-size:14px;}
 #tools-shell #river-summary{font-size:12px;}
+.hanford-section p{margin-block:8px;line-height:1.5;font-size:12px;}
+.hanford-section small{display:block;font-size:11px;line-height:1.5;color:var(--calcite-color-text-2);}
+.briefing-status{font-weight:600;}
+#hanford-document-note,#hanford-pdf-status{font-size:13px;line-height:1.5;margin-bottom:10px;}
+#hanford-page-image{display:block;width:100%;max-width:1200px;height:auto;align-self:flex-start;justify-self:start;}
+#hanford-page-controls{position:sticky;top:0;background:var(--calcite-color-surface-1);z-index:1;padding:6px 0;}

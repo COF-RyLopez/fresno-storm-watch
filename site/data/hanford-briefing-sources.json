@@ -1,0 +1,27 @@
+{
+  "publisher": "National Weather Service, Weather Forecast Office Hanford, California",
+  "checked": "2026-10-19",
+  "publicProduct": {
+    "page": "https://www.weather.gov/hnx/briefing",
+    "pdf": "https://www.weather.gov/media/hnx/smokeImages/partneremail.pdf",
+    "observedPages": 4,
+    "publicationTimeMeaning": "Last Update stated by the source web page, not inferred from download time",
+    "updatePolicy": "Event-driven; page states normally updated by 6 a.m. when impactful weather is expected",
+    "collection": "Existing GitHub Pages workflow, target 15 minutes; browser checks metadata each minute while visible. Scheduling is not guaranteed."
+  },
+  "datedPartnerSlides": {
+    "title": "NWS Hanford Midweek Storm System Briefing",
+    "dated": "2026-10-19",
+    "presenter": "Stephen McCoy",
+    "pages": 19,
+    "supplier": "Fresno County OES",
+    "path": "briefings/nws-hanford-2026-10-19.pdf",
+    "sha256": "28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4",
+    "livePublicUrl": null,
+    "classification": "Reviewed NWS weather-only slides; no county email, signature or operational records included",
+    "automaticUpdates": false
+  },
+  "use": "Context for reading forecast timing, impacts, uncertainty and geography. Briefing contents are not CAP alerts or configured county deployment thresholds.",
+  "retention": "Public current PDF snapshot retains the last good collection with explicit errors and original times on failure. The dated partner deck is static. No automatic mailbox access.",
+  "owner": "County GIS maintains the collector; County OES coordinates the full partner slide source and distribution with NWS Hanford."
+}

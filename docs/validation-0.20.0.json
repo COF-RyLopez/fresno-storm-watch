@@ -1,0 +1,45 @@
+{
+  "release": "0.20.0",
+  "checked": "2026-10-19",
+  "scope": "NWS Hanford public briefing ingestion and a dated partner slide reader. No AGOL changes, mailbox access, hazard thresholds or dispatch logic.",
+  "sourceFindings": {
+    "partnerTitle": "NWS Hanford Midweek Storm System Briefing",
+    "partnerDate": "2026-10-19",
+    "partnerPresenter": "Stephen McCoy",
+    "partnerPages": 19,
+    "publicSummaryPagesAtCheck": 4,
+    "publicPage": "https://www.weather.gov/hnx/briefing",
+    "publicPdf": "https://www.weather.gov/media/hnx/smokeImages/partneremail.pdf",
+    "fullPartnerLiveUrlFound": false,
+    "emailMessagePublished": false
+  },
+  "automated": {
+    "javascriptTests": 224,
+    "publisherContractTests": 18,
+    "rendererTests": 3,
+    "standaloneWaterwayTests": 4,
+    "waterwayEnvironment": "Existing work/waterways-env; separate pinned dependencies",
+    "syntaxSourceGeometryLinksPublicConfig": "Passed"
+  },
+  "browser": {
+    "environment": "In-app browser, local app, 1280x720 and 390x844",
+    "verified": [
+      "Public summary reader displays four original page previews and verifies the PDF hash",
+      "Dated partner reader displays all 19 preview assets and verifies the original PDF hash",
+      "Previous/Next navigation, explicit page counts, source links and original PDF links are visible",
+      "Phone reader controls wrap with labels and an Open page image link for zooming",
+      "Briefing publication/source-page time, original file retrieval and successful source verification remain separate",
+      "Live conditional-source check preserved the original PDF save time while advancing the successful check",
+      "Official alert counts and area review rules remain separate from briefing availability"
+    ],
+    "limitations": [
+      "Full partner webinar slides have no verified public recurring URL; October 19 deck is a static archive",
+      "Update marker is session-local and does not record an EOC team acknowledgement",
+      "No automatic reading of county email and no full archive of every public briefing revision",
+      "Physical EOC and team tabletop acceptance remain county work"
+    ]
+  },
+  "operation": "Existing Pages schedule targets 15 minutes; browser checks metadata every minute while visible. Conditional source checks avoid repeated downloads; full byte verification repeats at least every six hours. Failed collection retains original evidence with explicit error. Page or file update over 36 hours receives an app verification cue, not an NWS expiration. Only the latest good public PDF and the explicitly dated partner deck are retained.",
+  "dependencies": "Pinned pypdfium2 5.14.0 and Pillow 12.3.0. Exact releases and Linux wheels verified in the primary PyPI registry. Runtime does not need a second Calcite or PDF JavaScript library.",
+  "rollback": "Redeploy commit 8c27688a650dcd0a75523e4985e15df929664201 (0.19.0). No data migration or AGOL access changes to undo."
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "sourcePage": "https://www.weather.gov/hnx/briefing",
+  "sourcePdf": "https://www.weather.gov/media/hnx/smokeImages/partneremail.pdf",
+  "checkedAt": "2026-10-19T22:42:12.541Z",
+  "lastSuccessAt": "2026-10-19T22:42:12.541Z",
+  "document": {
+    "sha256": "cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7",
+    "bytes": 7874391,
+    "sourceUpdatedAt": "2026-10-19T09:40:02.000Z",
+    "sourceDateLabel": "Mon Oct 19 02:40:02 PDT 2026",
+    "collectedAt": "2026-10-19T22:29:07.373Z",
+    "fileModifiedAt": "2026-10-19T09:53:31.000Z",
+    "previews": [
+      {
+        "path": "./data/briefing-previews/cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7/1.webp",
+        "width": 1200,
+        "height": 1553
+      },
+      {
+        "path": "./data/briefing-previews/cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7/2.webp",
+        "width": 1200,
+        "height": 1553
+      },
+      {
+        "path": "./data/briefing-previews/cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7/3.webp",
+        "width": 1200,
+        "height": 1553
+      },
+      {
+        "path": "./data/briefing-previews/cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7/4.webp",
+        "width": 1200,
+        "height": 1553
+      }
+    ],
+    "previewError": null
+  },
+  "error": null
+}

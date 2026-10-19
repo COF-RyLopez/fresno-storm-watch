@@ -10,10 +10,11 @@ import { createCameraWatch } from './lib/camera-ui.js?v=0.19.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.19.0';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.19.0';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.19.0-r3';
-import {createCountyStrip,reportHealth} from './lib/source-health.js';
+import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
 import { createPowerWatch } from './lib/power-ui.js?v=0.19.0';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.19.0';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.19.0';
+import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.20.0';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
 
 const $ = id => document.getElementById(id);
@@ -48,6 +49,7 @@ function openRoads(){workspace.showPanel('roads');}
 function openPower(){workspace.showPanel('power');}
 for(const [id,topic]of [['view-watch','watch'],['view-rivers','rivers'],['view-environment','weather'],['view-alerts','alerts'],['view-power','power'],['view-roads','roads']])$(id).addEventListener('click',()=>workspace.showPanel(topic));
 const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
+createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap});
 const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
