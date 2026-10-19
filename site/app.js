@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
-import { createMap } from './lib/map.js?v=0.14.0';
+import { createMap } from './lib/map.js?v=0.16.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -10,7 +10,7 @@ import { createCameraWatch } from './lib/camera-ui.js';
 import { createEnvironmentWatch } from './lib/environment-ui.js';
 import { createPlanningWatch } from './lib/planning-ui.js';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.13.0';
-import { createPowerWatch } from './lib/power-ui.js?v=0.14.0';
+import { createPowerWatch } from './lib/power-ui.js?v=0.16.0';
 import { createFacilityWatch } from './lib/facility-ui.js';
 import { createRoadWatch } from './lib/roads-ui.js';
 import { createReleaseTrends } from './lib/release-trend-ui.js';

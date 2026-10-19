@@ -265,3 +265,27 @@ Map layers, panning and gauge filters do not change this fixed scope.
 Source changes are readiness-review cues; no county action thresholds, risk
 score, inundation prediction or staging-site selection have been configured.
 See site/planning.html#area-watch and site/setup.html#area-watch-check.
+
+POWER SYMBOLS AND TERRAIN (v0.16.0)
+The Power symbols dialog and map legend share shapes, glyphs and area patterns
+with utility cards and map graphics. Source failure adds a retained-data clock
+badge without changing the last utility status. Use All symbols in the fictional
+power exercise to inspect all seven states. County assets remain overlap cues.
+
+site/terrain.html contains a Fresno USGS LiDAR shortlist, 15-work-unit inventory,
+download links and a Pro preparation guide. No new terrain is connected yet.
+
+The named-waterway format trial preserves 16,184 county-intersecting segments,
+stable IDs and full WKB geometry. GeoParquet is 4.67 MB; equivalent plain GeoJSON
+14.04 MB; gzip GeoJSON 3.73 MB. No browser rendering speed improvement is claimed.
+The live app retains its viewport USGS service for both 2D and 3D. ParquetLayer
+is currently a beta 2D option, not a replacement for SceneView.
+
+Reproduce with a separate Python environment (do not modify the Pro environment):
+  python -m venv work/waterways-env
+  work/waterways-env/Scripts/python -m pip install -r scripts/requirements-waterways.txt
+  work/waterways-env/Scripts/python scripts/export-waterways.py
+  work/waterways-env/Scripts/python -m unittest discover -s tests -p test_waterway_export.py
+Results, source download, rejected-record accounting and manifest go under
+work/waterways-geoparquet. --reuse-download repeats conversion of that snapshot.
+No credentials, private layers, AGOL writes or scheduled collection are used.

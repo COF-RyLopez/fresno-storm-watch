@@ -1,0 +1,40 @@
+{
+  "release": "0.16.0",
+  "checkedLocalDate": "2026-10-18",
+  "power": {
+    "scope": "Visual presentation only; utility ingestion, county scope, notification rules and permissions unchanged",
+    "states": ["consideration", "warning", "psps", "outage", "restored", "cancelled", "unknown"],
+    "checks": [
+      "175 JavaScript tests passed, including 4 power-symbol contracts",
+      "18 private-workspace publisher contract tests passed",
+      "Syntax, source contracts, public configuration and local page links passed",
+      "Dark and light legend dialogs inspected in browser; Escape and close control work",
+      "Fictional watch, warning, PSPS and ordinary outage point/area graphics inspected in 2D; symbols also visible in 3D",
+      "Seven-status exercise returns 7 records, combining point and area representations without double counting",
+      "Failed-source exercise keeps PSPS/warning status with retained-data warnings",
+      "Approximate protanopia, deuteranopia and tritanopia simulations retain shape, glyph and text distinctions"
+    ],
+    "limitations": ["No independent assistive-technology or real-phone certification", "Area locations remain utility approximations; county assets indicate possible overlap only"]
+  },
+  "waterways": {
+    "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
+    "scope": "Named full segments intersecting Fresno County; unnamed detail excluded",
+    "sourceCount": 16184,
+    "outputCount": 16184,
+    "rejectedCount": 0,
+    "format": "GeoParquet 1.1.0, Snappy, WKB MultiLineString, explicit OGC:CRS84, bbox covering, spatially sorted row groups",
+    "checks": "4 Python export tests passed; full export preserves exact WKB geometry and stable IDs on read-back",
+    "bytes": {"parquet": 4672847, "plainGeojson": 14042022, "gzipGeojson": 3727948},
+    "parquetSha256": "1309c0a12262c51bcd3331b2204ce50ced379a1edd1989e88b52b806039f1582",
+    "applicationChange": "None. Viewport feature service remains connected in 2D and 3D.",
+    "limitation": "Serialized-size comparison only; no browser-speed improvement established. ParquetLayer currently supports 2D only."
+  },
+  "lidar": {
+    "source": "https://index.nationalmap.gov/arcgis/rest/services/3DEPElevationIndex/MapServer/8",
+    "workUnitsIntersectingCounty": 15,
+    "preferred": ["CA_SanJoaquin_3_2021", "CA_SierraNevada_14_B22", "CA_SierraNevada_11_B22"],
+    "method": "Project polygons intersect county; gauge/reservoir points matched to those footprints",
+    "limitation": "Catalog/metadata screening only. No raw LiDAR tile download, classification inspection, vertical accuracy validation, Pro processing or hosted terrain publication performed."
+  },
+  "rollback": "Revert this release commit and redeploy. No hosted records or sharing settings were changed."
+}

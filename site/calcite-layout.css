@@ -254,6 +254,18 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .power-card h3{font-size:1rem;margin:0.6rem 0;}
 .power-card p{font-size:0.85rem;line-height:1.45;overflow-wrap:anywhere;}
 .power-card>strong{color:var(--power-color);font-size:0.9rem;}
+.power-card-status{display:flex;align-items:center;gap:0.6rem;}
+.power-card-status>strong{color:var(--calcite-color-text-1);font-size:0.95rem;line-height:1.4;}
+.power-card-status img{flex:none;}
+.power-key-heading{font-size:0.8rem;font-weight:600;margin-block:0.65rem!important;color:var(--calcite-color-text-2);}
+.power-key-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0.45rem 1rem;}
+.power-key-item{display:flex;align-items:center;gap:0.45rem;min-width:0;}
+.power-key-item>img{flex:none;border-radius:4px;background:#24313b;}
+.power-key-item strong,.power-key-item small{display:block;line-height:1.35;color:var(--calcite-color-text-1);}
+.power-key-item strong{font-size:0.82rem;}
+.power-key-item small{font-size:0.75rem;color:var(--calcite-color-text-2);}
+.power-key-note{display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;line-height:1.5;margin-top:0.7rem!important;color:var(--calcite-color-text-2);}
+.power-key-note img{flex:none;}
 .power-new{display:inline-block;padding:0.15rem 0.4rem;background:var(--calcite-color-foreground-3);font-size:0.75rem;}
 .power-gap{color:var(--calcite-color-status-warning);font-weight:600;}
 .power-source{display:grid;gap:0.3rem;padding:0.7rem 0;border-bottom:1px solid var(--calcite-color-border-2);}

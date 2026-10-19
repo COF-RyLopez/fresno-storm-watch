@@ -14,7 +14,7 @@ export const POWER_FEEDS=[
   {id:'sce-outages',utility:'SCE',label:'SCE · current outage map',direct:false}
 ];
 export const POWER_STATES={consideration:'PSPS under consideration',warning:'PSPS warning',psps:'PSPS power shut off',outage:'Reported outage',restored:'Utility reports restored',cancelled:'Utility reports cancelled',unknown:'Status needs verification'};
-export const POWER_COLORS={consideration:'#edbd62',warning:'#edbd62',psps:'#ef89ba',outage:'#ef89ba',restored:'#93bfc5',cancelled:'#93bfc5',unknown:'#b4bdc6'};
+export const POWER_COLORS={consideration:'#edc86b',warning:'#f5a45d',psps:'#db9df1',outage:'#fa929c',restored:'#8fced2',cancelled:'#b5bec8',unknown:'#c3c9d0'};
 export const POWER_MAX_AGE=45*60_000;
 const text=v=>v==null?'':String(v).trim().slice(0,1000);
 const required=v=>{const s=text(v);if(!s)throw new Error('Power source identity is missing');return s;};

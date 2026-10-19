@@ -1,7 +1,8 @@
-import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js';
+import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.16.0';
 import {collectPower} from './power-data.js';
 import {formatTime} from './model.js';
-import {powerExercise} from './power-exercise.js';
+import {powerExercise} from './power-exercise.js?v=0.16.0';
+import {powerMarkerUrl,renderPowerLegend} from './power-symbols.js';
 
 const $=id=>document.getElementById(id);
 const el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
@@ -10,6 +11,9 @@ const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel=
 
 /** @param {object} options @returns {object} Fixed county power status, independent of the map extent and selected workspace. */
 export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){
+  for(const host of document.querySelectorAll('[data-power-key]'))renderPowerLegend(host);
+  for(const id of ['power-key-open','map-power-key-open'])$(id).onclick=()=>$('power-key-dialog').setAttribute('open','');
+  $('power-key-close').onclick=()=>$('power-key-dialog').removeAttribute('open');
   let snapshot=null,county=null,map=null,busy=false,loadError=null,lastDirect=0,checked=null,selectedKey=null;
   let changes=null;
   const time=t=>t?formatTime(t,timeZone):'Not supplied';
@@ -55,7 +59,8 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     if(!visible.length)list.append(el('p',snapshot?'No records returned in this filter. This is not an all-clear; check source health and official maps.':'Waiting for power data.','power-empty'));
     for(const row of visible){
       const card=el('article','','power-card');card.style.setProperty('--power-color',POWER_COLORS[row.status]);
-      card.append(el('strong',`${row.utility} · ${POWER_STATES[row.status]}`),el('h3',row.name),el('p',row.location));
+      const status=el('div','','power-card-status'),icon=document.createElement('img');icon.src=powerMarkerUrl(row.status,!!row.health);icon.alt='';icon.width=34;icon.height=34;
+      status.append(icon,el('strong',`${row.utility} · ${POWER_STATES[row.status]}`));card.append(status,el('h3',row.name),el('p',row.location));
       if(pending.has(`${row.key}|${row.revision}`))card.append(el('span','New / changed','power-new'));
       if(row.health)card.append(el('p',row.health,'power-gap'));
       for(const issue of row.issues.filter(s=>/passed|ended|24 hours|Unrecognized|differ|future/.test(s)))card.append(el('p',issue,'power-gap'));
@@ -90,7 +95,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
   for(const [id,key] of [['pge-map-link','pge'],['sce-map-link','sce']])$(id).setAttribute('href',POWER_LINKS[key]);
   if(exercise){
     $('power-refresh').setAttribute('disabled','');const controls=el('div','','power-actions');controls.append(el('strong','EXERCISE · fictional power records'));
-    for(const [name,label] of [['watch','Watch / shutoff'],['restored','Restoration / cancellation'],['failure','Feed failure']])controls.append(button(label,()=>{accept(powerExercise(name));checked=Date.now();render();}));
+    for(const [name,label] of [['watch','Watch / shutoff'],['symbols','All symbols'],['restored','Restoration / cancellation'],['failure','Feed failure']])controls.append(button(label,()=>{accept(powerExercise(name));checked=Date.now();render();}));
     $('power-panel').prepend(controls);accept(powerExercise());checked=Date.now();render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
