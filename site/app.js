@@ -9,7 +9,7 @@ import { createRiverWatch } from './lib/river-ui.js?v=0.19.0';
 import { createCameraWatch } from './lib/camera-ui.js?v=0.19.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.19.0';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.19.0';
-import { createWorkspace } from './lib/workspace-ui.js?v=0.19.0';
+import { createWorkspace } from './lib/workspace-ui.js?v=0.19.0-r3';
 import {createCountyStrip,reportHealth} from './lib/source-health.js';
 import { createPowerWatch } from './lib/power-ui.js?v=0.19.0';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.19.0';

@@ -9,7 +9,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{}}={}){
     for(const [id,p] of Object.entries(WORKSPACES))$(p.panel).hidden=id!==section;
     for(const id of ['river-metrics','weather-metrics','weather-footer'])$(id).hidden=false;
     $('weather-banner-wrap').hidden=false;
-    $('tools-shell').toggleAttribute('collapsed',!panelOpen);
+    $('tools-shell').toggleAttribute('collapsed',compact.matches&&!panelOpen);
     const covered=compact.matches&&panelOpen;$('planning-workspace').classList.toggle('map-covered',covered);$('planning-workspace').inert=covered;
     $('workspace-list').hidden=!compact.matches;
     if(dock.matches){$('camera-sheet').removeAttribute('open');if(cameraPanel.parentElement!==$('camera-shell'))$('camera-shell').append(cameraPanel);$('camera-shell').hidden=!camerasOpen;}
