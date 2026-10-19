@@ -2,6 +2,7 @@ import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { POWER_COLORS } from './power-model.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
+import { installMapContext } from './map-context.js';
 
 let sdkPromise;
 /** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */
@@ -97,6 +98,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     popup: { dockEnabled: true, dockOptions: { position: 'bottom-right', buttonEnabled: false, breakpoint: false } },
     attributionVisible: true, ui: { components: ['zoom'] } });
   let view=mapView, sceneView=null, modeBusy=false, terrain=null, terrainError=false;
+  const mapContext=installMapContext({map,FeatureLayer,sdk,reactiveUtils,fresnoGeometry:fresnoView,getView:()=>view});
   const viewListeners=new Set();
   await view.when();
   let femaError=false, selectedGauge=null, gaugeRows=[], cameraRows=[], selectedCamera=null;
@@ -161,6 +163,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const geographicTarget=bounds=>{const extent=new Extent({...bounds,spatialReference:{wkid:4326}});return view.type==='3d'?{target:extent,tilt:35,heading:0}:webMercatorUtils.geographicToWebMercator(extent);};
   for (const type of ['pointerdown', 'wheel', 'keydown']) document.querySelector('#map').addEventListener(type, () => { followRegion = false; }, { passive: true });
   const bindView=targetView=>{
+    mapContext.bindView(targetView);
     targetView.on('layerview-create-error',event=>{
       if(imageryBasemap&&[...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].includes(event.layer)){imageryFailure=true;imageryStatus();}
     });
@@ -199,6 +202,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   await reactiveUtils.whenOnce(() => view.width > 0 && view.height > 0);
   await view.goTo(scopeExtent().clone().expand(1.15), { animate: false });
   const modeStatus=()=>{
+    mapContext.onViewChanged();
     document.querySelector('#view-mode-status').textContent=view.type==='3d'
       ? terrainError?'3D terrain unavailable · return to 2D for map context':'3D terrain context · no flood-depth model'
       : '2D map';

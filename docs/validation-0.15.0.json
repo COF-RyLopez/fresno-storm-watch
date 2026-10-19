@@ -1,0 +1,30 @@
+{
+  "release": "0.15.0",
+  "checked": "2026-10-18",
+  "automated": {
+    "javascriptTests": "171 passed before final UI-only label/layout adjustments; deployment workflow reruns the complete suite",
+    "privatePublisherContractTests": "18 passed; no hosted items or memberships changed",
+    "syntaxSourceGeometryLinksPublicConfig": "Passed",
+    "diffWhitespace": "Passed"
+  },
+  "browser": {
+    "environment": "In-app browser, local prototype at 1280x720; public/no ArcGIS sign-in",
+    "verified": [
+      "USGS names and reference lines at San Joaquin River / Highway 41 and Enterprise Canal",
+      "Enterprise Canal popup shows its source name, Surface Connector classification and id3dhp CXA6J",
+      "Open 3D Buildings load in the 3D terrain view near north Fresno",
+      "Imagery Hybrid coexists with buildings, FEMA reference, gauges and named waterways",
+      "Buildings off/on and 3D-to-2D-to-3D preserve map function",
+      "Expand map makes source popup contents scrollable and readable on a short screen",
+      "Escape restores the normal workspace and notification banners"
+    ],
+    "limitations": [
+      "Physical EOC workstation and phone acceptance remain outstanding",
+      "SDK emits nonfatal texture-compression and polyline/polygon label-placement diagnostics in this browser; map layers rendered. 3D labels are horizontal, not along-line",
+      "No source outage was forced; initial load/LayerView failures have explicit unavailable states",
+      "County-to-Overture identity matching and Waze connection are not implemented in this release"
+    ]
+  },
+  "privacy": "Only public map services and token-free setup guidance added. Private county features, Waze feed URL and partner records are absent from repository/deployment files.",
+  "sourceEvidence": "docs/map-context-source-check.json"
+}

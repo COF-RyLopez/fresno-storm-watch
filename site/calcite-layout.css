@@ -279,4 +279,11 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .facility-evidence{border-top:1px solid var(--calcite-color-border-2);padding-block:0.7rem;}
 #facility-mapping{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;}
 #imagery-status{font-size:0.75rem;color:var(--calcite-color-text-2);}
+.context-status{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:0.72rem;color:var(--calcite-color-text-2);}
+.map-panel.map-expanded{position:fixed;inset:0;z-index:500;height:100dvh;width:100vw;max-width:none;}
+.map-panel.map-expanded #scope-note{display:none;}
+#expanded-map-note{font-size:12px;color:var(--caution-text);}
+.waterway-channel,.waterway-canal,.waterway-connector{border-top:2px solid #70b9f4;padding-top:3px;}
+.waterway-canal{border-top:2px dashed #83d4e6;}
+.waterway-connector{border-top:2px dotted #a6b9c3;}
 @media(max-width:600px){#facility-mapping{grid-template-columns:1fr;}#facility-banner-text{font-size:0.72rem;}}

@@ -1,0 +1,84 @@
+{
+  "release": "0.15.0",
+  "checked": "2026-10-18",
+  "scope": "Public map context for Fresno County. No private asset records or Waze credentials are bundled.",
+  "waterways": {
+    "publisher": "US Geological Survey, 3D Hydrography Program",
+    "url": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
+    "sourceCRS": "EPSG:3857; service also exposes Z/M, not used for water elevations",
+    "displayFilterCRS": "EPSG:4326 Fresno County polygon in site/data/counties.geojson",
+    "filter": "LayerView intersects; source segments are retained, not clipped. Complete segments can cross the border.",
+    "identifier": "id3dhp",
+    "label": "gnisidlabel",
+    "classification": "featuretype / featuretypelabel",
+    "date": "featuredate is source feature metadata, not observation time",
+    "length": "lengthkm describes the full source segment, in kilometers",
+    "countyNameCheck": {
+      "distinctNameStrings": 496,
+      "distinctNameTypePairs": 828,
+      "exceededTransferLimit": false,
+      "method": "Server query with exact county polygon; distinct gnisidlabel and featuretypelabel, blank names excluded. Names are not counts of independent waterways.",
+      "examples": [
+        "San Joaquin River",
+        "Kings River",
+        "Friant-Kern Canal",
+        "Enterprise Canal",
+        "Gould Canal",
+        "Fresno Canal",
+        "Fancher Creek",
+        "Fresno Slough",
+        "James Bypass"
+      ]
+    },
+    "scaleDenominators": {
+      "namedLines": 400000,
+      "names": 160000,
+      "unnamedDetail": 30000
+    },
+    "limitations": [
+      "Combines new 3DHP data with legacy NHD coverage",
+      "Local district aliases and operations are unverified",
+      "Connectors can describe network continuity rather than a physical channel",
+      "No flood, water-level or current-flow inference"
+    ]
+  },
+  "buildings": {
+    "publisher": "Esri Living Atlas, derived from Overture Maps",
+    "item": "c444b24b184c4523a5dc96248bfea4e1",
+    "service": "https://basemaps3d.arcgis.com/arcgis/rest/services/Open3D_Buildings_v1/SceneServer",
+    "sourceReleaseReportedOnCheckDate": "2026-08-19.0",
+    "sourceCRS": "EPSG:4326",
+    "schemaFields": [
+      "height",
+      "building_levels",
+      "ObjectID",
+      "OSMID",
+      "OSMType",
+      "SrcID",
+      "name",
+      "building",
+      "source"
+    ],
+    "gersExposed": false,
+    "display": "Lazy 3D-only SceneLayer, scale 1:80000 or closer, approximate gray reference forms",
+    "countyMatches": "Not implemented. Requires private reviewed county-ID to Overture parent-building GERS crosswalk from a versioned source extract.",
+    "limitations": [
+      "Not photorealistic imagery",
+      "No surveyed floor elevations, flood protection, power readiness or safe-access inference",
+      "ObjectID is not a durable county relationship key",
+      "Overture building-part IDs are outside the parent-building GERS stability commitment"
+    ]
+  },
+  "waze": {
+    "connection": "Pending; no feed URL, token or partner records in this release",
+    "requirements": [
+      "Approved county coverage",
+      "Managed server process and secret store",
+      "Private AGOL output with appropriate county access",
+      "Validate current agreement, timestamps, units, stable IDs and 5000-event completeness limit"
+    ],
+    "documentation": "https://support.google.com/waze/partners/answer/10618035",
+    "documentedRefreshMinutes": 2,
+    "interim": "Esri Waze for Cities Live Alerts Data Pipeline ff20f111a8044d209dc74efaa9ddd9c2; private owner-only configuration, 15-minute minimum schedule, input caching disabled; privileges and credit budget required."
+  }
+}

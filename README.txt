@@ -1,5 +1,13 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.10.2 | October 17, 2026 | County road-feed connection repair
+Version 0.15.0 | October 18, 2026 | Named waterways and Open 3D buildings
+
+MAP CONTEXT (v0.15.0)
+USGS 3DHP named waterways and close-scale unnamed features are county-filtered
+in 2D/3D. Open 3D Buildings loads on demand in 3D. Source geometry is reference
+context; private county-to-building matches remain pending. Waze is not connected:
+the interim AGOL Data Pipelines route needs privileges, a credit budget and
+verified coverage. A managed collector or Velocity can support faster updates.
+See site/planning.html#map-context and #waze for source contracts and setup.
 
 EOC PILOT LINKS
 App: https://cof-rylopez.github.io/fresno-storm-watch/?view=watch
