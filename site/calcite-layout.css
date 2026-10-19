@@ -324,3 +324,60 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 
 .area-concern-summary{border-inline-start:3px solid var(--calcite-color-brand);padding:8px 12px;margin:10px 0;background:var(--calcite-color-foreground-2);}
 .area-concern-summary p{margin-block:6px;line-height:1.5;}
+
+/* Focused workspaces: Calcite owns structure and native theme tokens. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;}
+.workspace-tabs{background:var(--calcite-color-surface-2);width:100%;}
+.workspace-tabs>calcite-tab{height:0;min-height:0;overflow:hidden;--calcite-tab-padding:0;}
+.workspace-tabs calcite-tab-nav{width:100%;}
+.county-strip{display:flex;flex-wrap:wrap;gap:4px;padding:4px 12px;background:var(--calcite-color-surface-1);border-bottom:1px solid var(--calcite-color-border-2);}
+.county-strip calcite-button{--calcite-button-font-size:12px;}
+.shell-header{max-height:none;overflow:visible;}
+.app-logo-image{height:48px;width:48px;}
+.scope-bar{padding:4px 16px;}
+#tools-shell{--calcite-shell-panel-width:370px;--calcite-shell-panel-max-width:100vw;}
+#workspace-actions{display:none!important;}
+.map-action-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+.map-action-bar{width:auto;max-width:100%;--calcite-action-bar-expanded-max-width:100%;}
+.map-action-bar calcite-action{--calcite-action-padding:8px;}
+.popover-options{padding:12px 16px;min-width:250px;max-height:65dvh;overflow:auto;display:flex;flex-direction:column;gap:10px;}
+.popover-options calcite-label{margin:0;}
+.source-notes{font-size:12px;color:var(--calcite-color-text-2);}
+.map-source-notes{display:flex;flex-direction:column;gap:5px;padding:8px 0;}
+.workspace-layer-off{display:none!important;}
+#map-panel .map-toolbar-stack{max-height:25cqh;}
+#map-panel .legend-stack{max-height:18cqh;}
+.area-filter{padding:8px 16px;margin:0;}
+#camera-sheet-host{height:78dvh;min-height:0;}
+#camera-sheet-host>calcite-panel{height:100%;}
+calcite-panel>.notification-wrap{margin-bottom:8px;}
+#workspace-list{display:none;}
+@media(max-width:900px){
+ #tools-shell{--calcite-shell-panel-width:100vw;--calcite-shell-panel-max-width:100vw;}
+ #workspace-list:not([hidden]){display:block;}
+ .navigation-actions{gap:0;padding:0 6px;}
+ .navigation-actions .official-link{display:none;}
+ .app-brand{padding-inline-start:6px;}
+ .app-logo-image{width:40px;height:40px;}
+ .county-strip{gap:0;padding:2px 6px;}
+ .scope-bar{padding:3px 8px;font-size:11px;}
+}
+@media(max-width:600px){
+ #scope-note{display:none;}
+ .county-strip calcite-button{flex:1 1 48%;}
+ .navigation-actions calcite-action{text-overflow:clip;}
+ .scope-bar{flex-wrap:wrap;gap:2px;}
+ .shell-header .navigation-actions{flex-wrap:wrap;}
+}
+
+.topic-notice{--calcite-block-content-space:0;}
+#header-tools-open{display:none;}
+@media(max-width:900px){
+ #header-actions-host{display:none;}
+ #header-tools-open{display:block;margin-inline:4px;}
+ #header-tools-host .navigation-actions{display:flex;flex-direction:column;align-items:stretch;padding:8px;gap:4px;max-width:280px;}
+ #header-tools-host .official-link{display:block;}
+ .shell-header .navigation-actions{flex-wrap:nowrap;}
+}
+#tools-shell #river-title{font-size:14px;}
+#tools-shell #river-summary{font-size:12px;}

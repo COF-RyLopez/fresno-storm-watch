@@ -50,7 +50,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     const visible=assessment.sites.filter(r=>$('facility-filter').value==='all'||r.review);
     for(const row of visible){const card=el('article','','power-card facility-card');card.style.setProperty('--power-color',FACILITY_COLORS[row.tone]);card.append(el('strong',row.label),el('h3',row.site.name),el('p',`${row.site.kind} · ${row.site.owner||'Owner unassigned'}`),el('p',`Backup power: ${row.site.backup||'Unknown — verify'}`),button('Review site',()=>show(row)));list.append(card);}
     if(connected&&!visible.length)list.append(el('p','No site records returned in this filter. Check inventory completeness and utility coverage; this is not an all-clear.','power-empty'));
-    map?.setFacilities(assessment.sites);map?.setFacilitiesVisible($('facility-map-toggle').checked);
+    map?.setFacilities(assessment.sites);
     if($('facility-dialog').hasAttribute('open')&&selected){const row=assessment.sites.find(r=>r.site.key===selected);if(row)show(row);else{$('facility-dialog').removeAttribute('open');$('facility-detail').replaceChildren();selected=null;}}
   }
   function clearInspector(){inspector?.close();inspector=null;$('facility-mapping').replaceChildren();$('facility-mapping-section').hidden=true;$('facility-source-url').value='';$('facility-source-title').value='';$('facility-setup-message').textContent='';}
@@ -97,7 +97,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     try{if(!county)throw new Error('County boundary is not ready. Retry after the map loads.');const family=FACILITY_PRESETS.find(p=>inspector.url.startsWith(p.url+'/'))?.family;if(sources.some(s=>s.url===inspector.url||family&&s.family===family))throw new Error('This inventory or an alternate building representation is already connected. Disconnect it before switching.');const fields=Object.fromEntries(Object.keys(FIELD_LABELS).map(k=>[k,$(`facility-field-${k}`).value||'']));facilityFields(inspector.metadata,fields);sources.push({url:inspector.url,family,title:$('facility-source-title').value.trim()||inspector.metadata.name,kind:$('facility-source-kind').value,fields,adapter:inspector,rows:[],lastSuccess:null,accounting:null,error:null});inspector=null;$('facility-connect-dialog').removeAttribute('open');clearInspector();await refresh();}
     catch(error){$('facility-setup-message').textContent=error.message;}
   };
-  $('facility-refresh').onclick=()=>void refresh();$('facility-filter').addEventListener('calciteSelectChange',render);$('facility-map-toggle').addEventListener('calciteCheckboxChange',render);
+  $('facility-refresh').onclick=()=>void refresh();$('facility-filter').addEventListener('calciteSelectChange',render);$('facility-map-toggle').addEventListener('calciteCheckboxChange',()=>{map?.setLayerPreference('facilities',$('facility-map-toggle').checked);render();});
   $('facility-connect-dialog').addEventListener('calciteDialogClose',clearInspector);
   setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!document.hidden)render();},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('pagehide',()=>{session=null;clear();});

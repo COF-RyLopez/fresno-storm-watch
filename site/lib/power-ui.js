@@ -1,3 +1,4 @@
+import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.16.0';
 import {collectPower} from './power-data.js';
 import {formatTime} from './model.js';
@@ -68,7 +69,8 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
       if(row.start.time||row.start.text)card.append(el('p',`${row.kind.includes('psps')?'Potential shutoff / start':'Outage start'} ${stamp(row.start)}`));
       card.append(el('p',`Estimated restoration ${stamp(row.restoration)}`),button('Review power record',()=>showDetail(row)));list.append(card);
     }
-    map?.setPower(all);map?.setPowerVisible($('power-map-toggle').checked);
+    map?.setPower(all);
+    if(!exercise)for(const spec of POWER_FEEDS){const f=snapshot?.feeds.find(f=>f.id===spec.id);reportHealth('power:'+spec.id,spec.label,{checked:Date.parse(f?.lastSuccess),error:loadError||f?.error,maxAgeMs:45*60000});}
     onData(all,snapshot?.feeds||[],{checked,error:loadError});
     if($('power-dialog').hasAttribute('open')&&selectedKey){
       const selected=all.find(r=>r.key===selectedKey);
@@ -91,7 +93,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     checked=Date.now();busy=false;$('power-refresh').removeAttribute('loading');render();
   }
   $('power-refresh').onclick=()=>void refresh(true);$('power-clear').onclick=()=>{changes?.pending.clear();changes?.missing.clear();render();};
-  $('review-power').onclick=onOpen;$('power-filter').addEventListener('calciteSelectChange',render);$('power-map-toggle').addEventListener('calciteCheckboxChange',render);
+  $('review-power').onclick=onOpen;$('power-filter').addEventListener('calciteSelectChange',render);$('power-map-toggle').addEventListener('calciteCheckboxChange',()=>{map?.setLayerPreference('power',$('power-map-toggle').checked);render();});
   for(const [id,key] of [['pge-map-link','pge'],['sce-map-link','sce']])$(id).setAttribute('href',POWER_LINKS[key]);
   if(exercise){
     $('power-refresh').setAttribute('disabled','');const controls=el('div','','power-actions');controls.append(el('strong','EXERCISE · fictional power records'));

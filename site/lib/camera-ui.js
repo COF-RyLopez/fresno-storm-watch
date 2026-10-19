@@ -1,3 +1,4 @@
+import {reportHealth} from './source-health.js';
 import { CAMERA_FEED, normalizeCameras, cameraAvailability, cameraImageFreshness } from './camera-model.js';
 import { createCameraVideo } from './camera-video.js';
 import { formatTime } from './model.js';
@@ -29,6 +30,7 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
   const clearImage=()=>{imageGeneration++;imageController?.abort();imageController=null;imageBusy=false;clearTimeout(imageTimer);imageState=null;nextImage=0;
     $('camera-image').removeAttribute('src');$('camera-image').hidden=true;if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;paintImageTime();};
   const paint=()=>{
+    if(!exercise)reportHealth('caltrans-cameras','Caltrans camera catalog',{checked:lastCheck,error:feedError,maxAgeMs:config.pollMs*2,detail:'Catalog availability does not confirm a camera image is current.'});
     const c=current();
     $('camera-count').textContent=String(selection.length);$('camera-count').setAttribute('label',`${selection.length} selected river-area cameras`);
     $('camera-feed-status').textContent=exercise?'Cameras disabled in fictional exercise':busy?'Checking Caltrans catalog…':feedError?`Catalog check failed · ${feedError}`:lastCheck?`Catalog checked ${time(lastCheck)}`:'Waiting for Caltrans catalog';
@@ -137,5 +139,5 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
     if(!exercise){cameras=selection.map(s=>({...s,checked:null,inService:null,error:'Waiting for live catalog'}));selected=cameras[0]?.id||null;void refreshCatalog();}
     paint();
   }catch(error){$('camera-feed-status').textContent=error.message;}
-  return {setMap:controller=>{map=controller;paint();map.setCamerasVisible(true);map.selectCamera(selected);},select:id=>{setOpen(true);select(id);},setOpen};
+  return {setMap:controller=>{map=controller;paint();map.selectCamera(selected);},select:id=>{setOpen(true);select(id);},setOpen};
 }

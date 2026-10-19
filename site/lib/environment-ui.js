@@ -1,10 +1,11 @@
+import {reportHealth} from './source-health.js';
 import { loadSdk } from './map.js';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.18.0';
+import {createWeatherTimeline} from './weather-ui.js?v=0.19.0';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -17,7 +18,7 @@ function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.
 export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{}}){
   let map=null,layers=null,selection=null,snapshot=null,snapshotError=null,snapshotRead=null;
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
-  let overlay='off',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
+  let overlay='radar',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
   let nextWeather=0,nextReservoir=0,cycleRequest=0;
   const layerErrors=new Map();
   let reservoirRenderKey='';
@@ -37,15 +38,16 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   function syncLayers(){
     if(!layers)return;
     const frame=currentFrame();
-    layers.radar.visible=overlay==='radar'&&!!radarUsable()&&!activeLayerError();
+    map.setLayerEligibility(layers.radar,overlay==='radar'&&!!radarUsable()&&!activeLayerError());
     if(frame&&layers.frameId!==frame.id){layers.radar.mosaicRule={method:'lock-raster',lockRasterIds:[frame.id],mosaicOperation:'first'};layers.frameId=frame.id;}
     for(const [id,layer] of layers.qpf){
-      layer.visible=overlay==='qpf'&&id===period.id&&!!qpfUsable()&&!activeLayerError();
+      map.setLayerEligibility(layer,overlay==='qpf'&&id===period.id&&!!qpfUsable()&&!activeLayerError());
       if(id===period.id&&qpfUsable())layer.definitionExpression=`issue_time = '${qpf.issueText}' AND start_time = '${qpf.startText}' AND end_time = '${qpf.endText}' AND units = 'Inches' AND qpf >= 0.01`;
     }
   }
 
   function renderWeather(){
+    if(!exercise){reportHealth('radar','NOAA radar',{checked:radarChecked,error:radarError||(!radar[0]?'No recent CONUS image':Date.now()-radar[0].time>config.radarMaxAgeMs?'Newest observation is old':null)});reportHealth('wpc-cycle','WPC rainfall forecast cycle',{checked:qpfChecked,error:qpfError||(!qpf?'No forecast cycle':Date.now()-qpf.issue>config.qpfMaxAgeMs||qpf.end<Date.now()?'Forecast is old or ended':null)});}
     weather.setOverlay(overlay);weather.setContext({radar,radarError:radarError||(checkOverdue(radarChecked)?'Catalog check overdue':null),qpf,qpfError:qpfError||(checkOverdue(qpfChecked)?'Cycle check overdue':null)});
     for(const kind of ['off','radar','qpf','satellite']){$(`env-${kind}`).setAttribute('aria-pressed',String(overlay===kind));$(`env-${kind}`).setAttribute('appearance',overlay===kind?'solid':'outline');}
     $('radar-controls').hidden=overlay!=='radar';$('qpf-controls').hidden=overlay!=='qpf';
@@ -98,6 +100,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     status.dataset.tone=snapshotError||overdue||snapshot?.stations.some(s=>s.error||s.scheduled?.error)?'gap':'normal';
     $('reservoir-read-time').textContent=snapshotRead?`App checked ${time(snapshotRead)} · collector target 15 min`:'Collector target 15 min · app checks each minute';
     if(!selection)return;
+    if(!exercise)for(const station of selection.stations){const row=snapshot?.stations.find(s=>s.id===station.id),bad=station.metrics.filter(m=>reservoirMetricState(row?.metrics?.[m.key],m,now).tone!=='normal');reportHealth('cdec:'+station.id,'CDEC · '+station.name,{checked:Date.parse(row?.lastSuccess),error:snapshotError||row?.error||row?.scheduled?.error||(!snapshotRead||now-snapshotRead>config.weatherCheckMaxAgeMs?'App snapshot check overdue':bad.length?bad.length+' metric(s) need verification':null),maxAgeMs:config.collectorMaxAgeMs});}
     const schedules=selection.stations.map(s=>scheduleEvidence({selection,snapshot,error:snapshotError,checked:snapshotRead,config},s.id,now));
     const key=JSON.stringify([snapshot,snapshotError,overdue,schedules,selection.stations.map(s=>s.metrics.map(m=>reservoirMetricState(snapshot?.stations.find(r=>r.id===s.id)?.metrics?.[m.key],m,now).label))]);
     if(key===reservoirRenderKey)return;reservoirRenderKey=key;
@@ -134,7 +137,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   function drawReservoirs(){
     if(!selection||!layers)return;
     layers.reservoirs.removeAll();
-    for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Weather & reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
+    for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
   for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>{map?.clearEnvironmentPopup();overlay=kind;renderWeather();});
@@ -171,7 +174,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
         layer.on('layerview-create',event=>{layerErrors.delete(`${id}:${event.view.type}`);renderWeather();});
       }
       map.onViewChanged(renderWeather);
-      map.addEnvironmentLayers([radarLayer,...forecasts.values()],reservoirs);drawReservoirs();renderWeather();
+      map.registerLayer('weather',radarLayer,false);for(const l of forecasts.values())map.registerLayer('weather',l,false);map.registerLayer('reservoirs',reservoirs);drawReservoirs();renderWeather();
       $('environment-extent').removeAttribute('disabled');
     }catch(error){layerError=error.message;renderWeather();}
   }};

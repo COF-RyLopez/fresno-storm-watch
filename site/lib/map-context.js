@@ -20,7 +20,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const expandMap = (expanded, restoreFocus=true) => {
     panel.classList.toggle('map-expanded',expanded);
     expandedNote.hidden=!expanded;
-    expandButton.text=expanded?'Restore workspace':'Expand map';
+    expandButton.text=expanded?'Restore workspace':matchMedia('(max-width:900px)').matches?'Expand':'Expand map';
     expandButton.icon=expanded?'full-screen-exit':'full-screen';
     expandButton.setAttribute('aria-expanded',String(expanded));
     // Keep keyboard focus on the reversible control, not behind the enlarged map.
@@ -38,8 +38,8 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const waterViews = new WeakMap();
   const buildingViews = new WeakMap();
   const boundViews = new WeakSet();
-  let buildings = null, buildingsLoading = false, buildingsWanted = true, buildingsError = false;
-  let waterEnabled = true, waterError = false;
+  let buildings = null, buildingsLoading = false, buildingsWanted = false, buildingsError = false;
+  let waterEnabled = false, waterError = false;
   // SceneView renders these as horizontal labels; along-line placement applies
   // in 2D only. Keep a placement value: omitting it suppresses 3D labels in 5.1.
   const waterLabels = [{labelExpressionInfo:{expression:'$feature.gnisidlabel'},
@@ -148,6 +148,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   for (const layer of [named,unnamed]) void layer.load().catch(()=>{waterError=true;updateStatus();});
   return {
     bindView,
+    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;named.visible=waterEnabled;unnamed.visible=waterEnabled;if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
     onViewChanged:()=>{
       const view=getView();
       if(buildings){

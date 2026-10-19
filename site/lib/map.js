@@ -2,7 +2,8 @@ import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
-import { installMapContext } from './map-context.js';
+import { installMapContext } from './map-context.js?v=0.19.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js';
 
 let sdkPromise;
 /** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */
@@ -12,7 +13,7 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   const sdk = await loadSdk();
@@ -27,6 +28,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const selectedLayer = new GraphicsLayer({ title: 'Selected alert' });
   const labels = new GraphicsLayer({ title: 'County labels', elevationInfo:{mode:'relative-to-ground'} });
   const gauges = new GraphicsLayer({ title: 'NWS river watchpoints', elevationInfo:{mode:'relative-to-ground'} });
+  const areaLayer=new GraphicsLayer({title:'Area review watchpoints — not flood extents',elevationInfo:{mode:'relative-to-ground'}});
   const cameras = new GraphicsLayer({ title: 'Caltrans river-area highway cameras', elevationInfo:{mode:'relative-to-ground'} });
   const power = new GraphicsLayer({title:'Utility PSPS / outage records — approximate',elevationInfo:{mode:'on-the-ground'}});
   const facilities = new GraphicsLayer({title:'Connected county sites — power unconfirmed',elevationInfo:{mode:'relative-to-ground'}});
@@ -54,11 +56,23 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Reference/MapServer`
     })] });
   };
-  const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities] });
+  const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities, areaLayer] });
+  const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
+  let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
+  const currentState=()=>memory.get(activeProfile);
+  const registerLayer=(key,layer,eligible=true)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer);layer.visible=layerVisible(currentState(),key,eligible);};
+  for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer]])registerLayer(key,layer);
+  const syncVisibility=()=>{
+    for(const [layer,r]of registry)layer.visible=layerVisible(currentState(),r.key,r.eligible);
+    const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways)visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
+    document.querySelector('#map').dataset.layers=visibleKeys.join(' ');document.querySelector('#map').dataset.workspace=activeProfile;
+    for(const el of document.querySelectorAll('[data-layer-key]'))el.classList.toggle('workspace-layer-off',!currentState().layers[el.dataset.layerKey]);
+  };
+  const setLayerEligibility=(layer,eligible)=>{const r=registry.get(layer);if(r){r.eligible=!!eligible;syncVisibility();}};
   let imageryBasemap=null,imagery=false,imageryFailure=false;
   const imageryStatus=()=>{const host=document.querySelector('#imagery-status');host.hidden=!imagery;host.textContent=imageryFailure?'Imagery hybrid incomplete — road labels or imagery unavailable':'Imagery hybrid · roads and labels · historical imagery';};
-  document.querySelector('#toggle-imagery').addEventListener('click',()=>{
-    imagery=!imagery;
+  function setImagery(wanted){
+    imagery=!!wanted;
     if(!imageryBasemap){
       imageryBasemap=new Basemap({title:'Esri Imagery Hybrid',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],
         referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
@@ -70,7 +84,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     document.querySelector('#toggle-imagery').setAttribute('aria-pressed',String(imagery));
     document.querySelector('#imagery-note').hidden=!imagery;
     imageryStatus();
-  });
+  }
+  document.querySelector('#toggle-imagery').addEventListener('click',()=>{currentState().imagery=!imagery;setImagery(!imagery);});
   let region, fresnoGeometry;
   for (const feature of counties) {
     const geometry = new Polygon(countyGeometry(feature.geometry));
@@ -91,7 +106,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   if(!fresnoGeometry)throw new Error('Fresno County boundary is required for the river view.');
   const fresnoView = webMercatorUtils.geographicToWebMercator(fresnoGeometry);
   let mapScope=initialScope;
-  const scopeExtent=()=>mapScope==='fresno'?fresnoView.extent:regionView;
+  const weatherExtent=webMercatorUtils.geographicToWebMercator(new Extent({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2,spatialReference:{wkid:4326}}));
+  const scopeExtent=()=>mapScope==='fresno'?fresnoView.extent:mapScope==='weather'?weatherExtent:regionView;
   const mapView = new MapView({ container: 'map', map, center: [-119.6, 36.8], zoom: 7,
     padding: { top: 12, right: 12, bottom: 32, left: 12 },
     constraints: { rotationEnabled: false, minZoom: 5, snapToZoom: false }, popupEnabled: true,
@@ -109,12 +125,12 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   };
   void fema.load().then(femaStatus).catch(()=>{femaError=true;femaStatus();});
   document.querySelector('#toggle-fema').addEventListener('click',()=>{
-    fema.visible=!fema.visible;document.querySelector('#toggle-fema').textContent=`FEMA zones: ${fema.visible?'on':'off'}`;
+    setLayerPreference('fema',!currentState().layers.fema);document.querySelector('#toggle-fema').textContent=`FEMA zones: ${fema.visible?'on':'off'}`;
     document.querySelector('#toggle-fema').setAttribute('aria-pressed',String(fema.visible));document.querySelector('#fema-legend').hidden=!fema.visible;femaStatus();
   });
   const drawGauges=()=>{
     gauges.removeAll();
-    for(const row of gaugeRows){const g=row.gauge||row.station,tone=row.assessment.tone;
+    for(const row of gaugeRows.filter(r=>(activeProfile!=='rivers'||riverBasin==='All'||r.station.basin===riverBasin)&&(activeProfile!=='reservoirs'||currentState().layers.upstream||['SJXC1','RSBC1','GVAC1','SJMC1'].includes(r.station.id)))){const g=row.gauge||row.station,tone=row.assessment.tone;
       gauges.add(new Graphic({geometry:{type:'point',longitude:g.longitude,latitude:g.latitude,spatialReference:{wkid:4326}},attributes:{gaugeId:row.station.id},
         symbol:{type:'simple-marker',style:{threshold:'triangle',change:'square',monitor:'circle',gap:'diamond'}[tone],size:row.station.id===selectedGauge?14:10,color:color(`--gauge-${tone}`)||RIVER_COLORS[tone],outline:{color:row.station.id===selectedGauge?color('--map-selection'):darkMode()?'#202427':'#ffffff',width:row.station.id===selectedGauge?2.5:1.3}}}));
     }
@@ -159,11 +175,20 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   // Calcite can resize the panel after MapView becomes ready. Keep the initial
   // region fitted until the operator deliberately navigates the map.
   let followRegion = true;
-  const fitTarget=()=>view.type==='3d'?{target:scopeExtent().clone().expand(1.15),tilt:45,heading:0}:scopeExtent().clone().expand(1.15);
+  const fitTarget=()=>{
+    let points=[];
+    if(activeProfile==='watch')points=planningRows.filter(r=>planningFilter==='all'||r.review).flatMap(r=>r.samplePoints);
+    if(activeProfile==='rivers')points=gaugeRows.filter(r=>riverBasin==='All'||r.station.basin===riverBasin).map(r=>r.gauge||r.station);
+    if(activeProfile==='reservoirs'){points=gaugeRows.filter(r=>currentState().layers.upstream||['SJXC1','RSBC1','GVAC1','SJMC1'].includes(r.station.id)).map(r=>r.gauge||r.station);for(const [l,r]of registry)if(r.key==='reservoirs')for(const g of l.graphics||[])points.push({longitude:g.geometry.longitude,latitude:g.geometry.latitude});}
+    let extent=scopeExtent().clone().expand(1.15);
+    if(points.length){const xs=points.map(p=>p.longitude),ys=points.map(p=>p.latitude);extent=webMercatorUtils.geographicToWebMercator(new Extent({xmin:Math.min(...xs)-.08,ymin:Math.min(...ys)-.08,xmax:Math.max(...xs)+.08,ymax:Math.max(...ys)+.08,spatialReference:{wkid:4326}}));}
+    return view.type==='3d'?{target:extent,tilt:45,heading:0}:extent;
+  };
   const geographicTarget=bounds=>{const extent=new Extent({...bounds,spatialReference:{wkid:4326}});return view.type==='3d'?{target:extent,tilt:35,heading:0}:webMercatorUtils.geographicToWebMercator(extent);};
   for (const type of ['pointerdown', 'wheel', 'keydown']) document.querySelector('#map').addEventListener(type, () => { followRegion = false; }, { passive: true });
   const bindView=targetView=>{
     mapContext.bindView(targetView);
+    targetView.addHandles(reactiveUtils.watch(()=>[targetView.stationary,targetView.scale],()=>{if(view===targetView)document.querySelector('#map-scale').textContent='Scale 1:'+Math.round(targetView.scale).toLocaleString('en-US');},{initial:true}));
     targetView.on('layerview-create-error',event=>{
       if(imageryBasemap&&[...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].includes(event.layer)){imageryFailure=true;imageryStatus();}
     });
@@ -180,7 +205,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }));
     targetView.on('click',async event=>{
       try{
-        const hit=await targetView.hitTest(event,{include:[facilities,cameras,gauges,roads,power,alertLayer]});
+        const hit=await targetView.hitTest(event,{include:[facilities,cameras,gauges,roads,power,alertLayer,areaLayer].filter(l=>l.visible)});
+        const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
         const cameraId=hit.results.find(r=>r.graphic?.attributes?.cameraId)?.graphic.attributes.cameraId;
@@ -208,10 +234,12 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       : '2D map';
     document.querySelector('#scene-controls').hidden=view.type!=='3d';
     for(const mode of ['2d','3d']){const button=document.querySelector(`#mode-${mode}`);button.setAttribute('aria-pressed',String(view.type===mode));button.setAttribute('appearance',view.type===mode?'solid':'outline');}
+    const control=document.querySelector('#map-mode');for(const item of control.children)item.checked=item.getAttribute('value')===view.type;
     for(const listener of viewListeners)listener();
+    syncVisibility();
   };
-  const setMode=async mode=>{
-    if(modeBusy||mode===view.type)return;modeBusy=true;
+  const switchMode=async mode=>{
+    if(mode===view.type)return;modeBusy=true;
     for(const m of ['2d','3d'])document.querySelector(`#mode-${m}`).setAttribute('disabled','');
     const previous=view, originalViewpoint=view.viewpoint.clone(), viewpoint=originalViewpoint.clone();
     const status=document.querySelector('#map-status');status.hidden=false;status.textContent=`Opening ${mode==='3d'?'3D terrain':'2D map'}…`;
@@ -235,7 +263,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       viewpoint.scale*=mode==='3d'?factor:1/factor;
       previous.container=null;target.container='map';target.viewpoint=viewpoint;view=target;
       let readyTimer;
-      try{await Promise.race([target.when(),new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(new Error('View initialization timed out')),25_000);})]);}finally{clearTimeout(readyTimer);}
+      try{await Promise.race([reactiveUtils.whenOnce(()=>target.ready),new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(new Error('View initialization timed out')),25_000);})]);}finally{clearTimeout(readyTimer);}
       if(mode==='3d')await target.goTo({target:point,scale:viewpoint.scale,tilt:55,heading:0},{animate:false});
       if(target.fatalError)throw target.fatalError;
       status.hidden=true;modeStatus();femaStatus();
@@ -246,20 +274,52 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       console.warn('Storm Watch view switch:',error.message);modeStatus();
     }finally{modeBusy=false;for(const m of ['2d','3d'])document.querySelector(`#mode-${m}`).removeAttribute('disabled');}
   };
+  let modeQueue=Promise.resolve();const setMode=mode=>{modeQueue=modeQueue.catch(()=>{}).then(()=>switchMode(mode));return modeQueue;};
   for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).addEventListener('click',()=>void setMode(mode));
+  document.querySelector('#map-mode').addEventListener('calciteSegmentedControlChange',e=>{const mode=e.target.selectedItem?.value;if(['2d','3d'].includes(mode)){const state=currentState();state.mode=mode;void setMode(mode).then(()=>{state.mode=view.type;state.viewpoint=view.viewpoint?.clone();});}});
   document.querySelector('#scene-overhead').addEventListener('click',()=>void navigate({tilt:0,heading:0}));
   document.querySelector('#scene-tilt').addEventListener('click',()=>void navigate({tilt:55,heading:0}));
   modeStatus();for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).removeAttribute('disabled');
+  function drawPower(){
+    power.removeAll();const keys=new Set(planningRows.filter(r=>planningFilter==='all'||r.review).flatMap(r=>[...r.power.matches,...r.power.followups].map(m=>m.row.key)));
+    for(const r of powerRows){if(activeProfile==='watch'&&!keys.has(r.key))continue;if(!currentState().layers.powerHistory&&['restored','cancelled'].includes(r.status))continue;const style=powerMapStyle(r);for(const g of r.geometries){const polygon=!!g.rings;power.add(new Graphic({attributes:{powerKey:r.key},geometry:{...g,type:polygon?'polygon':'point'},symbol:polygon?style.area:style.point}));}}
+  }
+  function drawAreas(){areaLayer.removeAll();const seen=new Set();for(const row of planningRows.filter(r=>planningFilter==='all'||r.review))for(const p of row.samplePoints){const key=`${p.longitude}:${p.latitude}`;if(seen.has(key))continue;seen.add(key);areaLayer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},attributes:{areaId:row.area.id},symbol:{type:'simple-marker',style:row.review?'triangle':row.gaps.length?'diamond':'circle',size:12,color:color(row.review?'--gauge-change':row.gaps.length?'--gauge-gap':'--gauge-monitor'),outline:{color:'#202427',width:1.5}}}));}}
+  function syncControls(){
+    for(const c of document.querySelectorAll('[data-context-layer]')){c.checked=!!currentState().layers[c.dataset.contextLayer];c.closest('calcite-label').hidden=c.dataset.contextLayer==='upstream'&&activeProfile!=='reservoirs';}
+    for(const [id,key]of [['power-map-toggle','power'],['facility-map-toggle','facilities'],['wind-map-toggle','wind']])document.querySelector('#'+id).checked=!!currentState().layers[key];
+    mapContext.setVisibility(currentState().layers.waterways,currentState().layers.buildings);femaStatus();syncVisibility();
+  }
+  function setLayerPreference(key,wanted){if(!(key in LAYER_LABELS))return;currentState().layers[key]=!!wanted;drawGauges();drawPower();syncControls();}
+  const options=document.querySelector('#context-options');for(const [key,label]of Object.entries(LAYER_LABELS)){if(key==='cameras')continue;const host=document.createElement('calcite-label');host.layout='inline';const box=document.createElement('calcite-checkbox');box.dataset.contextLayer=key;box.addEventListener('calciteCheckboxChange',()=>setLayerPreference(key,box.checked));host.append(box,document.createTextNode(label));options.append(host);}
+  const focusNavigate=target=>{const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
+  function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;}
+  function setWorkspace(id){
+    if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
+    if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
+    activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();
+    mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
+    drawGauges();drawPower();drawAreas();syncControls();
+    transition=transition.catch(()=>{}).then(async()=>{
+      if(version!==workspaceVersion)return;const state=memory.get(id);setImagery(state.imagery);await setMode(state.mode);
+      if(version!==workspaceVersion)return;
+      followRegion=!state.viewpoint;if(state.viewpoint)await navigate(state.viewpoint.clone());else await navigate(fitTarget());
+      if(version===workspaceVersion){workspaceSwitching=false;syncControls();}
+    }).catch(error=>{workspaceSwitching=false;document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Workspace map could not restore. Use Fit workspace or the evidence list.';console.warn('Workspace restore:',error.message);});return transition;
+  }
+  syncControls();
   return {
+    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,
+    setPlanningData:(rows,filter)=>{planningRows=rows;planningFilter=filter;drawAreas();drawPower();},
     setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
-    setFacilitiesVisible:visible=>{facilities.visible=visible;},
-    focusFacility:key=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(g){followRegion=false;facilities.visible=true;document.querySelector('#facility-map-toggle').checked=true;return navigate({target:g.geometry,scale:14000,...(view.type==='3d'?{tilt:45}:{})});}},
-    setPower:rows=>{power.removeAll();for(const r of rows){const style=powerMapStyle(r);for(const g of r.geometries){const polygon=!!g.rings;power.add(new Graphic({attributes:{powerKey:r.key},geometry:{...g,type:polygon?'polygon':'point'},symbol:polygon?style.area:style.point}));}}},
-    setPowerVisible:visible=>{power.visible=visible;},
-    focusPower:key=>{const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;power.visible=true;document.querySelector('#power-map-toggle').checked=true;return navigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:25000}:{})});}},
+    setFacilitiesVisible:visible=>{setLayerPreference('facilities',visible);},
+    focusFacility:key=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(g){followRegion=false;setLayerPreference('facilities',true);document.querySelector('#facility-map-toggle').checked=true;return focusNavigate({target:g.geometry,scale:14000,...(view.type==='3d'?{tilt:45}:{})});}},
+    setPower:rows=>{powerRows=rows;drawPower();},
+    setPowerVisible:visible=>setLayerPreference('power',visible),
+    focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;return focusNavigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:25000}:{})});}},
     setRoads:rows=>{roads.removeAll();for(const r of rows){if(!r.geometry)continue;const inactive=r.active==='no',shade=inactive?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';roads.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||inactive?'dash':'solid'}}));}},
-    setRoadsVisible:visible=>{roads.visible=visible;},
-    focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;return navigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:22000}:{})});}},
+    setRoadsVisible:visible=>setLayerPreference('roads',visible),
+    focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;return focusNavigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:22000}:{})});}},
     sceneViewpoint:()=>{
       const point=view.type==='3d'?view.camera.position:view.center;
       // Approximate the 2D ground height with a 55-degree vertical camera field of view.
@@ -271,16 +331,16 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     addEnvironmentLayers:(overlays,reservoirs)=>{map.addMany(overlays,1);map.add(reservoirs);},
     onViewChanged:listener=>{viewListeners.add(listener);},
     clearEnvironmentPopup:()=>view.closePopup(),
-    focusEnvironment:(longitude,latitude)=>{followRegion=false;return navigate({center:[longitude,latitude],scale:90_000,...(view.type==='3d'?{tilt:50,heading:0}:{})});},
+    focusEnvironment:(longitude,latitude)=>{followRegion=false;return focusNavigate({center:[longitude,latitude],scale:90_000,...(view.type==='3d'?{tilt:50,heading:0}:{})});},
     fitEnvironment:()=>{followRegion=false;return navigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
-    focusPlanningPoints:points=>{if(!points.length)return;followRegion=false;const xs=points.map(p=>p.longitude),ys=points.map(p=>p.latitude);return navigate(geographicTarget({xmin:Math.min(...xs)-0.04,ymin:Math.min(...ys)-0.04,xmax:Math.max(...xs)+0.04,ymax:Math.max(...ys)+0.04}));},
+    focusPlanningPoints:points=>{if(!points.length)return;followRegion=false;const xs=points.map(p=>p.longitude),ys=points.map(p=>p.latitude);return focusNavigate(geographicTarget({xmin:Math.min(...xs)-0.04,ymin:Math.min(...ys)-0.04,xmax:Math.max(...xs)+0.04,ymax:Math.max(...ys)+0.04}));},
     updateCameras: rows=>{cameraRows=rows;drawCameras();},
     selectCamera: id=>{selectedCamera=id;drawCameras();},
-    setCamerasVisible: visible=>{cameras.visible=visible;},
-    focusCamera: id=>{const row=cameraRows.find(c=>c.id===id);if(row){followRegion=false;return navigate({center:[row.longitude,row.latitude],scale:25_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
-    updateGauges: rows=>{gaugeRows=rows;drawGauges();},
+    setCamerasVisible: visible=>setLayerPreference('cameras',visible),
+    focusCamera: id=>{const row=cameraRows.find(c=>c.id===id);if(row){followRegion=false;return focusNavigate({center:[row.longitude,row.latitude],scale:25_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
+    updateGauges:(rows,basin='All')=>{gaugeRows=rows;riverBasin=basin;drawGauges();},
     selectGauge: id=>{selectedGauge=id;drawGauges();},
-    focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){followRegion=false;const g=row.gauge||row.station;return navigate({center:[g.longitude,g.latitude],scale:35_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
+    focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){followRegion=false;const g=row.gauge||row.station;return focusNavigate({center:[g.longitude,g.latitude],scale:35_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
     setScope: scope=>{if(mapScope!==scope){mapScope=scope;followRegion=true;for(const layer of [boundaryLayer,labels])layer.graphics.forEach(g=>{g.visible=scope!=='fresno'||g.attributes.countyId==='06019';});return navigate(fitTarget());}},
     fit: () => { followRegion = true; return navigate(fitTarget()); },
     update: alerts => {
@@ -302,7 +362,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         extent = extent ? extent.union(geometry.extent) : geometry.extent.clone();
         selectedLayer.add(new Graphic({ geometry, symbol: { type: 'simple-fill', style: 'none', outline: { color: color('--map-selection'), width: 3, style: 'dash' } } }));
       }
-      if (zoom && extent) { followRegion = false; void navigate(webMercatorUtils.geographicToWebMercator(extent).expand(1.3)); }
+      if (zoom && extent) { followRegion = false; void focusNavigate(webMercatorUtils.geographicToWebMercator(extent).expand(1.3)); }
     },
     get view(){return view;}
   };

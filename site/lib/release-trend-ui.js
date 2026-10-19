@@ -110,6 +110,7 @@ export function createReleaseTrends({config,timeZone,exercise}){
   $('trend-future').addEventListener('calciteSelectChange',e=>{futureHours=Number(e.target.value);render(true);});
   $('open-release-trends').addEventListener('click',()=>open(stationId));
   setInterval(()=>{if(!document.hidden)render();},30000);
-  const initial=new URLSearchParams(location.search).get('trends');if(TREND_REACHES[initial])open(initial);
+  const restoreRoute=()=>{const id=new URLSearchParams(location.search).get('trends');if(TREND_REACHES[id])open(id);else dialog.removeAttribute('open');};
+  window.addEventListener('popstate',restoreRoute);restoreRoute();
   return {open,setReservoirData:data=>{reservoirs=data;render();},setRiverData:data=>{entries=new Map(data.entries);stations=data.stations||stations;if(dialog.hasAttribute('open'))selectStation(stationId);render();}};
 }

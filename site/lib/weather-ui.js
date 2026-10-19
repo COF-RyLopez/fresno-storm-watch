@@ -1,5 +1,6 @@
+import {reportHealth} from './source-health.js';
 import {loadSdk} from './map.js';
-import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.18.0';
+import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.19.0';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -14,7 +15,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   const target=(now=Date.now())=>fixed??now;
   const overdue=()=>!wind||Date.now()-Date.parse(wind.generatedAt)>45*60_000||Date.parse(wind.generatedAt)>Date.now()+120_000;
   const satelliteFrame=()=>!satelliteError&&satelliteChecked&&Date.now()-satelliteChecked<=7*60_000?observationAt(catalog?.[product]||[],target(),Date.now(),{maxGapMs:20*60_000,maxAgeMs:30*60_000}):null;
-  const windVisible=()=>$('wind-map-toggle').checked&&!exercise;
+  const windVisible=()=>!exercise;
   const sourceLink=site=>`https://forecast.weather.gov/MapClick.php?lat=${site.latitude}&lon=${site.longitude}`;
   const selectTime=stamp=>{fixed=stamp;render();onChange();};
 
@@ -41,7 +42,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
 
   function drawWind(){
     if(!layers)return;
-    layers.wind.visible=windVisible();layers.windLabels.visible=windVisible();
+    controller.setLayerEligibility(layers.wind,windVisible());controller.setLayerEligibility(layers.windLabels,windVisible());
     const now=Date.now(),rows=(wind?.sites||[]).map(site=>({site,state:windAt(site,target(),now,overdue()||!!windError)}));
     const key=JSON.stringify([rows,windVisible()]);if(key===drawKey)return;drawKey=key;
     layers.wind.removeAll();layers.windLabels.removeAll();
@@ -58,6 +59,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
 
   function render(){
     const now=Date.now(),stamp=target(now),future=stamp>now;
+    if(!exercise){reportHealth('goes','NOAA GOES catalog',{checked:satelliteChecked,error:satelliteError||(!catalog?'No frame catalog':now-Math.max(...(catalog[product]||[]))>30*60000?'Newest observation is old':null)});for(const site of wind?.sites||[])reportHealth('wind:'+site.id,'NWS wind · '+site.name,{checked:windChecked,error:windError||windAt(site,now,now,overdue()).reason});}
     $('weather-selected-time').textContent=`${fixed===null?'Now · follows clock':future?'Forecast planning time':'Past planning time'} · ${time(stamp)}`;
     $('weather-live').setAttribute('appearance',fixed===null?'solid':'outline');
     $('weather-time').value=String(fixed===null?12:stops.reduce((best,t,i)=>Math.abs(t-stamp)<Math.abs(stops[best]-stamp)?i:best,0));
@@ -77,7 +79,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     const legend=new URL(GOES_URL);legend.search=new URLSearchParams({service:'WMS',version:'1.3.0',request:'GetLegendGraphic',format:'image/png',layer:product});
     const img=$('satellite-legend-image');if(overlay==='satellite'&&!exercise&&img.getAttribute('src')!==legend.href)img.src=legend.href;
     img.alt=`NOAA publisher legend for ${productInfo.label}`;
-    if(layers){layers.satellite.visible=overlay==='satellite'&&!!frame&&!imageError;const layerKey=`${product}:${frame}`;if(frame&&layers.satelliteKey!==layerKey){layers.satelliteKey=layerKey;layers.satellite.sublayers=[{name:product}];layers.satellite.customLayerParameters={TIME:new Date(frame).toISOString()};layers.satellite.refresh();}}
+    if(layers){controller.setLayerEligibility(layers.satellite,overlay==='satellite'&&!!frame&&!imageError);const layerKey=`${product}:${frame}`;if(frame&&layers.satelliteKey!==layerKey){layers.satelliteKey=layerKey;layers.satellite.sublayers=[{name:product}];layers.satellite.customLayerParameters={TIME:new Date(frame).toISOString()};layers.satellite.refresh();}}
     const sites=wind?.sites||[],states=sites.map(s=>windAt(s,stamp,now,overdue()||!!windError)),available=states.filter(s=>!s.reason&&(s.speed!==null||s.gust!==null)).length;
     $('timeline-wind').textContent=exercise?'Exercise · live feed disabled':`${available}/9 forecast samples available at selected time`;
     const failed=sites.filter(s=>s.error).length;
@@ -111,7 +113,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   $('weather-before').addEventListener('click',()=>{const index=Math.max(0,Number($('weather-time').value)-1);selectTime(stops[index]);});
   $('weather-after').addEventListener('click',()=>{const index=Math.min(stops.length-1,Number($('weather-time').value)+1);selectTime(stops[index]);});
   $('satellite-product').addEventListener('calciteSelectChange',e=>{if(GOES_PRODUCTS.some(p=>p.id===e.target.value)){product=e.target.value;render();onChange();}});
-  $('wind-map-toggle').addEventListener('calciteCheckboxChange',()=>{render();onChange();});
+  $('wind-map-toggle').addEventListener('calciteCheckboxChange',()=>{controller?.setLayerPreference('wind',$('wind-map-toggle').checked);render();onChange();});
   $('wind-site').addEventListener('calciteSelectChange',e=>{selected=e.target.value;render();});
   $('wind-locate').addEventListener('click',()=>{const s=wind?.sites.find(s=>s.id===selected);if(s){onMap();controller?.focusEnvironment(s.longitude,s.latitude);}});
   $('weather-refresh').addEventListener('click',()=>void refresh());
@@ -138,7 +140,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
         const windLayer=new GraphicsLayer({title:'NWS wind / gust forecast samples · mph',elevationInfo:{mode:'relative-to-ground'}});
         const windLabels=new GraphicsLayer({title:'Wind forecast labels · zoom to view',minScale:250_000,elevationInfo:{mode:'relative-to-ground'}});
         layers={satellite,wind:windLayer,windLabels,Graphic,satelliteKey:null};
-        map.addEnvironmentLayers([satellite],windLayer);map.addEnvironmentLayers([],windLabels);map.onViewChanged(()=>{render();onChange();});
+        map.registerLayer('weather',satellite,false);map.registerLayer('wind',windLayer);map.registerLayer('wind',windLabels);map.onViewChanged(()=>{render();onChange();});
         if(!exercise)void satellite.load().catch(error=>{satelliteError=`Map service unavailable: ${error.message}`;render();onChange();});
         render();
       }catch(error){satelliteError=`Map initialization failed: ${error.message}`;render();onChange();}

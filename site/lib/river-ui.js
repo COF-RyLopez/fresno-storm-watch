@@ -1,3 +1,4 @@
+import {reportHealth} from './source-health.js';
 import { fetchJson } from './nws.js';
 import { fetchRiverWatch } from './nwps.js';
 import { assessGauge, riverValue, formatRiverTime } from './river-model.js';
@@ -20,7 +21,7 @@ export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()
     const entry=entries.get(station.id);
     return {station,gauge:entry?.gauge??null,assessment:assessGauge(entry?.gauge,config,horizon,Date.now(),entry?.error??null)};
   });
-  const paintMap=()=>map?.updateGauges(rows());
+  const paintMap=()=>{const data=rows();map?.updateGauges(data,basin);if(!exercise)for(const r of data)reportHealth('nwps:'+r.station.id,'NWPS · '+r.station.name,{checked:r.gauge?.fetched,error:!r.assessment.current?'Observation unavailable or old':!r.assessment.forecastUsable?'Published forecast unavailable or old':null,maxAgeMs:config.staleMs});};
   const detail=()=>{
     const host=$('river-detail');host.replaceChildren();
     const row=rows().find(r=>r.station.id===selected);

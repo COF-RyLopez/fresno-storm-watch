@@ -1,0 +1,39 @@
+{
+  "release": "0.19.0",
+  "checked": "2026-10-19",
+  "scope": "Calcite focused workspaces and presentation-only map state. No new thresholds, AGOL items, permissions or private storage changes.",
+  "automated": {
+    "javascriptTests": 215,
+    "passed": 215,
+    "privatePublisherContractTests": 18,
+    "syntaxSourceGeometryLinksPublicConfig": "Passed",
+    "diffWhitespace": "Passed"
+  },
+  "browser": {
+    "environment": "In-app browser; local app; 1920x1080, 1280x720 and 390x844 viewport overrides; anonymous public-source session",
+    "verified": [
+      "Seven labeled tabs expose only their focused default layer groups, with Area Watch as the landing workspace",
+      "Weather and Reservoirs have separate panels; legacy conditions and release-chart links resolve to the correct workspace",
+      "Countywide area, regional NWS and power counts remain unchanged across all seven tabs, map changes and future weather time selection",
+      "Independent 2D scale restoration exactly matches after switching tabs; Back/Forward returns to the correct workspace",
+      "Optional FEMA context stays with its workspace; source refreshes do not re-enable unrelated layers",
+      "3D initialization followed by rapid tab changes ends in the destination workspace 2D preset; returning restores the original workspace 3D mode",
+      "Camera choices restore independently per tab; wide-screen dock and phone Sheet close behavior verified; cameras start closed",
+      "Phone Map/List controls and labeled account/help menu remain usable without header overlap",
+      "Keyboard arrows focus tab titles and Enter activates; Escape dismisses the camera Sheet",
+      "Fictional failed NWS feed retains dated evidence and an explicit failure; empty result never declares safe conditions"
+    ],
+    "limitations": [
+      "Viewport tests emulate device sizes; physical EOC monitor, phones and a team tabletop remain county acceptance work",
+      "Forced GPU/context loss and expired private sign-in were not induced in the live county session; existing failure messages and publisher/auth regression contracts remain in place",
+      "Source coverage and timing gaps remain visible; this release adds no forecast model, local hazard threshold or dispatch logic"
+    ]
+  },
+  "operation": "Map state, layer choices and camera preferences exist only in page memory. Theme preference retains the existing non-sensitive persistence. Public collectors continue independently while the page is visible. Source issues deduplicate by underlying check rather than by area association.",
+  "designSources": [
+    "https://developers.arcgis.com/calcite-design-system/components/",
+    "https://developers.arcgis.com/calcite-design-system/foundations/colors/",
+    "https://developers.arcgis.com/calcite-design-system/foundations/layouts/"
+  ],
+  "rollback": "Redeploy commit 1f480cfd8c1637840b3497126a8d27716f866756 (0.18.0). No data migration is required. Preserve later unrelated work."
+}

@@ -1,3 +1,4 @@
+import {reportHealth} from './source-health.js';
 import { environmentalJson } from './environment-data.js';
 import { planningPoints,evaluateAreas } from './planning-model.js';
 import { fetchPlanningRain } from './planning-data.js';
@@ -17,9 +18,9 @@ function el(tag,text='',css=''){const n=document.createElement(tag);n.textConten
 function link(text,href){const n=el('a',text);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Fixed-area review banner; separate from official NWS alerts and team acknowledgements. */
-export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onTrends=()=>{},onExercise=()=>{}}){
+export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onTrends=()=>{},onExercise=()=>{}}){
   let areaConfig=null,points=[],gaugeSettings=[],reservoirSettings=null,entries=new Map(),reservoirs={},rain=null,busy=false,next=0,map=null,signature='',scenario='combined';
-  let associations=null,windSites=[],wind=null,power=null,previousRows=[];
+  let associations=null,windSites=[],wind=null,power=null,previousRows=[],filterMode='review';
   const expanded=new Set(),clock=Date.now();
   const time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Unknown';
   const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.addEventListener('click',fn);return b;};
@@ -86,14 +87,16 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
   }
   function render(){
     if(!areaConfig)return;
+    if(!exercise)for(const p of points)reportHealth('wpc-point:'+p.id,'WPC rainfall sample · '+p.name,{checked:rain?.checked,error:rain?.error||rain?.points?.[p.id]?.error||(!Number.isFinite(rain?.points?.[p.id]?.value)?'Forecast amount unknown':rain?.cycle?.end<=Date.now()?'Forecast window ended':Date.now()-rain?.cycle?.issue>config.environment.qpfMaxAgeMs?'Forecast issue is old':null),maxAgeMs:config.environment.weatherCheckMaxAgeMs});
     const riverRows=evaluateAreas({areas:areaConfig.areas,points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs,rain,environmentConfig:config.environment});
     const rows=combineAreaConcerns({rows:riverRows,associations,windSites,points,wind,power,previous:previousRows});previousRows=rows;
+    onSummary(rows.filter(r=>r.review).length);map?.setPlanningData(rows,filterMode);
     const reviews=rows.filter(r=>r.review),gaps=rows.filter(r=>r.gaps.length),rainOnly=rows.filter(r=>r.rank===2);
     const overlaps=rows.filter(r=>r.pspsRiver),verification=rows.filter(r=>r.power.verification.length);
     const threshold=reviews.some(r=>r.threshold);
     const scheduleCues=[...new Map(rows.flatMap(r=>r.scheduled).map(n=>[n.key,n])).values()].sort((a,b)=>Number(b.phase==='upcoming')-Number(a.phase==='upcoming')||a.time-b.time);
     const title=overlaps.length?`${overlaps.length} river area${overlaps.length===1?' has':'s have'} PSPS + river cues to review`:reviews.length?`${reviews.length} river area${reviews.length===1?'':'s'} to review for possible prepositioning`:rainOnly.length?`${rainOnly.length} river area${rainOnly.length===1?' has':'s have'} forecast precipitation`:!rain?'Checking river-area evidence':gaps.length?'River-area review · evidence incomplete':'River-area review · no current change cue';
-    const key=JSON.stringify([title,busy,rain,reservoirs.snapshot?.generatedAt,reservoirs.error,rows.map(r=>[r.area.id,r.status,cueSummary(r),r.gaps,r.wind,r.paired,r.power.matches.map(m=>[m.row.key,m.row.revision,m.problem,m.eligible]),r.power.followups.map(m=>m.row.key),r.power.checked,r.gauges.map(g=>[g.assessment.current,g.assessment.forecastUsable,g.assessment.observed,g.assessment.peak]),r.releases.map(s=>[s.sample,s.delta,s.current])])]);
+    const key=JSON.stringify([filterMode,title,busy,rain,reservoirs.snapshot?.generatedAt,reservoirs.error,rows.map(r=>[r.area.id,r.status,cueSummary(r),r.gaps,r.wind,r.paired,r.power.matches.map(m=>[m.row.key,m.row.revision,m.problem,m.eligible]),r.power.followups.map(m=>m.row.key),r.power.checked,r.gauges.map(g=>[g.assessment.current,g.assessment.forecastUsable,g.assessment.observed,g.assessment.peak]),r.releases.map(s=>[s.sample,s.delta,s.current])])]);
     $('watch-check-time').textContent=`${exercise?'Fictional exercise · ':''}Evaluated ${time(Date.now())} · fixed six-area scope`;
     $('watch-refresh').toggleAttribute('loading',busy);$('watch-refresh').toggleAttribute('disabled',busy||exercise);
     if(key===signature)return;signature=key;
@@ -105,8 +108,8 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     $('view-watch').setAttribute('text',reviews.length?`Area watch · ${reviews.length}`:'Area watch');
     $('view-watch').toggleAttribute('indicator',reviews.length>0);
     $('watch-rule-summary').textContent=`${reviews.length} review · ${overlaps.length} PSPS + river · ${verification.length} power verification · ${gaps.length} with gaps`;
-    const host=$('area-watch-list');host.replaceChildren();
-    for(const r of rows){
+    const host=$('area-watch-list');host.replaceChildren();if(filterMode==='review'&&!reviews.length)host.append(el('p','No current review cues returned. Check source issues or choose All areas; this is not an all-clear.','empty-state'));
+    for(const r of rows.filter(r=>filterMode==='all'||r.review)){
       const card=el('calcite-block','','area-watch-card');card.dataset.tone=r.threshold?'threshold':r.review?'review':r.gaps.length?'gap':'monitor';
       card.setAttribute('heading',r.area.name);card.setAttribute('heading-level','3');card.setAttribute('description',r.status);card.setAttribute('expanded','');
       card.setAttribute('icon-start',r.threshold?'exclamation-mark-triangle':r.review?'exclamation-mark-circle':r.gaps.length?'information':'water-drop');
@@ -135,6 +138,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     finally{busy=false;next=Date.now()+config.environment.pollMs;render();}
   }
   function applyExercise(){const fixture=planningExercise(gaugeSettings,points,reservoirSettings,['overlap','timing'].includes(scenario)?'combined':scenario,clock);entries=fixture.entries;rain=fixture.rain;reservoirs=fixture.reservoirs;({wind,power}=areaConcernExercise(windSites,scenario,clock));previousRows=[];onExercise(entries,reservoirs);render();}
+  $('area-filter').addEventListener('calciteSelectChange',e=>{filterMode=e.target.value;render();});
   $('review-areas').addEventListener('click',onOpen);
   $('watch-refresh').addEventListener('click',()=>void refreshRain());
   $('watch-conditions').addEventListener('click',onConditions);
@@ -148,5 +152,5 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     points=planningPoints(areas,gauges.stations,res.stations);associations=validateAreaConcerns(concerns,areas.areas,winds.sites);windSites=winds.sites;areaConfig=areas;gaugeSettings=gauges.stations;reservoirSettings=res;
     if(exercise)applyExercise();else{render();void refreshRain();}
   }).catch(error=>{$('river-title').textContent='River-area review unavailable';$('river-summary').textContent=error.message;$('watch-rule-summary').textContent=error.message;});
-  return {setMap:controller=>{map=controller;signature='';render();},setRiverData:data=>{if(!exercise){entries=new Map(data.entries);render();}},setReservoirData:data=>{if(!exercise){reservoirs=data;render();}},setWindData:data=>{if(!exercise){wind=data;render();}},setPowerData:data=>{if(!exercise){power=data;render();}}};
+  return {selectArea:id=>{filterMode='all';for(const o of $('area-filter').children)o.selected=o.getAttribute('value')==='all';expanded.add(id);signature='';render();$('evidence-'+id)?.scrollIntoView({block:'nearest'});},setMap:controller=>{map=controller;signature='';render();},setRiverData:data=>{if(!exercise){entries=new Map(data.entries);render();}},setReservoirData:data=>{if(!exercise){reservoirs=data;render();}},setWindData:data=>{if(!exercise){wind=data;render();}},setPowerData:data=>{if(!exercise){power=data;render();}}};
 }

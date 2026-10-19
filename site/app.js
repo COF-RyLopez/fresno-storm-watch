@@ -1,19 +1,20 @@
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
-import { createMap } from './lib/map.js?v=0.18.0';
+import { createMap } from './lib/map.js?v=0.19.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
-import { createRiverWatch } from './lib/river-ui.js';
-import { createCameraWatch } from './lib/camera-ui.js';
-import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.18.0';
-import { createPlanningWatch } from './lib/planning-ui.js?v=0.18.0';
-import { createWorkspace } from './lib/workspace-ui.js?v=0.13.0';
-import { createPowerWatch } from './lib/power-ui.js?v=0.18.0';
-import { createFacilityWatch } from './lib/facility-ui.js';
-import { createRoadWatch } from './lib/roads-ui.js';
-import { createReleaseTrends } from './lib/release-trend-ui.js';
+import { createRiverWatch } from './lib/river-ui.js?v=0.19.0';
+import { createCameraWatch } from './lib/camera-ui.js?v=0.19.0';
+import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.19.0';
+import { createPlanningWatch } from './lib/planning-ui.js?v=0.19.0';
+import { createWorkspace } from './lib/workspace-ui.js?v=0.19.0';
+import {createCountyStrip,reportHealth} from './lib/source-health.js';
+import { createPowerWatch } from './lib/power-ui.js?v=0.19.0';
+import { createFacilityWatch } from './lib/facility-ui.js?v=0.19.0';
+import { createRoadWatch } from './lib/roads-ui.js?v=0.19.0';
+import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
 
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
@@ -37,56 +38,26 @@ let planningExerciseEntries=null;
 let riverView=true;
 const workspace=createWorkspace({onCameraChange:open=>cameras?.setOpen(open)});
 
-/** @returns {void} Keep the river geography distinct from the weather-alert query region. */
-function renderScope() {
-  if(!$('power-panel').hidden){$('scope-label').textContent='Fresno County · utility power status';$('map-panel').setAttribute('heading',`Fresno power & river conditions${exercise?' · EXERCISE':''}`);$('fit-region').setAttribute('text','Fit Fresno County');$('scope-note').textContent='Power counts stay fixed when panning · approximate utility locations';return;}
-  $('scope-label').textContent=riverView?'Fresno County · boundary river reaches':'Fresno · Madera · Merced · Kings · Tulare';
-  $('map-panel').setAttribute('heading',`${riverView?'Fresno County river areas':'Five-county weather overview'}${exercise?' · EXERCISE':''}`);
-  $('fit-region').setAttribute('text',riverView?'Fit Fresno County':'Fit region');
-  $('scope-note').textContent=riverView?'Fresno river reaches · counts stay fixed when panning':state.error?'Last successful polygons · source check failed':'Panning does not change the regional alert count';
-}
-
-/** @param {boolean} showRivers @returns {void} Change the work panel without changing either source's scope. */
-function planningView(showRivers) {
-  riverView=showRivers;
-  $('environment-panel').hidden=true;
-  $('watch-panel').hidden=true;
-  $('roads-panel').hidden=true;
-  $('power-panel').hidden=true;
-  for(const id of ['river-panel','river-metrics']) $(id).hidden=!showRivers;
-  for(const id of ['weather-panel','weather-banner-wrap','weather-metrics','weather-footer']) $(id).hidden=showRivers;
-  workspace.showPanel(showRivers?'rivers':'alerts');
-  renderScope();map?.setScope(showRivers?'fresno':'regional');
-}
-$('view-rivers').addEventListener('click',()=>planningView(true));
-$('view-alerts').addEventListener('click',()=>planningView(false));
-function openEnvironment(){
-  planningView(true);$('river-panel').hidden=true;$('environment-panel').hidden=false;
-  workspace.showPanel('environment');
-}
-$('view-environment').addEventListener('click',openEnvironment);
-function openPlanning(){
-  planningView(true);$('river-panel').hidden=true;$('watch-panel').hidden=false;
-  workspace.showPanel('watch');
-}
-$('view-watch').addEventListener('click',openPlanning);
-function openRoads(){planningView(true);$('river-panel').hidden=true;$('roads-panel').hidden=false;workspace.showPanel('roads');}
-$('view-roads').addEventListener('click',openRoads);
-function openPower(){planningView(true);$('river-panel').hidden=true;$('power-panel').hidden=false;workspace.showPanel('power');renderScope();}
-$('view-power').addEventListener('click',openPower);
+/** Topic selection never alters source queries or countywide counts. */
+function renderScope(){/* The workspace controller owns map and scope headings. */}
+function planningView(showRivers){workspace.showPanel(showRivers?'rivers':'alerts');}
+function openEnvironment(){workspace.showPanel('weather');}
+function openReservoirs(){workspace.showPanel('reservoirs');}
+function openPlanning(){workspace.showPanel('watch');}
+function openRoads(){workspace.showPanel('roads');}
+function openPower(){workspace.showPanel('power');}
+for(const [id,topic]of [['view-watch','watch'],['view-rivers','rivers'],['view-environment','weather'],['view-alerts','alerts'],['view-power','power'],['view-roads','roads']])$(id).addEventListener('click',()=>workspace.showPanel(topic));
+const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap});
-const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
+const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
-planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onTrends:id=>releaseTrends.open(id),onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
+planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
-environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onTrends:id=>releaseTrends.open(id),onReservoirData:data=>{planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data)});
-if(new URLSearchParams(location.search).get('view')==='conditions')openEnvironment();
-if(new URLSearchParams(location.search).get('view')==='watch')openPlanning();
-if(new URLSearchParams(location.search).get('view')==='roads')openRoads();
-if(new URLSearchParams(location.search).get('view')==='power')openPower();
-void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onTrends:(id,gauge)=>releaseTrends.open(id,gauge),onData:data=>{planning.setRiverData(data);releaseTrends.setRiverData(data);}}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
+environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onTrends:id=>{openReservoirs();releaseTrends.open(id);},onReservoirData:data=>{planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data)});
+
+void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onTrends:(id,gauge)=>{openReservoirs();releaseTrends.open(id,gauge);},onData:data=>{planning.setRiverData(data);releaseTrends.setRiverData(data);}}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
 void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen);if(map)cameras.setMap(map);});
 
 /** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Publisher values are always text, never HTML. */
@@ -109,6 +80,8 @@ function component(tag, text, attributes = {}) {
 /** @returns {void} Render health separately from hazard counts. */
 function renderBanner() {
   const banner = bannerState(state, Date.now(), CONFIG.staleMs);
+  strip.alerts(state.lastSuccess===null?null:state.alerts.length);
+  if(!exercise)reportHealth('nws-region','NWS regional alerts',{checked:state.lastSuccess,error:state.error,maxAgeMs:CONFIG.staleMs});
   $('banner').dataset.tone = banner.tone;
   $('banner').setAttribute('kind', ['failure', 'warning'].includes(banner.tone) ? 'danger' : banner.tone === 'watch' ? 'warning' : 'info');
   $('banner').setAttribute('icon', ['failure', 'warning'].includes(banner.tone) ? 'exclamation-mark-triangle' : 'bell');
@@ -276,9 +249,9 @@ try {
   void refresh();
   power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key)).then(controller => {
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);}).then(controller => {
     map = controller;
-    map.setScope(riverView?'fresno':'regional');
+
     rivers?.setMap(map);
     cameras?.setMap(map);
     planning.setMap(map);
@@ -286,6 +259,7 @@ try {
     power.setMap(map);
     facilities.setMap(map);
     void environment.setMap(map);
+    workspace.setMap(map);
     map.update(state.alerts);
     map.select(state.alerts.find(a => a.key === selectedKey));
     $('map-status').hidden = true;

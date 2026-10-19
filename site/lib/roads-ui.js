@@ -1,3 +1,4 @@
+import {reportHealth} from './source-health.js';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{}}={}) {
@@ -5,6 +6,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{}}={}) {
   const host=document.getElementById('road-list'),status=document.getElementById('road-health');
   const time=value=>value?new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(value):'Not supplied';
   function render(){
+    if(!exercise)reportHealth('county-roads','County road records',{checked:snapshot?.checked,error:error?.message||null});
     status.textContent=exercise?'Exercise mode — live county records are not mixed into fictional scenarios':roadHealth(snapshot,error);
     document.getElementById('road-times').textContent=snapshot?`Application checked ${time(snapshot.checked)} · source dates appear on each record`:'';
     host.replaceChildren();
@@ -33,6 +35,6 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{}}={}) {
   document.getElementById('roads-refresh').onclick=()=>void refresh();document.getElementById('roads-all').addEventListener('change',render);
   for(const [id,url] of [['county-roads-link',ROAD_MAP],['county-evac-link',EVAC_MAP]])document.getElementById(id).setAttribute('href',url);
   document.getElementById('toggle-roads').onclick=()=>{const b=document.getElementById('toggle-roads'),visible=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(visible));b.textContent=`County roads: ${visible?'on':'off'}`;map?.setRoadsVisible(visible);};
-  void refresh();setInterval(()=>void refresh(),300000);setInterval(()=>{status.textContent=exercise?'Exercise mode · live road feed disabled':roadHealth(snapshot,error);},15000);
+  void refresh();setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{status.textContent=exercise?'Exercise mode · live road feed disabled':roadHealth(snapshot,error);},15000);
   return {setMap(controller){map=controller;render();},select(key){const row=snapshot?.rows.find(r=>r.key===key);if(row){onOpen();detail(row);}},get snapshot(){return snapshot;}};
 }

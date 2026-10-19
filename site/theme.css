@@ -2,13 +2,13 @@
    Gauge and alert colors are also read by map.js, keeping the legend and map in sync. */
 :root {
   color-scheme: light;
-  --app-canvas: #f8f8f8;
-  --app-surface: #ffffff;
-  --app-text: #242424;
-  --app-muted: #515b62;
-  --app-link: #00619b;
-  --app-border: #d4d4d4;
-  --app-map-background: #e8ecee;
+  --app-canvas: var(--calcite-color-surface-1);
+  --app-surface: var(--calcite-color-surface-2);
+  --app-text: var(--calcite-color-text-1);
+  --app-muted: var(--calcite-color-text-2);
+  --app-link: var(--calcite-color-text-link);
+  --app-border: var(--calcite-color-border-2);
+  --app-map-background: var(--calcite-color-surface-1);
   --warning: #b43f35;
   --watch: #986006;
   --advisory: #216a99;
@@ -36,19 +36,13 @@
 }
 :root.calcite-mode-dark {
   color-scheme: dark;
-  --calcite-color-brand: #69bee9;
-  --calcite-color-brand-hover: #8bd1f4;
-  --calcite-color-brand-press: #50addc;
-  --calcite-color-text-link: #77c6f2;
-  --calcite-color-text-1: #e3e6e8;
-  --calcite-color-focus: #77c6f2;
-  --app-canvas: #15191c;
-  --app-surface: #24282c;
-  --app-text: #e3e6e8;
-  --app-muted: #b7c0c6;
-  --app-link: #77c6f2;
-  --app-border: #50575d;
-  --app-map-background: #202427;
+  --app-canvas: var(--calcite-color-surface-1);
+  --app-surface: var(--calcite-color-surface-2);
+  --app-text: var(--calcite-color-text-1);
+  --app-muted: var(--calcite-color-text-2);
+  --app-link: var(--calcite-color-text-link);
+  --app-border: var(--calcite-color-border-2);
+  --app-map-background: var(--calcite-color-surface-1);
   --warning: #ef8d87;
   --watch: #e0b663;
   --advisory: #75bddd;
