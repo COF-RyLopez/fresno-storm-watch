@@ -10,7 +10,7 @@ const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale
 const FIELD_LABELS={id:'Stable site ID (required)',name:'Site name (required)',owner:'Department / owner in source',reference:'Inventory reference ID',assetType:'Asset type in source',status:'Site status in source',backup:'Backup-power inventory status',runtime:'Reported backup runtime (hours)',load:'Critical load (kW)',updated:'Site record update time (date field)'};
 
 /** @param {object} options @returns {object} Private, read-only site review. All site records and source connections live only in this tab's memory. */
-export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{}}={}) {
+export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {
   let session=null,county=null,map=null,sources=[],inspector=null,powerRows=[],feeds=[],generation=0,busy=false,selected=null;
   let previous=new Map(),assessment=null;
   const examples=exercise?facilityExercise():[];
@@ -51,6 +51,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     for(const row of visible){const card=el('article','','power-card facility-card');card.style.setProperty('--power-color',FACILITY_COLORS[row.tone]);card.append(el('strong',row.label),el('h3',row.site.name),el('p',`${row.site.kind} · ${row.site.owner||'Owner unassigned'}`),el('p',`Backup power: ${row.site.backup||'Unknown — verify'}`),button('Review site',()=>show(row)));list.append(card);}
     if(connected&&!visible.length)list.append(el('p','No site records returned in this filter. Check inventory completeness and utility coverage; this is not an all-clear.','power-empty'));
     map?.setFacilities(assessment.sites);
+    onData({connected,sites:assessment.sites,sourceGaps:siteGaps});
     if($('facility-dialog').hasAttribute('open')&&selected){const row=assessment.sites.find(r=>r.site.key===selected);if(row)show(row);else{$('facility-dialog').removeAttribute('open');$('facility-detail').replaceChildren();selected=null;}}
   }
   function clearInspector(){inspector?.close();inspector=null;$('facility-mapping').replaceChildren();$('facility-mapping-section').hidden=true;$('facility-source-url').value='';$('facility-source-title').value='';$('facility-setup-message').textContent='';}

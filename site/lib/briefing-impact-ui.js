@@ -2,11 +2,12 @@ import {validateBriefingImpacts,briefingImpacts} from './briefing-impact-model.j
 import {HNX_BRIEFING_PAGE} from './briefing-model.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Read-only planning context; never mutates attention counts, assignments or private records. */
-export function createBriefingImpactView({exercise=false,onOpen}){
+export function createBriefingImpactView({exercise=false,onOpen,onData=()=>{}}){
   const host=document.getElementById('briefing-impacts'),block=document.getElementById('briefing-impact-block');
   let register=null,snapshot=null,error=null,signature='';
   function render(){
     const model=briefingImpacts(register,snapshot),key=JSON.stringify({model,error,exercise});if(key===signature)return;signature=key;
+    onData(exercise?{rows:[],unreviewed:false,missing:true}:model);
     host.replaceChildren();block.description=exercise?'Live briefing context disabled':model.unreviewed?'New public revision · summary review needed':`${model.rows.filter(r=>r.period!=='past').length} dated outlooks · separate from area-review counts`;
     const status=el('calcite-notice');status.open=true;status.width='full';status.kind=model.unreviewed||error||model.missing?'warning':'info';status.icon='information';
     const title=el('span',exercise?'Fictional exercise · live summaries hidden':error?'Briefing summaries unavailable':model.unreviewed?'New public briefing needs Fresno impact review':model.missing?'Public briefing identity unavailable':'Fresno planning context · NWS Hanford');title.slot='title';

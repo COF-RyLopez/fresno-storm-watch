@@ -3,7 +3,7 @@ import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { installMapContext } from './map-context.js?v=0.19.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.22.0';
 
 let sdkPromise;
 /** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */
@@ -33,6 +33,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const power = new GraphicsLayer({title:'Utility PSPS / outage records — approximate',elevationInfo:{mode:'on-the-ground'}});
   const facilities = new GraphicsLayer({title:'Connected county sites — power unconfirmed',elevationInfo:{mode:'relative-to-ground'}});
   const roads = new GraphicsLayer({title:'County road records — verify access',elevationInfo:{mode:'on-the-ground'}});
+  const briefingContext=new GraphicsLayer({title:'Selected briefing context — proximity, not exposure',elevationInfo:{mode:'on-the-ground'}});
   const fema = new FeatureLayer({
     url:'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28',
     title:'FEMA mapped flood hazard — planning reference', minScale:100_000, opacity:0.55, elevationInfo:{mode:'on-the-ground'},
@@ -61,7 +62,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
   const currentState=()=>memory.get(activeProfile);
   const registerLayer=(key,layer,eligible=true)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer);layer.visible=layerVisible(currentState(),key,eligible);};
-  for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer]])registerLayer(key,layer);
+  for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   const syncVisibility=()=>{
     for(const [layer,r]of registry)layer.visible=layerVisible(currentState(),r.key,r.eligible);
     const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways)visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
@@ -207,7 +208,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }));
     targetView.on('click',async event=>{
       try{
-        const hit=await targetView.hitTest(event,{include:[facilities,cameras,gauges,roads,power,alertLayer,areaLayer].filter(l=>l.visible)});
+        const hit=await targetView.hitTest(event,{include:[briefingContext,facilities,cameras,gauges,roads,power,alertLayer,areaLayer].filter(l=>l.visible)});
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
@@ -312,6 +313,13 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   syncControls();
   return {
     registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,
+    setBriefingContext:data=>{
+      briefingContext.removeAll();
+      for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));
+      for(const r of data.roads){if(!r.geometry)continue;const shade=r.active==='no'?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';briefingContext.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||r.active==='no'?'dash':'solid'}}));}
+      for(const r of data.facilities){const polygon=!!r.site.geometry.rings;briefingContext.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}}));}
+    },
+    focusBriefingContext:(points,radiusKm=5)=>{if(!points.length)return;followRegion=false;setLayerPreference('briefingContext',true);const b=points.reduce((a,p)=>[Math.min(a[0],p.longitude),Math.min(a[1],p.latitude),Math.max(a[2],p.longitude),Math.max(a[3],p.latitude)],[Infinity,Infinity,-Infinity,-Infinity]),pad=(radiusKm+1)/111,lonPad=pad/Math.cos((b[1]+b[3])/2*Math.PI/180);return focusNavigate(new Extent({spatialReference:{wkid:4326},xmin:b[0]-lonPad,ymin:b[1]-pad,xmax:b[2]+lonPad,ymax:b[3]+pad}));},
     setPlanningData:(rows,filter)=>{planningRows=rows;planningFilter=filter;drawAreas();drawPower();},
     setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
     setFacilitiesVisible:visible=>{setLayerPreference('facilities',visible);},

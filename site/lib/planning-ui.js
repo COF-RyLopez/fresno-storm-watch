@@ -18,7 +18,7 @@ function el(tag,text='',css=''){const n=document.createElement(tag);n.textConten
 function link(text,href){const n=el('a',text);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Fixed-area review banner; separate from official NWS alerts and team acknowledgements. */
-export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onTrends=()=>{},onExercise=()=>{}}){
+export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onTrends=()=>{},onExercise=()=>{},onData=()=>{}}){
   let areaConfig=null,points=[],gaugeSettings=[],reservoirSettings=null,entries=new Map(),reservoirs={},rain=null,busy=false,next=0,map=null,signature='',scenario='combined';
   let associations=null,windSites=[],wind=null,power=null,previousRows=[],filterMode='review';
   const expanded=new Set(),clock=Date.now();
@@ -91,6 +91,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     const riverRows=evaluateAreas({areas:areaConfig.areas,points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs,rain,environmentConfig:config.environment});
     const rows=combineAreaConcerns({rows:riverRows,associations,windSites,points,wind,power,previous:previousRows});previousRows=rows;
     onSummary(rows.filter(r=>r.review).length);map?.setPlanningData(rows,filterMode);
+    onData({rows,points});
     const reviews=rows.filter(r=>r.review),gaps=rows.filter(r=>r.gaps.length),rainOnly=rows.filter(r=>r.rank===2);
     const overlaps=rows.filter(r=>r.pspsRiver),verification=rows.filter(r=>r.power.verification.length);
     const threshold=reviews.some(r=>r.threshold);

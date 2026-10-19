@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "checked": "2026-10-19",
+  "basis": "GIS-maintained regional associations for review, not NWS reach forecasts, hazard polygons or county-approved staging areas. Every association is bound to the reviewed source PDF revision.",
+  "associations": [
+    {"impact":"fresno-valley-rain","sha256":"cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7","areas":["san-joaquin-lower","james-bypass"],"relation":"regional-context","note":"Valley / western-hills rainfall provides regional context for these review groups. It is not a prediction of inundation along the reach or at nearby assets."},
+    {"impact":"fresno-foothills-rain","sha256":"28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4","areas":["san-joaquin-upper","little-dry","kings-upper","kings-lower"],"relation":"regional-context","note":"Foothill / lower-Sierra context around the listed gauge or dam locations. For Kings below Pine Flat this is dam-vicinity context, not full downstream coverage. The dated partner deck requires verification."},
+    {"impact":"fresno-high-sierra-snow","sha256":"cdbc3307470957ed2cbaabcb32a0108886ff0f865e425aa333a11093f2a6f1f7","areas":["san-joaquin-upper","kings-upper"],"relation":"headwater-context","note":"High-Sierra headwater context only. Reference gauges and nearby roads or facilities are not assumed above 8,000 ft or exposed to snow. No snowmelt, runoff or river travel-time model is applied."}
+  ]
+}

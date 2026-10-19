@@ -398,3 +398,9 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 #briefing-impacts> a,.briefing-impact> a{display:block;margin-block:8px;font-size:12px;}
 #briefing-impacts>calcite-notice{margin-bottom:8px;}
 .briefing-impact calcite-accordion{margin-block:10px;}
+
+#briefing-context-block calcite-label{font-size:12px;}
+.briefing-context-evidence{border-block-start:1px solid var(--calcite-color-border-2);padding-block:10px;margin-block:8px;}
+.briefing-context-evidence strong{font-size:13px;}
+#briefing-context-list h4{font-size:13px;margin-block:14px 6px;}
+#briefing-context-map-note{margin:0;padding:6px 12px;background:var(--calcite-color-surface-1);font-size:11px;line-height:1.4;}

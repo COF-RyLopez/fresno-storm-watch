@@ -1,20 +1,21 @@
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
-import { createMap } from './lib/map.js?v=0.19.0-r2';
+import { createMap } from './lib/map.js?v=0.22.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
 import { createRiverWatch } from './lib/river-ui.js?v=0.19.0';
 import { createCameraWatch } from './lib/camera-ui.js?v=0.19.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.19.0';
-import { createPlanningWatch } from './lib/planning-ui.js?v=0.19.0';
+import { createPlanningWatch } from './lib/planning-ui.js?v=0.22.0';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.19.0-r3';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
 import { createPowerWatch } from './lib/power-ui.js?v=0.19.0';
-import { createFacilityWatch } from './lib/facility-ui.js?v=0.19.0';
-import { createRoadWatch } from './lib/roads-ui.js?v=0.19.0';
-import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.21.0';
+import { createFacilityWatch } from './lib/facility-ui.js?v=0.22.0';
+import { createRoadWatch } from './lib/roads-ui.js?v=0.22.0';
+import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.22.0';
+import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.22.0';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
 
 const $ = id => document.getElementById(id);
@@ -49,13 +50,14 @@ function openRoads(){workspace.showPanel('roads');}
 function openPower(){workspace.showPanel('power');}
 for(const [id,topic]of [['view-watch','watch'],['view-rivers','rivers'],['view-environment','weather'],['view-alerts','alerts'],['view-power','power'],['view-roads','roads']])$(id).addEventListener('click',()=>workspace.showPanel(topic));
 const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
-createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing});
-const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap});
+const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBriefing:(...args)=>briefings.open(...args),onArea:id=>planning?.selectArea(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onConnect:()=>{openPower();document.querySelector('.facility-section calcite-accordion-item').expanded=true;},onMap:workspace.showMap});
+const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings});
+const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:context.setFacilities});
 const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
-roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
+roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onData:context.setRoads});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
-planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
+planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:context.setPlanning,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
 environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onTrends:id=>{openReservoirs();releaseTrends.open(id);},onReservoirData:data=>{planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data)});
 
@@ -260,6 +262,7 @@ try {
     roads.setMap(map);
     power.setMap(map);
     facilities.setMap(map);
+    context.setMap(map);
     void environment.setMap(map);
     workspace.setMap(map);
     map.update(state.alerts);

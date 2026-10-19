@@ -2,16 +2,16 @@ import {validateBriefingSnapshot,briefingState,BRIEFING_CHECK_MAX_AGE,HNX_BRIEFI
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
 import {PARTNER_BRIEFING} from './briefing-impact-model.js?v=0.21.0';
-import {createBriefingImpactView} from './briefing-impact-ui.js?v=0.21.0';
+import {createBriefingImpactView} from './briefing-impact-ui.js?v=0.22.0';
 const $=id=>document.getElementById(id);
 const ARCHIVE=PARTNER_BRIEFING;
 /** @param {string} tag @param {string} text @returns {HTMLElement} All source metadata is displayed as text. */
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Public documents only; update markers live in memory and are not team acknowledgements. */
-export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{}}){
+export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},onImpacts=()=>{}}){
   let snapshot=null,error=null,busy=false,baseline=null,updated=false,pdfBlob=null,generation=0,initialLinkHandled=false,pages=[],pageIndex=0,pdfController=null;
   const time=t=>formatTime(Number.isFinite(Date.parse(t))?Date.parse(t):null,timeZone),state=()=>briefingState(error?{...snapshot,error}:snapshot);
-  const impacts=createBriefingImpactView({exercise,onOpen:(...args)=>void show(...args)});
+  const impacts=createBriefingImpactView({exercise,onOpen:(...args)=>void show(...args),onData:onImpacts});
   const cardViews=new WeakMap();
   function cardView(host){
     if(cardViews.has(host))return cardViews.get(host);

@@ -1,0 +1,50 @@
+{
+  "release": "0.22.0",
+  "checked": "2026-10-19",
+  "scope": "Read-only briefing associations with six existing river watch groups, nearby county road records and authorized connected assets. No source edits, AGOL changes or new dispatch / hazard thresholds.",
+  "method": {
+    "briefings": "GIS-maintained regional / headwater associations bound to exact reviewed PDF revisions; no NWS reach-specific forecasts or impact polygons inferred.",
+    "geometry": "WGS84 points, polyline segments and polygon footprints; spherical minimum distance with mean radius 6371008.8 m, displayed approximately to 0.1 km. Multipart gaps and holes preserved. Invalid geometry accounted for once.",
+    "search": "1 / 5 / 10 km from listed gauge/dam points. Default 5 km is a lookup preference, not an action threshold, access route or complete river corridor.",
+    "timing": "Published start/end Pacific calendar dates compared with current reviewed public briefing dates; incomplete / conflicting times stay unknown. Date intersection is not confirmation of simultaneous impacts.",
+    "privacy": "Existing source permissions and sign-in control assets. Operational data remains in page memory; disconnect, denied access and sign-out clear asset copies in the new list and selected map context. No new persistence or external exports."
+  },
+  "automated": {
+    "javascriptTests": 243,
+    "publisherContractTests": 18,
+    "pdfRendererTests": 3,
+    "syntaxSourceGeometryLinksPublicConfig": "Passed",
+    "newCases": [
+      "Spherical segment interiors, multipart gaps, polygon holes and invalid / projected geometry",
+      "Coarse spatial pruning agrees with complete local distances",
+      "Revision-bound regional and upstream-only associations",
+      "Stable-ID deduplication and independence from topic filters / map extent",
+      "Search distances do not become hazard / travel-time thresholds",
+      "Inactive history and elapsed active flags stay distinct from reopening",
+      "Failed or stale feeds and incomplete geometry remain qualified",
+      "Disconnected authorization excludes private records even if a stale caller supplies them",
+      "Calendar overlap, missing dates and contradictory windows",
+      "Dated / past / stale briefings cannot create a current combined context cue"
+    ]
+  },
+  "browserLocal": [
+    "Six groups display source evidence and source-page links",
+    "County road query loads; three nearby records cross-checked against existing status/detail dialogs with full years",
+    "Existing authorized county facility inventory loaded; nearby asset records appeared with source owner/status and unknown backup-power qualification",
+    "Selected map draws reference points, nearby roads and loaded assets without a hazard-area buffer",
+    "Sign-out removed private asset detail controls and retained the explicit unassessed state",
+    "Weather map excluded briefing context; Area Watch restored it",
+    "Phone 390x844 wraps source dates, status, lookup descriptions and review controls",
+    "Existing automated area-review and official-alert counts unchanged by briefing context"
+  ],
+  "limits": [
+    "Regional associations need county / operator confirmation",
+    "Reference-point proximity does not establish exposure, a facility access route, capacity or an approved staging site",
+    "Upstream snow context does not predict snow at lower gauges or nearby assets",
+    "Older county road records have unresolved status and remain verification context",
+    "Only loaded authorized inventories are assessed; pump / generator schemas and Enterprise access remain existing prerequisites",
+    "No resource allocation, dispatch, modeled river arrival or predicted inundation"
+  ],
+  "publishedProof": "Deployment result and anonymous screenshots are saved under ignored work/qa-0.22.0 after Pages completes.",
+  "rollback": "Redeploy ef8cb834e016f2b044afc10ff267583d4118d2b5 (0.21.0); no data migration or county source change."
+}
