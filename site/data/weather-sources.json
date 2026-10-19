@@ -1,0 +1,43 @@
+{
+  "checked":"2026-10-19",
+  "release":"0.17.0",
+  "scope":"Fresno County and boundary river planning with regional weather context; nine named wind forecast samples, no inferred continuous wind surface",
+  "sources":[
+    {
+      "publisher":"NOAA National Weather Service, Hanford",
+      "product":"Wind speed, wind gust and wind direction forecast grids",
+      "discovery":"https://api.weather.gov/points/{latitude},{longitude}",
+      "endpoint":"https://api.weather.gov/gridpoints/{office}/{x},{y}",
+      "documentation":"https://www.weather.gov/documentation/services-web-api",
+      "definitions":"https://www.weather.gov/gis/ndfd_metadata.html",
+      "units_verified":{"windSpeed":"wmoUnit:km_h-1","windGust":"wmoUnit:km_h-1","windDirection":"wmoUnit:degree_(angle)"},
+      "conversion":"mph = km/h / 1.609344",
+      "height":"10 meters above ground; direction is meteorological FROM relative to true north",
+      "time_fields":["properties.updateTime","properties.windSpeed.values[].validTime","properties.windGust.values[].validTime","properties.windDirection.values[].validTime"],
+      "cadence":"Publisher updates vary; scheduled Pages collection target 15 minutes, browser snapshot checks every 5 minutes while visible",
+      "app_freshness_limits":{"collection_minutes":45,"forecast_update_hours":24},
+      "identity":"Watchlist ID plus publisher office/grid X/Y, re-resolved each collection",
+      "missing":"Nulls, conflicting duplicates and gaps are unknown; no interpolation or extrapolation",
+      "initial_verification":"All nine points returned forecast series successfully; source grid identity, units, intervals and update times checked",
+      "access":"Public HTTPS, no credentials; only public forecast samples in deployment artifacts",
+      "maintenance":"FROG GIS app maintainer; county/NWS coordination required for operational thresholds"
+    },
+    {
+      "publisher":"NOAA nowCOAST",
+      "product":"GOES East/West observed infrared and water vapor imagery",
+      "endpoint":"https://nowcoast.noaa.gov/geoserver/observations/satellite/ows",
+      "capabilities":"https://nowcoast.noaa.gov/geoserver/observations/satellite/ows?service=WMS&version=1.3.0&request=GetCapabilities",
+      "layer_names":["goes_longwave_imagery","goes_water_vapor_imagery"],
+      "time_fields":"Explicit time Dimension for each WMS Layer; UTC TIME sent on GetMap",
+      "cadence":"Five-minute frame spacing observed in capabilities; publisher times determine actual availability",
+      "app_freshness_limits":{"catalog_check_minutes":7,"newest_observation_minutes":30,"selected_frame_max_earlier_minutes":20},
+      "display":"Publisher-rendered image and publisher legend; no inference of temperature, precipitation, visibility or surface humidity from image pixels",
+      "timeline":"Nearest earlier explicit image within tolerance; observations hidden for every future target time",
+      "initial_verification":"Both products and explicit frame timestamps present in live capabilities",
+      "access":"Public WMS accessed directly in browser, no token or imagery archive",
+      "maintenance":"FROG GIS app maintainer; official NOAA nowCOAST link retained for source outages"
+    }
+  ],
+  "time_policy":"One weather target time across radar, GOES, wind and WPC. WPC retains its entire accumulation window. Other operational feeds retain independent source times.",
+  "use":"Planning context. No wind threshold, automatic activation, utility PSPS inference or dispatch action is configured."
+}

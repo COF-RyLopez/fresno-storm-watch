@@ -4,6 +4,8 @@ import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateRe
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
+import {createWeatherTimeline} from './weather-ui.js';
+import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
 /** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Source content is text, never executable markup. */
@@ -20,16 +22,17 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   const layerErrors=new Map();
   let reservoirRenderKey='';
   const parameters=new URLSearchParams(location.search);
-  if(!exercise&&['radar','qpf'].includes(parameters.get('overlay')))overlay=parameters.get('overlay');
+  if(!exercise&&['radar','qpf','satellite'].includes(parameters.get('overlay')))overlay=parameters.get('overlay');
   period=QPF_PERIODS.find(p=>String(p.id)===parameters.get('qpf'))||period;
   for(const option of $('qpf-period').children)option.toggleAttribute('selected',option.getAttribute('value')===String(period.id));
   const time=t=>formatTime(Number.isFinite(t)?t:null,timeZone);
   const newButton=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.addEventListener('click',fn);return b;};
-  const currentFrame=()=>frameChoice==='latest'?radar[0]:radar.find(f=>String(f.id)===frameChoice);
-  const activeLayerError=()=>layerError||layerErrors.get(`${overlay==='radar'?'radar':period.id}:${map?.view.type}`);
+  const weather=createWeatherTimeline({time,exercise,onChange:renderWeather,onMap});
+  const currentFrame=()=>{const stamp=observationAt(radar.map(f=>f.time),weather.target(),Date.now(),{maxAgeMs:config.radarMaxAgeMs});return radar.find(f=>f.time===stamp);};
+  const activeLayerError=()=>layerError||(['radar','qpf'].includes(overlay)&&layerErrors.get(`${overlay==='radar'?'radar':period.id}:${map?.view.type}`));
   const checkOverdue=checked=>checked===null||Date.now()-checked>config.weatherCheckMaxAgeMs;
   const radarUsable=()=>!exercise&&!radarError&&!checkOverdue(radarChecked)&&radar[0]&&Date.now()-radar[0].time<=config.radarMaxAgeMs&&currentFrame();
-  const qpfUsable=()=>!exercise&&!qpfError&&!checkOverdue(qpfChecked)&&qpf&&qpf.hours===period.hours&&Date.now()-qpf.issue<=config.qpfMaxAgeMs&&qpf.end>Date.now();
+  const qpfUsable=()=>!exercise&&!qpfError&&!checkOverdue(qpfChecked)&&qpf&&qpf.hours===period.hours&&Date.now()-qpf.issue<=config.qpfMaxAgeMs&&qpf.end>Date.now()&&weather.target()>=qpf.start&&weather.target()<qpf.end&&weather.target()>=qpf.issue;
 
   function syncLayers(){
     if(!layers)return;
@@ -43,19 +46,22 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   }
 
   function renderWeather(){
-    for(const kind of ['off','radar','qpf']){$(`env-${kind}`).setAttribute('aria-pressed',String(overlay===kind));$(`env-${kind}`).setAttribute('appearance',overlay===kind?'solid':'outline');}
+    weather.setOverlay(overlay);weather.setContext({radar,radarError:radarError||(checkOverdue(radarChecked)?'Catalog check overdue':null),qpf,qpfError:qpfError||(checkOverdue(qpfChecked)?'Cycle check overdue':null)});
+    for(const kind of ['off','radar','qpf','satellite']){$(`env-${kind}`).setAttribute('aria-pressed',String(overlay===kind));$(`env-${kind}`).setAttribute('appearance',overlay===kind?'solid':'outline');}
     $('radar-controls').hidden=overlay!=='radar';$('qpf-controls').hidden=overlay!=='qpf';
     const frame=currentFrame();
-    $('radar-time').textContent=frame?`${frameChoice==='latest'?'Latest available':'Historical frame'} · ${time(frame.time)}`:'No selected radar frame';
-    $('radar-health').textContent=exercise?'Live radar disabled in exercise':radarError?`Radar check failed · ${radarError}`:!radarChecked?'Waiting for NOAA':!frame?'Selected frame expired · choose Latest':checkOverdue(radarChecked)?'Radar check overdue · overlay hidden':Date.now()-radar[0].time>config.radarMaxAgeMs?'Newest radar frame is old · overlay hidden':`Catalog checked ${time(radarChecked)}`;
+    frameChoice=weather.live?'latest':frame?String(frame.id):'unavailable';
+    updateFramePicker();
+    $('radar-time').textContent=frame?`${weather.live?'Latest available':'Selected earlier observation'} · ${time(frame.time)}`:weather.target()>Date.now()?'Observed radar hidden at future planning time.':'No matching radar frame';
+    $('radar-health').textContent=exercise?'Live radar disabled in exercise':radarError?`Radar check failed · ${radarError}`:!radarChecked?'Waiting for NOAA':weather.target()>Date.now()?'Future time selected · observed radar hidden':!frame?'No matching recent frame · choose Now / live':checkOverdue(radarChecked)?'Radar check overdue · overlay hidden':Date.now()-radar[0].time>config.radarMaxAgeMs?'Newest radar frame is old · overlay hidden':`Catalog checked ${time(radarChecked)}`;
     $('radar-health').dataset.tone=radarUsable()?'normal':'gap';
     $('qpf-issued').textContent=qpf?time(qpf.issue):'Not available';
     $('qpf-window').textContent=qpf?`${time(qpf.start)} → ${time(qpf.end)}`:'Not available';
-    $('qpf-health').textContent=exercise?'Live QPF disabled in exercise':qpfError?`Forecast check failed · ${qpfError}`:!qpfChecked?'Waiting for WPC':!qpfUsable()?'Forecast is old, ended or check overdue · overlay hidden':`Cycle checked ${time(qpfChecked)}`;
+    $('qpf-health').textContent=exercise?'Live QPF disabled in exercise':qpfError?`Forecast check failed · ${qpfError}`:!qpfChecked?'Waiting for WPC':qpf&&(weather.target()<qpf.start||weather.target()>=qpf.end)?'Selected time is outside this accumulation window · overlay hidden':qpf&&weather.target()<qpf.issue?'Selected time predates this forecast update · overlay hidden':!qpfUsable()?'Forecast is old, ended or check overdue · overlay hidden':`Cycle checked ${time(qpfChecked)} · showing the full accumulation window`;
     $('qpf-health').dataset.tone=qpfUsable()?'normal':'gap';
-    const usable=overlay==='radar'?radarUsable():overlay==='qpf'?qpfUsable():true;
-    const selected=overlay==='off'?'Atmospheric overlay off':overlay==='radar'?`Radar ${frameChoice==='latest'?'latest':'history'} · ${frame?time(frame.time):'no frame'}`:`WPC ${period.hours}h QPF · ${qpf?time(qpf.start)+' to '+time(qpf.end):'no valid cycle'}`;
-    $('environment-map-status').textContent=selected+(overlay!=='off'?(activeLayerError()?' · map layer failed':!usable?' · unavailable/hidden':!layers?' · map initializing':''):'');
+    const usable=overlay==='radar'?radarUsable():overlay==='qpf'?qpfUsable():overlay==='satellite'?weather.satelliteReady():true;
+    const selected=overlay==='off'?'Atmospheric overlay off':overlay==='satellite'?weather.status():overlay==='radar'?`Radar ${weather.live?'latest':'history'} · ${frame?time(frame.time):'no frame'}`:`WPC ${period.hours}h QPF · ${qpf?time(qpf.start)+' to '+time(qpf.end):'no valid cycle'}`;
+    $('environment-map-status').textContent=selected+(overlay!=='off'?(activeLayerError()?' · map layer failed':!usable?' · unavailable/hidden':!layers?' · map initializing':''):'')+(overlay!=='satellite'?weather.status():'');
     $('environment-map-status').dataset.tone=usable&&!activeLayerError()?'normal':'gap';
     $('environment-legend').hidden=overlay==='off';$('radar-legend').hidden=overlay!=='radar';$('qpf-legend').hidden=overlay!=='qpf';
     $('environment-refresh').toggleAttribute('loading',busy);$('environment-refresh').toggleAttribute('disabled',busy||exercise);
@@ -131,8 +137,8 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Weather & reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
-  for(const kind of ['off','radar','qpf'])$(`env-${kind}`).addEventListener('click',()=>{map?.clearEnvironmentPopup();overlay=kind;renderWeather();});
-  $('radar-frame').addEventListener('calciteSelectChange',e=>{frameChoice=e.target.value;renderWeather();});
+  for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>{map?.clearEnvironmentPopup();overlay=kind;renderWeather();});
+  $('radar-frame').addEventListener('calciteSelectChange',e=>{const frame=radar.find(f=>String(f.id)===e.target.value);if(e.target.value==='latest')weather.selectTime(null);else if(frame)weather.selectTime(frame.time);});
   $('qpf-period').addEventListener('calciteSelectChange',e=>{
     const requested=QPF_PERIODS.find(p=>String(p.id)===e.target.value);if(!requested||requested.id===period.id)return;
     map?.clearEnvironmentPopup();period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;renderWeather();void refreshWeather();
@@ -142,7 +148,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   $('environment-extent').addEventListener('click',()=>{onMap();map?.fitEnvironment();});
   $('open-environment').addEventListener('click',()=>{onOpen();if(overlay==='off'){overlay='radar';renderWeather();}});
   $('qpf-band-list').replaceChildren(...QPF_BANDS.map(b=>{const n=el('span',`${b.label} in`);const swatch=el('i');swatch.style.background=b.color;n.prepend(swatch);return n;}));
-  if(exercise){for(const id of ['env-radar','env-qpf','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
+  if(exercise){for(const id of ['env-radar','env-qpf','env-satellite','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
   void environmentalJson(new URL('../data/reservoir-watchlist.json',import.meta.url)).then(s=>{selection=s;renderReservoirs();}).catch(error=>{snapshotError=error.message;renderReservoirs();});
   void refreshWeather();void refreshReservoirs();renderWeather();renderReservoirs();
   const tick=()=>{if(document.hidden)return;renderWeather();renderReservoirs();if(!exercise&&Date.now()>=nextWeather)void refreshWeather();if(!exercise&&Date.now()>=nextReservoir)void refreshReservoirs();};
@@ -151,6 +157,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});
   return {async setMap(controller){
     map=controller;
+    void weather.setMap(controller);
     try{
       const sdk=await loadSdk();const [ImageryLayer,FeatureLayer,GraphicsLayer,Graphic]=await sdk.import(['@arcgis/core/layers/ImageryLayer.js','@arcgis/core/layers/FeatureLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);
       const radarLayer=new ImageryLayer({url:RADAR_URL,title:'NOAA radar reflectivity — selected frame',format:'png32',opacity:0.72,visible:false,popupEnabled:false});

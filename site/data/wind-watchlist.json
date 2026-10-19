@@ -1,0 +1,17 @@
+{
+  "checked":"2026-10-19",
+  "scope":"Nine named forecast samples for Fresno County and boundary river planning; not a continuous wind map or complete facility inventory.",
+  "publisher":"NOAA National Weather Service, Hanford",
+  "reference":"https://www.weather.gov/documentation/services-web-api",
+  "sites":[
+    {"id":"SJ41","name":"San Joaquin · Highway 41","longitude":-119.793333,"latitude":36.876111},
+    {"id":"FRIANT","name":"Friant / Millerton vicinity","longitude":-119.704,"latitude":36.999},
+    {"id":"MENDOTA","name":"San Joaquin · Mendota","longitude":-120.378226,"latitude":36.810505},
+    {"id":"JAMES","name":"James Bypass","longitude":-120.180278,"latitude":36.6525},
+    {"id":"PINEFLAT","name":"Pine Flat Dam vicinity","longitude":-119.325,"latitude":36.833},
+    {"id":"TRIMMER","name":"Kings River · Trimmer","longitude":-119.140833,"latitude":36.874722},
+    {"id":"FRESNO","name":"Fresno urban area","longitude":-119.7871,"latitude":36.7378},
+    {"id":"COALINGA","name":"Coalinga / west county","longitude":-120.36,"latitude":36.14},
+    {"id":"SHAVER","name":"Shaver Lake / Sierra approach","longitude":-119.317,"latitude":37.105}
+  ]
+}

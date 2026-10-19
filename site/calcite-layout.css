@@ -299,3 +299,21 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .waterway-canal{border-top:2px dashed #83d4e6;}
 .waterway-connector{border-top:2px dotted #a6b9c3;}
 @media(max-width:600px){#facility-mapping{grid-template-columns:1fr;}#facility-banner-text{font-size:0.72rem;}}
+
+/* Shared weather time and explicitly sampled forecasts use the active theme. */
+.weather-slider-label{font-size:0.85rem;display:block;margin-bottom:0.5rem;}
+#weather-time{width:100%;accent-color:var(--app-link);min-height:32px;cursor:pointer;}
+#weather-time:focus-visible{outline:2px solid var(--app-link);outline-offset:3px;}
+.weather-range-labels{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--app-muted);}
+.weather-availability{font-size:0.8rem;line-height:1.5;display:grid;grid-template-columns:5.4rem 1fr;gap:0.5rem;margin:1rem 0;}
+.weather-availability dt{font-weight:600;}.weather-availability dd{margin:0;overflow-wrap:anywhere;color:var(--app-muted);}
+.wind-metrics{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+.wind-metrics dt{font-size:0.75rem;color:var(--app-muted);}.wind-metrics dd{font-size:1.05rem;margin:0.3rem 0;font-weight:600;}
+.wind-metrics>div:last-child{grid-column:1/-1;}.wind-metrics>div:last-child dd{font-size:0.9rem;}
+.wind-chart{margin:1rem 0;}.wind-chart svg{width:100%;height:auto;display:block;background:var(--chart-background);border:1px solid var(--app-border);}
+.wind-chart figcaption{font-size:0.74rem;line-height:1.6;margin-top:0.5rem;color:var(--app-muted);}
+#wind-all-sites p{font-size:0.8rem;border-top:1px solid var(--app-border);padding-top:0.6rem;line-height:1.6;}
+.weather-site-button{color:var(--app-link);background:none;border:0;text-decoration:underline;font:inherit;cursor:pointer;padding:0;text-align:left;}
+.weather-site-button:focus-visible{outline:2px solid var(--app-link);outline-offset:2px;}
+#satellite-legend-image{display:block;max-width:100%;height:auto;max-height:150px;object-fit:contain;object-position:left;}
+#wind-chart:empty{display:none;}
