@@ -8,6 +8,9 @@ const snapshot=JSON.parse(await readFile(new URL('../site/data/hanford-briefing.
 // Fixed reviewed identity for unit cases; deployment may legitimately collect a newer PDF.
 const publishedSnapshot=structuredClone(snapshot);snapshot.document.sha256=register.documents.find(d=>d.kind==='latest').sha256;
 const now=Date.parse('2026-10-19T23:00:00Z'),copy=v=>structuredClone(v);
+// Collection checks advance during deployment; unit freshness assertions must use fixed clocks.
+snapshot.checkedAt=snapshot.lastSuccessAt=new Date(now).toISOString();
+for(const k of ['sourceUpdatedAt','collectedAt','fileModifiedAt'])snapshot.document[k]=new Date(now-3600000).toISOString();
 
 test('Fresno summaries bind source pages to exact public and partner PDFs',async()=>{
   validateBriefingImpacts(register);
