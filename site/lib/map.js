@@ -1,5 +1,6 @@
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { POWER_COLORS } from './power-model.js';
+import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 
 let sdkPromise;
@@ -10,15 +11,15 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   const sdk = await loadSdk();
-  const [Map, MapView, Basemap, TileLayer, GraphicsLayer, Graphic, Polygon, reactiveUtils, webMercatorUtils, FeatureLayer, Extent] = await sdk.import([
+  const [Map, MapView, Basemap, TileLayer, GraphicsLayer, Graphic, Polygon, reactiveUtils, webMercatorUtils, FeatureLayer, Extent, VectorTileLayer] = await sdk.import([
     '@arcgis/core/Map.js', '@arcgis/core/views/MapView.js', '@arcgis/core/Basemap.js',
     '@arcgis/core/layers/TileLayer.js', '@arcgis/core/layers/GraphicsLayer.js',
     '@arcgis/core/Graphic.js', '@arcgis/core/geometry/Polygon.js', '@arcgis/core/core/reactiveUtils.js',
-    '@arcgis/core/geometry/support/webMercatorUtils.js', '@arcgis/core/layers/FeatureLayer.js', '@arcgis/core/geometry/Extent.js'
+    '@arcgis/core/geometry/support/webMercatorUtils.js', '@arcgis/core/layers/FeatureLayer.js', '@arcgis/core/geometry/Extent.js', '@arcgis/core/layers/VectorTileLayer.js'
   ]);
   const boundaryLayer = new GraphicsLayer({ title: 'Five-county scope' });
   const alertLayer = new GraphicsLayer({ title: 'Regional NWS alerts' });
@@ -27,6 +28,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const gauges = new GraphicsLayer({ title: 'NWS river watchpoints', elevationInfo:{mode:'relative-to-ground'} });
   const cameras = new GraphicsLayer({ title: 'Caltrans river-area highway cameras', elevationInfo:{mode:'relative-to-ground'} });
   const power = new GraphicsLayer({title:'Utility PSPS / outage records — approximate',elevationInfo:{mode:'on-the-ground'}});
+  const facilities = new GraphicsLayer({title:'Connected county sites — power unconfirmed',elevationInfo:{mode:'relative-to-ground'}});
   const roads = new GraphicsLayer({title:'County road records — verify access',elevationInfo:{mode:'on-the-ground'}});
   const fema = new FeatureLayer({
     url:'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28',
@@ -51,17 +53,22 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Reference/MapServer`
     })] });
   };
-  const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras] });
-  let imageryBasemap=null,imagery=false;
+  const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities] });
+  let imageryBasemap=null,imagery=false,imageryFailure=false;
+  const imageryStatus=()=>{const host=document.querySelector('#imagery-status');host.hidden=!imagery;host.textContent=imageryFailure?'Imagery hybrid incomplete — road labels or imagery unavailable':'Imagery hybrid · roads and labels · historical imagery';};
   document.querySelector('#toggle-imagery').addEventListener('click',()=>{
     imagery=!imagery;
-    imageryBasemap??=new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],
-      referenceLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer'})]});
+    if(!imageryBasemap){
+      imageryBasemap=new Basemap({title:'Esri Imagery Hybrid',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],
+        referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
+      void Promise.all([...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].map(l=>l.load())).catch(()=>{imageryFailure=true;imageryStatus();});
+    }
     map.basemap=imagery?imageryBasemap:themedBasemap();
     updateContextSymbols();
-    document.querySelector('#toggle-imagery').textContent=`Imagery: ${imagery?'on':'off'}`;
+    document.querySelector('#toggle-imagery').textContent=`Imagery hybrid: ${imagery?'on':'off'}`;
     document.querySelector('#toggle-imagery').setAttribute('aria-pressed',String(imagery));
     document.querySelector('#imagery-note').hidden=!imagery;
+    imageryStatus();
   });
   let region, fresnoGeometry;
   for (const feature of counties) {
@@ -154,6 +161,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const geographicTarget=bounds=>{const extent=new Extent({...bounds,spatialReference:{wkid:4326}});return view.type==='3d'?{target:extent,tilt:35,heading:0}:webMercatorUtils.geographicToWebMercator(extent);};
   for (const type of ['pointerdown', 'wheel', 'keydown']) document.querySelector('#map').addEventListener(type, () => { followRegion = false; }, { passive: true });
   const bindView=targetView=>{
+    targetView.on('layerview-create-error',event=>{
+      if(imageryBasemap&&[...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].includes(event.layer)){imageryFailure=true;imageryStatus();}
+    });
     // Apply the same county display filter independently to both layer views.
     void targetView.whenLayerView(fema).then(layerView=>{
       layerView.filter={geometry:fresnoView,spatialRelationship:'intersects'};femaViews.set(targetView,'ready');femaStatus();
@@ -167,13 +177,15 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }));
     targetView.on('click',async event=>{
       try{
-        const hit=await targetView.hitTest(event,{include:[cameras,gauges,roads,power,alertLayer]});
+        const hit=await targetView.hitTest(event,{include:[facilities,cameras,gauges,roads,power,alertLayer]});
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
         const cameraId=hit.results.find(r=>r.graphic?.attributes?.cameraId)?.graphic.attributes.cameraId;
         if(cameraId){onCameraSelect(cameraId);return;}
         const gaugeId=hit.results.find(r=>r.graphic?.attributes?.gaugeId)?.graphic.attributes.gaugeId;
         if(gaugeId){onGaugeSelect(gaugeId);return;}
+        const facilityKey=hit.results.find(r=>r.graphic?.attributes?.facilityKey)?.graphic.attributes.facilityKey;
+        if(facilityKey){onFacilitySelect(facilityKey);return;}
         const powerKey=hit.results.find(r=>r.graphic?.attributes?.powerKey)?.graphic.attributes.powerKey;
         if(powerKey){onPowerSelect(powerKey);return;}
         const key=hit.results.find(r=>r.graphic?.attributes?.alertKey)?.graphic.attributes.alertKey;
@@ -235,6 +247,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   document.querySelector('#scene-tilt').addEventListener('click',()=>void navigate({tilt:55,heading:0}));
   modeStatus();for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).removeAttribute('disabled');
   return {
+    setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
+    setFacilitiesVisible:visible=>{facilities.visible=visible;},
+    focusFacility:key=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(g){followRegion=false;facilities.visible=true;document.querySelector('#facility-map-toggle').checked=true;return navigate({target:g.geometry,scale:14000,...(view.type==='3d'?{tilt:45}:{})});}},
     setPower:rows=>{power.removeAll();for(const r of rows){for(const g of r.geometries){const shade=POWER_COLORS[r.status],ended=['restored','cancelled'].includes(r.status),unknown=!!r.health||r.status==='unknown',polygon=!!g.rings;power.add(new Graphic({attributes:{powerKey:r.key},geometry:{...g,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',color:shade,style:unknown?'diagonal-cross':ended?'none':'backward-diagonal',outline:{color:shade,width:1.5,style:unknown?'dash':'solid'}}:{type:'simple-marker',style:unknown?'diamond':ended?'circle':['warning','consideration'].includes(r.status)?'triangle':'square',size:12,color:ended?[0,0,0,0]:shade,outline:{color:darkMode()?'#f3f3f3':'#252525',width:1.5}}}));}}},
     setPowerVisible:visible=>{power.visible=visible;},
     focusPower:key=>{const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;power.visible=true;document.querySelector('#power-map-toggle').checked=true;return navigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:25000}:{})});}},

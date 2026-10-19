@@ -1,6 +1,6 @@
 {
   "prepared": "2026-10-17",
-  "application": "Fresno County Storm Watch prototype 0.13.0",
+  "application": "Fresno County Storm Watch prototype 0.14.0",
   "sources": [
     {
       "publisher": "County of Fresno",
@@ -312,5 +312,25 @@
     "units": "Estimated customer accounts per utility record; no county sum. No confidential Medical Baseline, account/meter/address lookup or subscription fields requested.",
     "limitations": "No other utilities or future maintenance schedules. SCE reported outages can take 30 minutes to appear. Geometries approximate. Disappearance/ETOR/window-end never means restored.",
     "maintenanceOwner": "County GIS maintainer; utility liaison confirms operational meaning and critical-site status."
+  },
+  "facilityPower": {
+    "checked": "2026-10-18",
+    "status": "County facility-point, alternate building-footprint and Enterprise generator/fuel-asset presets configured; pump stable ID/classification and shelter registry pending",
+    "storage": "Authenticated POST; explicit field mappings. County records and ad hoc sources remain in memory only. Preset service identifiers and field names are public config, never records or credentials. Cleared on sign-out, invalid session and page exit.",
+    "scope": "Up to 5000 point/polygon site records per source; verified service WGS84 output and exact Fresno boundary; full polygon intersections, no centroid substitution, distance buffer or inferred service area.",
+    "identity": "GlobalIDs deduplicate across layers with an inventory warning; other maintained IDs scoped to source layer. Duplicate IDs within a layer fail refresh.",
+    "accounting": "Complete ObjectID inventory and batches; in-county, outside-county and rejected geometry/ID counts. Partial queries retain dated old data.",
+    "rules": "Possible polygon overlap only; unmatched is not powered. Backup listing is not verified readiness. Site follow-up retained in current tab when footprint removed or restored/cancelled. No persistent assignment or acknowledgement.",
+    "cadence": "Visible-tab 5-minute site check; 10-minute site retrieval warning. Utility feed checks remain separate.",
+    "maintenanceOwner": "County ISD / GIS and facility operators. Confirm master inventory, generator-to-facility relationships, maintained pump IDs/types and shelter registry.",
+    "inventory": "County-provided FacilityPoints_Exp_Lim restricted points and County_Building_Footprints_Reader_View_V2 public polygons are alternate representations; only one connects at a time. No generator readiness field exposed. No source sharing changed."
+  },
+  "imageryHybrid": {
+    "checked": "2026-10-18",
+    "base": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "referenceItem": "https://www.arcgis.com/home/item.html?id=30d6b8271e1849cd9c3042060001f425",
+    "publisher": "Esri / Esri Vector Maps; publisher credits displayed by SDK",
+    "crs": "Web Mercator for basemap display; source matching remains WGS84",
+    "use": "Road/label and historical imagery reference; not safe access, current conditions or modeled inundation"
   }
 }

@@ -1,0 +1,68 @@
+FRESNO STORM WATCH 0.14.0 — COUNTY ASSET POWER REVIEW
+
+Purpose
+Read approved county inventories in the signed-in browser and identify possible
+intersections with the existing PG&E/SCE outage and PSPS polygons. This is an
+owner-verification queue, not proof of service loss or a dispatch instruction.
+
+How to use
+Power / PSPS > Facilities & backup power > County ArcGIS sign-in.
+Choose County facility points, then Load county inventory. Optionally load County
+generator / fuel assets as a second connection; complete county Enterprise sign-in.
+Use either facility points or the alternate building footprints, never both.
+Use Needs review or All connected sites. Review site shows source times, utility
+records, unknown backup information and requested follow-up. Show site on map
+opens the location in 2D or 3D. Imagery hybrid adds roads and labels.
+
+Read-only boundary
+No ArcGIS edits, persistent browser asset storage, server-side asset processing,
+GitHub asset exports, changes to sharing or source inventories. Named county AGOL
+sign-in gates the connector; each source separately enforces access. County
+Enterprise credentials are handled by the ArcGIS SDK dialog. Preset service URLs
+and field names are public application configuration. Records stay in tab memory.
+Sign-out, failed AGOL sign-in checks and page exit clear records, map graphics,
+connection metadata and open detail panes. Expired/denied source refresh clears
+that source's records; other failures retain dated records with a failure notice.
+Do not screenshot or export real assets into this public repository.
+
+Data contract
+Point or polygon layers, explicit fields, maintained ID/GlobalID, WGS84 queries.
+ObjectIDs are only query batch keys. Limit: 5,000 records per connection. Query
+all IDs, reconcile each batch and account for outside-Fresno or invalid records.
+Reject truncated queries or repeated stable IDs. Use full polygon intersections,
+including holes and boundary touches. No point-outage radius or inferred circuit.
+The utility footprint is approximate. An unmatched site is not confirmed powered.
+GlobalIDs are counted once across layers; multiple assets can share a location.
+Site refresh target: 5 min while visible; overdue warning: 10 min. Source edit
+and retrieval times are distinct. Utility refresh rules remain unchanged.
+
+Backup interpretation
+A generator listing never suppresses a review. Fuel assets do not establish
+backup at a nearby facility. Tank size is not available fuel, generator output or
+runtime. Generator-to-facility joins need owner-confirmed relationships. Unknown
+backup count includes reviewed facilities/pumps/shelters, not fuel assets.
+Removal/restoration of a utility polygon retains follow-up in the current tab;
+reload clears this transient history. EOC link opens the private workspace for
+manual verification/assignment and does not transfer or submit an asset record.
+
+Pending county inputs
+ISD: confirm master point/footprint inventory and fuel-asset relationships.
+Special Districts: maintained asset ID/GlobalID, asset type and responsible owner.
+The supplied OSHA layer currently has ObjectID/name/notes/editor tracking only;
+no unverified name or ObjectID is used as the pump's durable identity.
+OES: approved shelter registry, availability/activation and sharing classification.
+A park, road yard or basin does not establish a shelter, pump or staging site.
+
+Acceptance
+Local authenticated source tests reconciled full point and fuel-asset inventories
+with no rejected records. Sign-out clearance checked in browser. Fictional-only
+exercises cover overlapping polygons, unknown backup, restoration and feed failure.
+Automated tests cover holes, edges, polygon intersections, stable ID duplicates,
+CRS/truncation failures, denied access and fuel-asset semantics.
+Repeat with the actual EOC account groups and a phone before operational use.
+
+Roll back
+Restore the preceding app commit 38b01c8dd312fc1bbfca4ad11a3af224e7275172 through
+normal Git review/deployment. No county records or sharing changes need rollback.
+Keep public feed collection enabled; inspect Pages deployment and feed timestamps.
+Google direct 3D is documented in setup.html#google-3d and is not enabled or billed.

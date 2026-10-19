@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
-import { createMap } from './lib/map.js?v=0.13.0';
+import { createMap } from './lib/map.js?v=0.14.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -10,7 +10,8 @@ import { createCameraWatch } from './lib/camera-ui.js';
 import { createEnvironmentWatch } from './lib/environment-ui.js';
 import { createPlanningWatch } from './lib/planning-ui.js';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.13.0';
-import { createPowerWatch } from './lib/power-ui.js';
+import { createPowerWatch } from './lib/power-ui.js?v=0.14.0';
+import { createFacilityWatch } from './lib/facility-ui.js';
 import { createRoadWatch } from './lib/roads-ui.js';
 import { createReleaseTrends } from './lib/release-trend-ui.js';
 
@@ -72,7 +73,8 @@ function openRoads(){planningView(true);$('river-panel').hidden=true;$('roads-pa
 $('view-roads').addEventListener('click',openRoads);
 function openPower(){planningView(true);$('river-panel').hidden=true;$('power-panel').hidden=false;workspace.showPanel('power');renderScope();}
 $('view-power').addEventListener('click',openPower);
-const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap});
+const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap});
+const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds)=>facilities.setPower(rows,feeds)});
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
@@ -263,7 +265,7 @@ if (exercise) {
     void refresh();
   }));
 }
-void setupAuth(CONFIG.arcgis, exercise);
+void setupAuth(CONFIG.arcgis, exercise,session=>facilities.setSession(session));
 setupSceneCompanion(CONFIG.arcgis, () => map?.sceneViewpoint(), exercise);
 renderBanner(); renderList(); renderDetail();
 try {
@@ -271,7 +273,8 @@ try {
   // Fetches run even if the SDK, graphics driver, or basemap fails.
   void refresh();
   power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key)).then(controller => {
+  facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key)).then(controller => {
     map = controller;
     map.setScope(riverView?'fresno':'regional');
     rivers?.setMap(map);
@@ -279,6 +282,7 @@ try {
     planning.setMap(map);
     roads.setMap(map);
     power.setMap(map);
+    facilities.setMap(map);
     void environment.setMap(map);
     map.update(state.alerts);
     map.select(state.alerts.find(a => a.key === selectedKey));

@@ -9,7 +9,7 @@ const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** @param {object} options @returns {object} Fixed county power status, independent of the map extent and selected workspace. */
-export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{}}={}){
+export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){
   let snapshot=null,county=null,map=null,busy=false,loadError=null,lastDirect=0,checked=null,selectedKey=null;
   let changes=null;
   const time=t=>t?formatTime(t,timeZone):'Not supplied';
@@ -64,6 +64,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
       card.append(el('p',`Estimated restoration ${stamp(row.restoration)}`),button('Review power record',()=>showDetail(row)));list.append(card);
     }
     map?.setPower(all);map?.setPowerVisible($('power-map-toggle').checked);
+    onData(all,snapshot?.feeds||[]);
     if($('power-dialog').hasAttribute('open')&&selectedKey){
       const selected=all.find(r=>r.key===selectedKey);
       if(selected)showDetail(selected);

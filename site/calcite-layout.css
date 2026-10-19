@@ -263,3 +263,20 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 #power-detail dd{margin:0.15rem 0 0.5rem;}
 #power-detail>a{display:block;margin:1rem 0;}
 @media(max-width:600px){.power-banner-wrap calcite-action{max-width:46px;}.power-banner-wrap{font-size:0.8rem;}}
+.facility-section{border-bottom:1px solid var(--calcite-color-border-2);font-size:0.85rem;line-height:1.5;}
+.facility-section .power-actions{margin-top:0.8rem;}
+.facility-section p,.facility-source{overflow-wrap:anywhere;}
+.facility-card{padding:0.75rem;margin-block:0.5rem;background:var(--calcite-color-foreground-1);}
+.facility-source{border-bottom:1px solid var(--calcite-color-border-2);padding-block:0.7rem;}
+.facility-source small{display:block;margin-bottom:0.5rem;}
+#facility-reference-list small{display:block;margin-block:0.4rem;}
+#facility-banner-text{display:block;margin-top:0.3rem;font-weight:600;}
+#facility-banner-text[hidden]{display:none;}
+#facility-detail{line-height:1.5;overflow-wrap:anywhere;}
+#facility-detail dt{font-weight:700;margin-top:0.7rem;}
+#facility-detail dd{margin:0.2rem 0;}
+#facility-detail>a,#facility-detail>small{display:block;margin-top:0.8rem;}
+.facility-evidence{border-top:1px solid var(--calcite-color-border-2);padding-block:0.7rem;}
+#facility-mapping{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;}
+#imagery-status{font-size:0.75rem;color:var(--calcite-color-text-2);}
+@media(max-width:600px){#facility-mapping{grid-template-columns:1fr;}#facility-banner-text{font-size:0.72rem;}}
