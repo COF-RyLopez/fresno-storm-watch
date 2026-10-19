@@ -1,0 +1,199 @@
+{
+ "title": "Muncie, Indiana \u00b7 White River 2D (HEC-RAS example)",
+ "source": "HEC-RAS 7.0.1 example project \"Muncie\", plan \"Unsteady Run with 2D 50ft User n Value Regions\"; buildings from the USACE National Structure Inventory; losses by the Hazus 7.2 per-building flood method (bugs fixed).",
+ "extent": {
+  "xmin": -9505729.267748844,
+  "ymin": 4893977.4339941265,
+  "xmax": -9502833.443604644,
+  "ymax": 4895588.884344342,
+  "wkid": 3857
+ },
+ "frames": [
+  {
+   "hour": 0,
+   "image": "depth_00.png",
+   "wet_acres": 0.0
+  },
+  {
+   "hour": 1,
+   "image": "depth_01.png",
+   "wet_acres": 0.0
+  },
+  {
+   "hour": 2,
+   "image": "depth_02.png",
+   "wet_acres": 0.0
+  },
+  {
+   "hour": 3,
+   "image": "depth_03.png",
+   "wet_acres": 0.0
+  },
+  {
+   "hour": 4,
+   "image": "depth_04.png",
+   "wet_acres": 38.0
+  },
+  {
+   "hour": 5,
+   "image": "depth_05.png",
+   "wet_acres": 94.8
+  },
+  {
+   "hour": 6,
+   "image": "depth_06.png",
+   "wet_acres": 223.6
+  },
+  {
+   "hour": 7,
+   "image": "depth_07.png",
+   "wet_acres": 354.2
+  },
+  {
+   "hour": 8,
+   "image": "depth_08.png",
+   "wet_acres": 384.9
+  },
+  {
+   "hour": 9,
+   "image": "depth_09.png",
+   "wet_acres": 400.7
+  },
+  {
+   "hour": 10,
+   "image": "depth_10.png",
+   "wet_acres": 412.2
+  },
+  {
+   "hour": 11,
+   "image": "depth_11.png",
+   "wet_acres": 424.0
+  },
+  {
+   "hour": 12,
+   "image": "depth_12.png",
+   "wet_acres": 434.5
+  },
+  {
+   "hour": 13,
+   "image": "depth_13.png",
+   "wet_acres": 446.3
+  },
+  {
+   "hour": 14,
+   "image": "depth_14.png",
+   "wet_acres": 458.8
+  },
+  {
+   "hour": 15,
+   "image": "depth_15.png",
+   "wet_acres": 470.1
+  },
+  {
+   "hour": 16,
+   "image": "depth_16.png",
+   "wet_acres": 471.6
+  },
+  {
+   "hour": 17,
+   "image": "depth_17.png",
+   "wet_acres": 472.0
+  },
+  {
+   "hour": 18,
+   "image": "depth_18.png",
+   "wet_acres": 472.1
+  },
+  {
+   "hour": 19,
+   "image": "depth_19.png",
+   "wet_acres": 472.1
+  },
+  {
+   "hour": 20,
+   "image": "depth_20.png",
+   "wet_acres": 472.1
+  },
+  {
+   "hour": 21,
+   "image": "depth_21.png",
+   "wet_acres": 471.8
+  },
+  {
+   "hour": 22,
+   "image": "depth_22.png",
+   "wet_acres": 471.2
+  },
+  {
+   "hour": 23,
+   "image": "depth_23.png",
+   "wet_acres": 470.7
+  },
+  {
+   "hour": 24,
+   "image": "depth_24.png",
+   "wet_acres": 469.1
+  }
+ ],
+ "legend": [
+  {
+   "ft": 0.0,
+   "rgba": [
+    190,
+    235,
+    255,
+    90
+   ]
+  },
+  {
+   "ft": 1.0,
+   "rgba": [
+    120,
+    200,
+    245,
+    170
+   ]
+  },
+  {
+   "ft": 3.0,
+   "rgba": [
+    50,
+    140,
+    220,
+    200
+   ]
+  },
+  {
+   "ft": 6.0,
+   "rgba": [
+    25,
+    85,
+    190,
+    215
+   ]
+  },
+  {
+   "ft": 10.0,
+   "rgba": [
+    25,
+    45,
+    140,
+    225
+   ]
+  },
+  {
+   "ft": 16.0,
+   "rgba": [
+    40,
+    15,
+    90,
+    235
+   ]
+  }
+ ],
+ "totals": {
+  "buildings": 538,
+  "wet": 451,
+  "loss_usd": 118074043
+ }
+}
