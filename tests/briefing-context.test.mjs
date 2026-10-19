@@ -7,7 +7,7 @@ import {briefingImpacts} from '../site/lib/briefing-impact-model.js';
 import {planningPoints} from '../site/lib/planning-model.js';
 const json=async name=>JSON.parse(await readFile(new URL('../site/data/'+name+'.json',import.meta.url),'utf8'));
 const [associations,register,snapshot,areas,gauges,reservoirs]=await Promise.all(['briefing-river-context','hanford-briefing-impacts','hanford-briefing','river-areas','river-watchlist','reservoir-watchlist'].map(json));
-const now=Date.parse('2026-10-19T23:00:00Z'),known=structuredClone(snapshot);known.document.sha256=register.documents.find(d=>d.kind==='latest').sha256;known.checkedAt=known.lastSuccessAt=new Date(now).toISOString();for(const k of ['sourceUpdatedAt','collectedAt','fileModifiedAt'])known.document[k]=new Date(now-3600000).toISOString();
+const now=Date.parse('2026-10-19T23:00:00Z'),known=structuredClone(snapshot);known.error=null;known.document.sha256=register.documents.find(d=>d.kind==='latest').sha256;known.checkedAt=known.lastSuccessAt=new Date(now).toISOString();for(const k of ['sourceUpdatedAt','collectedAt','fileModifiedAt'])known.document[k]=new Date(now-3600000).toISOString();
 const points=planningPoints(areas,gauges.stations,reservoirs.stations),briefing=briefingImpacts(register,known,now);
 const planning={points,rows:areas.areas.map(area=>({area,status:'Review evidence',riverReview:area.id==='san-joaquin-lower',gaps:[]}))};
 const point=points.find(p=>p.id==='MIL'),geometry={x:point.longitude,y:point.latitude,spatialReference:{wkid:4326}};
