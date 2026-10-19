@@ -69,7 +69,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
       card.append(el('p',`Estimated restoration ${stamp(row.restoration)}`),button('Review power record',()=>showDetail(row)));list.append(card);
     }
     map?.setPower(all);map?.setPowerVisible($('power-map-toggle').checked);
-    onData(all,snapshot?.feeds||[]);
+    onData(all,snapshot?.feeds||[],{checked,error:loadError});
     if($('power-dialog').hasAttribute('open')&&selectedKey){
       const selected=all.find(r=>r.key===selectedKey);
       if(selected)showDetail(selected);

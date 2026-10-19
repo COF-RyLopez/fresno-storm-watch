@@ -8,6 +8,7 @@ import { validateReservoirSnapshot } from '../site/lib/environment-model.js';
 import { planningPoints } from '../site/lib/planning-model.js';
 import {validatePowerSnapshot} from '../site/lib/power-model.js';
 import {validateWindSnapshot} from '../site/lib/weather-model.js';
+import {validateAreaConcerns} from '../site/lib/area-concern-model.js';
 
 const root = new URL('../', import.meta.url);
 for (const folder of ['site/', 'site/lib/', 'scripts/']) {
@@ -41,6 +42,7 @@ validatePowerSnapshot(JSON.parse(await readFile(new URL('site/data/power-latest.
 validateWindSnapshot(JSON.parse(await readFile(new URL('site/data/wind-latest.json',root),'utf8')));
 const areaSettings=JSON.parse(await readFile(new URL('site/data/river-areas.json',root),'utf8'));
 assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,11);
+validateAreaConcerns(JSON.parse(await readFile(new URL('site/data/area-concerns.json',root),'utf8')),areaSettings.areas,JSON.parse(await readFile(new URL('site/data/wind-watchlist.json',root),'utf8')).sites);
 const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
 assert.equal(createHash('sha256').update(player).digest('hex'),'0c4f60fc126ef62dc18e8e5e7b1984cf77628aa2a230688dcf5bea7f3966e052','Pinned HLS library changed');
 console.log('Syntax, county geometry, nine river watchpoints, eight cameras, two reservoir contracts/snapshot, pinned player integrity, page links and public config checks passed.');

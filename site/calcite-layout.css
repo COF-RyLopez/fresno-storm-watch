@@ -321,3 +321,6 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .weather-site-button:focus-visible{outline:2px solid var(--app-link);outline-offset:2px;}
 #satellite-legend-image{display:block;max-width:100%;height:auto;max-height:150px;object-fit:contain;object-position:left;}
 #wind-chart:empty{display:none;}
+
+.area-concern-summary{border-inline-start:3px solid var(--calcite-color-brand);padding:8px 12px;margin:10px 0;background:var(--calcite-color-foreground-2);}
+.area-concern-summary p{margin-block:6px;line-height:1.5;}

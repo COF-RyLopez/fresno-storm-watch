@@ -3,10 +3,10 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval'; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
-<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css"><link rel="stylesheet" href="./calcite-layout.css?v=0.17.1">
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css"><link rel="stylesheet" href="./calcite-layout.css?v=0.18.0">
 <script src="./theme.js"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=0.17.1"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=0.18.0"></script>
 </head><body>
 <a class="skip-link" href="#workspace-actions">Skip to workspace tools</a>
 <calcite-shell id="storm-shell">
@@ -34,8 +34,8 @@
     </div>
     <div id="river-banner-wrap" class="notification-wrap">
       <calcite-notice id="river-banner" open width="full" kind="info" icon="water-drop">
-        <div slot="title" class="banner-heading"><span class="eyebrow">RIVER-AREA REVIEW · PLANNING CUES</span><span id="river-title" role="status">Checking rainfall, releases and river watchpoints</span></div>
-        <div id="river-summary" slot="message">Checking observations and scheduled releases. County action thresholds are not configured.</div><calcite-action id="review-areas" slot="actions-end" text="Review areas" icon="chevron-right" text-enabled></calcite-action>
+        <div slot="title" class="banner-heading"><span class="eyebrow">AREA REVIEW · WIND / POWER / RIVERS</span><span id="river-title" role="status">Checking wind, power and river watchpoints</span></div>
+        <div id="river-summary" slot="message">Checking wind forecasts, utility polygons and river evidence. Local action thresholds are not configured.</div><calcite-action id="review-areas" slot="actions-end" text="Review areas" icon="chevron-right" text-enabled></calcite-action>
       </calcite-notice>
     </div>
     <div class="notification-wrap power-banner-wrap"><calcite-notice id="power-banner" open width="full" kind="info" icon="flash" scale="s"><span id="power-banner-title" slot="title" role="status">Checking Fresno County power feeds</span><div slot="message"><span id="power-banner-detail">PG&amp;E / SCE · PSPS and outage records</span><span id="facility-banner-text" role="status" hidden></span></div><calcite-action id="review-power" slot="actions-end" text="Review power" icon="chevron-right" text-enabled></calcite-action></calcite-notice></div>
@@ -81,10 +81,10 @@
       <div id="road-list"></div>
       <div slot="footer" class="sidebar-footer"><a id="county-roads-link" target="_blank" rel="noopener noreferrer">County official road map</a><a id="county-evac-link" target="_blank" rel="noopener noreferrer">County official evacuation map</a><span>Evacuation features do not provide individual update timestamps. Verify current orders with the county.</span><a href="./eoc.html">Open EOC workspace</a><a href="./eoc-guide.html">County plan &amp; workspace setup</a></div>
     </calcite-panel>
-    <calcite-panel id="watch-panel" class="alert-panel watch-panel" heading="Fresno river-area review" heading-level="2" description="Possible prepositioning · evidence first" hidden>
+    <calcite-panel id="watch-panel" class="alert-panel watch-panel" heading="Fresno area concern review" heading-level="2" description="Possible prepositioning · evidence first" hidden>
       <calcite-action slot="header-actions-end" data-show-map icon="map" text="Show map"></calcite-action>
       <div slot="content-top" class="watch-intro"><p id="watch-rule-summary">Loading the fixed river-area inventory.</p><a href="./planning.html#area-watch">How review cues work</a></div>
-      <div id="watch-exercise" class="river-exercise" hidden><strong>FICTIONAL AREA-WATCH EXERCISE</strong><calcite-button scale="s" data-watch-scenario="combined" aria-pressed="true">Rain + rise + release</calcite-button><calcite-button scale="s" data-watch-scenario="scheduled" appearance="outline">Scheduled releases</calcite-button><calcite-button scale="s" data-watch-scenario="threshold" appearance="outline">NWS threshold</calcite-button><calcite-button scale="s" data-watch-scenario="baseline" appearance="outline">No change</calcite-button><calcite-button scale="s" data-watch-scenario="stale" appearance="outline">Stale sources</calcite-button><calcite-button scale="s" data-watch-scenario="missing" appearance="outline">Missing sources</calcite-button></div>
+      <div id="watch-exercise" class="river-exercise" hidden><strong>FICTIONAL AREA-WATCH EXERCISE</strong><calcite-button scale="s" data-watch-scenario="overlap" appearance="outline">Wind + PSPS + river</calcite-button><calcite-button scale="s" data-watch-scenario="timing" appearance="outline">PSPS timing unknown</calcite-button><calcite-button scale="s" data-watch-scenario="combined" aria-pressed="true">Rain + rise + release</calcite-button><calcite-button scale="s" data-watch-scenario="scheduled" appearance="outline">Scheduled releases</calcite-button><calcite-button scale="s" data-watch-scenario="threshold" appearance="outline">NWS threshold</calcite-button><calcite-button scale="s" data-watch-scenario="baseline" appearance="outline">No change</calcite-button><calcite-button scale="s" data-watch-scenario="stale" appearance="outline">Stale sources</calcite-button><calcite-button scale="s" data-watch-scenario="missing" appearance="outline">Missing sources</calcite-button></div>
       <div id="area-watch-list"></div>
       <div slot="footer" class="sidebar-footer"><div><calcite-button id="watch-refresh" scale="s" appearance="transparent" icon-start="refresh">Check area rainfall</calcite-button><calcite-button id="watch-conditions" scale="s" appearance="outline">Weather &amp; releases</calcite-button></div><span id="watch-check-time">Waiting for sources</span><span>Verify NWS/operator guidance, field reports, closures and approved staging access before assigning resources.</span></div>
     </calcite-panel>

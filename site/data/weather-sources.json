@@ -1,6 +1,6 @@
 {
   "checked":"2026-10-19",
-  "release":"0.17.1",
+  "release":"0.18.0",
   "scope":"Fresno County and boundary river planning with regional weather context; nine named wind forecast samples, no inferred continuous wind surface",
   "sources":[
     {
@@ -39,5 +39,6 @@
     }
   ],
   "time_policy":"One weather target time across radar, GOES, wind and WPC. WPC retains its entire accumulation window. Other operational feeds retain independent source times.",
+  "area_review":"Six fixed river groups use next-72-hour wind maxima as context beside existing river cues and public utility polygon matches at configured points. PSPS windows are paired with gusts only at wind points inside the utility polygon; uncertain timing requires verification. See area-concerns.json.",
   "use":"Planning context. No wind threshold, automatic activation, utility PSPS inference or dispatch action is configured."
 }

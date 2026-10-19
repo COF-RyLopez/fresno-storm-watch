@@ -1,5 +1,5 @@
 import {loadSdk} from './map.js';
-import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.17.1';
+import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.18.0';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -7,7 +7,7 @@ const el=(tag,text='',className='')=>{const n=document.createElement(tag);n.text
 const value=n=>Number.isFinite(n)?Math.round(n).toLocaleString('en-US'):'Unknown';
 
 /** @param {object} options @returns {object} One selected time, with explicit per-source availability. */
-export function createWeatherTimeline({time,exercise,onChange,onMap}){
+export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=()=>{}}){
   let fixed=null,stops=weatherStops(),context={},product=GOES_PRODUCTS[0].id,overlay='off';
   let catalog=null,satelliteError=null,satelliteChecked=null,wind=null,windError=null,windChecked=null;
   let busy=false,next=0,controller=null,layers=null,selected='SJ41',mapErrors=new Map(),drawKey='';
@@ -101,7 +101,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap}){
     if(busy||exercise||document.hidden)return;busy=true;render();
     await Promise.allSettled([
       fetchSatelliteCatalog().then(data=>{catalog=data;satelliteChecked=Date.now();satelliteError=null;mapErrors.clear();}).catch(error=>{satelliteError=error.message;}).finally(()=>{render();onChange();}),
-      fetchCurrentWind({previous:wind}).then(data=>{wind=data;windChecked=Date.now();windError=null;}).catch(error=>{windError=error.message;}).finally(()=>{render();onChange();})
+      fetchCurrentWind({previous:wind}).then(data=>{wind=data;windChecked=Date.now();windError=null;}).catch(error=>{windError=error.message;}).finally(()=>{onWindData({snapshot:wind,checked:windChecked,error:windError});render();onChange();})
     ]);
     busy=false;next=Date.now()+300_000;render();onChange();
   }
@@ -118,7 +118,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap}){
   $('satellite-legend-image').addEventListener('error',()=>{$('satellite-legend-note').textContent='Publisher legend unavailable; verify the NOAA source before interpreting image colors.';});
   const tick=()=>{if(document.hidden)return;render();if(Date.now()>=next)void refresh();};
   setInterval(tick,60_000);document.addEventListener('visibilitychange',tick);
-  window.addEventListener('offline',()=>{windError='Browser offline';satelliteError='Browser offline';render();onChange();});
+  window.addEventListener('offline',()=>{windError='Browser offline';satelliteError='Browser offline';onWindData({snapshot:wind,checked:windChecked,error:windError});render();onChange();});
   window.addEventListener('online',()=>{next=0;tick();});
   if(exercise)for(const id of ['wind-map-toggle','satellite-product'])$(id).setAttribute('disabled','');
   queueMicrotask(()=>{render();void refresh();});

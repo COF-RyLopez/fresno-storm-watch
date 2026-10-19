@@ -1,0 +1,10 @@
+{
+  "release":"0.18.0",
+  "checked":"2026-10-19",
+  "scope":"Public-source Area watch banner; no private AGOL item, membership, official utility record or county operational record changes",
+  "automated":{"javascriptTests":209,"passed":209,"syntaxSourceGeometryLinksPublicConfig":"Passed","diffWhitespace":"Passed"},
+  "browser":{"environment":"In-app browser at 1280x720, localhost, no county sign-in","verified":["Live public wind callbacks populate six-area gust context while existing river cues remain separate","Fictional Wind + PSPS + river scenario produces one area, one PSPS record and a source-timed 40 mph gust interval","Expanded source evidence retains original forecast intervals and matches gusts only within the polygon and published utility timing window","Fictional incomplete PSPS dates display simultaneous timing cannot be established","Unavailable utility feeds remain explicit instead of becoming an all-clear"],"limitations":["No actual active PSPS record was available for a positive live-source overlap test; positive spatial/time cases use the explicitly labeled built-in exercise","Physical EOC monitor, phone and team tabletop acceptance remain outstanding","Only configured watchpoints are sampled; no complete corridor footprints or facility impact inference","No approved local wind or resource deployment threshold configured"]},
+  "sources":{"nws":"https://www.weather.gov/documentation/services-web-api","pge":"https://pgealerts.alerts.pge.com/psps-updates/","pgeFieldCheck":"Public PSPS layer reports DeEngStart, DeEngEnd and LstUpdated as strings; only unambiguous parsed times can support a pairing","associations":"site/data/area-concerns.json"},
+  "operation":"Re-evaluate while app visible every 30 seconds using independently dated existing feeds. Utility-match follow-ups live only in memory until reload. Power filters, weather timeline, map position and wind visibility do not alter banner scope.",
+  "rollback":"Redeploy commit d326e777b195a81e27c4d2bd616aafc5ba7af28a to restore 0.17.1. There are no storage migrations or AGOL changes to undo. Preserve subsequent unrelated work when preparing a rollback."
+}

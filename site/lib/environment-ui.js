@@ -4,7 +4,7 @@ import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateRe
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.17.1';
+import {createWeatherTimeline} from './weather-ui.js?v=0.18.0';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -14,7 +14,7 @@ function el(tag,text='',className=''){const n=document.createElement(tag);n.text
 function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Independent public weather/reservoir controller. */
-export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{}}){
+export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{}}){
   let map=null,layers=null,selection=null,snapshot=null,snapshotError=null,snapshotRead=null;
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
   let overlay='off',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
@@ -27,7 +27,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   for(const option of $('qpf-period').children)option.toggleAttribute('selected',option.getAttribute('value')===String(period.id));
   const time=t=>formatTime(Number.isFinite(t)?t:null,timeZone);
   const newButton=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.addEventListener('click',fn);return b;};
-  const weather=createWeatherTimeline({time,exercise,onChange:renderWeather,onMap});
+  const weather=createWeatherTimeline({time,exercise,onChange:renderWeather,onMap,onWindData});
   const currentFrame=()=>{const stamp=observationAt(radar.map(f=>f.time),weather.target(),Date.now(),{maxAgeMs:config.radarMaxAgeMs});return radar.find(f=>f.time===stamp);};
   const activeLayerError=()=>layerError||(['radar','qpf'].includes(overlay)&&layerErrors.get(`${overlay==='radar'?'radar':period.id}:${map?.view.type}`));
   const checkOverdue=checked=>checked===null||Date.now()-checked>config.weatherCheckMaxAgeMs;
