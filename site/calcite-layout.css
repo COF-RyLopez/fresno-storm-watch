@@ -409,3 +409,11 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 .briefing-layer-symbols{display:flex;flex-wrap:wrap;gap:.25rem .75rem;margin-block:.35rem}
 .briefing-layer-symbols span{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem}
 .briefing-layer-symbols img{object-fit:contain;flex:none}
+
+/* Inundation scenario player over the map (mirrors the flood-scenario page player). */
+.inundation-player{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:1;width:min(640px,calc(100% - 32px));display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:8px 12px;border-radius:6px;background:var(--calcite-color-foreground-1);border:1px solid var(--calcite-color-border-2);box-shadow:0 4px 18px #0005;}
+.inundation-player[hidden]{display:none;}
+.inundation-title{flex-basis:100%;font-size:12px;color:var(--calcite-color-text-2);}
+.inundation-clock{font-variant-numeric:tabular-nums;font-weight:600;min-width:112px;}
+.inundation-player calcite-slider{flex:1;min-width:140px;}
+.inundation-player calcite-select{width:84px;}

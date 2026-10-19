@@ -50,5 +50,6 @@
     "Empty / failed / mixed / expired source metadata hides overlay; no shading does not establish safety."
   ],
   "publishedProof": "Anonymous deployment verification and screenshots saved in ignored work/qa-0.23.0 after Pages succeeds.",
-  "rollback": "Redeploy 71cfc5ebbcfbff210a8b36900be98b4b52f694ee (0.22.0). No migration."
+  "rollback": "Redeploy 88eedec (preceding main with inundation map improvements). No migration.",
+  "integration": "Preserved concurrently merged main-map inundation controls and GitHub Actions updates from origin/main 88eedec."
 }
