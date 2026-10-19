@@ -1,6 +1,6 @@
 {
   "checked":"2026-10-19",
-  "release":"0.17.0",
+  "release":"0.17.1",
   "scope":"Fresno County and boundary river planning with regional weather context; nine named wind forecast samples, no inferred continuous wind surface",
   "sources":[
     {
@@ -14,7 +14,7 @@
       "conversion":"mph = km/h / 1.609344",
       "height":"10 meters above ground; direction is meteorological FROM relative to true north",
       "time_fields":["properties.updateTime","properties.windSpeed.values[].validTime","properties.windGust.values[].validTime","properties.windDirection.values[].validTime"],
-      "cadence":"Publisher updates vary; scheduled Pages collection target 15 minutes, browser snapshot checks every 5 minutes while visible",
+      "cadence":"Publisher updates vary; scheduled Pages collection target 15 minutes, not guaranteed. Browser checks every 5 minutes while visible; old, unavailable or incomplete snapshots trigger a direct NWS check, reused in memory for up to 15 minutes.",
       "app_freshness_limits":{"collection_minutes":45,"forecast_update_hours":24},
       "identity":"Watchlist ID plus publisher office/grid X/Y, re-resolved each collection",
       "missing":"Nulls, conflicting duplicates and gaps are unknown; no interpolation or extrapolation",

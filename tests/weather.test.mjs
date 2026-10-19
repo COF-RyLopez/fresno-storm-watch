@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {forecastInterval,windForecast,intervalAt,observationAt,satelliteFrames,weatherStops,validateWindSnapshot,windAt,windCompass,HOUR} from '../site/lib/weather-model.js';
 import {collectWind} from '../scripts/collect-wind.mjs';
+import {fetchCurrentWind} from '../site/lib/weather-data.js';
 
 const now=Date.parse('2026-10-19T14:00:00Z'),grid={office:'HNX',x:53,y:106};
 const rows=value=>[{validTime:'2026-10-19T13:00:00+00:00/PT2H',value},{validTime:'2026-10-19T15:00:00+00:00/PT3H',value:10}];
@@ -86,4 +87,20 @@ test('published wind snapshot has nine source-identified planning points and rej
   assert.equal(s.sites.length,9);assert(s.sites.every(s=>s.source?.startsWith('https://api.weather.gov/gridpoints/')||s.error));
   const bad=structuredClone(s);bad.sites[0].forecast.series.windGust[0].value=-1;assert.throws(()=>validateWindSnapshot(bad));
   const missing=structuredClone(s);missing.sites.pop();assert.throws(()=>validateWindSnapshot(missing));
+});
+
+test('fresh scheduled wind copy avoids a browser fan-out to NWS',async()=>{
+  const copy=JSON.parse(await readFile(new URL('../site/data/wind-latest.json',import.meta.url),'utf8'));copy.generatedAt=new Date(now).toISOString();let requests=0;
+  const result=await fetchCurrentWind({now,fetchImpl:async()=>{requests++;return {ok:true,json:async()=>copy};}});
+  assert.equal(requests,1);assert.equal(result.generatedAt,copy.generatedAt);
+});
+
+test('old scheduled copy triggers direct NWS fallback; in-memory direct checks are reused for 15 minutes',async()=>{
+  const copy=JSON.parse(await readFile(new URL('../site/data/wind-latest.json',import.meta.url),'utf8'));copy.generatedAt=new Date(now-2*HOUR).toISOString();let nwsRequests=0;
+  const fetchImpl=async url=>{
+    if(String(url).startsWith('https://api.weather.gov/')){nwsRequests++;return {ok:true,json:async()=>String(url).includes('/points/')?{properties:{gridId:'HNX',gridX:53,gridY:106}}:payload()};}
+    return {ok:true,json:async()=>copy};
+  };
+  const direct=await fetchCurrentWind({now,fetchImpl});assert.equal(direct.sourceMode,'browser-direct');assert.equal(nwsRequests,18);assert(direct.sites.every(s=>!s.error&&s.lastSuccess===new Date(now).toISOString()));
+  const reused=await fetchCurrentWind({now:now+5*60_000,fetchImpl,previous:direct});assert.equal(reused,direct);assert.equal(nwsRequests,18);
 });

@@ -36,6 +36,10 @@ a:focus-visible { outline: 2px solid var(--calcite-color-brand, #007ac2); outlin
 #workspace-actions calcite-action-group { width: 100%; min-width: 0; }
 #workspace-actions calcite-action { width: 100%; }
 calcite-shell-panel > calcite-panel, #map-panel { height: 100%; min-height: 0; min-width: 0; }
+/* Long source notices and a publisher legend must leave a measurable map body. */
+#map-panel{container-type:size;}
+#map-panel .map-toolbar-stack{max-height:24cqh;overflow-y:auto;scrollbar-gutter:stable;}
+#map-panel .legend-stack{max-height:18cqh;overflow-y:auto;scrollbar-gutter:stable;}
 calcite-panel {
   --calcite-panel-space: 0;
   --calcite-panel-content-top-space: 12px 16px;

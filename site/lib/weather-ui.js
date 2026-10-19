@@ -1,7 +1,6 @@
 import {loadSdk} from './map.js';
-import {environmentalJson} from './environment-data.js';
-import {fetchSatelliteCatalog} from './weather-data.js';
-import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,validateWindSnapshot,windAt,windCompass} from './weather-model.js';
+import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.17.1';
+import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
 const el=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;n.className=className;return n;};
@@ -81,9 +80,10 @@ export function createWeatherTimeline({time,exercise,onChange,onMap}){
     if(layers){layers.satellite.visible=overlay==='satellite'&&!!frame&&!imageError;const layerKey=`${product}:${frame}`;if(frame&&layers.satelliteKey!==layerKey){layers.satelliteKey=layerKey;layers.satellite.sublayers=[{name:product}];layers.satellite.customLayerParameters={TIME:new Date(frame).toISOString()};layers.satellite.refresh();}}
     const sites=wind?.sites||[],states=sites.map(s=>windAt(s,stamp,now,overdue()||!!windError)),available=states.filter(s=>!s.reason&&(s.speed!==null||s.gust!==null)).length;
     $('timeline-wind').textContent=exercise?'Exercise · live feed disabled':`${available}/9 forecast samples available at selected time`;
-    $('wind-health').textContent=exercise?'Live wind forecasts disabled in exercise':windError?`Wind snapshot check failed · ${windError}`:!wind?'Waiting for NWS forecast collection':overdue()?'Wind collection overdue · map samples hidden':`${available}/9 samples available · collected ${time(Date.parse(wind.generatedAt))} · app checked ${time(windChecked)}`;
+    const failed=sites.filter(s=>s.error).length;
+    $('wind-health').textContent=exercise?'Live wind forecasts disabled in exercise':windError?`Wind check failed · ${windError}`:!wind?'Waiting for NWS forecast collection':overdue()?'Wind collection overdue · map samples hidden':`${failed?failed+' source checks failed · ':''}${available}/9 samples available · ${wind.sourceMode==='browser-direct'?'direct NWS check':'collected'} ${time(Date.parse(wind.generatedAt))} · app checked ${time(windChecked)}`;
     $('wind-health').dataset.tone=available===9&&!overdue()&&!windError?'normal':'gap';
-    $('wind-map-legend').hidden=!windVisible();$('wind-map-legend').textContent=`◆ NWS wind / gust forecast samples · mph · ${available}/9 available · select a diamond for values; labels appear when zoomed in`;
+    $('wind-map-legend').hidden=!windVisible();$('wind-map-legend').textContent=`◆ Cyan diamonds: NWS wind / gust forecasts · mph · ${available}/9 samples · select for values`;
     if(sites.length&&$('wind-site').children.length!==sites.length){$('wind-site').replaceChildren(...sites.map(s=>{const o=el('calcite-option',s.name);o.setAttribute('value',s.id);o.toggleAttribute('selected',s.id===selected);return o;}));}
     const site=sites.find(s=>s.id===selected),s=site?windAt(site,stamp,now,overdue()||!!windError):null;
     $('wind-speed').textContent=s?`${value(s.speed)}${s.speed===null?'':' mph'}`:'Unknown';$('wind-gust').textContent=s?`${value(s.gust)}${s.gust===null?'':' mph'}`:'Unknown';$('wind-direction').textContent=s&&s.direction!==null?`${windCompass(s.direction)} · ${Math.round(s.direction)}°`:'Unknown';
@@ -99,9 +99,10 @@ export function createWeatherTimeline({time,exercise,onChange,onMap}){
 
   async function refresh(){
     if(busy||exercise||document.hidden)return;busy=true;render();
-    const results=await Promise.allSettled([fetchSatelliteCatalog(),environmentalJson(new URL('../data/wind-latest.json',import.meta.url)).then(validateWindSnapshot)]);
-    if(results[0].status==='fulfilled'){catalog=results[0].value;satelliteChecked=Date.now();satelliteError=null;mapErrors.clear();}else satelliteError=results[0].reason.message;
-    if(results[1].status==='fulfilled'){wind=results[1].value;windChecked=Date.now();windError=null;}else windError=results[1].reason.message;
+    await Promise.allSettled([
+      fetchSatelliteCatalog().then(data=>{catalog=data;satelliteChecked=Date.now();satelliteError=null;mapErrors.clear();}).catch(error=>{satelliteError=error.message;}).finally(()=>{render();onChange();}),
+      fetchCurrentWind({previous:wind}).then(data=>{wind=data;windChecked=Date.now();windError=null;}).catch(error=>{windError=error.message;}).finally(()=>{render();onChange();})
+    ]);
     busy=false;next=Date.now()+300_000;render();onChange();
   }
 
