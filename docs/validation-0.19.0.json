@@ -21,7 +21,8 @@
       "Camera choices restore independently per tab; wide-screen dock and phone Sheet close behavior verified; cameras start closed",
       "Phone Map/List controls and labeled account/help menu remain usable without header overlap",
       "Keyboard arrows focus tab titles and Enter activates; Escape dismisses the camera Sheet",
-      "Fictional failed NWS feed retains dated evidence and an explicit failure; empty result never declares safe conditions"
+      "Fictional failed NWS feed retains dated evidence and an explicit failure; empty result never declares safe conditions",
+      "Initial county/regional extent is independent of partial feed arrival order; Fit workspace explicitly fits active watchpoints"
     ],
     "limitations": [
       "Viewport tests emulate device sizes; physical EOC monitor, phones and a team tabletop remain county acceptance work",

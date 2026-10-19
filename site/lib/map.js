@@ -175,6 +175,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   // Calcite can resize the panel after MapView becomes ready. Keep the initial
   // region fitted until the operator deliberately navigates the map.
   let followRegion = true;
+  // Initial geography must not depend on which partial feed finishes first.
+  const scopeTarget=()=>{const extent=scopeExtent().clone().expand(1.15);return view.type==='3d'?{target:extent,tilt:45,heading:0}:extent;};
   const fitTarget=()=>{
     let points=[];
     if(activeProfile==='watch')points=planningRows.filter(r=>planningFilter==='all'||r.review).flatMap(r=>r.samplePoints);
@@ -198,7 +200,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }).catch(()=>{femaViews.set(targetView,'error');femaStatus();});
     targetView.addHandles(reactiveUtils.watch(()=>[targetView.scale,fema.visible],femaStatus));
     targetView.addHandles(reactiveUtils.watch(()=>[targetView.width,targetView.height],([width,height])=>{
-      if(view===targetView&&!modeBusy&&followRegion&&width>0&&height>0)void navigate(fitTarget());
+      if(view===targetView&&!modeBusy&&followRegion&&width>0&&height>0)void navigate(scopeTarget());
     }));
     targetView.addHandles(reactiveUtils.watch(()=>targetView.fatalError,error=>{
       if(error&&view===targetView){const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map graphics failed. Try 2D, or use the lists and camera panel.';}
@@ -303,7 +305,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     transition=transition.catch(()=>{}).then(async()=>{
       if(version!==workspaceVersion)return;const state=memory.get(id);setImagery(state.imagery);await setMode(state.mode);
       if(version!==workspaceVersion)return;
-      followRegion=!state.viewpoint;if(state.viewpoint)await navigate(state.viewpoint.clone());else await navigate(fitTarget());
+      followRegion=!state.viewpoint;if(state.viewpoint)await navigate(state.viewpoint.clone());else await navigate(scopeTarget());
       if(version===workspaceVersion){workspaceSwitching=false;syncControls();}
     }).catch(error=>{workspaceSwitching=false;document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Workspace map could not restore. Use Fit workspace or the evidence list.';console.warn('Workspace restore:',error.message);});return transition;
   }
@@ -342,7 +344,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     selectGauge: id=>{selectedGauge=id;drawGauges();},
     focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){followRegion=false;const g=row.gauge||row.station;return focusNavigate({center:[g.longitude,g.latitude],scale:35_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
     setScope: scope=>{if(mapScope!==scope){mapScope=scope;followRegion=true;for(const layer of [boundaryLayer,labels])layer.graphics.forEach(g=>{g.visible=scope!=='fresno'||g.attributes.countyId==='06019';});return navigate(fitTarget());}},
-    fit: () => { followRegion = true; return navigate(fitTarget()); },
+    fit: () => { followRegion = false; return focusNavigate(fitTarget()); },
     update: alerts => {
       alertLayer.removeAll();
       selectedLayer.removeAll();
