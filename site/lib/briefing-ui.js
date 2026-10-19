@@ -8,7 +8,7 @@ const ARCHIVE=PARTNER_BRIEFING;
 /** @param {string} tag @param {string} text @returns {HTMLElement} All source metadata is displayed as text. */
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Public documents only; update markers live in memory and are not team acknowledgements. */
-export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},onImpacts=()=>{}}){
+export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},onImpacts=()=>{},onMapTour=()=>{}}){
   let snapshot=null,error=null,busy=false,baseline=null,updated=false,pdfBlob=null,generation=0,initialLinkHandled=false,pages=[],pageIndex=0,pdfController=null;
   const time=t=>formatTime(Number.isFinite(Date.parse(t))?Date.parse(t):null,timeZone),state=()=>briefingState(error?{...snapshot,error}:snapshot);
   const impacts=createBriefingImpactView({exercise,onOpen:(...args)=>void show(...args),onData:onImpacts});
@@ -17,7 +17,8 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
     if(cardViews.has(host))return cardViews.get(host);
     const status=el('p'),date=el('p'),reason=el('p'),actions=el('div');status.className='briefing-status';actions.className='environment-actions';
     const open=el('calcite-button','Read public briefing');open.scale='s';open.appearance='outline';open.iconStart='file-text';open.onclick=()=>void show('latest');
-    const archive=el('calcite-button','Oct 19 partner slides');archive.scale='s';archive.appearance='transparent';archive.disabled=exercise;archive.onclick=()=>void show('archive');actions.append(open,archive);
+    const archive=el('calcite-button','Oct 19 partner slides');archive.scale='s';archive.appearance='transparent';archive.disabled=exercise;archive.onclick=()=>void show('archive');
+    const tour=el('calcite-button','Explore live briefing layers');tour.scale='s';tour.appearance='outline';tour.iconStart='map';tour.disabled=exercise;tour.onclick=()=>onMapTour('ero-day-3');actions.append(open,archive,tour);
     const source=el('a','NWS Hanford briefing page ↗');source.href=HNX_BRIEFING_PAGE;source.target='_blank';source.rel='noopener noreferrer';
     const check=el('calcite-button','Check briefing');check.scale='s';check.appearance='transparent';check.onclick=()=>void refresh();
     host.append(status,date,reason,actions,source,check,el('small','Office-wide context may include areas outside Fresno County. Public summaries and partner slides are separate products; neither changes warning counts or deployment decisions.'));

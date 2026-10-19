@@ -1,0 +1,54 @@
+{
+  "release": "0.23.0",
+  "checked": "2026-10-19",
+  "scope": "Read-only public NOAA briefing map tour in Weather. No county source, private data, AGOL permissions or operational rules changed.",
+  "products": [
+    "WPC daily QPF amounts: Days 1, 2, 3",
+    "WPC excessive-rainfall outlook: Days 1, 2, 3",
+    "WPC deterministic WSSI overall: Days 1\u20133"
+  ],
+  "sourceContracts": {
+    "provenance": "briefing-layer-source-check.json",
+    "cadence": "Five-minute checks while the page is visible; seven-minute overdue guard. Not guaranteed delivery.",
+    "renderer": "Publisher FeatureLayer renderer retained, official NOAA PNG legend with text labels; service CRS retained through SDK.",
+    "times": "Verified UTC source formats converted to local time with zone. One coherent national product / issue / start / end tuple; exact definitionExpression locks revision.",
+    "independence": "Tour products use their own forecast windows. Shared slider continues to control wind and regular weather; radar/GOES/regular QPF are mutually exclusive with tour."
+  },
+  "sourceResults": {
+    "verified": 6,
+    "withheld": 1,
+    "withheldProduct": "ERO Day 2: empty national forecast cycle. Missing data is not treated as no risk."
+  },
+  "automated": {
+    "javascriptTests": 251,
+    "syntaxSourceGeometryLinksPublicConfig": "Passed",
+    "cases": [
+      "Product identity / units / daily windows",
+      "UTC strings, WSSI Zulu times and invalid calendars",
+      "Mixed revisions / duplicates / incomplete national query",
+      "Future, ended and stale source forecasts",
+      "Publisher PNG legends / invalid content / missing layer",
+      "Workspace visibility isolation; tour defaults off"
+    ]
+  },
+  "browserLocal": [
+    "2D live ERO map and publisher legend",
+    "WSSI terrain overlay and linked partner slide 14 with verified archived PDF",
+    "Empty ERO Day 2 cycle withholds map and reports source issue",
+    "Rapid step switching discards superseded requests",
+    "Rainfall source period and inches legend",
+    "Direct link; Previous/Next; Back restores source step",
+    "Rivers excludes tour; Weather restores it",
+    "GOES selection ends tour and removes tour URL parameter",
+    "390x844 list/map switch, source time, scrolling legend; viewport reset"
+  ],
+  "limitations": [
+    "Live service cycles do not reproduce dated October 19 graphics.",
+    "WPC QPF amounts are related guidance, not Hanford local rain ranges or exceedance probabilities.",
+    "Local rain/snow exceedance probabilities, lightning graphics and other unsupported briefing graphics remain source-only.",
+    "No new geographic risk joins, inundation predictions, thresholds, resource decisions, dispatch or unattended notifications.",
+    "Empty / failed / mixed / expired source metadata hides overlay; no shading does not establish safety."
+  ],
+  "publishedProof": "Anonymous deployment verification and screenshots saved in ignored work/qa-0.23.0 after Pages succeeds.",
+  "rollback": "Redeploy 71cfc5ebbcfbff210a8b36900be98b4b52f694ee (0.22.0). No migration."
+}

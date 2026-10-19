@@ -3,7 +3,7 @@ import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { installMapContext } from './map-context.js?v=0.19.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.22.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.23.0';
 
 let sdkPromise;
 /** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */

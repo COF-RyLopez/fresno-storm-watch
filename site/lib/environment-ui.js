@@ -15,7 +15,7 @@ function el(tag,text='',className=''){const n=document.createElement(tag);n.text
 function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Independent public weather/reservoir controller. */
-export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{}}){
+export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{},onOverlayChange=()=>{}}){
   let map=null,layers=null,selection=null,snapshot=null,snapshotError=null,snapshotRead=null;
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
   let overlay='radar',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
@@ -140,7 +140,8 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
-  for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>{map?.clearEnvironmentPopup();overlay=kind;renderWeather();});
+  function selectOverlay(kind,notify=true){if(!['off','radar','qpf','satellite'].includes(kind))return;map?.clearEnvironmentPopup();overlay=kind;if(notify)onOverlayChange(kind);renderWeather();}
+  for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>selectOverlay(kind));
   $('radar-frame').addEventListener('calciteSelectChange',e=>{const frame=radar.find(f=>String(f.id)===e.target.value);if(e.target.value==='latest')weather.selectTime(null);else if(frame)weather.selectTime(frame.time);});
   $('qpf-period').addEventListener('calciteSelectChange',e=>{
     const requested=QPF_PERIODS.find(p=>String(p.id)===e.target.value);if(!requested||requested.id===period.id)return;
@@ -149,7 +150,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   $('environment-refresh').addEventListener('click',()=>void refreshWeather());
   $('reservoir-refresh').addEventListener('click',()=>void refreshReservoirs());
   $('environment-extent').addEventListener('click',()=>{onMap();map?.fitEnvironment();});
-  $('open-environment').addEventListener('click',()=>{onOpen();if(overlay==='off'){overlay='radar';renderWeather();}});
+  $('open-environment').addEventListener('click',()=>{onOpen();if(overlay==='off')selectOverlay('radar');});
   $('qpf-band-list').replaceChildren(...QPF_BANDS.map(b=>{const n=el('span',`${b.label} in`);const swatch=el('i');swatch.style.background=b.color;n.prepend(swatch);return n;}));
   if(exercise){for(const id of ['env-radar','env-qpf','env-satellite','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
   void environmentalJson(new URL('../data/reservoir-watchlist.json',import.meta.url)).then(s=>{selection=s;renderReservoirs();}).catch(error=>{snapshotError=error.message;renderReservoirs();});
@@ -158,7 +159,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   setInterval(tick,30_000);document.addEventListener('visibilitychange',tick);
   window.addEventListener('online',()=>{nextWeather=0;nextReservoir=0;tick();});
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});
-  return {async setMap(controller){
+  return {selectOverlay,async setMap(controller){
     map=controller;
     void weather.setMap(controller);
     try{

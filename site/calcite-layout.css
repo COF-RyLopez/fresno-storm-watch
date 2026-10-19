@@ -404,3 +404,8 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 .briefing-context-evidence strong{font-size:13px;}
 #briefing-context-list h4{font-size:13px;margin-block:14px 6px;}
 #briefing-context-map-note{margin:0;padding:6px 12px;background:var(--calcite-color-surface-1);font-size:11px;line-height:1.4;}
+
+/* Publisher legend labels remain available without color or hover. */
+.briefing-layer-symbols{display:flex;flex-wrap:wrap;gap:.25rem .75rem;margin-block:.35rem}
+.briefing-layer-symbols span{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem}
+.briefing-layer-symbols img{object-fit:contain;flex:none}
