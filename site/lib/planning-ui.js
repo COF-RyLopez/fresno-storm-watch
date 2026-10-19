@@ -99,12 +99,12 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     if(key===signature)return;signature=key;
     $('river-title').textContent=(exercise?'EXERCISE · ':'')+title;
     const focus=(overlaps.length?overlaps:reviews).slice(0,2),windPeak=rows.filter(r=>r.wind.gust).sort((a,b)=>b.wind.gust.value-a.wind.gust.value)[0];
-    $('river-summary').textContent=`${focus.length?focus.map(r=>`${r.area.name}: ${windSummary(r)}`).join(' · '):windPeak?windSummary(windPeak):'Wind context unknown'}. ${scheduleCues.length?`${scheduleCues.length} scheduled release notice(s) to review. `:''}${overlaps.length} known PSPS + river matches at watchpoints${rows.some(r=>r.power.gaps.length)?' (utility coverage incomplete)':''} · ${verification.length} areas need power verification · ${gaps.length}/6 with evidence gaps. Review cues are not deployment instructions.`;
+    $('river-summary').textContent=`${focus.length?focus.map(r=>`${r.area.name}: ${windSummary(r)}`).join(' · '):windPeak?windSummary(windPeak):'Wind context unknown'}. ${scheduleCues.length?`${scheduleCues.length} scheduled release notice(s) to review. `:''}Known PSPS + river matches at watchpoints: ${overlaps.length}${rows.some(r=>r.power.gaps.length)?' (utility coverage incomplete)':''} · ${verification.length} ${verification.length===1?'area needs':'areas need'} power verification · ${gaps.length}/6 with evidence gaps. Review cues are not deployment instructions.`;
     $('river-banner').setAttribute('kind',threshold?'danger':reviews.length||gaps.length?'warning':'info');
     $('review-areas').setAttribute('text',`Review areas${reviews.length?' ('+reviews.length+')':''}`);
     $('view-watch').setAttribute('text',reviews.length?`Area watch · ${reviews.length}`:'Area watch');
     $('view-watch').toggleAttribute('indicator',reviews.length>0);
-    $('watch-rule-summary').textContent=`${reviews.length} for review · ${overlaps.length} PSPS + river co-locations · ${verification.length} power verification · ${gaps.length} with gaps. Fixed six-area scope and next 72 hours; map, timeline and utility filters do not change this banner. Wind values are context; no local wind trigger is set.`;
+    $('watch-rule-summary').textContent=`${reviews.length} review · ${overlaps.length} PSPS + river · ${verification.length} power verification · ${gaps.length} with gaps`;
     const host=$('area-watch-list');host.replaceChildren();
     for(const r of rows){
       const card=el('calcite-block','','area-watch-card');card.dataset.tone=r.threshold?'threshold':r.review?'review':r.gaps.length?'gap':'monitor';
