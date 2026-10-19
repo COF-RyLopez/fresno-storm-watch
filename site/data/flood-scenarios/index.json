@@ -1,0 +1,7 @@
+{
+ "default": "big-dry-creek",
+ "scenarios": [
+  {"id": "big-dry-creek", "label": "Big Dry Creek Dam failure (hypothetical)"},
+  {"id": "muncie", "label": "Muncie, IN · HEC-RAS example (demo)"}
+ ]
+}

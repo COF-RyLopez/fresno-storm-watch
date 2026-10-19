@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval'; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta name="description" content="Flood scenario playback prototype: hourly HEC-RAS depth, flood front and building impacts. Demonstration data, not a forecast.">
+<title>Storm Watch · Flood scenario playback</title>
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css">
+<script src="./theme.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario.js?v=0.16.0"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: var(--app-canvas); color: var(--app-text); }
+  .stage { position: relative; height: 100%; }
+  #view { position: absolute; inset: 0; background: var(--app-map-background); }
+  .fs-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 8px 16px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }
+  .fs-header .brand { display: flex; align-items: center; gap: 10px; } .fs-header img { width: 40px; height: 40px; }
+  .fs-header h1 { margin: 0; font-size: 1.05rem; } .eyebrow { font-size: .7rem; letter-spacing: .08em; color: var(--app-muted); }
+  .fs-header nav calcite-select { width: 240px; }
+  .fs-header nav { flex-wrap: wrap; display: flex; gap: 8px; align-items: center; } .fs-header a { color: var(--app-link); }
+  .demo-flag { margin: 0; padding: 6px 16px; font-size: .8rem; background: var(--caution-surface); color: var(--caution-text); }
+  .panel { padding: 12px 14px; display: grid; gap: 14px; font-size: .9rem; }
+  .clock { font-size: 1.6rem; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .stats div { padding: 8px; border: 1px solid var(--app-border); border-radius: 4px; }
+  .stats b { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; } .stats span { color: var(--app-muted); font-size: .75rem; }
+  .ramp { height: 12px; border-radius: 3px; } .ramp-labels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--app-muted); }
+  .key { display: grid; gap: 4px; font-size: .8rem; } .key i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid #0006; }
+  .player { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); display: flex; gap: 10px; align-items: center;
+    padding: 8px 12px; border-radius: 6px; background: var(--app-surface); border: 1px solid var(--app-border); box-shadow: 0 4px 18px #0005; }
+  .player calcite-slider { flex: 1; } .player calcite-select { width: 92px; }
+  .note { font-size: .75rem; color: var(--app-muted); margin: 0; }
+</style>
+</head><body>
+<calcite-shell>
+  <header slot="header">
+    <div class="fs-header"><div class="brand"><img src="./assets/frog-logo.png" width="40" height="40" alt="F.R.O.G. — Flood Response Operations Group"><div><div class="eyebrow">STORM WATCH · SCENARIO PLAYBACK PROTOTYPE</div><h1 id="scenario-title">Flood scenario playback</h1></div></div>
+      <nav><calcite-select id="scenario-pick" scale="s" label="Scenario"></calcite-select><a href="./planning.html#flood-scenarios">How this works</a><a href="./">Return to map</a><calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action></nav></div>
+    <p class="demo-flag" id="notice"></p>
+  </header>
+  <calcite-shell-panel slot="panel-end" width="m">
+    <calcite-panel heading="Scenario status">
+      <div class="panel">
+        <div><div class="clock" id="clock" role="status" aria-live="off">T+0 h 00 min</div><div class="note" id="clock-note">Hours after simulation start</div></div>
+        <div class="stats">
+          <div><b id="s-acres">0</b><span>acres flooded</span></div>
+          <div><b id="s-wet">0</b><span>buildings with water</span></div>
+          <div><b id="s-inside">0</b><span>water above first floor</span></div>
+          <div><b id="s-people">0</b><span>residents (night) in wet buildings</span></div>
+          <div style="grid-column: span 2"><b id="s-loss">$0</b><span>Hazus direct loss at buildings that have peaked</span></div>
+        </div>
+        <div><strong>Depth (ft)</strong><div class="ramp" id="ramp"></div><div class="ramp-labels" id="ramp-labels"></div></div>
+        <div class="key"><strong>Buildings · water vs first floor</strong><span class="note">Shown when zoomed in to neighbourhood scale.</span>
+          <span><i style="background:#8b949e"></i>Dry</span><span><i style="background:#f2cc60"></i>Wet, below first floor</span>
+          <span><i style="background:#f0883e"></i>0–2 ft inside</span><span><i style="background:#da3633"></i>2–6 ft inside</span><span><i style="background:#8e1519"></i>Over 6 ft inside</span>
+          <span><i style="background:transparent;border:2px solid #ffb000;border-radius:2px"></i>Flood front (first 0.1 ft)</span></div>
+        <p class="note" id="source"></p>
+        <p class="note">Velocity streamlines are not shown yet. Select a building for its depth hydrograph, arrival time and estimated loss.</p>
+      </div>
+    </calcite-panel>
+  </calcite-shell-panel>
+  <div class="stage"><div id="view"></div>
+  <div class="player" aria-label="Scenario playback">
+    <calcite-button id="play" icon-start="play" scale="s" appearance="solid" label="Play">Play</calcite-button>
+    <calcite-slider id="time" min="0" max="24" step="0.05" value="0" label-handles label="Scenario hour"></calcite-slider>
+    <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
+  </div></div>
+</calcite-shell>
+</body></html>
