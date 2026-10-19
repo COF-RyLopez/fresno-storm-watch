@@ -1,6 +1,14 @@
 {
  "title": "Muncie, Indiana \u00b7 White River 2D (HEC-RAS example)",
+ "depth_model": "samples",
  "source": "HEC-RAS 7.0.1 example project \"Muncie\", plan \"Unsteady Run with 2D 50ft User n Value Regions\"; buildings from the USACE National Structure Inventory; losses by the Hazus 7.2 per-building flood method (bugs fixed).",
+ "notice": "<strong>DEMONSTRATION DATA \u00b7 NOT FRESNO COUNTY \u00b7 NOT A FORECAST.</strong> Public HEC-RAS example model (Muncie, Indiana) used to prove the playback design.",
+ "clock_note": "Hours after simulation start",
+ "arrival_labels": [
+  "Water arrives (0.1 ft), hour",
+  "2 ft deep, hour"
+ ],
+ "popup_note": "Model values from a demonstration HEC-RAS run. Losses use the Hazus 7.2 per-building flood method at maximum depth.",
  "extent": {
   "xmin": -9505729.267748844,
   "ymin": 4893977.4339941265,
