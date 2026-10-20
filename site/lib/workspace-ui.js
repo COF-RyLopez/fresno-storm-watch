@@ -4,6 +4,11 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
   let section=workspaceRoute(location.href),panelOpen=true,camerasOpen=false,map=null,syncing=false;
   const cameraStates=new Map(),cameraPanel=$('camera-panel');
+  function mapLabels(){
+    const narrow=compact.matches||$('map-panel').getBoundingClientRect().width<520;
+    $('fit-region').setAttribute('text',narrow?'Fit':'Fit workspace');
+    if(!$('map-panel').classList.contains('map-expanded'))$('expand-map').setAttribute('text',narrow?'Expand':'Expand map');
+  }
   function render(){
     const actionHost=compact.matches?$('header-tools-host'):$('header-actions-host');if($('header-actions').parentElement!==actionHost)actionHost.append($('header-actions'));if(!compact.matches)$('header-tools-menu').removeAttribute('open');
     for(const [id,p] of Object.entries(WORKSPACES))$(p.panel).hidden=id!==section;
@@ -23,7 +28,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     $('storm-shell').dataset.workspace=section;
     $('map-panel').setAttribute('heading',WORKSPACES[section].title+' map');$('scope-note').textContent=WORKSPACES[section].description;
     $('scope-label').textContent=section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
-    $('fit-region').setAttribute('text',compact.matches?'Fit':'Fit workspace');if(!$('map-panel').classList.contains('map-expanded'))$('expand-map').setAttribute('text',compact.matches?'Expand':'Expand map');
+    mapLabels();
   }
   function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
   function showPanel(name,{history:push=true}={}){
@@ -43,6 +48,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   document.querySelectorAll('[data-show-map]').forEach(b=>b.addEventListener('click',showMap));
   $('camera-sheet').addEventListener('calciteSheetClose',()=>{if(!dock.matches&&!evidence?.isOpen&&camerasOpen){setCameras(false);onCameraChange(false);}});
   compact.addEventListener('change',()=>{if(evidence?.isOpen)panelOpen=!compact.matches;render();});dock.addEventListener('change',render);
+  new ResizeObserver(mapLabels).observe($('map-panel'));
   render();
   return {showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
 }
