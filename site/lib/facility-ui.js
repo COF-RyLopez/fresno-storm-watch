@@ -16,7 +16,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
   const examples=exercise?facilityExercise():[];
   const time=value=>Number.isFinite(value)?formatTime(value,timeZone):'Not supplied';
   function sites(){return exercise?examples:sources.flatMap(s=>s.rows.map(r=>({...r,sourceError:s.error||s.accounting?.rejected>0})));}
-  function show(row){
+  function show(row,locate=true){
     selected=row.site.key;const s=row.site,host=$('facility-detail');host.replaceChildren();
     host.append(el('p',`${row.label} · site power is unconfirmed`,'power-gap'));
     const dl=el('dl');
@@ -27,7 +27,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     for(const note of row.notes)host.append(el('p',note,'power-gap'));
     host.append(el('h3','Requested follow-up'),el('p',row.next),el('p','Confirm generator connection and capacity, fuel/refueling, access and the facility mission with its owner before prepositioning. A listed shelter is not necessarily open or approved for use.'),button('Show site on map',()=>{onMap();map?.focusFacility(s.key);}));
     const eoc=el('a','Open private EOC workspace to record verification / assignment');eoc.href=exercise?'./eoc.html?exercise=1':'./eoc.html';host.append(eoc,el('small','The link does not submit a report or assign resources. This site review has no write access to the county asset layer.'));
-    $('facility-dialog').setAttribute('heading',s.name);$('facility-dialog').setAttribute('open','');
+    $('facility-dialog').setAttribute('heading',s.name);$('facility-dialog').setAttribute('open','');if(locate){onMap();map?.focusFacility(s.key);}
   }
   function render(){
     const connected=exercise||sources.length>0;
@@ -48,11 +48,11 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     for(const source of sources){const card=el('div','','facility-source');card.append(el('strong',source.title),el('p',`Retrieved ${time(source.lastSuccess)} · ${source.rows.length} Fresno asset records`));if(source.accounting)card.append(el('small',`${source.accounting.returned} returned; ${source.accounting.outsideCounty} outside county; ${source.accounting.rejected} invalid location / ID records excluded. Inventory gaps require GIS review.`));if(source.error)card.append(el('p',source.error,'power-gap'));if(source.accounting?.rejected)card.append(el('p','Some sites could not be assessed. This is an incomplete inventory.','power-gap'));card.append(button('Disconnect layer',()=>{source.adapter.close();sources=sources.filter(s=>s!==source);render();}));inventory.append(card);}
     const list=$('facility-list');list.replaceChildren();
     const visible=assessment.sites.filter(r=>$('facility-filter').value==='all'||r.review);
-    for(const row of visible){const card=el('article','','power-card facility-card');card.style.setProperty('--power-color',FACILITY_COLORS[row.tone]);card.append(el('strong',row.label),el('h3',row.site.name),el('p',`${row.site.kind} · ${row.site.owner||'Owner unassigned'}`),el('p',`Backup power: ${row.site.backup||'Unknown — verify'}`),button('Review site',()=>show(row)));list.append(card);}
+    for(const row of visible){const card=el('article','','power-card facility-card');card.style.setProperty('--power-color',FACILITY_COLORS[row.tone]);const title=el('h3');title.append(button(row.site.name,()=>show(row)));card.append(el('strong',row.label),title,el('p',`${row.site.kind} · ${row.site.owner||'Owner unassigned'}`),el('p',`Backup power: ${row.site.backup||'Unknown — verify'}`),button('Review site',()=>show(row)));list.append(card);}
     if(connected&&!visible.length)list.append(el('p','No site records returned in this filter. Check inventory completeness and utility coverage; this is not an all-clear.','power-empty'));
     map?.setFacilities(assessment.sites);
     onData({connected,sites:assessment.sites,sourceGaps:siteGaps});
-    if($('facility-dialog').hasAttribute('open')&&selected){const row=assessment.sites.find(r=>r.site.key===selected);if(row)show(row);else{$('facility-dialog').removeAttribute('open');$('facility-detail').replaceChildren();selected=null;}}
+    if($('facility-dialog').hasAttribute('open')&&selected){const row=assessment.sites.find(r=>r.site.key===selected);if(row)show(row,false);else{$('facility-dialog').removeAttribute('open');$('facility-detail').replaceChildren();selected=null;}}
   }
   function clearInspector(){inspector?.close();inspector=null;$('facility-mapping').replaceChildren();$('facility-mapping-section').hidden=true;$('facility-source-url').value='';$('facility-source-title').value='';$('facility-setup-message').textContent='';}
   function clear(){generation++;for(const source of sources)source.adapter.close();sources=[];clearInspector();previous.clear();selected=null;busy=false;$('facility-detail').replaceChildren();$('facility-dialog').removeAttribute('open');$('facility-connect-dialog').removeAttribute('open');$('facility-refresh').removeAttribute('loading');$('facility-inspect').removeAttribute('loading');$('facility-add').removeAttribute('loading');$('facility-preset-load').removeAttribute('loading');$('facility-preset-message').textContent='';render();}
@@ -103,5 +103,5 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
   setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!document.hidden)render();},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('pagehide',()=>{session=null;clear();});
   render();
-  return {setSession(next){session=next?.portal?.id==='ibgDyuD2DLBge82s'?next:null;clear();},setCounty(c){county=c;},setPower(rows,nextFeeds){powerRows=rows;feeds=nextFeeds;render();},setMap(m){map=m;render();},select(key){const row=assessment?.sites.find(r=>r.site.key===key);if(row){onOpen();show(row);}}};
+  return {setSession(next){session=next?.portal?.id==='ibgDyuD2DLBge82s'?next:null;clear();},setCounty(c){county=c;},setPower(rows,nextFeeds){powerRows=rows;feeds=nextFeeds;render();},setMap(m){map=m;render();if(selected)map.focusFacility(selected);},select(key){const row=assessment?.sites.find(r=>r.site.key===key);if(row){onOpen();show(row);}}};
 }

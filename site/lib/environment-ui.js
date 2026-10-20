@@ -5,7 +5,7 @@ import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateRe
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.19.0';
+import {createWeatherTimeline} from './weather-ui.js?v=0.27.0';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -107,7 +107,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     const list=$('reservoir-list');list.replaceChildren();
     for(const station of selection.stations){
       const row=snapshot?.stations.find(s=>s.id===station.id);
-      const card=el('calcite-block','','reservoir-card');card.setAttribute('heading',station.name);card.setAttribute('heading-level','4');card.setAttribute('description',`${station.river} · ${station.operator} · ${station.id}`);card.setAttribute('expanded','');
+      const card=el('calcite-block','','reservoir-card');const heading=el('h3');const location=newButton(station.name,()=>{onMap();map?.focusEnvironment(station.longitude,station.latitude);});location.setAttribute('icon-start','cube');location.toggleAttribute('disabled',!map);location.title='Locate reservoir in 3D';heading.append(location);card.append(heading,el('p',`${station.river} · ${station.operator} · ${station.id}`));card.setAttribute('expanded','');
       if(row?.error||snapshotError||overdue){const warning=el('p',row?.error?`Source check failed: ${row.error}. Previous values retained.`:'Collection unavailable or overdue · verify the publisher.','environment-health');warning.dataset.tone='gap';card.append(warning);}
       const grid=el('dl','','reservoir-grid');
       for(const metric of station.metrics){
@@ -159,8 +159,8 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   setInterval(tick,30_000);document.addEventListener('visibilitychange',tick);
   window.addEventListener('online',()=>{nextWeather=0;nextReservoir=0;tick();});
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});
-  return {selectOverlay,async setMap(controller){
-    map=controller;
+  return {selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
+    map=controller;reservoirRenderKey='';renderReservoirs();
     void weather.setMap(controller);
     try{
       const sdk=await loadSdk();const [ImageryLayer,FeatureLayer,GraphicsLayer,Graphic]=await sdk.import(['@arcgis/core/layers/ImageryLayer.js','@arcgis/core/layers/FeatureLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);

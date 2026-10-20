@@ -24,7 +24,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     snapshot=validatePowerSnapshot(next);
     changes=powerChanges(changes,rows());
   }
-  function showDetail(row){
+  function showDetail(row,locate=true){
     selectedKey=row.key;
     const host=$('power-detail');host.replaceChildren();
     const feed=snapshot.feeds.find(f=>f.id===row.feedId);
@@ -32,7 +32,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     const issues=powerRowIssues(row);if(powerHealth(feed))issues.unshift(powerHealth(feed));for(const issue of issues)host.append(el('p',issue,'power-gap'));
     host.append(el('p','Map locations and areas are approximate. A passed estimate, weather all-clear or disappearance from this feed does not establish restored power. Confirm critical sites with the utility and facility owner.'));
     host.append(link('Open official utility map',row.official),button('Show on map',()=>{onMap();map?.focusPower(row.key);}));
-    $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');
+    $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate){onMap();map?.focusPower(row.key);}
   }
   function render(){
     const pending=changes?.pending||new Set(),missing=changes?.missing.size||0;
@@ -61,7 +61,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     for(const row of visible){
       const card=el('article','','power-card');card.style.setProperty('--power-color',POWER_COLORS[row.status]);
       const status=el('div','','power-card-status'),icon=document.createElement('img');icon.src=powerMarkerUrl(row.status,!!row.health);icon.alt='';icon.width=34;icon.height=34;
-      status.append(icon,el('strong',`${row.utility} · ${POWER_STATES[row.status]}`));card.append(status,el('h3',row.name),el('p',row.location));
+      status.append(icon,el('strong',`${row.utility} · ${POWER_STATES[row.status]}`));const title=el('h3');title.append(button(row.name,()=>showDetail(row)));card.append(status,title,el('p',row.location));
       if(pending.has(`${row.key}|${row.revision}`))card.append(el('span','New / changed','power-new'));
       if(row.health)card.append(el('p',row.health,'power-gap'));
       for(const issue of row.issues.filter(s=>/passed|ended|24 hours|Unrecognized|differ|future/.test(s)))card.append(el('p',issue,'power-gap'));
@@ -74,7 +74,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     onData(all,snapshot?.feeds||[],{checked,error:loadError});
     if($('power-dialog').hasAttribute('open')&&selectedKey){
       const selected=all.find(r=>r.key===selectedKey);
-      if(selected)showDetail(selected);
+      if(selected)showDetail(selected,false);
       else $('power-detail').replaceChildren(el('p','This record is no longer returned by the latest check. Removal does not confirm restored power. Verify the official utility map.','power-gap'),link('PG&E official map',POWER_LINKS.pge),link('SCE official map',POWER_LINKS.sce));
     }
   }
@@ -101,5 +101,5 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     $('power-panel').prepend(controls);accept(powerExercise());checked=Date.now();render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
-  return {setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;render();},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
+  return {setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;render();if(selectedKey)map.focusPower(selectedKey);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
 }

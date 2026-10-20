@@ -1,3 +1,4 @@
+import {createSelectionFocus,validLocation} from './selection-focus.js?v=0.27.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
@@ -280,10 +281,10 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }finally{modeBusy=false;for(const m of ['2d','3d'])document.querySelector(`#mode-${m}`).removeAttribute('disabled');}
   };
   let modeQueue=Promise.resolve();const setMode=mode=>{modeQueue=modeQueue.catch(()=>{}).then(()=>switchMode(mode));return modeQueue;};
-  for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).addEventListener('click',()=>void setMode(mode));
-  document.querySelector('#map-mode').addEventListener('calciteSegmentedControlChange',e=>{const mode=e.target.selectedItem?.value;if(['2d','3d'].includes(mode)){const state=currentState();state.mode=mode;void setMode(mode).then(()=>{state.mode=view.type;state.viewpoint=view.viewpoint?.clone();});}});
-  document.querySelector('#scene-overhead').addEventListener('click',()=>void navigate({tilt:0,heading:0}));
-  document.querySelector('#scene-tilt').addEventListener('click',()=>void navigate({tilt:55,heading:0}));
+  for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).addEventListener('click',()=>{selectionFocus.cancel();void setMode(mode);});
+  document.querySelector('#map-mode').addEventListener('calciteSegmentedControlChange',e=>{const mode=e.target.selectedItem?.value;if(['2d','3d'].includes(mode)){selectionFocus.cancel();const state=currentState();state.mode=mode;void setMode(mode).then(()=>{state.mode=view.type;state.viewpoint=view.viewpoint?.clone();});}});
+  document.querySelector('#scene-overhead').addEventListener('click',()=>{selectionFocus.cancel();void navigate({tilt:0,heading:0});});
+  document.querySelector('#scene-tilt').addEventListener('click',()=>{selectionFocus.cancel();void navigate({tilt:55,heading:0});});
   modeStatus();for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).removeAttribute('disabled');
   function drawPower(){
     power.removeAll();const keys=new Set(planningRows.filter(r=>planningFilter==='all'||r.review).flatMap(r=>[...r.power.matches,...r.power.followups].map(m=>m.row.key)));
@@ -297,12 +298,24 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   }
   function setLayerPreference(key,wanted){if(!(key in LAYER_LABELS))return;currentState().layers[key]=!!wanted;drawGauges();drawPower();syncControls();}
   const options=document.querySelector('#context-options');for(const [key,label]of Object.entries(LAYER_LABELS)){if(key==='cameras')continue;const host=document.createElement('calcite-label');host.layout='inline';const box=document.createElement('calcite-checkbox');box.dataset.contextLayer=key;box.addEventListener('calciteCheckboxChange',()=>setLayerPreference(key,box.checked));host.append(box,document.createTextNode(label));options.append(host);}
-  const focusNavigate=target=>{const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
+  const focusNavigate=target=>{selectionFocus.cancel();const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
+  const focusMessage=text=>{const host=document.querySelector('#map-status');host.hidden=false;host.textContent=text;};
+  const selectionFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,
+    navigate:target=>{followRegion=false;const status=document.querySelector('#map-status');if(/^(No usable source location|The selected location)/.test(status.textContent))status.hidden=true;return navigate(target);},save:capture,
+    missing:()=>focusMessage('No usable source location for this selection. Evidence remains available; map position unchanged.'),
+    failed:()=>focusMessage('The selected location could not be shown. Evidence remains available; use Fit workspace to recover.')});
+  const focusLocation=(longitude,latitude,scale=35000,layer=null)=>selectionFocus.focus(type=>{
+    if(!validLocation({longitude,latitude}))return null;
+    if(layer)setLayerPreference(layer,true);
+    return {target:[longitude,latitude],scale,...(type==='3d'?{tilt:55,heading:0}:{})};
+  });
+  const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
+  const focusPoints=(points,padding=.04)=>{const valid=points.filter(validLocation);if(!valid.length)return focusGeometry(null);const xs=valid.map(p=>p.longitude),ys=valid.map(p=>p.latitude);return focusGeometry(new Extent({xmin:Math.min(...xs)-padding,ymin:Math.min(...ys)-padding,xmax:Math.max(...xs)+padding,ymax:Math.max(...ys)+padding,spatialReference:{wkid:4326}}));};
   function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;state.basemap=basemapKey;}
   function setWorkspace(id){
     if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
     if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
-    activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
+    selectionFocus.cancel();activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
     mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
     drawGauges();drawPower();drawAreas();syncControls();
     transition=transition.catch(()=>{}).then(async()=>{
@@ -340,17 +353,17 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       for(const r of data.roads){if(!r.geometry)continue;const shade=r.active==='no'?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';briefingContext.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||r.active==='no'?'dash':'solid'}}));}
       for(const r of data.facilities){const polygon=!!r.site.geometry.rings;briefingContext.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}}));}
     },
-    focusBriefingContext:(points,radiusKm=5)=>{if(!points.length)return;followRegion=false;setLayerPreference('briefingContext',true);const b=points.reduce((a,p)=>[Math.min(a[0],p.longitude),Math.min(a[1],p.latitude),Math.max(a[2],p.longitude),Math.max(a[3],p.latitude)],[Infinity,Infinity,-Infinity,-Infinity]),pad=(radiusKm+1)/111,lonPad=pad/Math.cos((b[1]+b[3])/2*Math.PI/180);return focusNavigate(new Extent({spatialReference:{wkid:4326},xmin:b[0]-lonPad,ymin:b[1]-pad,xmax:b[2]+lonPad,ymax:b[3]+pad}));},
+    focusBriefingContext:(points,radiusKm=5)=>{setLayerPreference('briefingContext',true);if(!points.some(validLocation))return focusGeometry(null);points=points.filter(validLocation);const b=points.reduce((a,p)=>[Math.min(a[0],p.longitude),Math.min(a[1],p.latitude),Math.max(a[2],p.longitude),Math.max(a[3],p.latitude)],[Infinity,Infinity,-Infinity,-Infinity]),pad=(radiusKm+1)/111,lonPad=pad/Math.cos((b[1]+b[3])/2*Math.PI/180);return focusGeometry(new Extent({spatialReference:{wkid:4326},xmin:b[0]-lonPad,ymin:b[1]-pad,xmax:b[2]+lonPad,ymax:b[3]+pad}));},
     setPlanningData:(rows,filter)=>{planningRows=rows;planningFilter=filter;drawAreas();drawPower();},
     setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
     setFacilitiesVisible:visible=>{setLayerPreference('facilities',visible);},
-    focusFacility:key=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(g){followRegion=false;setLayerPreference('facilities',true);document.querySelector('#facility-map-toggle').checked=true;return focusNavigate({target:g.geometry,scale:14000,...(view.type==='3d'?{tilt:45}:{})});}},
+    focusFacility:key=>selectionFocus.focus(type=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(!g)return null;setLayerPreference('facilities',true);return {target:g.geometry,scale:14000,...(type==='3d'?{tilt:45,heading:0}:{})};}),
     setPower:rows=>{powerRows=rows;drawPower();},
     setPowerVisible:visible=>setLayerPreference('power',visible),
-    focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;return focusNavigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:25000}:{})});}},
+    focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;const geometries=power.graphics.toArray().filter(item=>item.attributes.powerKey===key).map(item=>item.geometry);return focusGeometry(geometries,geometries.length===1&&g.geometry.type==='point'?25000:null);}return focusGeometry(null);},
     setRoads:rows=>{roads.removeAll();for(const r of rows){if(!r.geometry)continue;const inactive=r.active==='no',shade=inactive?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';roads.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||inactive?'dash':'solid'}}));}},
     setRoadsVisible:visible=>setLayerPreference('roads',visible),
-    focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;return focusNavigate({target:g.geometry,...(view.type==='3d'?{tilt:40}:{}),...(g.geometry.type==='point'?{scale:22000}:{})});}},
+    focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;setLayerPreference('roads',true);return focusGeometry(g.geometry,g.geometry.type==='point'?22000:null);}return focusGeometry(null);},
     sceneViewpoint:()=>{
       const point=view.type==='3d'?view.camera.position:view.center;
       // Approximate the 2D ground height with a 55-degree vertical camera field of view.
@@ -362,16 +375,17 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     addEnvironmentLayers:(overlays,reservoirs)=>{map.addMany(overlays,1);map.add(reservoirs);},
     onViewChanged:listener=>{viewListeners.add(listener);},
     clearEnvironmentPopup:()=>{view.closePopup();onFeatureSelect(null);},
-    focusEnvironment:(longitude,latitude)=>{followRegion=false;return focusNavigate({center:[longitude,latitude],scale:90_000,...(view.type==='3d'?{tilt:50,heading:0}:{})});},
-    fitEnvironment:()=>{followRegion=false;return navigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
-    focusPlanningPoints:points=>{if(!points.length)return;followRegion=false;const xs=points.map(p=>p.longitude),ys=points.map(p=>p.latitude);return focusNavigate(geographicTarget({xmin:Math.min(...xs)-0.04,ymin:Math.min(...ys)-0.04,xmax:Math.max(...xs)+0.04,ymax:Math.max(...ys)+0.04}));},
+    focusEnvironment:(longitude,latitude)=>focusLocation(longitude,latitude,45000,'reservoirs'),
+    focusWind:(longitude,latitude)=>focusLocation(longitude,latitude,90000,'wind'),
+    fitEnvironment:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
+    focusPlanningPoints:points=>{setLayerPreference('areas',true);return focusPoints(points);},
     updateCameras: rows=>{cameraRows=rows;drawCameras();},
     selectCamera: id=>{selectedCamera=id;drawCameras();},
     setCamerasVisible: visible=>setLayerPreference('cameras',visible),
-    focusCamera: id=>{const row=cameraRows.find(c=>c.id===id);if(row){followRegion=false;return focusNavigate({center:[row.longitude,row.latitude],scale:25_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
+    focusCamera: id=>{const row=cameraRows.find(c=>c.id===id);if(row){return focusLocation(row.longitude,row.latitude,25000,'cameras');}},
     updateGauges:(rows,basin='All')=>{gaugeRows=rows;riverBasin=basin;drawGauges();},
     selectGauge: id=>{selectedGauge=id;drawGauges();},
-    focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){followRegion=false;const g=row.gauge||row.station;return focusNavigate({center:[g.longitude,g.latitude],scale:35_000,...(view.type==='3d'?{tilt:55,heading:0}:{})});}},
+    focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){const g=validLocation(row.gauge)?row.gauge:row.station;return focusLocation(g.longitude,g.latitude,35000,'gauges');}},
     setScope: scope=>{if(mapScope!==scope){mapScope=scope;followRegion=true;for(const layer of [boundaryLayer,labels])layer.graphics.forEach(g=>{g.visible=scope!=='fresno'||g.attributes.countyId==='06019';});return navigate(fitTarget());}},
     fit: () => { followRegion = false; return focusNavigate(fitTarget()); },
     update: alerts => {
@@ -393,7 +407,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         extent = extent ? extent.union(geometry.extent) : geometry.extent.clone();
         selectedLayer.add(new Graphic({ geometry, symbol: { type: 'simple-fill', style: 'none', outline: { color: color('--map-selection'), width: 3, style: 'dash' } } }));
       }
-      if (zoom && extent) { followRegion = false; void focusNavigate(webMercatorUtils.geographicToWebMercator(extent).expand(1.3)); }
+      if(zoom){setLayerPreference('alerts',true);void focusGeometry(extent?.expand(1.3)||null);}
     },
     get view(){return view;}
   };

@@ -315,3 +315,18 @@ project checkout and its local data were not moved or modified.
 Local preview: npm run collect:probability then npm start (STORM_PORT=8778 if
 8777 is occupied). Operational notes: planning.html#slide-following and
 planning.html#basemap-gallery. Rollback: redeploy 347e7d1 (0.25.0); no migration.
+
+
+0.27.0 Location selections focus the 3D map
+Left-panel named area/reservoir controls and gauge, road, utility, facility,
+wind and camera selections now locate source geometry and open terrain in 3D.
+Release-chart reservoir/gauge selections also locate their corresponding point.
+The latest selection wins across workspace and mode initialization; manually
+changing modes or using Fit cancels pending selection navigation. Refreshes only
+repaint evidence. County facilities are re-resolved after mode loading so cleared
+private geometry cannot be navigated to by a delayed selection.
+Missing geometry remains explicit. Failed 3D uses the retained 2D view. No new
+sources, thresholds, persistence, permissions or AGOL items are introduced.
+Operating notes: planning.html#location-selection.
+Rollback: redeploy d1b3407322cb68b4da60d9f6e53963ec7d6f4b26 (0.26.0);
+no data migration.

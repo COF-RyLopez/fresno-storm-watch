@@ -58,7 +58,7 @@ export function releaseTrendChart(series,model,domain,release,zone,selectionKey=
 }
 
 /** @param {object} options @returns {object} Reuse live controllers; no extra polling or private storage. */
-export function createReleaseTrends({config,timeZone,exercise}){
+export function createReleaseTrends({config,timeZone,exercise,onLocate=()=>{}}){
   let reservoirs={},entries=new Map(),stations=[],stationId='MIL',gaugeId='SJXC1',measure='flow',historyHours=168,futureHours=72,lastSignature='';
   const dialog=$('release-trend-dialog'),time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Not supplied';
   function render(force=false){
@@ -102,9 +102,9 @@ export function createReleaseTrends({config,timeZone,exercise}){
     picker.toggleAttribute('disabled',!options.length);$('trend-measure').toggleAttribute('disabled',!options.length);
     for(const o of $('trend-reservoir').children)o.toggleAttribute('selected',o.getAttribute('value')===stationId);
   }
-  function open(id='MIL',preferredGauge=null){if(preferredGauge)gaugeId=preferredGauge;selectStation(id);$('river-dialog').removeAttribute('open');dialog.setAttribute('open','');render(true);}
-  $('trend-reservoir').addEventListener('calciteSelectChange',e=>{selectStation(e.target.value);render(true);});
-  $('trend-gauge').addEventListener('calciteSelectChange',e=>{gaugeId=e.target.value;render(true);});
+  function open(id='MIL',preferredGauge=null){if(preferredGauge)gaugeId=preferredGauge;selectStation(id);$('river-dialog').removeAttribute('open');dialog.setAttribute('open','');render(true);onLocate(stationId);}
+  $('trend-reservoir').addEventListener('calciteSelectChange',e=>{selectStation(e.target.value);render(true);onLocate(stationId);});
+  $('trend-gauge').addEventListener('calciteSelectChange',e=>{gaugeId=e.target.value;render(true);onLocate(stationId,gaugeId);});
   $('trend-measure').addEventListener('calciteSelectChange',e=>{measure=e.target.value;render(true);});
   $('trend-history').addEventListener('calciteSelectChange',e=>{historyHours=Number(e.target.value);render(true);});
   $('trend-future').addEventListener('calciteSelectChange',e=>{futureHours=Number(e.target.value);render(true);});

@@ -1,0 +1,37 @@
+{
+  "release": "0.27.0",
+  "checkedAt": "2026-10-20T03:38:00Z",
+  "scope": "Source-location selections focus the map and open 3D terrain; private workspace and Experience Builder unchanged.",
+  "automated": {
+    "nodeTests": 277,
+    "nodeFailures": 0,
+    "privatePublisherContractTests": 18,
+    "syntaxAndPublicConfig": "passed",
+    "navigationCases": [
+      "active-view targets",
+      "latest selection during delayed mode initialization",
+      "workspace and manual cancellation",
+      "2D fallback",
+      "missing coordinates and navigation failure",
+      "private location withdrawn during loading"
+    ]
+  },
+  "localBrowser": {
+    "viewportDesktop": "2016x1244",
+    "viewportPhone": "390x844",
+    "observed": [
+      "Millerton title opens focused 3D terrain at the reservoir",
+      "Pine Flat / Millerton / Pine Flat resolves to latest choice",
+      "Rivers restores 2D independently; Gravelly Ford row opens 3D plus source evidence",
+      "James Bypass selection followed by Roads retains Roads default 2D",
+      "Phone North Ave selection reveals map and road evidence, then focuses closure at approximately 1:32824"
+    ]
+  },
+  "limitations": [
+    "Real authenticated county facility selection was not exercised; private-source withdrawal and publisher permissions verified by unit/contract tests.",
+    "3D initialization failure is tested with controlled fallback; no browser WebGL failure was forced.",
+    "Map geometry is publisher/reference context; no flood-depth, access, threshold or activation rules changed."
+  ],
+  "sdkReference": "https://developers.arcgis.com/javascript/latest/api-reference/esri-views-SceneView.html#goTo",
+  "rollback": "Redeploy d1b3407322cb68b4da60d9f6e53963ec7d6f4b26 (0.26.0); no data migration."
+}

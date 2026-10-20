@@ -94,7 +94,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     $('wind-source').href=site?sourceLink(site):'https://www.weather.gov/hnx/';
     $('wind-locate').toggleAttribute('disabled',!site);chart(site);
     const all=$('wind-all-sites');all.replaceChildren();
-    for(const [i,site] of sites.entries()){const row=el('p'),a=el('button',site.name,'weather-site-button');a.type='button';a.addEventListener('click',()=>{selected=site.id;for(const o of $('wind-site').children)o.toggleAttribute('selected',o.getAttribute('value')===selected);render();});const s=states[i];row.append(a,el('span',s.reason?` · ${s.reason}`:` · ${value(s.speed)} / gust ${value(s.gust)} mph`));all.append(row);}
+    for(const [i,site] of sites.entries()){const row=el('p'),a=el('button',site.name,'weather-site-button');a.type='button';a.addEventListener('click',()=>{selected=site.id;onMap();controller?.focusWind(site.longitude,site.latitude);for(const o of $('wind-site').children)o.toggleAttribute('selected',o.getAttribute('value')===selected);render();});const s=states[i];row.append(a,el('span',s.reason?` · ${s.reason}`:` · ${value(s.speed)} / gust ${value(s.gust)} mph`));all.append(row);}
     $('weather-refresh').toggleAttribute('loading',busy);$('weather-refresh').toggleAttribute('disabled',busy||exercise);
     drawWind();
   }
@@ -114,8 +114,8 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   $('weather-after').addEventListener('click',()=>{const index=Math.min(stops.length-1,Number($('weather-time').value)+1);selectTime(stops[index]);});
   $('satellite-product').addEventListener('calciteSelectChange',e=>{if(GOES_PRODUCTS.some(p=>p.id===e.target.value)){product=e.target.value;render();onChange();}});
   $('wind-map-toggle').addEventListener('calciteCheckboxChange',()=>{controller?.setLayerPreference('wind',$('wind-map-toggle').checked);render();onChange();});
-  $('wind-site').addEventListener('calciteSelectChange',e=>{selected=e.target.value;render();});
-  $('wind-locate').addEventListener('click',()=>{const s=wind?.sites.find(s=>s.id===selected);if(s){onMap();controller?.focusEnvironment(s.longitude,s.latitude);}});
+  $('wind-site').addEventListener('calciteSelectChange',e=>{selected=e.target.value;render();const site=wind?.sites.find(s=>s.id===selected);if(site){onMap();controller?.focusWind(site.longitude,site.latitude);}});
+  $('wind-locate').addEventListener('click',()=>{const s=wind?.sites.find(s=>s.id===selected);if(s){onMap();controller?.focusWind(s.longitude,s.latitude);}});
   $('weather-refresh').addEventListener('click',()=>void refresh());
   $('satellite-legend-image').addEventListener('error',()=>{$('satellite-legend-note').textContent='Publisher legend unavailable; verify the NOAA source before interpreting image colors.';});
   const tick=()=>{if(document.hidden)return;render();if(Date.now()>=next)void refresh();};

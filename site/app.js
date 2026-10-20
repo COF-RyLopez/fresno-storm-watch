@@ -3,23 +3,23 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js';
-import { createMap } from './lib/map.js?v=0.26.0';
+import { createMap } from './lib/map.js?v=0.27.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
-import { createRiverWatch } from './lib/river-ui.js?v=0.24.0';
-import { createCameraWatch } from './lib/camera-ui.js?v=0.24.0';
-import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.23.0';
-import { createPlanningWatch } from './lib/planning-ui.js?v=0.22.0';
+import { createRiverWatch } from './lib/river-ui.js?v=0.27.0';
+import { createCameraWatch } from './lib/camera-ui.js?v=0.27.0';
+import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.27.0';
+import { createPlanningWatch } from './lib/planning-ui.js?v=0.27.0';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.25.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
-import { createPowerWatch } from './lib/power-ui.js?v=0.24.0';
-import { createFacilityWatch } from './lib/facility-ui.js?v=0.24.0';
-import { createRoadWatch } from './lib/roads-ui.js?v=0.22.0';
+import { createPowerWatch } from './lib/power-ui.js?v=0.27.0';
+import { createFacilityWatch } from './lib/facility-ui.js?v=0.27.0';
+import { createRoadWatch } from './lib/roads-ui.js?v=0.27.0';
 import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.26.0';
 import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.26.0';
 import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.22.0';
-import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
+import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.27.0';
 
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
@@ -59,8 +59,8 @@ const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBri
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id),onSlide:context=>briefingLayers?.followSlide(context)});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:context.setFacilities});
 const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
-roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onData:context.setRoads});
-const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise});
+roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:workspace.showMap,onData:context.setRoads});
+const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onLocate:(id,gauge)=>{workspace.showMap();if(gauge)map?.focusGauge(gauge);else environment?.focusReservoir(id);}});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
 planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:context.setPlanning,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
@@ -163,7 +163,7 @@ function selectAlert(key) {
   for (const item of $('alert-list').querySelectorAll('calcite-list-item')) item.toggleAttribute('selected', item.getAttribute('value') === key);
   renderDetail();
   if(state.alerts.some(a=>a.key===key))$('alert-evidence').setAttribute('open','');
-  map?.select(state.alerts.find(a => a.key === key));
+  workspace.showMap();map?.select(state.alerts.find(a => a.key === key),true);
 }
 
 /** @returns {void} Preserve source timestamps and original product names in the detail panel. */
@@ -265,6 +265,7 @@ try {
   facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures).then(controller => {
     map = controller;
+    workspace.setMap(map);
 
     rivers?.setMap(map);
     cameras?.setMap(map);
@@ -275,9 +276,8 @@ try {
     context.setMap(map);
     void briefingLayers.setMap(map);
     void environment.setMap(map);
-    workspace.setMap(map);
     map.update(state.alerts);
-    map.select(state.alerts.find(a => a.key === selectedKey));
+    map.select(state.alerts.find(a => a.key === selectedKey),!!selectedKey);
     $('map-status').hidden = true;
     $('fit-region').removeAttribute('disabled');
     void setupInundation(map);

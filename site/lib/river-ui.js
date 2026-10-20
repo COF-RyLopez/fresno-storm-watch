@@ -63,7 +63,7 @@ export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()
     if(g.forecastNote)host.append(el('p',g.forecastNote,{class:'muted'}));
     host.append(el('calcite-button',exercise?'Fictional exercise record':'Open official NWS gauge',{scale:'s',appearance:'outline',href:exercise?null:g.sourceUrl,target:'_blank',rel:'noopener noreferrer',disabled:exercise,'icon-end':'launch'}));
   };
-  const select=(id,open=true)=>{selected=id;if(open)onOpen();for(const item of $('river-list').querySelectorAll('calcite-list-item'))item.toggleAttribute('selected',item.getAttribute('value')===id);detail();map?.selectGauge(id);$('river-detail-open').removeAttribute('disabled');$('river-dialog').setAttribute('open','');};
+  const select=(id,open=true)=>{selected=id;if(open)onOpen();for(const item of $('river-list').querySelectorAll('calcite-list-item'))item.toggleAttribute('selected',item.getAttribute('value')===id);detail();map?.selectGauge(id);onMap();map?.focusGauge(id);$('river-detail-open').removeAttribute('disabled');$('river-dialog').setAttribute('open','');};
   const paint=()=>{
     const all=rows(), fresh=all.filter(r=>r.assessment.current).length, forecasts=all.filter(r=>r.assessment.forecastUsable).length;
     const unknown=all.filter(r=>!r.assessment.thresholdKnown).length, critical=all.filter(r=>r.assessment.tone==='threshold').length;
@@ -111,5 +111,5 @@ export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()
     for(const name of new Set(stations.map(s=>s.basin)))$('river-basin').append(el('calcite-option',name,{value:name}));
     void refresh();
   }catch(error){$('river-check-time').textContent=`River watch unavailable: ${error.message}`;onData({stations,entries});}
-  return {select,setMap:controller=>{map=controller;paintMap();detail();},refresh,setExerciseEntries:external=>{if(exercise){entries=new Map(external);paint();}}};
+  return {select,setMap:controller=>{map=controller;paintMap();detail();if(selected)map.focusGauge(selected);},refresh,setExerciseEntries:external=>{if(exercise){entries=new Map(external);paint();}}};
 }

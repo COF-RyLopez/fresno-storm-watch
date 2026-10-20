@@ -89,8 +89,8 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
     }
   };
   const select=id=>{
-    if(id===selected)return;
-    video.stop('Video is on demand');clearImage();selected=id;paint();map?.selectCamera(id);map?.focusCamera(id);void refreshImage();
+    if(id===selected){onMap();map?.focusCamera(id);return;}
+    video.stop('Video is on demand');clearImage();selected=id;paint();onMap();map?.selectCamera(id);map?.focusCamera(id);void refreshImage();
     $('camera-evidence').scrollIntoView({block:'start',behavior:'instant'});
   };
   const refreshCatalog=async()=>{

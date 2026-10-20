@@ -1,7 +1,7 @@
 import {reportHealth} from './source-health.js';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onData=()=>{}}={}) {
+export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {
   let snapshot=null,error=null,map=null,busy=false,selected=null;
   const host=document.getElementById('road-list'),status=document.getElementById('road-health');
   const time=value=>value?new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(value):'Not supplied';
@@ -19,7 +19,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onData=()
     if(!rows.length)host.append(el('p','No records in this filter. No inference of safe access.'));
     for(const row of rows){
       const card=el('article');card.className='road-card';
-      card.append(el('strong',`${row.kind} · ${row.name}`),el('p',`${row.status} · ${row.location}`));
+      const title=el('h3'),locate=el('calcite-button',`${row.kind} · ${row.name}`);locate.setAttribute('appearance','outline');locate.setAttribute('scale','s');locate.onclick=()=>detail(row);title.append(locate);card.append(title,el('p',`${row.status} · ${row.location}`));
       card.append(el('p',`Source updated ${time(row.sourceTime)} · edited ${time(row.edited)}`));
       const b=el('calcite-button','Review record');b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.onclick=()=>detail(row);card.append(b);host.append(card);
     }
@@ -30,12 +30,12 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onData=()
     for(const [label,value] of [['Status',row.status],['Location',row.location],['Reason',row.reason||'Not supplied'],['Comment',row.comment||'Not supplied'],['Alternate route',row.alternateRoute||'Not supplied'],['Active flag',row.active||'Not supplied'],['Start',time(row.start)],['End',time(row.end)],['Source update',time(row.sourceTime)],['Editor timestamp',time(row.edited)],['GlobalID',row.id]])d.append(el('strong',label),el('p',value));
     for(const issue of row.issues)d.append(el('p',issue));
     const link=el('a','County official road map');link.href=ROAD_MAP;link.target='_blank';link.rel='noopener noreferrer';d.append(link);
-    document.getElementById('road-dialog').setAttribute('heading',`${row.kind} · ${row.name}`);document.getElementById('road-dialog').setAttribute('open','');map?.focusRoad(row.key);
+    document.getElementById('road-dialog').setAttribute('heading',`${row.kind} · ${row.name}`);document.getElementById('road-dialog').setAttribute('open','');onMap();map?.focusRoad(row.key);
   }
   async function refresh(){if(busy||exercise)return;busy=true;document.getElementById('roads-refresh').setAttribute('loading','');try{snapshot=await fetchRoads();error=null;}catch(cause){error=cause;}finally{busy=false;document.getElementById('roads-refresh').removeAttribute('loading');render();}}
   document.getElementById('roads-refresh').onclick=()=>void refresh();document.getElementById('roads-all').addEventListener('change',render);
   for(const [id,url] of [['county-roads-link',ROAD_MAP],['county-evac-link',EVAC_MAP]])document.getElementById(id).setAttribute('href',url);
   document.getElementById('toggle-roads').onclick=()=>{const b=document.getElementById('toggle-roads'),visible=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(visible));b.textContent=`County roads: ${visible?'on':'off'}`;map?.setRoadsVisible(visible);};
   void refresh();setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{status.textContent=exercise?'Exercise mode · live road feed disabled':roadHealth(snapshot,error);},15000);
-  return {setMap(controller){map=controller;render();},select(key){const row=snapshot?.rows.find(r=>r.key===key);if(row){if(!roadInCurrentView(row)){document.getElementById('roads-all').checked=true;render();}onOpen();map?.setRoadsVisible(true);detail(row);}},get snapshot(){return snapshot;}};
+  return {setMap(controller){map=controller;render();if(selected)map.focusRoad(selected);},select(key){const row=snapshot?.rows.find(r=>r.key===key);if(row){if(!roadInCurrentView(row)){document.getElementById('roads-all').checked=true;render();}onOpen();map?.setRoadsVisible(true);detail(row);}},get snapshot(){return snapshot;}};
 }
