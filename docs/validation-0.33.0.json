@@ -1,0 +1,47 @@
+{
+  "release": "0.33.0",
+  "checkedDateLocal": "2026-10-20",
+  "scope": "Public Fresno County waterbody reference footprints and names in F.R.O.G. Waterways \u2014 Dark, retaining original flowline tiles and default Rivers/Reservoirs basemap behavior.",
+  "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/60",
+  "accounting": {
+    "downloaded": 7118,
+    "accepted": 7118,
+    "rejected": 0,
+    "representedAtMaxZoom": 7118,
+    "labelAnchors": 394,
+    "featureTypes": {
+      "Lake": 6971,
+      "Canal": 82,
+      "River": 65
+    },
+    "tileCount": 1031,
+    "tileBytes": 3895160
+  },
+  "automated": {
+    "nodeTests": 318,
+    "failures": 0,
+    "pythonWaterbodyGeometryTests": 2,
+    "privatePublisherContractTests": 18,
+    "syntaxAndPublicConfig": "passed"
+  },
+  "method": {
+    "crs": "Source RFC7946 WGS84 XY; areas EPSG:26944; display EPSG:3857 MVT",
+    "geometry": "Validate polygons, holes, multipart shapes, county intersection and source ID inventory before output. Clip to county envelope for boundary-crossing context. No implicit repair or omitted source records.",
+    "labels": "One interior anchor in largest polygon per normalized name; channel-name duplicates omitted; native collision avoidance retained.",
+    "rendering": "Muted blue reference fills and blue-gray edges beneath roads and channel linework. No operational/hazard status encoded.",
+    "cache": "Separate 1031-tile polygon/name cache; previous 15250 flowline tiles unchanged."
+  },
+  "localBrowser": [
+    "Millerton reference footprint and source name verified in 2D and 3D; channel/canal labels remain readable.",
+    "Pine Flat reservoir footprint and connected Kings River linework verified in 3D through existing Locate behavior.",
+    "Map source note identifies separate waterbody and flowline retrieval dates and reference limitations.",
+    "Basemap gallery retains F.R.O.G. Waterways \u2014 Dark entry; 2D/3D switching retains the reference cache."
+  ],
+  "limits": [
+    "Waterbody footprints are not current shorelines, water levels, predicted inundation or observed flood extent.",
+    "Local ponds/basins may be absent; source includes only waterbody polygons intersecting Fresno County with border-crossing parts retained inside the county envelope.",
+    "No private records, credentials, AGOL items or sharing settings changed."
+  ],
+  "integration": "Merged remote 23147e8 including scenario traffic and phone browser fixes; post-merge regression suite passes.",
+  "rollback": "Redeploy 23147e8, preceding public app content; no data migration."
+}
