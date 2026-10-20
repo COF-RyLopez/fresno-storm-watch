@@ -31,7 +31,7 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
     for(const [label,value] of [['Utility status',`${POWER_STATES[row.status]} · ${row.rawStatus||'No additional status'}`],['Location',row.location],['Utility details',row.details||'Not supplied'],['Customers in this utility record',row.customers===null?'Unknown':row.customers.toLocaleString('en-US')+' (not a county total)'],['Start / potential shutoff',stamp(row.start)],['Published window end',stamp(row.end)],['Estimated restoration',stamp(row.restoration)],['Utility record updated',stamp(row.updated)],['Source retrieved',time(Date.parse(feed.lastSuccess))],['Record identity',row.key]])host.append(el('dt',label),el('dd',value));
     const issues=powerRowIssues(row);if(powerHealth(feed))issues.unshift(powerHealth(feed));for(const issue of issues)host.append(el('p',issue,'power-gap'));
     host.append(el('p','Map locations and areas are approximate. A passed estimate, weather all-clear or disappearance from this feed does not establish restored power. Confirm critical sites with the utility and facility owner.'));
-    host.append(link('Open official utility map',row.official),button('Show on map',()=>{$('power-dialog').removeAttribute('open');onMap();map?.focusPower(row.key);}));
+    host.append(link('Open official utility map',row.official),button('Show on map',()=>{onMap();map?.focusPower(row.key);}));
     $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');
   }
   function render(){

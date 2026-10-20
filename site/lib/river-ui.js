@@ -29,7 +29,7 @@ export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()
     const {gauge:g,assessment:a,station:s}=row;
     host.append(el('h3',g?.name||s.name),el('p',`${s.id} · ${s.basin} · ${s.scopeRole||'Fresno river reach'}`,{class:'muted'}),el('p',`Publisher county label: ${g?.county||s.county}`,{class:'muted'}));
     const zoom=el('calcite-button','Inspect FEMA vicinity',{scale:'s',appearance:'outline',disabled:!map,'icon-start':'extent'});
-    zoom.addEventListener('click',()=>{$('river-dialog').removeAttribute('open');onMap();map?.focusGauge(s.id);});
+    zoom.addEventListener('click',()=>{onMap();map?.focusGauge(s.id);});
     host.append(zoom);
     if(TREND_REACHES.MIL.gauges.includes(s.id)){
       const trends=el('calcite-button','Compare with Millerton releases',{scale:'s',appearance:'outline'});trends.addEventListener('click',()=>onTrends('MIL',s.id));host.append(trends);

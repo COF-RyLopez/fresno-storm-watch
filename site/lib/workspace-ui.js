@@ -1,6 +1,6 @@
 import {WORKSPACES,workspaceRoute} from './workspace-model.js';
 /** One active topic, independent map state, and no persisted operational data. */
-export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{}}={}){
+export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
   let section=workspaceRoute(location.href),panelOpen=true,camerasOpen=false,map=null,syncing=false;
   const cameraStates=new Map(),cameraPanel=$('camera-panel');
@@ -12,8 +12,10 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{}}={}){
     $('tools-shell').toggleAttribute('collapsed',compact.matches&&!panelOpen);
     const covered=compact.matches&&panelOpen;$('planning-workspace').classList.toggle('map-covered',covered);$('planning-workspace').inert=covered;
     $('workspace-list').hidden=!compact.matches;
-    if(dock.matches){$('camera-sheet').removeAttribute('open');if(cameraPanel.parentElement!==$('camera-shell'))$('camera-shell').append(cameraPanel);$('camera-shell').hidden=!camerasOpen;}
+    if(evidence?.isOpen){$('camera-sheet').removeAttribute('open');$('camera-shell').hidden=true;}
+    else if(dock.matches){$('camera-sheet').removeAttribute('open');if(cameraPanel.parentElement!==$('camera-shell'))$('camera-shell').append(cameraPanel);$('camera-shell').hidden=!camerasOpen;}
     else{$('camera-shell').hidden=true;if(cameraPanel.parentElement!==$('camera-sheet-host'))$('camera-sheet-host').append(cameraPanel);$('camera-sheet').toggleAttribute('open',camerasOpen);}
+    evidence?.layout();
     syncing=true;
     for(const title of document.querySelectorAll('[data-workspace]')){title.selected=title.dataset.workspace===section;title.toggleAttribute('selected',title.selected);}
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
@@ -23,11 +25,11 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{}}={}){
     $('scope-label').textContent=section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     $('fit-region').setAttribute('text',compact.matches?'Fit':'Fit workspace');if(!$('map-panel').classList.contains('map-expanded'))$('expand-map').setAttribute('text',compact.matches?'Expand':'Expand map');
   }
-  function setCameras(open){camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
+  function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
   function showPanel(name,{history:push=true}={}){
     name=name==='environment'?'weather':name;if(!WORKSPACES[name])return;
     const changed=name!==section;cameraStates.set(section,camerasOpen);section=name;panelOpen=true;
-    if(changed){for(const id of ['river-dialog','power-dialog','facility-dialog','road-dialog','release-trend-dialog'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
+    if(changed){for(const id of ['river-dialog','power-dialog','facility-dialog','road-dialog','release-trend-dialog','alert-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
     render();if(map)void map.setWorkspace(section);if(changed)onCameraChange(camerasOpen);onActivate(section);
     if(push){const u=new URL(location.href);u.searchParams.set('view',section);u.searchParams.delete('trends');if(u.href!==location.href)window.history.pushState({},'',u);}
   }
@@ -39,8 +41,8 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{}}={}){
   $('view-map').addEventListener('click',showMap);
   $('view-cameras').addEventListener('click',()=>onCameraChange(!camerasOpen));
   document.querySelectorAll('[data-show-map]').forEach(b=>b.addEventListener('click',showMap));
-  $('camera-sheet').addEventListener('calciteSheetClose',()=>{if(!dock.matches&&camerasOpen){setCameras(false);onCameraChange(false);}});
-  compact.addEventListener('change',render);dock.addEventListener('change',render);
+  $('camera-sheet').addEventListener('calciteSheetClose',()=>{if(!dock.matches&&!evidence?.isOpen&&camerasOpen){setCameras(false);onCameraChange(false);}});
+  compact.addEventListener('change',()=>{if(evidence?.isOpen)panelOpen=!compact.matches;render();});dock.addEventListener('change',render);
   render();
-  return {showPanel,showMap,setCameras,setMap(controller){map=controller;void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
+  return {showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
 }

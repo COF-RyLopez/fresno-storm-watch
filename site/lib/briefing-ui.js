@@ -42,11 +42,12 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
   async function show(kind,pageNumber=1,expectedHash=null){
     clearViewer();const request=generation,archive=kind==='archive',doc=snapshot?.document;
     if(expectedHash&&expectedHash!==(archive?ARCHIVE.sha256:doc?.sha256)){
-      $('hanford-dialog').heading='Briefing revision changed';$('hanford-document-note').textContent='The source changed after this summary was displayed. Its page citation cannot be applied to the new PDF. Read the current briefing and request a new summary review.';$('hanford-pdf-status').textContent='Previous summary withheld.';$('hanford-pdf-open').disabled=true;$('hanford-publisher-link').href=HNX_BRIEFING_PAGE;$('hanford-publisher-link').textContent='Current NWS Hanford source';pages=[];pageView();$('hanford-dialog').open=true;return;
+      $('hanford-dialog').heading='Briefing revision changed';$('hanford-dialog').description='Source revision changed · previous summary withheld';$('hanford-preview-health').textContent='Revision changed · source review needed';$('hanford-dialog').querySelector('.briefing-document-details').open=true;$('hanford-document-note').textContent='The source changed after this summary was displayed. Its page citation cannot be applied to the new PDF. Read the current briefing and request a new summary review.';$('hanford-pdf-status').textContent='Previous summary withheld.';$('hanford-pdf-open').disabled=true;$('hanford-publisher-link').href=HNX_BRIEFING_PAGE;$('hanford-publisher-link').textContent='Current NWS Hanford source';pages=[];pageView();$('hanford-dialog').setAttribute('open','');return;
     }
     $('hanford-dialog').heading=archive?'NWS Hanford · October 19 partner slides':'NWS Hanford · public briefing';
+    $('hanford-dialog').description=archive?'October 19, 2026 · static partner briefing':doc?`${state().label} · NWS page updated ${time(doc.sourceUpdatedAt)}`:'Public briefing unavailable · use the NWS source';
     $('hanford-document-note').textContent=archive?'Dated October 19, 2026 · 19 NWS Hanford partner slides · supplied by Fresno County OES. Static archive; read the forecast periods in the slides.':doc?`NWS page updated ${time(doc.sourceUpdatedAt)} · PDF saved ${time(doc.collectedAt)}; source checked ${time(snapshot.lastSuccessAt||doc.collectedAt)}. ${state().label}.`:'No verified public briefing is available.';
-    $('hanford-pdf-status').textContent='Checking the saved PDF…';$('hanford-pdf-open').disabled=true;pages=archive?Array.from({length:19},(_,i)=>({path:`./data/briefing-previews/${ARCHIVE.sha256}/${i+1}.webp`})):(doc?.previews||[]);pageIndex=Math.max(0,Math.min(pages.length-1,Number.isInteger(pageNumber)?pageNumber-1:0));pageView();$('hanford-dialog').open=true;
+    $('hanford-preview-health').textContent='Verifying saved document…';$('hanford-pdf-status').textContent='Checking the saved PDF…';$('hanford-pdf-open').disabled=true;pages=archive?Array.from({length:19},(_,i)=>({path:`./data/briefing-previews/${ARCHIVE.sha256}/${i+1}.webp`})):(doc?.previews||[]);pageIndex=Math.max(0,Math.min(pages.length-1,Number.isInteger(pageNumber)?pageNumber-1:0));pageView();$('hanford-dialog').setAttribute('open','');
     $('hanford-publisher-link').href=archive?HNX_BRIEFING_PAGE:HNX_BRIEFING_PDF;$('hanford-publisher-link').textContent=archive?'NWS Hanford briefing page':'Original NWS public PDF';
     try{
       if(!archive&&!doc)throw new Error('Open the NWS page while the public briefing is unavailable.');
@@ -56,9 +57,9 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
       const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
       if(size!==expected.bytes||hash!==expected.sha256)throw new Error('The PDF does not match its saved revision. Check the briefing again or use NWS directly.');
       if(request!==generation)return;pdfBlob=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));$('hanford-pdf-open').href=pdfBlob;$('hanford-pdf-open').disabled=false;
-      $('hanford-pdf-status').textContent=pages.length?'PDF revision verified. Page previews retain the original content; open the PDF for full resolution and its text layer.':'PDF revision verified. Page previews unavailable; open the PDF or original NWS source.';
+      $('hanford-preview-health').textContent='Verified saved document · static page preview';$('hanford-pdf-status').textContent=pages.length?'PDF revision verified. Page previews retain the original content; open the PDF for full resolution and its text layer.':'PDF revision verified. Page previews unavailable; open the PDF or original NWS source.';
       if(!archive){updated=false;render();}
-    }catch(e){if(request===generation)$('hanford-pdf-status').textContent=`PDF unavailable · ${e.message}`;}
+    }catch(e){if(request===generation){$('hanford-pdf-status').textContent=`PDF unavailable · ${e.message}`;$('hanford-preview-health').textContent='Document verification failed · open source details';}}
   }
   async function refresh(){
     if(busy||exercise||document.hidden)return;busy=true;render();
@@ -67,9 +68,9 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
     if(!initialLinkHandled){const requested=new URLSearchParams(location.search).get('briefing');initialLinkHandled=true;if(requested==='latest')void show('latest');else if(requested==='2026-10-19')void show('archive');}
   }
   $('hanford-page-before').onclick=()=>{if(pageIndex>0){pageIndex--;pageView();$('hanford-page-controls').scrollIntoView({block:'start'});}};$('hanford-page-after').onclick=()=>{if(pageIndex<pages.length-1){pageIndex++;pageView();$('hanford-page-controls').scrollIntoView({block:'start'});}};
-  $('hanford-page-image').onerror=()=>{$('hanford-pdf-status').textContent='Page preview unavailable. Use the verified PDF or the original NWS source.';};
+  $('hanford-page-image').onerror=()=>{$('hanford-preview-health').textContent='Page preview unavailable · open source details';$('hanford-pdf-status').textContent='Page preview unavailable. Use the verified PDF or the original NWS source.';};
   $('hanford-briefing-open').onclick=()=>void show('latest');
-  $('hanford-dialog').addEventListener('calciteDialogClose',()=>{clearViewer();const u=new URL(location.href);if(u.searchParams.has('briefing')){u.searchParams.delete('briefing');history.replaceState({},'',u);}});
+  $('hanford-dialog').addEventListener('stormEvidenceClose',()=>{clearViewer();const u=new URL(location.href);if(u.searchParams.has('briefing')){u.searchParams.delete('briefing');history.replaceState({},'',u);}});
   setInterval(()=>{if(!document.hidden){render();void refresh();}},60_000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('online',()=>void refresh());
   render();void refresh();return {open:show};

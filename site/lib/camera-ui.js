@@ -11,7 +11,7 @@ function el(tag,text='',attrs={}) {const n=document.createElement(tag);n.textCon
 export async function createCameraWatch({config,timeZone,exercise,onGauge,initialOpen=true,onOpenChange=()=>{},onMap=()=>{}}) {
   let selection=[],cameras=[],selected=null,map=null,open=initialOpen,busy=false,feedError=null,lastCheck=null;
   let feedTimer,imageTimer,imageController,objectUrl=null,imageState=null,imageGeneration=0,nextImage=0;
-  let imageBusy=false,videoActive=false;
+  let imageBusy=false,videoActive=false,suspended=false;
   let listSignature='';
   const time=value=>formatTime(value??null,timeZone);
   const current=()=>cameras.find(c=>c.id===selected);
@@ -63,7 +63,7 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
   };
   const refreshImage=async()=>{
     const c=current();clearTimeout(imageTimer);
-    if(!c||!open||document.hidden||exercise||!available(c).usable||!c.imageUrl||imageBusy)return;
+    if(!c||!open||suspended||document.hidden||exercise||!available(c).usable||!c.imageUrl||imageBusy)return;
     imageBusy=true;const token=++imageGeneration,controller=new AbortController();imageController=controller;
     const timeout=setTimeout(()=>controller.abort(),config.requestTimeoutMs);paint();
     let candidateUrl;
@@ -85,7 +85,7 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
     }finally{
       clearTimeout(timeout);
       if(token===imageGeneration){imageController=null;imageBusy=false;nextImage=Date.now()+Math.max(config.imagePollMs,c.imageIntervalMs||0);paint();
-        if(open&&!document.hidden)imageTimer=setTimeout(()=>void refreshImage(),Math.max(config.imagePollMs,c.imageIntervalMs||0));}
+        if(open&&!suspended&&!document.hidden)imageTimer=setTimeout(()=>void refreshImage(),Math.max(config.imagePollMs,c.imageIntervalMs||0));}
     }
   };
   const select=id=>{
@@ -106,13 +106,13 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
     finally{clearTimeout(timeout);busy=false;paint();if(!document.hidden)feedTimer=setTimeout(()=>void refreshCatalog(),config.pollMs);}
     void refreshImage();
   };
-  const setOpen=value=>{
-    open=value;onOpenChange(open);
+  const setOpen=(value,{notify=true}={})=>{
+    open=value;if(notify)onOpenChange(open);
     $('toggle-cameras').setAttribute('aria-pressed',String(open));$('toggle-cameras').textContent=open?'Hide cameras':'Show cameras';
     if(!open){clearTimeout(imageTimer);imageGeneration++;imageController?.abort();imageBusy=false;video.stop('Video stopped · camera panel closed');}
     else {if(!videoActive)video.stop('Video is on demand');void refreshImage();}
   };
-  $('toggle-cameras').addEventListener('click',()=>setOpen(!open));
+  $('toggle-cameras').addEventListener('click',()=>setOpen(suspended?true:!open));
   $('camera-close').addEventListener('click',()=>setOpen(false));
   $('camera-catalog-refresh').addEventListener('click',()=>void refreshCatalog());
   $('camera-refresh').addEventListener('click',()=>void refreshImage());
@@ -139,5 +139,5 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
     if(!exercise){cameras=selection.map(s=>({...s,checked:null,inService:null,error:'Waiting for live catalog'}));selected=cameras[0]?.id||null;void refreshCatalog();}
     paint();
   }catch(error){$('camera-feed-status').textContent=error.message;}
-  return {setMap:controller=>{map=controller;paint();map.selectCamera(selected);},select:id=>{setOpen(true);select(id);},setOpen};
+  return {setMap:controller=>{map=controller;paint();map.selectCamera(selected);},select:id=>{setOpen(true);select(id);},setOpen,setSuspended(value){suspended=!!value;$('toggle-cameras').textContent=suspended?'Show cameras':open?'Hide cameras':'Show cameras';if(suspended){clearTimeout(imageTimer);imageGeneration++;imageController?.abort();imageBusy=false;video.stop('Video stopped · supporting evidence is open');}else if(open&&!document.hidden)void refreshImage();}};
 }

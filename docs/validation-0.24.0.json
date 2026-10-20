@@ -1,0 +1,50 @@
+{
+  "release": "0.24.0",
+  "checked": "2026-10-19",
+  "scope": "Nonmodal supporting evidence in the public map app. No new AGOL items, permissions, source edits, data exports, persistence or hazard rules.",
+  "presentation": {
+    "wide": "Calcite Shell Panel in dock mode at the right; one active evidence panel. Map remains interactive.",
+    "phone": "Evidence below the map in the existing main workspace, without a modal backdrop or focus trap. Resize reparents the existing DOM.",
+    "briefings": "Page controls stay visible above the image. Date / archive or current-public qualification and verification health remain visible; full source metadata is expandable. Original page and PDF links retained.",
+    "mapFeatures": "MapView / SceneView native popups disabled; existing record callbacks retain priority, other publisher templates render through arcgis-feature from the same SDK 5.1 CDN loader.",
+    "cameras": "Images / video pause while evidence is open; explicit camera selection replaces evidence. Existing camera choice can restore on close; no automatic video playback."
+  },
+  "cleanup": [
+    "One active evidence item; superseded opening requests cannot reopen withdrawn items.",
+    "Closing or replacing a briefing aborts pending PDF checks and revokes the Blob URL.",
+    "County-site inspector cleanup uses pane-close events; existing sign-out code still clears private source records and closes their panels.",
+    "Closing generic map evidence clears graphic, map and view references and destroys its feature component; delayed loads are invalidated.",
+    "Removed alerts close their evidence; selecting or closing evidence does not acknowledge or clear hazard notifications."
+  ],
+  "automated": {
+    "javascriptTests": 259,
+    "syntaxSourceGeometryLinksPublicConfig": "Passed",
+    "newCases": [
+      "Docked markup without application data dialogs",
+      "Exclusive evidence and source cleanup",
+      "Live refresh does not steal focus",
+      "Withdrawn asynchronous openings",
+      "Access-removal close / cleanup",
+      "Mobile reparenting preserves panel state",
+      "Idempotent close and keyboard focus",
+      "Map-tool expanded-state synchronization"
+    ]
+  },
+  "browserLocal": [
+    "Briefing beside live map, page navigation and map zoom together",
+    "Publisher wind feature content in the pane without a native popup",
+    "Existing 2023 road record retains verification-needed status and missing-field qualifications",
+    "Release and downstream gauge charts in a single scrolling column",
+    "Phone direct link opens map plus briefing; 390x844 and 1280x720 layouts; desktop viewport restored",
+    "Camera -> source-health -> camera restoration",
+    "Fictional alert selection opens evidence; empty-source exercise closes the removed selection",
+    "Map tools docked; Escape closes the pane; 3D terrain and briefing coexist"
+  ],
+  "limitations": [
+    "Map and evidence share available screen space; phones use a smaller map and scrollable evidence.",
+    "Actual ArcGIS authorization screens remain controlled by the SDK / identity provider. No authentication behavior changed.",
+    "Named-account / partner acceptance and AGOL permissions remain existing prerequisites, not newly certified by UI tests."
+  ],
+  "publishedProof": "Deployment and anonymous screenshots saved under ignored work/qa-0.24.0 after Pages succeeds.",
+  "rollback": "Redeploy b1982d24994f0f6268e7faffe924ff19e2f5698d (0.23.0), unless a newer unrelated main commit needs to be retained; no migration."
+}

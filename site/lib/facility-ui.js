@@ -25,7 +25,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     if(!row.matches.length)host.append(el('p','No current published polygon overlap. Point-only outages, missing footprints and feed failures can leave impacts undetected. This does not establish site power.'));
     for(const m of row.matches){const p=el('section','','facility-evidence');p.append(el('strong',`${m.utility} · ${POWER_STATES[m.status]}`),el('p',m.name),el('p',`Utility record updated ${m.updated?.time?time(m.updated.time):m.updated?.text||'Not supplied'}`),el('p',`Potential start ${m.start?.time?time(m.start.time):m.start?.text||'Not supplied'}`));if(m.health)p.append(el('p',m.health,'power-gap'));for(const issue of m.issues)p.append(el('p',issue,'power-gap'));const a=el('a','Official utility map');a.href=m.official;a.target='_blank';a.rel='noopener noreferrer';p.append(a);host.append(p);}
     for(const note of row.notes)host.append(el('p',note,'power-gap'));
-    host.append(el('h3','Requested follow-up'),el('p',row.next),el('p','Confirm generator connection and capacity, fuel/refueling, access and the facility mission with its owner before prepositioning. A listed shelter is not necessarily open or approved for use.'),button('Show site on map',()=>{$('facility-dialog').removeAttribute('open');onMap();map?.focusFacility(s.key);}));
+    host.append(el('h3','Requested follow-up'),el('p',row.next),el('p','Confirm generator connection and capacity, fuel/refueling, access and the facility mission with its owner before prepositioning. A listed shelter is not necessarily open or approved for use.'),button('Show site on map',()=>{onMap();map?.focusFacility(s.key);}));
     const eoc=el('a','Open private EOC workspace to record verification / assignment');eoc.href=exercise?'./eoc.html?exercise=1':'./eoc.html';host.append(eoc,el('small','The link does not submit a report or assign resources. This site review has no write access to the county asset layer.'));
     $('facility-dialog').setAttribute('heading',s.name);$('facility-dialog').setAttribute('open','');
   }
@@ -99,7 +99,7 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
     catch(error){$('facility-setup-message').textContent=error.message;}
   };
   $('facility-refresh').onclick=()=>void refresh();$('facility-filter').addEventListener('calciteSelectChange',render);$('facility-map-toggle').addEventListener('calciteCheckboxChange',()=>{map?.setLayerPreference('facilities',$('facility-map-toggle').checked);render();});
-  $('facility-connect-dialog').addEventListener('calciteDialogClose',clearInspector);
+  $('facility-connect-dialog').addEventListener('stormEvidenceClose',clearInspector);
   setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!document.hidden)render();},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('pagehide',()=>{session=null;clear();});
   render();

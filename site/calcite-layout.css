@@ -417,3 +417,29 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 .inundation-clock{font-variant-numeric:tabular-nums;font-weight:600;min-width:112px;}
 .inundation-player calcite-slider{flex:1;min-width:140px;}
 .inundation-player calcite-select{width:84px;}
+
+/* Supporting evidence occupies layout space; it never dims or floats over the map. */
+#evidence-shell{--calcite-shell-panel-width:clamp(360px,34vw,620px);--calcite-shell-panel-max-width:50vw;}
+#evidence-host,#evidence-mobile-host{height:100%;min-height:0;min-width:0;overflow:hidden;}
+#evidence-host>[data-evidence]{height:100%;min-height:0;--calcite-panel-space:16px;--calcite-panel-footer-space:8px 16px;}
+[data-evidence]:not([open]){display:none!important;}
+[data-evidence] p{font-size:13px;line-height:1.6;margin-bottom:12px;overflow-wrap:anywhere;}
+[data-evidence] .popover-options{max-height:none;padding:0;}
+[data-evidence] dl{font-size:13px;line-height:1.6;}
+[data-evidence] dd{margin-inline-start:0;overflow-wrap:anywhere;}
+#hanford-page-image{display:block;width:100%;height:auto;}
+#hanford-page-controls{margin:0;padding:0;justify-content:space-between;}
+.briefing-document-details{margin-block:12px;font-size:13px;line-height:1.6;}
+.briefing-document-details>summary{cursor:pointer;color:var(--calcite-color-text-link);margin-block-end:12px;}
+#release-trend-dialog .release-trend-columns{grid-template-columns:minmax(0,1fr);gap:16px;}
+#release-trend-dialog .trend-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;}
+#release-trend-dialog .trend-controls calcite-label:nth-child(2){grid-column:1/-1;order:1;}
+#map-feature-content{min-width:0;overflow-wrap:anywhere;}
+@media(max-width:900px){
+  #planning-workspace.evidence-stacked{display:grid;grid-template-rows:minmax(150px,1fr) minmax(210px,48%);}
+  #planning-workspace.evidence-stacked>#map-panel{height:100%;min-height:0;}
+  #evidence-mobile-host{border-block-start:2px solid var(--calcite-color-border-1);}
+  #evidence-host>[data-evidence]{--calcite-panel-space:12px;}
+  #planning-workspace.evidence-stacked .map-toolbar-stack{max-height:18cqh;}
+  #planning-workspace.evidence-stacked .legend-stack{max-height:12cqh;}
+}

@@ -14,7 +14,7 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   const sdk = await loadSdk();
@@ -112,7 +112,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const scopeExtent=()=>mapScope==='fresno'?fresnoView.extent:mapScope==='weather'?weatherExtent:regionView;
   const mapView = new MapView({ container: 'map', map, center: [-119.6, 36.8], zoom: 7,
     padding: { top: 12, right: 12, bottom: 32, left: 12 },
-    constraints: { rotationEnabled: false, minZoom: 5, snapToZoom: false }, popupEnabled: true,
+    constraints: { rotationEnabled: false, minZoom: 5, snapToZoom: false }, popupEnabled: false,
     popup: { dockEnabled: true, dockOptions: { position: 'bottom-right', buttonEnabled: false, breakpoint: false } },
     attributionVisible: true, ui: { components: ['zoom'] } });
   let view=mapView, sceneView=null, modeBusy=false, terrain=null, terrainError=false;
@@ -209,7 +209,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }));
     targetView.on('click',async event=>{
       try{
-        const hit=await targetView.hitTest(event,{include:[briefingContext,facilities,cameras,gauges,roads,power,alertLayer,areaLayer].filter(l=>l.visible)});
+        const version=workspaceVersion,hit=await targetView.hitTest(event);
+        if(view!==targetView||version!==workspaceVersion)return;
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
@@ -222,7 +223,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         const powerKey=hit.results.find(r=>r.graphic?.attributes?.powerKey)?.graphic.attributes.powerKey;
         if(powerKey){onPowerSelect(powerKey);return;}
         const key=hit.results.find(r=>r.graphic?.attributes?.alertKey)?.graphic.attributes.alertKey;
-        if(key)onSelect(key);
+        if(key){onSelect(key);return;}
+        const seen=new Set(),graphics=hit.results.filter(r=>r.graphic?.layer?.popupEnabled!==false&&(r.graphic?.popupTemplate||r.graphic?.layer?.popupTemplate)).map(r=>r.graphic).filter(g=>{const id=`${g.layer?.uid}:${g.getObjectId?.()??g.uid}`;if(seen.has(id))return false;seen.add(id);return true;});
+        if(graphics.length)onFeatureSelect({graphics,view:targetView});
       }catch{const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map selection unavailable; select a record in the list.';}
     });
   };
@@ -243,7 +246,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     syncVisibility();
   };
   const switchMode=async mode=>{
-    if(mode===view.type)return;modeBusy=true;
+    if(mode===view.type)return;modeBusy=true;onFeatureSelect(null);
     for(const m of ['2d','3d'])document.querySelector(`#mode-${m}`).setAttribute('disabled','');
     const previous=view, originalViewpoint=view.viewpoint.clone(), viewpoint=originalViewpoint.clone();
     const status=document.querySelector('#map-status');status.hidden=false;status.textContent=`Opening ${mode==='3d'?'3D terrain':'2D map'}…`;
@@ -255,7 +258,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         void terrain.load().catch(()=>{terrainError=true;modeStatus();});
         sceneView=new SceneView({map,container:null,qualityProfile:'medium',viewingMode:'global',
           environment:{lighting:{type:'virtual'},atmosphereEnabled:false,starsEnabled:false},
-          popup:{dockEnabled:true,dockOptions:{position:'bottom-right',buttonEnabled:false,breakpoint:false}},
+          popupEnabled:false,popup:{dockEnabled:true,dockOptions:{position:'bottom-right',buttonEnabled:false,breakpoint:false}},
           ui:{components:['zoom','compass','navigation-toggle']}});
         bindView(sceneView);
       }
@@ -301,7 +304,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   function setWorkspace(id){
     if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
     if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
-    activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();
+    activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
     mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
     drawGauges();drawPower();drawAreas();syncControls();
     transition=transition.catch(()=>{}).then(async()=>{
@@ -359,7 +362,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     },
     addEnvironmentLayers:(overlays,reservoirs)=>{map.addMany(overlays,1);map.add(reservoirs);},
     onViewChanged:listener=>{viewListeners.add(listener);},
-    clearEnvironmentPopup:()=>view.closePopup(),
+    clearEnvironmentPopup:()=>{view.closePopup();onFeatureSelect(null);},
     focusEnvironment:(longitude,latitude)=>{followRegion=false;return focusNavigate({center:[longitude,latitude],scale:90_000,...(view.type==='3d'?{tilt:50,heading:0}:{})});},
     fitEnvironment:()=>{followRegion=false;return navigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
     focusPlanningPoints:points=>{if(!points.length)return;followRegion=false;const xs=points.map(p=>p.longitude),ys=points.map(p=>p.latitude);return focusNavigate(geographicTarget({xmin:Math.min(...xs)-0.04,ymin:Math.min(...ys)-0.04,xmax:Math.max(...xs)+0.04,ymax:Math.max(...ys)+0.04}));},

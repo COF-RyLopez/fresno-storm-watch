@@ -1,21 +1,22 @@
+import {createEvidencePane} from './lib/evidence-ui.js';
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js';
-import { createMap } from './lib/map.js?v=0.23.0';
+import { createMap } from './lib/map.js?v=0.24.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
-import { createRiverWatch } from './lib/river-ui.js?v=0.19.0';
-import { createCameraWatch } from './lib/camera-ui.js?v=0.19.0';
+import { createRiverWatch } from './lib/river-ui.js?v=0.24.0';
+import { createCameraWatch } from './lib/camera-ui.js?v=0.24.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.23.0';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.22.0';
-import { createWorkspace } from './lib/workspace-ui.js?v=0.19.0-r3';
+import { createWorkspace } from './lib/workspace-ui.js?v=0.24.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
-import { createPowerWatch } from './lib/power-ui.js?v=0.19.0';
-import { createFacilityWatch } from './lib/facility-ui.js?v=0.22.0';
+import { createPowerWatch } from './lib/power-ui.js?v=0.24.0';
+import { createFacilityWatch } from './lib/facility-ui.js?v=0.24.0';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.22.0';
-import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.23.0';
+import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.24.0';
 import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.23.0';
 import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.22.0';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
@@ -41,7 +42,8 @@ let latestPlanningPower=null;
 let roads;
 let planningExerciseEntries=null;
 let riverView=true;
-const workspace=createWorkspace({onCameraChange:open=>cameras?.setOpen(open)});
+const evidence=createEvidencePane({timeZone:CONFIG.timeZone,onChange:open=>{if(open)workspace.showMap();else workspace.refreshLayout();cameras?.setSuspended(open);}});
+const workspace=createWorkspace({evidence,onCameraChange:open=>cameras?.setOpen(open)});
 
 /** Topic selection never alters source queries or countywide counts. */
 function renderScope(){/* The workspace controller owns map and scope headings. */}
@@ -66,7 +68,7 @@ environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.ti
 briefingLayers=createBriefingLayers({timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onStart:()=>environment.selectOverlay('off',false),onStop:()=>environment.selectOverlay('radar',false),onBriefing:(...args)=>briefings.open(...args)});
 
 void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onTrends:(id,gauge)=>{openReservoirs();releaseTrends.open(id,gauge);},onData:data=>{planning.setRiverData(data);releaseTrends.setRiverData(data);}}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
-void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen);if(map)cameras.setMap(map);});
+void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen,{notify:false});cameras.setSuspended(evidence.isOpen);if(map)cameras.setMap(map);});
 
 /** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Publisher values are always text, never HTML. */
 function element(tag, text = '', className = '') {
@@ -160,6 +162,7 @@ function selectAlert(key) {
   selectedKey = key;
   for (const item of $('alert-list').querySelectorAll('calcite-list-item')) item.toggleAttribute('selected', item.getAttribute('value') === key);
   renderDetail();
+  if(state.alerts.some(a=>a.key===key))$('alert-evidence').setAttribute('open','');
   map?.select(state.alerts.find(a => a.key === key));
 }
 
@@ -168,7 +171,9 @@ function renderDetail() {
   const alert = state.alerts.find(a => a.key === selectedKey);
   const host = $('alert-detail');
   host.replaceChildren();
+  $('alert-detail-open').disabled=!alert;
   if (!alert) {
+    $('alert-evidence').removeAttribute('open');
     host.append(element('p', 'Select an alert to see its NWS issue time, expiration and official source.', 'muted'));
     return;
   }
@@ -212,6 +217,7 @@ async function refresh() {
 }
 
 $('refresh').addEventListener('click', () => void refresh());
+$('alert-detail-open').addEventListener('click',()=>selectAlert(selectedKey));
 $('clear-notice').addEventListener('click', () => { state = clearNotice(state); renderBanner(); renderList(); });
 $('fit-region').addEventListener('click', () => map?.fit());
 $('alert-filter').addEventListener('calciteSelectChange', event => { filter = event.target.value; renderList(); });
@@ -219,10 +225,10 @@ $('alert-list').addEventListener('calciteListChange', event => {
   const key = event.target.selectedItems?.[0]?.value;
   if (key && key !== selectedKey) selectAlert(key);
 });
-document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => button.closest('calcite-dialog').removeAttribute('open')));
+document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => button.closest('[data-evidence],calcite-dialog').removeAttribute('open')));
 $('about').addEventListener('click', () => $('sources-dialog').setAttribute('open', ''));
 const interfaceTimeout = setTimeout(() => { $('interface-status').hidden = false; }, 15_000);
-void Promise.all(['calcite-shell','calcite-shell-panel','calcite-action-bar','calcite-block','calcite-notice','calcite-panel','calcite-list','calcite-select','calcite-dialog','calcite-button','calcite-action'].map(name => customElements.whenDefined(name))).then(() => { clearTimeout(interfaceTimeout); $('interface-status').hidden = true; });
+void Promise.all(['calcite-shell','calcite-shell-panel','calcite-action-bar','calcite-block','calcite-notice','calcite-panel','calcite-list','calcite-select','calcite-button','calcite-action'].map(name => customElements.whenDefined(name))).then(() => { clearTimeout(interfaceTimeout); $('interface-status').hidden = true; });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && (!state.lastSuccess || Date.now() >= (nextCheck ?? 0))) void refresh();
 });
@@ -257,7 +263,7 @@ try {
   void refresh();
   power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);}).then(controller => {
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures).then(controller => {
     map = controller;
 
     rivers?.setMap(map);
