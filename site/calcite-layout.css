@@ -429,6 +429,14 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 [data-evidence] dd{margin-inline-start:0;overflow-wrap:anywhere;}
 #hanford-page-image{display:block;width:100%;height:auto;}
 #hanford-page-controls{margin:0;padding:0;justify-content:space-between;}
+.hanford-pinned{display:flex;flex-direction:column;min-width:0;width:100%;}
+.hanford-live-context{padding:8px 12px;border-block-end:1px solid var(--calcite-color-border-2);background:var(--calcite-color-surface-1);max-height:32dvh;overflow:auto;}
+.hanford-live-context p{font-size:11px;line-height:1.4;margin-block:6px;}
+.hanford-live-context calcite-label{font-size:12px;margin-block-end:4px;}
+.hanford-live-context .briefing-layer-symbols span{font-size:11px;}
+#basemap-gallery-host{min-height:120px;}
+#basemap-gallery-host arcgis-basemap-gallery{display:block;width:100%;}
+#basemap-gallery-status{font-size:12px;line-height:1.5;}
 .briefing-document-details{margin-block:12px;font-size:13px;line-height:1.6;}
 .briefing-document-details>summary{cursor:pointer;color:var(--calcite-color-text-link);margin-block-end:12px;}
 #release-trend-dialog .release-trend-columns{grid-template-columns:minmax(0,1fr);gap:16px;}
@@ -438,6 +446,8 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 @container(max-width:520px){#scope-note{display:none;}}
 @media(max-width:900px){
   #planning-workspace.evidence-stacked{display:grid;grid-template-rows:minmax(150px,1fr) minmax(210px,48%);}
+  #planning-workspace.evidence-stacked:has(#hanford-dialog[open]){grid-template-rows:minmax(150px,1fr) minmax(210px,58%);}
+  .hanford-live-context{max-height:21dvh;}
   #planning-workspace.evidence-stacked>#map-panel{height:100%;min-height:0;}
   #evidence-mobile-host{border-block-start:2px solid var(--calcite-color-border-1);}
   #evidence-host>[data-evidence]{--calcite-panel-space:12px;}

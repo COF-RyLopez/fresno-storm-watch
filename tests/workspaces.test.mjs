@@ -10,9 +10,9 @@ test('seven focused defaults never start with an unrelated operational stack',()
   for(const id of Object.keys(WORKSPACES)){const s=workspaceDefaults(id);assert.equal(s.mode,'2d');assert.equal(s.imagery,false);assert.equal(s.cameras,false);assert.equal(s.layers.fema,false);assert.equal(s.layers.buildings,false);}
 });
 test('saved tab preferences and viewpoints are isolated, remembered in memory, and reset for a new page',()=>{
-  const m=workspaceMemory();m.activate('roads');const r=m.get('roads');r.imagery=true;r.mode='3d';r.viewpoint={scale:22000};r.layers.power=true;
-  m.activate('weather');assert.equal(m.get('weather').imagery,false);assert.equal(m.get('weather').layers.power,false);assert.equal(m.get('weather').viewpoint,null);
-  m.activate('roads');assert.equal(m.get('roads'),r);assert.equal(m.get('roads').viewpoint.scale,22000);assert.equal(workspaceMemory().get('roads').imagery,false);assert.throws(()=>m.get('unknown'));
+  const m=workspaceMemory();m.activate('roads');const r=m.get('roads');r.basemap='imagery';r.imagery=true;r.mode='3d';r.viewpoint={scale:22000};r.layers.power=true;
+  m.activate('weather');assert.equal(m.get('weather').basemap,'dark');assert.equal(m.get('weather').imagery,false);assert.equal(m.get('weather').layers.power,false);assert.equal(m.get('weather').viewpoint,null);
+  m.activate('roads');assert.equal(m.get('roads'),r);assert.equal(m.get('roads').basemap,'imagery');assert.equal(m.get('roads').viewpoint.scale,22000);assert.equal(workspaceMemory().get('roads').basemap,'dark');assert.equal(workspaceMemory().get('roads').imagery,false);assert.throws(()=>m.get('unknown'));
 });
 test('eligibility refreshes cannot expose another topic and cannot override a failed selected layer',()=>{
   const weather=workspaceDefaults('weather');for(let i=0;i<3;i++)assert.equal(layerVisible(weather,'roads',true),false);

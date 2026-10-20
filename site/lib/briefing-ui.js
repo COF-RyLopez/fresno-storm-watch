@@ -8,9 +8,11 @@ const ARCHIVE=PARTNER_BRIEFING;
 /** @param {string} tag @param {string} text @returns {HTMLElement} All source metadata is displayed as text. */
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Public documents only; update markers live in memory and are not team acknowledgements. */
-export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},onImpacts=()=>{},onMapTour=()=>{}}){
+export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},onImpacts=()=>{},onMapTour=()=>{},onSlide=()=>{}}){
   let snapshot=null,error=null,busy=false,baseline=null,updated=false,pdfBlob=null,generation=0,initialLinkHandled=false,pages=[],pageIndex=0,pdfController=null;
   const time=t=>formatTime(Number.isFinite(Date.parse(t))?Date.parse(t):null,timeZone),state=()=>briefingState(error?{...snapshot,error}:snapshot);
+  let currentDocument=null,follow=true;
+  function announceSlide(){onSlide(currentDocument?{...currentDocument,page:pageIndex+1,follow}:null);}
   const impacts=createBriefingImpactView({exercise,onOpen:(...args)=>void show(...args),onData:onImpacts});
   const cardViews=new WeakMap();
   function cardView(host){
@@ -37,10 +39,11 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
     onUpdate(updated);
     impacts.update(error?{...snapshot,error}:snapshot);
   }
-  function clearViewer(){generation++;pdfController?.abort();pdfController=null;$('hanford-page-image').removeAttribute('src');$('hanford-pdf-open').removeAttribute('href');if(pdfBlob)URL.revokeObjectURL(pdfBlob);pdfBlob=null;}
-  function pageView(){const page=pages[pageIndex];$('hanford-page-image').hidden=!page;$('hanford-page-controls').hidden=!pages.length;$('hanford-page-label').textContent=`Page ${pageIndex+1} of ${pages.length}`;$('hanford-page-before').disabled=pageIndex===0;$('hanford-page-after').disabled=pageIndex>=pages.length-1;if(page){$('hanford-page-image').src=page.path;$('hanford-page-open').href=page.path;$('hanford-page-image').alt=`NWS Hanford briefing · page ${pageIndex+1} of ${pages.length}. Open the PDF for its text layer and full resolution.`;}}
+  function clearViewer(){generation++;pdfController?.abort();pdfController=null;currentDocument=null;announceSlide();$('hanford-page-image').removeAttribute('src');$('hanford-pdf-open').removeAttribute('href');if(pdfBlob)URL.revokeObjectURL(pdfBlob);pdfBlob=null;}
+  function pageView(){const page=pages[pageIndex];$('hanford-page-image').hidden=!page;$('hanford-page-controls').hidden=!pages.length;$('hanford-page-label').textContent=`Page ${pageIndex+1} of ${pages.length}`;$('hanford-page-before').disabled=pageIndex===0;$('hanford-page-after').disabled=pageIndex>=pages.length-1;if(page){$('hanford-page-image').src=page.path;$('hanford-page-open').href=page.path;$('hanford-page-image').alt=`NWS Hanford briefing · page ${pageIndex+1} of ${pages.length}. Open the PDF for its text layer and full resolution.`;if(currentDocument){const u=new URL(location.href);u.searchParams.set('briefing',currentDocument.kind==='archive'?'2026-10-19':'latest');u.searchParams.set('briefingPage',String(pageIndex+1));history.replaceState({},'',u);}}announceSlide();}
   async function show(kind,pageNumber=1,expectedHash=null){
     clearViewer();const request=generation,archive=kind==='archive',doc=snapshot?.document;
+    currentDocument={kind:archive?'archive':'latest',sha256:archive?ARCHIVE.sha256:doc?.sha256,verified:false};
     if(expectedHash&&expectedHash!==(archive?ARCHIVE.sha256:doc?.sha256)){
       $('hanford-dialog').heading='Briefing revision changed';$('hanford-dialog').description='Source revision changed · previous summary withheld';$('hanford-preview-health').textContent='Revision changed · source review needed';$('hanford-dialog').querySelector('.briefing-document-details').open=true;$('hanford-document-note').textContent='The source changed after this summary was displayed. Its page citation cannot be applied to the new PDF. Read the current briefing and request a new summary review.';$('hanford-pdf-status').textContent='Previous summary withheld.';$('hanford-pdf-open').disabled=true;$('hanford-publisher-link').href=HNX_BRIEFING_PAGE;$('hanford-publisher-link').textContent='Current NWS Hanford source';pages=[];pageView();$('hanford-dialog').setAttribute('open','');return;
     }
@@ -58,6 +61,7 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
       if(size!==expected.bytes||hash!==expected.sha256)throw new Error('The PDF does not match its saved revision. Check the briefing again or use NWS directly.');
       if(request!==generation)return;pdfBlob=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));$('hanford-pdf-open').href=pdfBlob;$('hanford-pdf-open').disabled=false;
       $('hanford-preview-health').textContent='Verified saved document · static page preview';$('hanford-pdf-status').textContent=pages.length?'PDF revision verified. Page previews retain the original content; open the PDF for full resolution and its text layer.':'PDF revision verified. Page previews unavailable; open the PDF or original NWS source.';
+      currentDocument.verified=true;announceSlide();
       if(!archive){updated=false;render();}
     }catch(e){if(request===generation){$('hanford-pdf-status').textContent=`PDF unavailable · ${e.message}`;$('hanford-preview-health').textContent='Document verification failed · open source details';}}
   }
@@ -65,13 +69,16 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
     if(busy||exercise||document.hidden)return;busy=true;render();
     try{const r=await fetch('./data/hanford-briefing.json?check='+Date.now(),{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(15_000)});if(!r.ok)throw new Error(`Briefing metadata HTTP ${r.status}`);const next=validateBriefingSnapshot(await r.json());if(next.document){if(baseline&&baseline!==next.document.sha256)updated=true;baseline=next.document.sha256;}snapshot=next;error=null;
     }catch(e){error=e.message;}finally{busy=false;render();}
-    if(!initialLinkHandled){const requested=new URLSearchParams(location.search).get('briefing');initialLinkHandled=true;if(requested==='latest')void show('latest');else if(requested==='2026-10-19')void show('archive');}
+    if(!initialLinkHandled){const q=new URLSearchParams(location.search),requested=q.get('briefing'),page=Number(q.get('briefingPage')||1);initialLinkHandled=true;if(requested==='latest')void show('latest',page);else if(requested==='2026-10-19')void show('archive',page);}
   }
   $('hanford-page-before').onclick=()=>{if(pageIndex>0){pageIndex--;pageView();$('hanford-page-controls').scrollIntoView({block:'start'});}};$('hanford-page-after').onclick=()=>{if(pageIndex<pages.length-1){pageIndex++;pageView();$('hanford-page-controls').scrollIntoView({block:'start'});}};
   $('hanford-page-image').onerror=()=>{$('hanford-preview-health').textContent='Page preview unavailable · open source details';$('hanford-pdf-status').textContent='Page preview unavailable. Use the verified PDF or the original NWS source.';};
   $('hanford-briefing-open').onclick=()=>void show('latest');
-  $('hanford-dialog').addEventListener('stormEvidenceClose',()=>{clearViewer();const u=new URL(location.href);if(u.searchParams.has('briefing')){u.searchParams.delete('briefing');history.replaceState({},'',u);}});
+  $('hanford-dialog').addEventListener('stormEvidenceClose',()=>{clearViewer();const u=new URL(location.href);if(u.searchParams.has('briefing')){u.searchParams.delete('briefing');u.searchParams.delete('briefingPage');history.replaceState({},'',u);}});
+  function setFollow(value){follow=!!value;$('hanford-follow-slides').checked=follow;announceSlide();}
+  $('hanford-follow-slides').addEventListener('calciteCheckboxChange',e=>setFollow(e.target.checked));
+  window.addEventListener('popstate',()=>{if(!currentDocument||!$('hanford-dialog').hasAttribute('open'))return;const q=new URLSearchParams(location.search),kind=currentDocument.kind==='archive'?'2026-10-19':'latest',requested=Number(q.get('briefingPage'));if(q.get('briefing')===kind&&Number.isInteger(requested)&&requested>=1&&requested<=pages.length&&requested!==pageIndex+1){pageIndex=requested-1;pageView();}});
   setInterval(()=>{if(!document.hidden){render();void refresh();}},60_000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('online',()=>void refresh());
-  render();void refresh();return {open:show};
+  render();void refresh();return {open:show,setFollow};
 }

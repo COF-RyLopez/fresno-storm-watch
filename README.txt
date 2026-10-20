@@ -301,3 +301,17 @@ site/data/probability-images are generated artifacts, never private data.
 Source contract/provenance: docs/wpc-probability-sources.json.
 Operating rules: planning.html#rainfall-probabilities.
 Rollback: redeploy 5105df9 (0.24.0); no data migration.
+
+
+0.26.0 Automatic briefing following and basemap gallery
+The verified October 19 partner deck follows reviewed page/product/UTC-window
+associations in site/lib/briefing-follow-model.js. Unmapped pages clear the old
+forecast; unavailable exact periods are withheld. New PDF revisions require a
+reviewed mapping. Source dates and legends remain pinned above the preview.
+Map tools uses the SDK 5.1 Basemap Gallery: Dark Gray, Light Gray, Imagery Hybrid.
+Choices stay in page memory and are independent per workspace and from UI theme.
+The current working copy is in the county OneDrive Storm Prep folder; the old
+project checkout and its local data were not moved or modified.
+Local preview: npm run collect:probability then npm start (STORM_PORT=8778 if
+8777 is occupied). Operational notes: planning.html#slide-following and
+planning.html#basemap-gallery. Rollback: redeploy 347e7d1 (0.25.0); no migration.

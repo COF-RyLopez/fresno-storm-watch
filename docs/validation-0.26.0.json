@@ -1,0 +1,33 @@
+{
+  "release": "0.26.0",
+  "checkedAt": "2026-10-20T03:04:08Z",
+  "scope": "Verified slide-to-live-layer following with pinned forecast dates and legends, plus native SDK Basemap Gallery in the evidence pane.",
+  "automated": {
+    "javascriptTestsPassed": 271,
+    "javascriptTestsFailed": 0,
+    "deploymentChecks": "Syntax, geometry/watchpoint/camera/reservoir contracts, HLS integrity, page links and public config passed.",
+    "newCases": "Exact PDF hash/verification; threshold and absolute UTC-period matching after source cycle rollover; no substitution for missing periods; explicitly related rainfall/WSSI overlap; actual controller cancellation and unmapped-page clearing; periodic re-resolution and cycle change between resolution and display; workspace basemap memory."
+  },
+  "browser": {
+    "slideFollowing": "Slide 6 selects quarter-inch period 2; Next page selects half-inch period 3 for slide 7's later dates; slide 8 clears the old forecast and legend. Rapid previous-page navigation returns to slide 6 without late source replacement.",
+    "manualMode": "Turning Auto-sync off retains an independent live map across page changes; turning it back on for unmapped slide 8 clears the forecast and explains the missing mapping.",
+    "phone390x844": "Map, preview, navigation, forecast dates and complete percentage legend remain visible after advancing slides. Date/legend header stays above the scrolling original preview. Responsive override reset after test.",
+    "basemapGallery": "Native component shows Dark Gray, Light Gray, Imagery Hybrid. Verified actual selection changes, independent Roads/Weather restoration, phone-to-desktop reparenting, and gallery rebinding after 2D/3D transition.",
+    "symbology": "Source hazard renderers and probability palette retained. County labels/outlines adapt to chosen dark/light basemap. No new hazard thresholds or dispatch logic.",
+    "accounts": "Anonymous public-data workflow tested. No new private-account or permission acceptance claims."
+  },
+  "reviewedAssociations": {
+    "documentSha256": "28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4",
+    "pages": [3, 4, 5, 6, 7, 14],
+    "provenance": "Original partner slide previews visually reviewed; exact UTC periods encoded in site/lib/briefing-follow-model.js. Other pages and PDF revisions remain unmapped.",
+    "limitations": "WPC single rainfall amounts do not reproduce Hanford ranges. WSSI overall periods may differ. Exact-period ERO/probability products are withheld when unavailable. Latest cycle and publisher colors may differ from archived slides. No source identity is inferred from page numbers alone."
+  },
+  "sdk": {
+    "version": "5.1",
+    "reference": "https://developers.arcgis.com/javascript/latest/sample-code/basemap-gallery/",
+    "component": "arcgis-basemap-gallery, LocalBasemapsSource, supported view property; existing CDN runtime only.",
+    "thumbnails": "Public Esri MapServer exports for a fixed Fresno-area extent; no private layer data."
+  },
+  "workspace": "Existing tracked app cloned into the new county OneDrive working folder. Old project checkout and uncommitted reservoir snapshot left unchanged.",
+  "rollback": "Redeploy 347e7d13e469ea9e3a02c9a6662dbc7f443e18ed (0.25.0); no storage migration or AGOL permission change."
+}

@@ -12,7 +12,7 @@ export const WORKSPACES=Object.freeze({
 /** @param {string|URL} input @returns {string} Preserve legacy weather and release-chart links. */
 export function workspaceRoute(input){const u=new URL(input,'https://storm.invalid/');if(['MIL','PNF'].includes(u.searchParams.get('trends')))return 'reservoirs';const id=u.searchParams.get('view');return id==='conditions'||id==='environment'?'weather':WORKSPACES[id]?id:'watch';}
 /** @param {string} id @returns {object} Independent, memory-only defaults. */
-export function workspaceDefaults(id){return {mode:'2d',imagery:false,cameras:false,viewpoint:null,layers:Object.fromEntries(Object.keys(LAYER_LABELS).map(k=>[k,WORKSPACES[id].layers.includes(k)]))};}
+export function workspaceDefaults(id){return {mode:'2d',basemap:'dark',imagery:false,cameras:false,viewpoint:null,layers:Object.fromEntries(Object.keys(LAYER_LABELS).map(k=>[k,WORKSPACES[id].layers.includes(k)]))};}
 /** @param {object} state @param {string} key @param {boolean} eligible @returns {boolean} A refresh cannot enable a layer excluded by this workspace. */
 export const layerVisible=(state,key,eligible=true)=>!!state.layers[key]&&!!eligible;
 /** @returns {object} Independent mutable presentation state, held only in this page. */

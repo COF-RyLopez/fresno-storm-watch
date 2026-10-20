@@ -4,7 +4,8 @@ import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { blend } from './flood-scenario-model.js';
 import { installMapContext } from './map-context.js?v=0.19.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.23.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.26.0';
+import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
 /** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */
@@ -50,9 +51,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       {fieldName:'DFIRM_ID',label:'FIRM study ID'},{fieldName:'FLD_AR_ID',label:'Flood area ID'},{fieldName:'SOURCE_CIT',label:'Source citation'}]}]}
   });
   const basemaps = {};
-  const themedBasemap = () => {
-    const mode = darkMode() ? 'Dark' : 'Light';
-    return basemaps[mode] ??= new Basemap({ title: `${mode} gray context`, baseLayers: [new TileLayer({
+  const themedBasemap = (mode='Dark') => {
+    return basemaps[mode] ??= new Basemap({id:`frog-basemap-${mode.toLowerCase()}`,title: `${mode} gray context`,thumbnailUrl:`https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Base/MapServer/export?bbox=-120.9,36.3,-118.6,37.6&bboxSR=4326&imageSR=3857&size=240,160&format=png&transparent=false&f=image`,baseLayers: [new TileLayer({
       url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Base/MapServer`
     })], referenceLayers: [new TileLayer({
       url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Reference/MapServer`
@@ -71,23 +71,21 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     for(const el of document.querySelectorAll('[data-layer-key]'))el.classList.toggle('workspace-layer-off',!currentState().layers[el.dataset.layerKey]);
   };
   const setLayerEligibility=(layer,eligible)=>{const r=registry.get(layer);if(r){r.eligible=!!eligible;syncVisibility();}};
-  let imageryBasemap=null,imagery=false,imageryFailure=false;
+  const imageryBasemap=new Basemap({id:'frog-basemap-imagery',title:'Imagery Hybrid · roads and labels',thumbnailUrl:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-120.9,36.3,-118.6,37.6&bboxSR=4326&imageSR=3857&size=240,160&format=png&transparent=false&f=image',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
+  const galleryBasemaps={dark:themedBasemap('Dark'),light:themedBasemap('Light'),imagery:imageryBasemap};
+  let basemapKey='dark',imagery=false,imageryFailure=false,gallery=null;
   const imageryStatus=()=>{const host=document.querySelector('#imagery-status');host.hidden=!imagery;host.textContent=imageryFailure?'Imagery hybrid incomplete — road labels or imagery unavailable':'Imagery hybrid · roads and labels · historical imagery';};
-  function setImagery(wanted){
-    imagery=!!wanted;
-    if(!imageryBasemap){
-      imageryBasemap=new Basemap({title:'Esri Imagery Hybrid',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],
-        referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
+  let imageryLoaded=false;
+  function setBasemap(key){
+    basemapKey=Object.hasOwn(galleryBasemaps,key)?key:'dark';imagery=basemapKey==='imagery';
+    if(imagery&&!imageryLoaded){imageryLoaded=true;
       void Promise.all([...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].map(l=>l.load())).catch(()=>{imageryFailure=true;imageryStatus();});
     }
-    map.basemap=imagery?imageryBasemap:themedBasemap();
+    map.basemap=galleryBasemaps[basemapKey];
     updateContextSymbols();
-    document.querySelector('#toggle-imagery').textContent=`Imagery hybrid: ${imagery?'on':'off'}`;
-    document.querySelector('#toggle-imagery').setAttribute('aria-pressed',String(imagery));
     document.querySelector('#imagery-note').hidden=!imagery;
     imageryStatus();
   }
-  document.querySelector('#toggle-imagery').addEventListener('click',()=>{currentState().imagery=!imagery;setImagery(!imagery);});
   let region, fresnoGeometry;
   for (const feature of counties) {
     const geometry = new Polygon(countyGeometry(feature.geometry));
@@ -147,18 +145,17 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   function updateContextSymbols() {
     boundaryLayer.graphics.forEach(graphic => {
       const symbol = graphic.symbol.clone();
-      symbol.outline.color = imagery ? '#86c6d6' : color(graphic.attributes.countyId === '06019' ? '--map-county' : '--map-neighbor');
+      symbol.outline.color = basemapKey!=='light' ? '#86c6d6' : graphic.attributes.countyId==='06019'?'#246482':'#737f89';
       graphic.symbol = symbol;
     });
     labels.graphics.forEach(graphic => {
       const symbol = graphic.symbol.clone();
-      symbol.color = imagery ? '#e3e6e8' : color('--map-label');
-      symbol.haloColor = imagery ? '#202427' : color('--map-halo');
+      symbol.color = basemapKey!=='light' ? '#e3e6e8' : '#202427';
+      symbol.haloColor = basemapKey!=='light' ? '#202427' : '#ffffff';
       graphic.symbol = symbol;
     });
   }
   const applyMapTheme = () => {
-    if (!imagery) map.basemap = themedBasemap();
     updateContextSymbols();
     drawGauges();
     alertLayer.graphics.forEach(graphic => {
@@ -235,6 +232,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   await reactiveUtils.whenOnce(() => view.width > 0 && view.height > 0);
   await view.goTo(scopeExtent().clone().expand(1.15), { animate: false });
   const modeStatus=()=>{
+    gallery?.setView();
     mapContext.onViewChanged();
     document.querySelector('#view-mode-status').textContent=view.type==='3d'
       ? terrainError?'3D terrain unavailable · return to 2D for map context':'3D terrain context · no flood-depth model'
@@ -300,7 +298,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   function setLayerPreference(key,wanted){if(!(key in LAYER_LABELS))return;currentState().layers[key]=!!wanted;drawGauges();drawPower();syncControls();}
   const options=document.querySelector('#context-options');for(const [key,label]of Object.entries(LAYER_LABELS)){if(key==='cameras')continue;const host=document.createElement('calcite-label');host.layout='inline';const box=document.createElement('calcite-checkbox');box.dataset.contextLayer=key;box.addEventListener('calciteCheckboxChange',()=>setLayerPreference(key,box.checked));host.append(box,document.createTextNode(label));options.append(host);}
   const focusNavigate=target=>{const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
-  function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;}
+  function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;state.basemap=basemapKey;}
   function setWorkspace(id){
     if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
     if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
@@ -308,13 +306,14 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
     drawGauges();drawPower();drawAreas();syncControls();
     transition=transition.catch(()=>{}).then(async()=>{
-      if(version!==workspaceVersion)return;const state=memory.get(id);setImagery(state.imagery);await setMode(state.mode);
+      if(version!==workspaceVersion)return;const state=memory.get(id);setBasemap(state.basemap||(state.imagery?'imagery':'dark'));await setMode(state.mode);
       if(version!==workspaceVersion)return;
       followRegion=!state.viewpoint;if(state.viewpoint)await navigate(state.viewpoint.clone());else await navigate(scopeTarget());
       if(version===workspaceVersion){workspaceSwitching=false;syncControls();}
     }).catch(error=>{workspaceSwitching=false;document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Workspace map could not restore. Use Fit workspace or the evidence list.';console.warn('Workspace restore:',error.message);});return transition;
   }
   syncControls();
+  void installBasemapGallery({sdk,map,reactiveUtils,basemaps:galleryBasemaps,getView:()=>view,onSelect:key=>{if(workspaceSwitching||modeBusy)return;currentState().basemap=key;currentState().imagery=key==='imagery';setBasemap(key);}}).then(controller=>{gallery=controller;gallery.setView();});
   // Flood scenario overlay: every model frame, cross-faded by setTime(hour); drawn under the operational graphics.
   let inundation=null,inundationVersion=0;
   async function showInundation(base,scenario){
