@@ -1,6 +1,7 @@
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
 import {createSelectionFocus,validLocation} from './selection-focus.js?v=0.31.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
+import { createFrameWindow } from './frame-window.js';
 import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
@@ -412,10 +413,11 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     if(version!==inundationVersion)return;
     const {wkid,...bounds}=scenario.extent; // an unknown 'wkid' key zeroes the Extent
     const extent=new Extent({...bounds,spatialReference:{wkid}}),hours=scenario.frames.map(f=>f.hour);
-    const elements=scenario.frames.map(f=>new ImageElement({image:base+f.image,opacity:0,georeference:new ExtentAndRotationGeoreference({extent})}));
-    inundation=new MediaLayer({title:`${scenario.title} · modeled depth`,opacity:0.85,source:elements});
+    // only the frames on screen are layer elements (see frame-window.js): all ~50 at once exhausted phone memory
+    inundation=new MediaLayer({title:`${scenario.title} · modeled depth`,opacity:0.85,source:[]});
     map.add(inundation,1);
-    const setTime=t=>{const {i0,i1,w}=blend(t,hours);elements.forEach((e,i)=>{e.opacity=i===i0?1-w:i===i1&&i1!==i0?w:0;});};
+    const showFrames=createFrameWindow(inundation.source.elements,i=>new ImageElement({image:base+scenario.frames[i].image,opacity:0,georeference:new ExtentAndRotationGeoreference({extent})}),hours.length);
+    const setTime=t=>{const {i0,i1,w}=blend(t,hours);showFrames(i0,i1,w);};
     const target=view.type==='3d'?{target:extent,tilt:35,heading:0}:extent.clone().expand(1.1),workspace=workspaceVersion;
     void transition.then(()=>{if(version!==inundationVersion||workspace!==workspaceVersion)return;followRegion=false;
       return view.goTo(target,{duration:1500}).catch(error=>{if(error.name!=='AbortError')console.warn('Inundation fly-to:',error.message);});});

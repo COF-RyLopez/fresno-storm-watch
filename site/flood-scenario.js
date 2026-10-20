@@ -1,8 +1,11 @@
 import { loadSdk } from './lib/map.js';
 import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
-import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js?v=0.18.0';
+import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js?v=0.19.0';
+import { createFrameWindow } from './lib/frame-window.js';
 
 const ROOT = './data/flood-scenarios/';
+// Phones get the map first: the panel starts collapsed behind Details, and traffic loads only when switched on.
+const PHONE = matchMedia('(max-width: 760px)').matches;
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('en-US');
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
@@ -41,8 +44,10 @@ $('ramp').style.background = `linear-gradient(to right, ${stops.map(s => `rgba($
 $('ramp-labels').innerHTML = stops.map(s => `<span>${s.ft}${s === stops.at(-1) ? '+' : ''}</span>`).join('');
 
 // Depth: one image per model hour; playback cross-fades the two frames around the current fractional hour.
-const elements = frames.map(f => new ImageElement({ image: DATA + f.image, opacity: 0, georeference: new ExtentAndRotationGeoreference({ extent }) }));
-const depth = new MediaLayer({ source: elements, title: 'Modeled depth', blendMode: 'normal' });
+// Only the frames on screen (plus the next) are in the layer: all of them at once exhausted phone memory (lib/frame-window.js).
+const depth = new MediaLayer({ source: [], title: 'Modeled depth', blendMode: 'normal' });
+const showFrames = createFrameWindow(depth.source.elements,
+  i => new ImageElement({ image: DATA + frames[i].image, opacity: 0, georeference: new ExtentAndRotationGeoreference({ extent }) }), frames.length);
 
 const front = new GeoJSONLayer({
   url: DATA + 'front.geojson', title: 'Flood front', definitionExpression: 'hour = -1',
@@ -109,7 +114,7 @@ let rendererAt = 0;
 function render(next) {
   t = Math.min(Math.max(next, hours[0]), hours.at(-1));
   const { i0, i1, w } = blend(t, hours);
-  elements.forEach((e, i) => { e.opacity = i === i0 ? 1 - w : i === i1 && i1 !== i0 ? w : 0; });
+  showFrames(i0, i1, w);
   const hour = w < 0.5 ? frames[i0].hour : frames[i1].hour;
   if (hour !== shownHour) { shownHour = hour; front.definitionExpression = `hour = ${hour}`; }
   const q = Math.round(t * 4) / 4; // ponytail: building symbols refresh every 15 model minutes; per-frame renderer swaps cost more than they show
@@ -150,6 +155,11 @@ async function showTraffic(mode) {
     drawTraffic();
   } catch (error) { console.warn('Evacuation traffic:', error.message); $('traffic').hidden = true; }
 }
+if (PHONE) {
+  $('side-panel').collapsed = true;
+  $('panel-toggle').hidden = false;
+  $('panel-toggle').addEventListener('click', () => { $('side-panel').collapsed = !$('side-panel').collapsed; });
+}
 if (carCanvas) {
   $('traffic').hidden = false;
   $('traffic-note').textContent = 'Agent-based evacuation model following the LifeSim technical reference (Greenshields speed-density, spillback, '
@@ -158,9 +168,10 @@ if (carCanvas) {
     + 'The stress test compresses them to a quarter. No intersection or signal delay is modelled.';
   $('speed').value = '0.016667'; // one model minute per second: a typical trip takes a few minutes
   $('traffic-mode').addEventListener('calciteSegmentedControlChange', e => showTraffic(e.target.value));
-  $('traffic-show').addEventListener('calciteSwitchChange', drawTraffic);
+  // load on first use: on phones the switch starts off, so the car data is only fetched when asked for
+  $('traffic-show').addEventListener('calciteSwitchChange', () => { if ($('traffic-show').checked && !traffic) showTraffic($('traffic-mode').value); else drawTraffic(); });
   reactiveUtils.watch(() => [view.extent, view.size], () => carCanvas.draw(), { initial: false });
-  showTraffic('base');
+  if (PHONE) $('traffic-show').checked = false; else showTraffic('base');
 }
 
 let playing = false;

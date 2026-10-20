@@ -44,9 +44,12 @@ export async function loadTraffic(base) {
   const [ll, t16, start, status] = await Promise.all([
     decodeArray(data.trip_xy, Float32Array), decodeArray(data.trip_t, Uint16Array),
     decodeArray(data.trip_start, Uint32Array), decodeArray(data.trip_status, Uint8Array)]);
-  const xy = new Float64Array(ll.length);
-  for (let k = 0; k < ll.length; k += 2) [xy[k], xy[k + 1]] = toMercator(ll[k], ll[k + 1]);
-  return { meta, trips: { start, xy, t: Float32Array.from(t16) }, status, exits: meta.exits.map(([lon, lat]) => toMercator(lon, lat)) };
+  // Web Mercator metres relative to the first point, in Float32 (metre precision, half the memory of absolute Float64)
+  const origin = ll.length ? toMercator(ll[0], ll[1]) : [0, 0];
+  const xy = new Float32Array(ll.length);
+  for (let k = 0; k < ll.length; k += 2) { const [x, y] = toMercator(ll[k], ll[k + 1]); xy[k] = x - origin[0]; xy[k + 1] = y - origin[1]; }
+  const exits = meta.exits.map(([lon, lat]) => { const [x, y] = toMercator(lon, lat); return [x - origin[0], y - origin[1]]; });
+  return { meta, origin, trips: { start, xy, t: Float32Array.from(t16) }, status, exits };
 }
 
 /** Canvas over the map; draw(traffic, seconds) paints cars with a short trail, plus exit points. */
@@ -70,7 +73,7 @@ export function createTrafficCanvas(view, Point) {
   }
   function draw(traffic = now, seconds = nowS) {
     now = traffic; nowS = seconds;
-    const dpr = devicePixelRatio || 1, w = view.width, h = view.height;
+    const dpr = Math.min(devicePixelRatio || 1, 2), w = view.width, h = view.height; // 3x phone screens: 2x is plenty for lines
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     }
@@ -79,7 +82,9 @@ export function createTrafficCanvas(view, Point) {
     const sr = view.spatialReference; // read now: it is only known once the basemap has loaded
     if (!traffic || !view.center || !sr?.isWebMercator) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const T = transform(sr), sx = (x, y) => T.a * x + T.b * y + T.x0, sy = (x, y) => T.c * x + T.d * y + T.y0;
+    const T = transform(sr), [ox, oy] = traffic.origin; // positions are relative to traffic.origin
+    const X0 = T.x0 + T.a * ox + T.b * oy, Y0 = T.y0 + T.c * ox + T.d * oy;
+    const sx = (x, y) => T.a * x + T.b * y + X0, sy = (x, y) => T.c * x + T.d * y + Y0;
     const n = traffic.trips.start.length;
     if (!pos || pos.length !== 2 * n) { pos = new Float64Array(2 * n); prev = new Float64Array(2 * n); seg = new Int32Array(n); segPrev = new Int32Array(n); }
     positionsAt(traffic.trips, seconds, pos, on, seg);
