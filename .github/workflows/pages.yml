@@ -29,6 +29,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_eoc_publisher.py'
       - name: Check county network-attribute accounting offline
         run: python3 -m unittest discover -s tests -p 'test_county_waterways.py'
+      - name: Check irrigation source-audit semantics offline
+        run: python3 -m unittest discover -s tests -p 'test_irrigation_audit.py'
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published

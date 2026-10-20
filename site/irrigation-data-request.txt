@@ -1,0 +1,60 @@
+FRESNO COUNTY F.R.O.G. — IRRIGATION NETWORK COORDINATION REQUEST
+Prepared October 20, 2026
+
+Subject: Read-only irrigation GIS and operator review for Fresno County storm planning
+
+Hello GIS / Engineering / Water Operations team,
+
+Fresno County is preparing its F.R.O.G. storm planning workspace for EOC
+coordination. We would like to represent the documented connections between
+river/reservoir supplies, canals, pipes, headgates, checks, turnouts, pumps,
+interties, wasteways and recharge facilities in and connected to Fresno County.
+
+Could you provide a current read-only GIS service or file geodatabase /
+GeoPackage, a field and domain dictionary, and any related asset/link tables?
+Please identify the data revision, horizontal CRS/datum and positional accuracy.
+
+Requested attributes, where available and approved for sharing:
+- Stable asset and node IDs, local names, type, owner and responsible operator.
+- From-node / to-node links; flow direction, reversibility and seasonal or
+  gate-dependent qualifications. Please identify crossings that do not connect.
+- Active, replaced, abandoned, proposed and seasonal inventory classifications.
+- Capacity, units, basis, date and operator confirmation; distinguish design,
+  observed and currently available capacity. Unknown values should remain null.
+- A read-only status/measurement source, observation time, timezone, units,
+  quality flag, expected update interval and maintenance contact.
+- Approved power-feed / backup-power dependencies and readiness confirmation,
+  if these may be shared with authorized county emergency staff.
+- Intake and outlet links to rivers, reservoirs, district boundaries and
+  neighboring systems, with a short operator review of the important junctions.
+
+Please specify separately what may be displayed publicly, what is county-only
+or partner-only, and any required attribution, license or written data-sharing
+agreement. We can keep operational assets in private AGOL services. We are not
+requesting control-system access or write access to your operational systems.
+
+For Fresno Irrigation District specifically, we found the public "Facilities
+April 2018" archive (ArcGIS item 84307198681c46ab9e10acfa862f7606). Its embedded
+metadata says "Contact FID for authorization." Please confirm permitted use and
+provide a current replacement, including separate gate/pump/control structures
+and relationship tables if available. We have not republished that archive.
+
+For FMFCD, we found the public FID Facilities layer with 5,600 line records.
+Its item terms require written consent for publication/distribution. Please
+confirm permission, source date and whether a current richer schema is available.
+
+Our initial purpose is situational awareness and verification before resource
+planning. A mapped connection will not be treated as present flow, gate position,
+capacity, flood arrival time or authorization to operate a facility.
+
+Suggested coordination order:
+1. FID, Consolidated Irrigation District in Selma, Alta, Laguna, KRCD / KRWA.
+2. James, Tranquillity, CCID, Firebaugh Canal Water District, other Exchange
+   Contractors and relevant Mendota / river operators.
+3. Westlands, SLDMWA, Friant Water Authority, Reclamation, and remaining county
+   irrigation / water districts and private ditch companies.
+
+Please nominate a GIS contact and an operations reviewer for a short network
+walkthrough. We can return a draft map of the supplied data for your corrections.
+
+Thank you.

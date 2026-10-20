@@ -1,0 +1,306 @@
+{
+  "version": 1,
+  "checkedDate": "2026-10-20",
+  "countyGeoid": "06019",
+  "scope": "Public-source discovery for Fresno County and connected supply systems. This is a reference inventory, not a verified hydraulic or operating network.",
+  "sources": [
+    {
+      "id": "fid-maps",
+      "publisher": "Fresno Irrigation District",
+      "title": "District facilities maps",
+      "kind": "District map references",
+      "url": "https://www.fresnoirrigation.com/maps",
+      "coverage": "FID network: canals, pipelines and other facilities",
+      "dateLabel": "Publication date not confirmed; checked Oct 20, 2026",
+      "status": "Reference links available",
+      "limitation": "Request current GIS, headgates, checks, turnouts, pumps and explicit display/reuse permission. A map does not report gate position or flow."
+    },
+    {
+      "id": "fid-2018",
+      "publisher": "Fresno Irrigation District · lkiser_FID",
+      "title": "Facilities April 2018 — downloadable GIS",
+      "kind": "Historical line inventory",
+      "url": "https://www.arcgis.com/home/item.html?id=84307198681c46ab9e10acfa862f7606",
+      "coverage": "5,984 source segments: 1,369 Canal, 3,446 Pipeline, 929 Culvert, 192 Creek, 43 River, 4 Flume and 1 blank type",
+      "dateLabel": "2018 archive; item modified June 21, 2019",
+      "status": "Authorization and current replacement needed",
+      "limitation": "Embedded metadata: Contact FID for authorization. Kept local, not republished. 5,354 Active, 240 Replaced, 389 Abandoned and 1 blank status; these are historical inventory labels. Normal_cfs and Max_cfs are zero on every record and cannot establish capacity. No gate or pump point inventory is included."
+    },
+    {
+      "id": "fid-2015-plan",
+      "publisher": "Fresno Irrigation District / Bureau of Reclamation",
+      "title": "2015 water management plan — facilities map",
+      "kind": "Historical documented connections",
+      "url": "https://www.usbr.gov/mp/watershare/docs/2015/fresno-irrigation-district.pdf",
+      "coverage": "Fresno and Gould canal headgates on Kings River; Friant-Kern / Enterprise inflow",
+      "dateLabel": "2015 plan; facilities figure dated November 26, 2014",
+      "status": "Historical reference",
+      "limitation": "Supports high-level documentary relationships. Obtain current locations and operating configuration from FID."
+    },
+    {
+      "id": "alta",
+      "publisher": "Alta Irrigation District",
+      "title": "Facilities map and district maps",
+      "kind": "District map references",
+      "url": "https://altaid.org/maps/",
+      "coverage": "Kings River / Alta facilities serving Fresno, Tulare and Kings counties",
+      "dateLabel": "Map revision not confirmed; checked Oct 20, 2026",
+      "status": "Reference links available",
+      "limitation": "Request current GIS for headgate, checks, gates, turnouts and pumps. A district boundary or ditchtender area is not a connected pipe/canal network."
+    },
+    {
+      "id": "cid",
+      "publisher": "Consolidated Irrigation District · Selma, California",
+      "title": "Kings River supply and distribution system",
+      "kind": "District reference and GIS request",
+      "url": "https://cidwater.com/about-us/",
+      "coverage": "Consolidated canals, pipelines and recharge basins in southeastern Fresno County",
+      "dateLabel": "Checked Oct 20, 2026; asset revision unknown",
+      "status": "Current asset GIS requested next",
+      "limitation": "Public ArcGIS catalog exposes director and ditchtender areas, not a complete gate/pump network. Consolidated Irrigation District No. 19 in Washington is a different organization and was excluded."
+    },
+    {
+      "id": "laguna",
+      "publisher": "Laguna Irrigation District",
+      "title": "Distribution-system, canal/ditch, pipeline and recharge maps",
+      "kind": "District map references",
+      "url": "https://www.lagunaid.com/district-maps",
+      "coverage": "Southern Fresno / northern Kings county facilities and Kings River context",
+      "dateLabel": "Map revisions not confirmed; checked Oct 20, 2026",
+      "status": "Reference links available",
+      "limitation": "Request underlying GIS and operator-confirmed links at weirs, diversions and pumps. Map capacities and project status require confirmation before operational use."
+    },
+    {
+      "id": "kings-handbook",
+      "publisher": "Kings River Conservation District and Kings River Water Association",
+      "title": "Kings River Handbook — control structures and connections",
+      "kind": "Historical system reference",
+      "url": "https://krcd.org/wp-content/uploads/2023/01/handbook_2009-3-columns.pdf",
+      "coverage": "Kings River branches, weirs, James Bypass, Mendota Pool and member units",
+      "dateLabel": "September 2009, fifth printing; web upload date is not the publication date",
+      "status": "Historical reference",
+      "limitation": "Useful for system context, not current gate settings, available capacity or confirmation that an old diversion remains operational. Credit KRCD and KRWA."
+    },
+    {
+      "id": "friant",
+      "publisher": "Bureau of Reclamation",
+      "title": "Friant Division — Millerton and canal outlets",
+      "kind": "Federal system reference",
+      "url": "https://www.usbr.gov/projects/index.php?id=341",
+      "coverage": "Millerton / Friant Dam, Friant-Kern Canal and Madera Canal",
+      "dateLabel": "Undated project reference; checked Oct 20, 2026",
+      "status": "Documented supply relationships",
+      "limitation": "Separate river-outlet releases from canal deliveries. Routing, transit time and actual operations require current operator data."
+    },
+    {
+      "id": "mendota",
+      "publisher": "Bureau of Reclamation",
+      "title": "2024 Long-Term Operations EIS — facilities description",
+      "kind": "Federal system reference",
+      "url": "https://www.usbr.gov/mp/nepa/includes/documentShow.php?Doc_ID=55382",
+      "coverage": "Delta-Mendota Canal termination at Mendota Pool; section C.8.6",
+      "dateLabel": "2024 EIS facilities description",
+      "status": "Documented supply relationship",
+      "limitation": "Does not establish current withdrawal amounts, pumping status, downstream arrival or the detailed configuration of every district intake."
+    },
+    {
+      "id": "westlands",
+      "publisher": "Westlands Water District",
+      "title": "District and joint federal/state facilities maps",
+      "kind": "District map references",
+      "url": "https://wwd.ca.gov/about-westlands/maps/",
+      "coverage": "Western Fresno / Kings counties and imported-water system context",
+      "dateLabel": "Map revision not confirmed; checked Oct 20, 2026",
+      "status": "Reference links available",
+      "limitation": "Request current distribution pipelines, delivery points, pumps, interties and approved public/private sharing classification."
+    },
+    {
+      "id": "calwatrs",
+      "publisher": "California State Water Resources Control Board",
+      "title": "CalWATRS public water-rights features",
+      "kind": "Queryable regulatory GIS",
+      "url": "https://cw-gis.waterboards.ca.gov/hosted/rest/services/Public/cal_watrs_gis_water_rights/FeatureServer",
+      "coverage": "Fresno-intersecting: 1,064 diversion records; 418 storage points; 156 rediversion records; 7 facility polygons; 0 measurement points; 0 conveyance lines",
+      "dateLabel": "Queried Oct 20, 2026; individual record dates vary",
+      "status": "Regulatory reference; operational classification missing",
+      "limitation": "All 1,064 queried diversions lack diversion type/subtype and diversion-status values. Active/Inactive is data-management status, not flow or gate state. Public Relate links require semantic validation and are not hydraulic edges. Legacy eWRIMS stopped updating June 9, 2025."
+    },
+    {
+      "id": "county-districts",
+      "publisher": "Fresno County Public Works and Planning",
+      "title": "Irrigation district boundaries",
+      "kind": "County reference GIS",
+      "url": "https://gisprod10.co.fresno.ca.us/server/rest/services/PublicWorks/Boundaries/MapServer/34",
+      "coverage": "Ten named irrigation districts; other water districts and private ditch companies require additional coverage",
+      "dateLabel": "Queried Oct 20, 2026; currency requires county/LAFCo confirmation",
+      "status": "Coordination context",
+      "limitation": "Administrative boundaries identify a coordination starting point; they do not establish ownership of every asset inside them."
+    },
+    {
+      "id": "fmfcd-pumps",
+      "publisher": "Fresno Metropolitan Flood Control District, served by Fresno County",
+      "title": "FMFCD PUMP — 192 published points",
+      "kind": "Storm-drainage reference GIS",
+      "url": "https://gisprod10.co.fresno.ca.us/server/rest/services/PublicWorks/Boundaries/MapServer/53",
+      "coverage": "FMFCD storm-drainage service area; not all Fresno County irrigation districts",
+      "dateLabel": "Queried Oct 20, 2026; asset currency unverified",
+      "status": "Separate storm-drainage context",
+      "limitation": "Available drainage-area and elevation attributes do not establish connected irrigation canals, pump operability, capacity, power feed or backup-power readiness."
+    },
+    {
+      "id": "fid-fmfcd",
+      "publisher": "Fresno Metropolitan Flood Control District",
+      "title": "Published FID Facilities layer — 5,600 line records",
+      "kind": "Queryable GIS candidate; permission pending",
+      "url": "https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFCD_Layers/FeatureServer/10",
+      "coverage": "Published facility number/name and line geometry; detailed status and node links absent",
+      "dateLabel": "Queried Oct 20, 2026; service edit time does not establish asset currency",
+      "status": "Written reuse consent and currency confirmation needed",
+      "limitation": "FMFCD item terms require prior written consent for publication/distribution. Reference link only; geometry not copied. The schema omits gate/pump type, inventory status, capacities and from/to nodes. This differs from the richer historical FID archive."
+    },
+    {
+      "id": "alta-supply",
+      "publisher": "Alta Irrigation District",
+      "title": "Alta district-published Kings River / Pine Flat supply description",
+      "kind": "Documented supply relationship",
+      "url": "https://altaid.org/",
+      "coverage": "District supply from Kings River with irrigation releases from Pine Flat Dam",
+      "dateLabel": "Checked Oct 20, 2026; current delivery amounts unconfirmed",
+      "status": "Documentary supply context",
+      "limitation": "The description does not establish current gate positions, headgate capacity, connected asset IDs or observed delivery amounts."
+    }
+  ],
+  "connections": [
+    {
+      "id": "millerton-canals",
+      "title": "Millerton / Friant canal outlets",
+      "nodes": [
+        "Millerton Lake / Friant Dam",
+        "Friant-Kern Canal (south) or Madera Canal (north)"
+      ],
+      "sources": [
+        "friant"
+      ],
+      "dateLabel": "Documented federal supply relationship; present deliveries unconfirmed",
+      "locate": "MIL",
+      "note": "These are separate canal-delivery paths. River-outlet observations do not equal total canal delivery."
+    },
+    {
+      "id": "kings-fid",
+      "title": "Kings River → Fresno Irrigation District",
+      "nodes": [
+        "Pine Flat releases to Kings River",
+        "Fresno / Gould canal headgates",
+        "FID canal and pipeline network"
+      ],
+      "sources": [
+        "fid-2015-plan",
+        "fid-maps"
+      ],
+      "dateLabel": "Historical 2015 facilities reference; current configuration needs FID review",
+      "locate": "PNF",
+      "note": "Headgate settings, diversions and interconnections remain unverified."
+    },
+    {
+      "id": "fk-enterprise",
+      "title": "Friant-Kern → Enterprise connection",
+      "nodes": [
+        "Friant-Kern Canal",
+        "Enterprise Canal inflow location"
+      ],
+      "sources": [
+        "fid-2015-plan"
+      ],
+      "dateLabel": "Historical 2015 plan; current connection status unconfirmed",
+      "locate": "MIL",
+      "note": "Documented inflow location, not a verified current transfer or a mapped gate coordinate."
+    },
+    {
+      "id": "kings-alta",
+      "title": "Kings River → Alta",
+      "nodes": [
+        "Pine Flat irrigation releases",
+        "Kings River",
+        "Alta distribution system"
+      ],
+      "sources": [
+        "alta",
+        "alta-supply"
+      ],
+      "dateLabel": "District-published supply description; asset links pending",
+      "locate": "PNF",
+      "note": "District confirms Kings River supply and Pine Flat irrigation releases. Current structure IDs and gate/pump links are still needed."
+    },
+    {
+      "id": "kings-cid",
+      "title": "Kings River → Consolidated",
+      "nodes": [
+        "Kings River",
+        "Consolidated canals and pipelines",
+        "Irrigation and recharge facilities"
+      ],
+      "sources": [
+        "cid"
+      ],
+      "dateLabel": "District-published supply description; asset links pending",
+      "locate": "PNF",
+      "note": "Obtain current intake, gate, pump and basin links from Consolidated's Selma office."
+    },
+    {
+      "id": "james-mendota",
+      "title": "Kings / James Bypass → Mendota context",
+      "nodes": [
+        "Kings River North Fork",
+        "James Bypass",
+        "Mendota Pool / San Joaquin River"
+      ],
+      "sources": [
+        "kings-handbook"
+      ],
+      "dateLabel": "Historical 2009 system description; current routing requires operator review",
+      "locate": "SJMC1",
+      "note": "A conditional flood-water pathway, not continuous present flow. Old irrigation diversions can be abandoned or used infrequently."
+    },
+    {
+      "id": "dmc-mendota",
+      "title": "Delta-Mendota → Mendota Pool",
+      "nodes": [
+        "Delta-Mendota Canal",
+        "Mendota Pool",
+        "District withdrawals and downstream releases"
+      ],
+      "sources": [
+        "mendota"
+      ],
+      "dateLabel": "2024 federal facilities description; present withdrawals unknown",
+      "locate": "SJMC1",
+      "note": "Imported-water delivery and river/flood flows are different inputs. Obtain intake and pump connections from the responsible operators."
+    }
+  ],
+  "request": {
+    "priorityAgencies": [
+      "Fresno Irrigation District",
+      "Consolidated Irrigation District (Selma)",
+      "Alta Irrigation District",
+      "Laguna Irrigation District",
+      "KRCD / KRWA",
+      "James and Tranquillity irrigation districts",
+      "CCID / Firebaugh Canal Water District and Exchange Contractors",
+      "Westlands / SLDMWA / Friant Water Authority / Reclamation"
+    ],
+    "fields": [
+      "Stable asset ID and local name",
+      "Asset type, owner and responsible operator",
+      "Geometry with horizontal CRS, datum, accuracy and revision date",
+      "From-node / to-node IDs and flow-direction qualifications",
+      "Headgates, check structures, turnouts, interties, culverts, siphons and pumps",
+      "Active, replaced, abandoned, proposed and seasonal classifications",
+      "Capacity with units, basis, date and operator confirmation",
+      "Read-only status/telemetry source, observation time and expected update interval",
+      "Power dependency, backup-power status and owner confirmation where approved",
+      "Public / county / partner sharing classification and written use/redistribution permission"
+    ],
+    "format": "Read-only ArcGIS feature services or file geodatabase / GeoPackage preferred; relationship tables and a field/domain dictionary included. GeoParquet is also suitable for prepared line and point data.",
+    "review": "Validate intake and outlet links with each operator. A line crossing, matching name, district polygon or nearest point is not proof of connection. Unknown gate/pump states remain unknown."
+  }
+}

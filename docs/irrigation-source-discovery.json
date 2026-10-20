@@ -1,0 +1,107 @@
+{
+  "checkedAt": "2026-10-20T12:58:43.383428+00:00",
+  "source": "https://cw-gis.waterboards.ca.gov/hosted/rest/services/Public/cal_watrs_gis_water_rights/FeatureServer",
+  "countyGeoid": "06019",
+  "boundarySha256": "caca43ac4a58464db728d5e92461ff0fcf03b3ca0a63afc796caa9d2f7f066f2",
+  "countsByLayerId": {
+    "0": 1064,
+    "1": 418,
+    "2": 156,
+    "4": 0,
+    "5": 0,
+    "8": 7
+  },
+  "diversionAudit": {
+    "records": 1064,
+    "uniqueNonblankIds": {
+      "globalid": 1064,
+      "legacy_pod_id": 1062,
+      "wr_id": 804
+    },
+    "categories": {
+      "diversion_type": {
+        "None": 1064
+      },
+      "diversion_subtype": {
+        "None": 1064
+      },
+      "diversion_status": {
+        "None": 1064
+      },
+      "data_management_status": {
+        "Active": 886,
+        "Inactive": 178
+      }
+    },
+    "populated": {
+      "water_course_name": 1,
+      "last_edited_date": 32
+    },
+    "interpretation": "Records are regulatory references, not unique verified physical assets. Active/Inactive is data-management status, not operating state."
+  },
+  "crs": "County query EPSG:4326; native CalWATRS EPSG:3310; attributes only, no geometry exported",
+  "publishedData": false,
+  "fidHistoricalAudit": {
+    "archiveSha256": "6108d13e9bafc745e10f8e800cfb2fc3737698b01dc89d8e30604574d7178c56",
+    "records": 5984,
+    "readRows": 5984,
+    "deletedRows": 0,
+    "categories": {
+      "Status": {
+        "Active": 5354,
+        "Replaced": 240,
+        "Abandoned": 389,
+        "": 1
+      },
+      "TYPE_FACIL": {
+        "Pipeline": 3446,
+        "Canal": 1369,
+        "Culvert": 929,
+        "Creek": 192,
+        "River": 43,
+        "Flume": 4,
+        "": 1
+      },
+      "Normal_cfs": {
+        "0": 5984
+      },
+      "Max_cfs": {
+        "0": 5984
+      },
+      "OWNERSHIP": {
+        "Private": 1182,
+        "FID": 4324,
+        "Other": 126,
+        "FMFCD": 246,
+        "FriantKern": 17,
+        "StreamGroup": 47,
+        "KingsRiver": 28,
+        "SanJoaquin": 13,
+        "": 1
+      }
+    },
+    "sourceCrsWkt": "PROJCS[\"NAD_1983_StatePlane_California_IV_FIPS_0404\",GEOGCS[\"GCS_North_American_1983\",DATUM[\"D_North_American_1983\",SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"False_Easting\",2000000.0],PARAMETER[\"False_Northing\",500000.0],PARAMETER[\"Central_Meridian\",-119.0],PARAMETER[\"Standard_Parallel_1\",36.0],PARAMETER[\"Standard_Parallel_2\",37.25],PARAMETER[\"Latitude_Of_Origin\",35.33333333333334],UNIT[\"Meter\",1.0]]",
+    "terms": [
+      "Contact FID for authorization."
+    ],
+    "interpretation": "Historical 2018 reference; zero capacity values are not verified zero capacity. Authorization/current replacement required before publication.",
+    "useQualification": "Publisher describes approximate informational locations, excludes engineering/legal reliance, and directs users to FID Engineering for locating facilities."
+  },
+  "sourceRegister": "../site/data/irrigation-sources.json",
+  "requestText": "../site/irrigation-data-request.txt",
+  "queryMethod": "ArcGIS REST POST; exact Fresno County polygon; returnIdsOnly then batches of 150; reconcile every object ID and recheck source inventory",
+  "rawDataLocation": "work/irrigation-discovery (ignored; not deployed)",
+  "pipeline": "scripts/audit-irrigation-sources.py --fid-archive work/irrigation-discovery/FID-Facilities-April-2018.zip",
+  "environment": "Existing requirements-waterways.txt environment. No ArcGIS credentials needed for this audit.",
+  "excludedCandidates": [
+    {
+      "name": "Consolidated Irrigation District No. 19",
+      "reason": "Washington service boundary is approximately -117.24 to -117.03 longitude, 47.64 to 47.72 latitude. Different from Consolidated Irrigation District in Selma, CA."
+    },
+    {
+      "name": "Legacy eWRIMS diversion data as a live feed",
+      "reason": "Publisher states updates ended June 9, 2025."
+    }
+  ],
+  "gatePumpOutcome": "No current countywide operator-verified irrigation gate/pump inventory with complete hydraulic links found. District requests required. Public maps remain documentary evidence."
+}

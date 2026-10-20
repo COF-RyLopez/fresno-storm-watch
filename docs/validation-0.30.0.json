@@ -1,0 +1,35 @@
+{
+  "release": "0.30.0",
+  "checkedDateLocal": "2026-10-20",
+  "scope": "Public irrigation source register, documentary supply relationships and operator data-request text in the existing right evidence pane. No district asset geometry, private features or control-system data published. No AGOL changes.",
+  "automated": {
+    "nodeTests": 298,
+    "failures": 0,
+    "irrigationAuditTests": 2,
+    "privatePublisherContractTests": 18,
+    "syntaxAndPublicConfig": "passed",
+    "auditPipelineExecuted": "scripts/audit-irrigation-sources.py --fid-archive work/irrigation-discovery/FID-Facilities-April-2018.zip",
+    "countyDiversionIdsExpectedAndRead": 1064,
+    "historicalFidDbfRowsExpectedAndRead": 5984
+  },
+  "provenance": "irrigation-source-discovery.json",
+  "localBrowser": {
+    "viewports": ["1280x900", "390x844"],
+    "observed": [
+      "Waterway connections opens the existing nonmodal supporting-evidence surface from Rivers and Reservoirs.",
+      "Historical and unconfirmed supply relationships show dates, qualifications and official source links.",
+      "Locate Pine Flat focuses the existing reservoir reference in 3D alongside the source evidence.",
+      "Reservoirs retains F.R.O.G. Waterways basemap when opening the source pane.",
+      "At phone width, evidence stacks below the visible map with no horizontal page overflow.",
+      "Unavailable source-register fetch can be retried on reopening; covered by a runtime DOM test."
+    ]
+  },
+  "limitations": [
+    "Documentary arrows are not spatially traced hydraulic routes or proof of present flow.",
+    "Current operator-verified gate, pump, intertie and from/to relationships remain pending.",
+    "FID historical archive and FMFCD facility geometry require publisher authorization before republication; only source links and aggregate findings are published.",
+    "CalWATRS regulatory identifiers and management status do not establish current operating condition.",
+    "Source discovery is dated, not a scheduled operational feed or a claim of complete district coverage."
+  ],
+  "rollback": "Redeploy 2dbb3e3c558919d4ff70374d286e992dd53abc69 (0.29.0); no data migration."
+}
