@@ -1,5 +1,5 @@
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
-import {createSelectionFocus,validLocation} from './selection-focus.js?v=0.31.0';
+import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js?v=0.34.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { createFrameWindow } from './frame-window.js';
 import { powerMapStyle } from './power-symbols.js';
@@ -349,7 +349,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return {target:[longitude,latitude],scale,...(type==='3d'?{tilt:55,heading:0}:{})};
   });
   const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
-  const searchFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
+  const searchFocus=createSelectionFocus({settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
   let searchRevision=0;
   function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();searchContext.removeAll();document.querySelector('#map').dataset.searchSelected='false';}
   async function focusSearchSelection(shape){
@@ -362,11 +362,26 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     if(!coords.length||coords.some(([x,y])=>!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>180||Math.abs(y)>90))throw new Error('Invalid search coordinates');
     for(const [color,width]of [['#ffffff',6],['#ff65e5',3]])searchSelection.add(new Graphic({geometry,symbol:type==='point'?{type:'simple-marker',style:'circle',size:24,color:[0,0,0,0],outline:{color,width}}:type==='polygon'?{type:'simple-fill',style:'none',outline:{color,width}}:{type:'simple-line',color,width}}));
     document.querySelector('#map').dataset.searchSelected='true';
-    const ok=await searchFocus.focus(mode=>({target:geometry,...(type==='point'||Math.max(geometry.extent?.width??0,geometry.extent?.height??0)<.04?{scale:12000}:{}),...(mode==='3d'?{tilt:45,heading:0}:{})}));
+    const ok=await searchFocus.focus(mode=>searchDestination(geometry,mode));
     if(revision!==searchRevision)return false;if(!ok)clearSearchSelection();return ok;
   }
-  let distanceModule;
+  let distanceModule,polygonDistanceModules;
   async function findNearbySearch(shape,rows,options){
+    if(shape.rings){
+      // Keep exact full polygons; a local projected metric avoids repeated expensive
+      // spherical polygon comparisons. State Plane zone 4 covers Fresno County.
+      polygonDistanceModules??=sdk.import(['@arcgis/core/geometry/operators/projectOperator.js','@arcgis/core/geometry/operators/distanceOperator.js','@arcgis/core/geometry/SpatialReference.js','@arcgis/core/geometry/operators/intersectsOperator.js']).catch(error=>{polygonDistanceModules=null;throw error;});
+      const [project,distance,SpatialReference,intersects]=await polygonDistanceModules;
+      if(!project.isLoaded())await project.load();
+      if(!options.current())return null;
+      const sr=new SpatialReference({wkid:26944}),target=project.execute(new Graphic({geometry:{...shape,type:'polygon'}}).geometry,sr);
+      if(!target)throw new Error('Lake geometry projection unavailable');
+      intersects.accelerateGeometry(target);
+      return nearbyEntries(shape,rows,{...options,distance:(_a,b)=>{
+        const candidate=project.execute(new Graphic({geometry:b}).geometry,sr);
+        return !candidate?NaN:intersects.execute(target,candidate)?0:distance.execute(target,candidate,{unit:'meters'});
+      }});
+    }
     distanceModule??=sdk.import('@arcgis/core/geometry/operators/geodeticDistanceOperator.js').catch(error=>{distanceModule=null;throw error;});
     const operator=await distanceModule;if(!operator.isLoaded())await operator.load();
     const target=new Graphic({geometry:{...shape,type:shape.paths?'polyline':shape.rings?'polygon':'point'}}).geometry;

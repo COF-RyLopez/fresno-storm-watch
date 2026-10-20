@@ -113,3 +113,23 @@ test('a delayed vicinity calculation cannot restore private references after sig
   finishFirst({...empty,asset:{...empty.asset,rows:[{key:'private',private:true,name:'Private fixture'}],total:1}});await h.flush();
   assert(h.calls.slice(mark).every(call=>!call.context?.some(row=>row.private)));assert.equal(h.nodes.get('map-search-nearby-detail').children.length,0);
 });
+
+
+test('lake outlines and reservoir reporting-point selections use full polygon geometry and nearby context',async()=>{
+  const row={key:'waterbody:mil',name:'Millerton Lake',kind:'waterbody',stationId:'MIL',shard:'00.json'},shape={rings:[[[-119.8,36.8],[-119.8,36.9],[-119.7,36.9],[-119.7,36.8],[-119.8,36.8]]],spatialReference:{wkid:4326}};
+  let queriedShape;
+  const h=setup(async url=>({ok:true,json:async()=>url.pathname.endsWith('index.json')?{countyGeoid:'06019',entries:url.pathname.includes('waterbodies-v')?[row]:[]}:{[row.key]:shape}}),async(g)=>{queriedShape=g;return Object.fromEntries(['gauge','road-record','asset'].map(kind=>[kind,{rows:[],total:0,available:0,unknown:0,historyExcluded:0}]));});
+  h.controller.setReservoirs({selection:{stations:[{id:'MIL',name:'Millerton / Friant Dam',longitude:-119.705,latitude:37}]}});
+  h.nodes.get('map-search-open').dispatchEvent(new Event('click'));await h.flush();h.search('Millerton');
+  h.nodes.get('map-search-results').children.find(item=>item.label==='Millerton / Friant Dam').dispatchEvent(new Event('click'));await h.flush();
+  assert.equal(h.nodes.get('map-search-nearby').hidden,false);assert.equal(queriedShape,shape);assert(h.calls.some(call=>call?.rings===shape.rings));
+  assert.match(h.nodes.get('search-selection-label').textContent,/Millerton Lake/);
+  assert(h.nodes.get('map-search-selection').children.some(item=>item.textContent==='Fit full lake outline'));
+});
+
+test('lake-index failure keeps available street results and displays its separate coverage gap',async()=>{
+  const row={key:'street:a',kind:'street',name:'Shaw',shard:'00.json'};
+  const h=setup(async url=>url.pathname.includes('waterbodies-v')?{ok:false,status:503}:{ok:true,json:async()=>({countyGeoid:'06019',entries:[row]})});
+  h.nodes.get('map-search-open').dispatchEvent(new Event('click'));await h.flush();h.search('Shaw');
+  assert.equal(h.nodes.get('map-search-results').children.length,1);assert.match(h.nodes.get('map-search-coverage').textContent,/Lake outline index unavailable/);
+});

@@ -1,0 +1,47 @@
+{
+  "release": "0.34.0",
+  "checkedDateLocal": "2026-10-20",
+  "scope": "Named lake/reservoir search, full publisher outline fit and nearby gauge / closure / loaded authorized asset evidence. Public basemap and original stream/street indexes unchanged.",
+  "source": {
+    "url": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/60",
+    "publisher": "USGS 3D Hydrography Program",
+    "retrievedAt": "2026-10-20T23:11:07.747813+00:00"
+  },
+  "accounting": {
+    "input": 7118,
+    "otherFeatureType": 147,
+    "unnamed": 6554,
+    "accepted": 417
+  },
+  "namedGroups": 411,
+  "geometryShards": 198,
+  "automated": {
+    "nodeTests": 324,
+    "failures": 0,
+    "newPythonLakeGeometryTests": 3,
+    "existingPrivatePublisherContractTests": 18,
+    "syntaxAndPublicConfig": "passed"
+  },
+  "geometry": {
+    "identity": "Group only matching nonzero GNIS IDs; without GNIS, retain a separate source-feature identity. Equal names alone never merge different GNIS identities.",
+    "outline": "Full un-clipped, un-simplified WGS84 source polygon union by identity; all holes/parts retained. No centroid or dam-point substitution.",
+    "fit": "Full padded extent, no small-polygon fixed scale. Overhead 3D (tilt zero), 2D fallback retained. Selection-note space and two animation frames settle layout before navigating.",
+    "nearby": "Lake polygons use EPSG:26944 projected horizontal meters with default SDK equation-based datum transform; not survey accuracy. Zero for footprint intersection; holes remain outside. Other source types retain geodetic distances.",
+    "limits": "Reference outlines are not current shorelines, water levels, flooding, connectivity or proof of safe access."
+  },
+  "localBrowser": [
+    "Millerton Lake and Pine Flat Reservoir alias searches select full outlines and show nearby evidence.",
+    "Selecting Millerton / Friant Dam reporting-site search result selects its associated complete Millerton Lake outline.",
+    "Pine Flat 5-mile live vicinity: one configured gauge and seven returned road records, with status / coverage qualifications.",
+    "Exercise Millerton 5-mile vicinity: one configured gauge and two fictional assets from a four-site inventory; live roads explicitly disabled. No additional real private account sign-in performed.",
+    "At 390x844, phone Map/search and full-outline fit work without horizontal page overflow (390px scroll width).",
+    "SDK projection / distance fixture preserves interior, road intersection and island-hole behavior; controlled hole distance 2675.448m versus independent geodetic 2675.586m. This is a units/method integration check, not real-world source accuracy validation."
+  ],
+  "privacyAndFailure": [
+    "Queries remain local and are not sent to geocoders or source endpoints. Public geometry shards load only on selection.",
+    "Lake-index failure preserves available street/stream search results with a separate visible coverage gap.",
+    "Delayed selections and layout phases cancel on navigation / clearing. Existing private sign-out invalidation tests pass.",
+    "Private sites must be authorized and loaded; no permissions or AGOL items changed. Missing assets / geometry remain unknown."
+  ],
+  "rollback": "Redeploy b082fc7 (0.33.0); no data migration."
+}

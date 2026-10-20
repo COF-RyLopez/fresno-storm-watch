@@ -1,4 +1,4 @@
-/** In-memory vicinity query. Distances are horizontal geodesic meters, never route distances. */
+/** In-memory vicinity query. Distances are horizontal meters from the geodetic / local-projected SDK backend, never route distances. */
 export const METERS_PER_MILE=1609.344;
 const KINDS=['gauge','road-record','asset'];
 
@@ -20,7 +20,7 @@ export function searchGeometry(shape){
 }
 
 /** Conservative geographic envelope prefilter for this Fresno-only index (35–38°N).
- * Final inclusion always uses the SDK's geodetic distance between complete geometries.
+ * Final inclusion always uses the SDK's metric distance between complete geometries.
  */
 export function envelopesNear(a,b,meters){
   if([...a,...b].some((n,i)=>!Number.isFinite(n)||(i%4===1||i%4===3)&&Math.abs(n)>60))return true;

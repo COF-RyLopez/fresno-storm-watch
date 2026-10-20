@@ -1,11 +1,11 @@
-import {createMapSearch} from './lib/map-search-ui.js?v=0.32.0';
+import {createMapSearch} from './lib/map-search-ui.js?v=0.34.0';
 import {createIrrigationReference} from './lib/irrigation-ui.js?v=0.30.0';
 import {createEvidencePane} from './lib/evidence-ui.js';
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js';
-import { createMap } from './lib/map.js?v=0.33.0-waterbodies';
+import { createMap } from './lib/map.js?v=0.34.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';

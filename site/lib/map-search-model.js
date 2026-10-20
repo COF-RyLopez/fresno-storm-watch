@@ -13,7 +13,7 @@ export function findMapEntries(entries,query,scope='all',limit=40){
     seen.add(row.key);const score=name===q?0:aliases.includes(q)?1:name.startsWith(q)?2:3;
     matches.push({row,score});
   }
-  matches.sort((a,b)=>a.score-b.score||a.row.name.localeCompare(b.row.name)||a.row.key.localeCompare(b.row.key));
+  matches.sort((a,b)=>a.score-b.score||Number(b.row.kind==='waterbody')-Number(a.row.kind==='waterbody')||a.row.name.localeCompare(b.row.name)||a.row.key.localeCompare(b.row.key));
   return {rows:matches.slice(0,limit).map(x=>x.row),total:matches.length};
 }
 

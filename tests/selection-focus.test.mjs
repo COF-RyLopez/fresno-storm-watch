@@ -1,8 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSelectionFocus,validLocation} from '../site/lib/selection-focus.js';
+import {createSelectionFocus,validLocation,searchDestination} from '../site/lib/selection-focus.js';
 
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
+test('small and multipart lake outlines fit their full padded extent, without a point-scale cutoff',()=>{
+  let expanded;
+  const extent={clone:()=>({expand:n=>{expanded=n;return 'padded-full-outline';}})};
+  const polygon={type:'polygon',extent};
+  assert.deepEqual(searchDestination(polygon,'3d'),{target:'padded-full-outline',tilt:0,heading:0});assert.equal(expanded,1.25);
+  assert.deepEqual(searchDestination(polygon,'2d'),{target:'padded-full-outline'});
+  assert.equal(searchDestination({type:'point'},'2d').scale,12000);
+});
 function harness(overrides={}){
   const events=[],state={workspace:1,type:'2d'};
   const focus=createSelectionFocus({workspace:()=>state.workspace,ready:()=>Promise.resolve(),
@@ -42,4 +50,12 @@ test('missing location never switches modes or changes position; errors remain v
   assert(bad.events.some(e=>e[0]==='failed'));assert(!bad.events.some(e=>e[0]==='save'));
   for(const value of [null,{}, {longitude:null,latitude:37},{longitude:NaN,latitude:37},{longitude:181,latitude:37}])assert(!validLocation(value));
   assert(validLocation({longitude:-119.705,latitude:37.001}));
+});
+
+
+test('cancelling during the layout-settle phase prevents a stale full-outline navigation',async()=>{
+  const layout=deferred(),h=harness({settled:()=>layout.promise});
+  const pending=h.focus.focus(()=>({location:'lake'}));await new Promise(resolve=>setImmediate(resolve));
+  h.focus.cancel();layout.resolve();await pending;
+  assert(!h.events.some(event=>event[0]==='navigate'||event[0]==='save'));
 });
