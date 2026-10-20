@@ -40,7 +40,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const buildingViews = new WeakMap();
   const boundViews = new WeakSet();
   let buildings = null, buildingsLoading = false, buildingsWanted = false, buildingsError = false;
-  let waterEnabled = false, waterError = false;
+  let waterEnabled = false, waterError = false, basemapPilot=false;
   let namesError=false,namesCount=null;
   const waterSymbol = (color, width, style = 'solid') => ({type:'simple-line', color, width, style});
   const waterRenderer = () => ({type:'unique-value',field:'featuretype',defaultLabel:'Other network connector',defaultSymbol:waterSymbol('#a6b9c3',0.8,'dot'),uniqueValueInfos:[
@@ -73,15 +73,17 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   });
   const unnamed = new FeatureLayer({...common,id:'fresno-unnamed-waterways',title:'USGS unnamed waterways — close-scale reference',
     minScale:CONTEXT_SOURCES.detailScale,definitionExpression:"gnisidlabel IS NULL OR gnisidlabel = ''",opacity:0.55});
+  const detailSource=new FeatureLayer({...common,title:'Nearby USGS waterway reference — current publisher attributes'});
   // Reference geometry is beneath operational points/lines. Each view is filtered
   // by the same complete county polygon; panning never changes source scope.
   map.addMany([unnamed,named],1);
-  const names=installWaterwayLabels({map,sdk,reactiveUtils,getView,enabled:()=>waterEnabled,minScale:CONTEXT_SOURCES.namesScale,onError:error=>{namesError=!!error;updateStatus();},onCount:count=>{namesCount=count;updateStatus();}}).catch(error=>{namesError=true;updateStatus();console.warn('Waterway names:',error.message);return null;});
+  const names=installWaterwayLabels({map,sdk,reactiveUtils,getView,enabled:()=>waterEnabled&&!basemapPilot,minScale:CONTEXT_SOURCES.namesScale,onError:error=>{namesError=!!error;updateStatus();},onCount:count=>{namesCount=count;updateStatus();}}).catch(error=>{namesError=true;updateStatus();console.warn('Waterway names:',error.message);return null;});
   const updateStatus = () => {
     const view = getView(), state = waterViews.get(view);
     waterButton.textContent = `Waterways: ${waterEnabled?'on':'off'}`;
     waterButton.setAttribute('aria-pressed',String(waterEnabled));
-    waterStatus.textContent = !waterEnabled ? 'USGS waterway context off'
+    waterStatus.textContent = basemapPilot ? 'USGS pilot geometry / names are in the basemap · select another basemap for countywide reference'
+      : !waterEnabled ? 'USGS waterway context off'
       : waterError || namesError || state?.some(s=>s==='error') ? 'Waterway reference incomplete — check USGS source'
       : !state || state.some(s=>s==='loading') ? 'Loading USGS waterway reference'
       : view.scale > CONTEXT_SOURCES.waterwaysScale ? 'USGS waterways · zoom to 1:400,000'
@@ -136,7 +138,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
     });
   };
   waterButton.addEventListener('click',()=>{
-    waterEnabled=!waterEnabled; named.visible=waterEnabled; unnamed.visible=waterEnabled;void names.then(labels=>labels?.sync());updateStatus();
+    waterEnabled=!waterEnabled; named.visible=waterEnabled&&!basemapPilot; unnamed.visible=waterEnabled&&!basemapPilot;void names.then(labels=>labels?.sync());updateStatus();
   });
   buildingButton.addEventListener('click',()=>{
     buildingsWanted=!buildingsWanted;
@@ -146,7 +148,19 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   for (const layer of [named,unnamed]) void layer.load().catch(()=>{waterError=true;updateStatus();});
   return {
     bindView,
-    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;named.visible=waterEnabled;unnamed.visible=waterEnabled;void names.then(labels=>labels?.sync());if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
+    async queryPilot(point){
+      if(!basemapPilot||!point)return [];
+      const lon=point.longitude,lat=point.latitude;
+      if(!((lon>=-119.86&&lon<=-119.50&&lat>=36.89&&lat<=37.16)||(lon>=-119.52&&lon<=-119.13&&lat>=36.72&&lat<=37.02)))return [];
+      // Query current publisher attributes near the click; cached tile IDs never
+      // masquerade as a live observation. Bounded tolerance, no analysis buffer.
+      const distance=Math.min(150,Math.max(8,getView().scale*.00028*5));
+      const query=detailSource.createQuery();query.where='1=1';query.geometry=point;
+      query.distance=distance;query.units='meters';query.num=5;query.returnGeometry=true;
+      const result=await detailSource.queryFeatures(query);return result.features;
+    },
+    setBasemapPilot:value=>{basemapPilot=!!value;named.visible=waterEnabled&&!basemapPilot;unnamed.visible=waterEnabled&&!basemapPilot;void names.then(labels=>labels?.sync());updateStatus();},
+    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;named.visible=waterEnabled&&!basemapPilot;unnamed.visible=waterEnabled&&!basemapPilot;void names.then(labels=>labels?.sync());if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
     onViewChanged:()=>{
       const view=getView();void names.then(labels=>labels?.changeView());
       if(buildings){

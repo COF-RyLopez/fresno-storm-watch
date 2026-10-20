@@ -1,0 +1,83 @@
+{
+  "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
+  "publisher": "USGS 3D Hydrography Program",
+  "retrievedAt": "2026-10-20T04:45:37.572605+00:00",
+  "crs": "OGC:CRS84",
+  "areas": [
+    {
+      "id": "friant-millerton",
+      "name": "Friant / Millerton",
+      "bounds": [
+        -119.86,
+        36.89,
+        -119.5,
+        37.16
+      ]
+    },
+    {
+      "id": "pine-flat",
+      "name": "Pine Flat / Kings River",
+      "bounds": [
+        -119.52,
+        36.72,
+        -119.13,
+        37.02
+      ]
+    }
+  ],
+  "sourceSha256": "815a62ecaf60b0c4a3f77c4f653ec2cc93c639a3f220b0c48abcc280e7c1c86a",
+  "downloaded": 23997,
+  "outsideCounty": 4896,
+  "accepted": 19101,
+  "rejected": 0,
+  "featureTypes": {
+    "1": 17177,
+    "2": 47,
+    "3": 1,
+    "4": 42,
+    "5": 1798,
+    "7": 36
+  },
+  "scope": "County-intersecting source segments clipped to pilot boxes. Border segments may extend outside Fresno County.",
+  "limitations": "Reference snapshot, not live flow or a complete ditch inventory. County/district additions and local names require review.",
+  "license": "USGS public-domain federal reference data; Esri background attribution retained separately.",
+  "basemapVersion": "0.28.0",
+  "backgroundStyle": {
+    "itemId": "c11ce4f7801740b2905eb03ddc963ac8",
+    "owner": "esri_vector",
+    "url": "https://www.arcgis.com/sharing/rest/content/items/c11ce4f7801740b2905eb03ddc963ac8/resources/styles/root.json",
+    "sha256": "2f5bedb0db9161b915cb4c152470820b957d5ff4c6611fec1679723a57e965f1"
+  },
+  "cartography": {
+    "projection": "EPSG:3857 web tiles",
+    "tileSize": 512,
+    "extent": 4096,
+    "buffer": 128,
+    "maxzoom": 14,
+    "simplificationTolerance": 2,
+    "labelAnchors": 66,
+    "labelTargets": {
+      "san joaquin river": [
+        -119.733,
+        36.994
+      ],
+      "kings river": [
+        -119.34,
+        36.823
+      ],
+      "madera canal": [
+        -119.73,
+        37.01
+      ],
+      "friant-kern canal": [
+        -119.69,
+        36.986
+      ]
+    },
+    "labelRule": "One point anchor per normalized published name; four principal names snap to source paths near the dam areas, others use the midpoint of the longest clipped source path. Native collision avoidance may hide crowded names.",
+    "symbolRule": "Canal: source types 2/3 or published name containing canal/ditch. River: type 1 or named type 5 containing river. Other network connectors dotted. Named waterbody centerlines remain references, not channel beds."
+  },
+  "tileCount": 1219,
+  "tileBytes": 7794374,
+  "tilesSha256": "54297f382333f625684ef22290a59ce7c42e3fac7be4d5a0801a10c783db6656"
+}
