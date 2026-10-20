@@ -6,7 +6,7 @@
 <title>Storm Watch · Flood scenario playback</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css">
 <script src="./theme.js"></script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario.js?v=0.17.0"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario.js?v=0.18.0"></script>
 <style>
   html, body { margin: 0; height: 100%; background: var(--app-canvas); color: var(--app-text); }
   .stage { position: relative; height: 100%; }
@@ -25,7 +25,7 @@
   .key { display: grid; gap: 4px; font-size: .8rem; } .key i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid #0006; }
   .player { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); display: flex; gap: 10px; align-items: center;
     padding: 8px 12px; border-radius: 6px; background: var(--app-surface); border: 1px solid var(--app-border); box-shadow: 0 4px 18px #0005; }
-  .player calcite-slider { flex: 1; } .player calcite-select { width: 92px; }
+  .player calcite-slider { flex: 1; } .player calcite-select { width: 100px; }
   .note { font-size: .75rem; color: var(--app-muted); margin: 0; }
   .traffic { display: grid; gap: 8px; } .traffic calcite-label { --calcite-label-margin-bottom: 0; }
   .key .trail { display: inline-block; width: 16px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: 2px; }
@@ -80,7 +80,7 @@
   <div class="player" aria-label="Scenario playback">
     <calcite-button id="play" icon-start="play" scale="s" appearance="solid" label="Play">Play</calcite-button>
     <calcite-slider id="time" min="0" max="24" step="0.05" value="0" label-handles label="Scenario hour"></calcite-slider>
-    <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.05">0.05 h/s</calcite-option><calcite-option value="0.1">0.1 h/s</calcite-option><calcite-option value="0.25">0.25 h/s</calcite-option><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
+    <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.016667">1 min/s</calcite-option><calcite-option value="0.083333">5 min/s</calcite-option><calcite-option value="0.25">15 min/s</calcite-option><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
   </div></div>
 </calcite-shell>
 </body></html>

@@ -16,8 +16,9 @@ export async function decodeArray(b64, Type) {
  * Car positions at time ts (seconds after the failure begins), linearly interpolated between trace samples.
  * trips: { start: Uint32Array (first sample of each trip), xy: Float32Array|Float64Array (x, y per sample), t: Float32Array }.
  * Writes [x, y] per car on the road into out (Float64Array, 2 per trip) and returns the indices of those cars.
+ * With seg (Int32Array, 1 per trip), also records the sample each car is past, for drawing trails along the path.
  */
-export function positionsAt(trips, ts, out, on = []) {
+export function positionsAt(trips, ts, out, on = [], seg = null) {
   const { start, xy, t } = trips;
   on.length = 0;
   for (let i = 0; i < start.length; i++) {
@@ -28,6 +29,7 @@ export function positionsAt(trips, ts, out, on = []) {
     const f = t[hi] > t[lo] ? (ts - t[lo]) / (t[hi] - t[lo]) : 0;
     out[2 * i] = xy[2 * lo] + (xy[2 * hi] - xy[2 * lo]) * f;
     out[2 * i + 1] = xy[2 * lo + 1] + (xy[2 * hi + 1] - xy[2 * lo + 1]) * f;
+    if (seg) seg[i] = lo;
     on.push(i);
   }
   return on;
@@ -55,7 +57,8 @@ export function createTrafficCanvas(view, Point) {
   view.container.append(canvas);
   view.when(() => { const ui = view.container.querySelector('.esri-ui'); if (ui) ui.parentNode.insertBefore(canvas, ui); }); // under the map widgets
   const ctx = canvas.getContext('2d');
-  let now = null, nowS = 0, pos = null, prev = null;
+  const TRAIL_S = 30; // trail length, model seconds
+  let now = null, nowS = 0, pos = null, prev = null, seg = null, segPrev = null;
   const on = [], onPrev = [];
   function transform(sr) { // screen = A * (x, y) + c from three projected points, so rotation is handled
     const c = view.center, d = 1000;
@@ -78,11 +81,12 @@ export function createTrafficCanvas(view, Point) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const T = transform(sr), sx = (x, y) => T.a * x + T.b * y + T.x0, sy = (x, y) => T.c * x + T.d * y + T.y0;
     const n = traffic.trips.start.length;
-    if (!pos || pos.length !== 2 * n) { pos = new Float64Array(2 * n); prev = new Float64Array(2 * n); }
-    positionsAt(traffic.trips, seconds, pos, on);
-    positionsAt(traffic.trips, seconds - 60, prev, onPrev);
+    if (!pos || pos.length !== 2 * n) { pos = new Float64Array(2 * n); prev = new Float64Array(2 * n); seg = new Int32Array(n); segPrev = new Int32Array(n); }
+    positionsAt(traffic.trips, seconds, pos, on, seg);
+    positionsAt(traffic.trips, seconds - TRAIL_S, prev, onPrev, segPrev);
     const hadPrev = new Uint8Array(n);
     for (const i of onPrev) hadPrev[i] = 1;
+    const { start, xy } = traffic.trips;
     for (const [colour, caught] of [['rgba(255,181,71,0.9)', 0], ['rgba(255,93,115,0.95)', 1]]) {
       ctx.strokeStyle = colour; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
       ctx.beginPath();
@@ -90,7 +94,11 @@ export function createTrafficCanvas(view, Point) {
         if ((traffic.status[i] === 1) !== !!caught) continue;
         const x = sx(pos[2 * i], pos[2 * i + 1]), y = sy(pos[2 * i], pos[2 * i + 1]);
         if (x < -20 || y < -20 || x > w + 20 || y > h + 20) continue;
-        if (hadPrev[i]) ctx.moveTo(sx(prev[2 * i], prev[2 * i + 1]), sy(prev[2 * i], prev[2 * i + 1])); else ctx.moveTo(x - 0.5, y);
+        // trail follows the recorded path: from TRAIL_S ago (or the trip start) through every sample passed since
+        const k0 = hadPrev[i] ? segPrev[i] : start[i];
+        if (hadPrev[i]) ctx.moveTo(sx(prev[2 * i], prev[2 * i + 1]), sy(prev[2 * i], prev[2 * i + 1]));
+        else ctx.moveTo(sx(xy[2 * k0], xy[2 * k0 + 1]), sy(xy[2 * k0], xy[2 * k0 + 1]));
+        for (let k = k0 + 1; k <= seg[i]; k++) ctx.lineTo(sx(xy[2 * k], xy[2 * k + 1]), sy(xy[2 * k], xy[2 * k + 1]));
         ctx.lineTo(x, y);
       }
       ctx.stroke();

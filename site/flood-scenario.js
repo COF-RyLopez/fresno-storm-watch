@@ -1,6 +1,6 @@
 import { loadSdk } from './lib/map.js';
 import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
-import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js';
+import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js?v=0.18.0';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
@@ -156,7 +156,7 @@ if (carCanvas) {
     + 'rerouting around roads deeper than 0.5 ft). One car per household of night-time residents (NSI) on OpenStreetMap roads; exits are major roads '
     + 'half a mile beyond mapped water. Warning at 15 minutes; departure delays are a placeholder (mean 45 minutes), not a calibrated warning curve. '
     + 'The stress test compresses them to a quarter. No intersection or signal delay is modelled.';
-  $('speed').value = '0.25'; // evacuations play out in the first hours
+  $('speed').value = '0.016667'; // one model minute per second: a typical trip takes a few minutes
   $('traffic-mode').addEventListener('calciteSegmentedControlChange', e => showTraffic(e.target.value));
   $('traffic-show').addEventListener('calciteSwitchChange', drawTraffic);
   reactiveUtils.watch(() => [view.extent, view.size], () => carCanvas.draw(), { initial: false });
