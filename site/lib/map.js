@@ -62,7 +62,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
   let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
   const currentState=()=>memory.get(activeProfile);
-  const registerLayer=(key,layer,eligible=true)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer);layer.visible=layerVisible(currentState(),key,eligible);};
+  const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=layerVisible(currentState(),key,eligible);};
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   const syncVisibility=()=>{
     for(const [layer,r]of registry)layer.visible=layerVisible(currentState(),r.key,r.eligible);

@@ -1,0 +1,31 @@
+{
+  "checked": "2026-10-20T02:14:19Z",
+  "publisher": "NOAA / National Weather Service / Weather Prediction Center",
+  "portal": "https://www.wpc.ncep.noaa.gov/Prob_Precip/?zoom=HNX",
+  "applicationSource": "https://www.wpc.ncep.noaa.gov/Prob_Precip/script.js?v=5",
+  "cycleDeclaration": "https://www.wpc.ncep.noaa.gov/Prob_Precip/current_cycle_co.js",
+  "referenceQueryDecoded": {
+    "layer": "https://mapservices.weather.noaa.gov/static/rest/services/nws_reference_maps/nws_reference_map/MapServer/3",
+    "name": "NWS States Borders",
+    "where": "1=1",
+    "outFields": "objectid",
+    "format": "pbf",
+    "spatialReference": "Web Mercator 102100 / 3857",
+    "interpretation": "Map viewport/tile query with quantized geometry; no forecast threshold, probability or valid period. The WPC application references this same state-border layer."
+  },
+  "forecastImages": {
+    "template": "https://www.wpc.ncep.noaa.gov/Prob_Precip/hourly-data/co/{cycle}/png/ppp_ndfd_co_pp24ige{threshold}_{cycle}f{forecastHour3digits}_tile_0_1.png",
+    "thresholdsInches": [0.25, 0.5],
+    "units": "percent chance of at least the selected liquid-equivalent precipitation threshold",
+    "accumulationHours": 24,
+    "selection": "First available 24-hour key plus 24 and 48 forecast hours, where supported by the publisher cycle. Does not claim the archived slides' exact dates or 12Z boundaries.",
+    "sourceBoundsWGS84": [-124.786952, 24.530802, -95.856708, 38.002106],
+    "displayCRS": "EPSG:3857; publisher geographic corners projected to Web Mercator for linear image placement, matching the portal's map grid",
+    "coverage": "Southwest CONUS tile, including Fresno County; north of 38.002106 degrees is outside this increment's image coverage.",
+    "style": "Unmodified publisher PNG bytes, opacity 1, normal blend; exact publisher green probability legend with textual percentage labels.",
+    "access": "Public NOAA files. CORS allows weather.gov, so scheduled GitHub Actions publishes only these public map images and provenance on Pages. No private features or credentials.",
+    "cadence": "Existing Pages collection target: every 15 minutes, not a delivery guarantee. Open app checks its deployed manifest every five minutes.",
+    "guards": "Failed/partial collection, cycle rollover, changed source bounds/colors, hash/dimension mismatch, unavailable period, cycle older than six hours, collection check older than two hours, or ended forecast withholds shading.",
+    "comparison": "Latest WPC portal cycle beside the original dated partner slide. Not proven to be the identical forecast cycle, local generation method or graphic used by Hanford."
+  }
+}

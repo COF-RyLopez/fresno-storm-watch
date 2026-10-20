@@ -1,0 +1,27 @@
+{
+  "release": "0.25.0",
+  "checkedAt": "2026-10-20T02:22:00Z",
+  "scope": "WPC quarter-/half-inch probability map images in the Weather briefing tour; decoded reference-map query documented.",
+  "automated": {
+    "javascriptTests": {"passed": 266, "failed": 0},
+    "deploymentChecks": "Passed syntax, county geometry, watchpoint/camera/reservoir contracts, pinned player integrity, page links and public-config checks.",
+    "newCases": "Cycle injection/calendar/freshness; all 24 cycle-hour period keys; exact source bounds/colors; missing/duplicate/mixed image metadata; ended/unavailable periods; PNG truncation/dimensions; partial collector failures and cycle rollover."
+  },
+  "liveSource": {
+    "cycle": "2026102001",
+    "images": 6,
+    "bytes": 453854,
+    "collectionResult": "Complete, source-hashed public WPC southwest tiles; no partial forecast published.",
+    "provenance": "docs/wpc-probability-sources.json"
+  },
+  "localBrowser": {
+    "desktop": "Verified live percentage colors/legend, correct threshold/window selection and related archived slide in the right pane without obstructing map interaction.",
+    "phone390x844": "Verified map/evidence reflow and scrollable legend with no modal backdrop; viewport reset afterward.",
+    "threeDimensional": "Verified probability MediaLayer on 3D terrain alongside archived slide.",
+    "failureAndRecovery": "Temporarily set ignored local metadata to an explicit QA collection failure; Check layer withheld shading and legend, displayed failure and incremented source issues. Restored original metadata; next selection recovered. No QA failure data is committed or deployed.",
+    "thresholdComparison": "Quarter-/half-inch navigation changes the original image URL and textual threshold without changing the forecast window. Archived page remains explicitly static.",
+    "limitation": "Only southwest CONUS tile in this increment, covering Fresno County south of 38.002106N. No inferred pixel queries, exposure calculations or exact archived forecast-cycle equivalence."
+  },
+  "preserved": "Existing private EOC, Experience Builder, alert/Area Watch rules, county layers, credentials and permissions unchanged.",
+  "rollback": "Redeploy 5105df9775e50083729e3ef4ca00f10d3ab618a9 (0.24.0); no data migration."
+}

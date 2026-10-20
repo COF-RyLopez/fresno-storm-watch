@@ -38,6 +38,9 @@ jobs:
       - name: Collect public NWS Hanford briefing
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:briefing -- --published
+      - name: Collect public WPC rainfall-probability map images
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npm run collect:probability
       - name: Render public briefing page previews
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |

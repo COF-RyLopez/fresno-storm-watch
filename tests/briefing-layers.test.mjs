@@ -4,9 +4,9 @@ import {BRIEFING_LAYERS,briefingLayerTime,briefingLayerCycle,briefingLayerLegend
 import {workspaceDefaults,layerVisible} from '../site/lib/workspace-model.js';
 const now=Date.parse('2026-10-19T23:00:00Z'),rain=BRIEFING_LAYERS[0],ero=BRIEFING_LAYERS[5],winter=BRIEFING_LAYERS[6];
 const data=(s=rain)=>({features:[{attributes:{product:s.product,issue_time:'2026-10-19 22:00:00',start_time:'2026-10-20 00:00:00',end_time:'2026-10-21 00:00:00',units:'Inches'}}]});
-test('seven guided steps use only verified NOAA services and distinguish amount from probability',()=>{
-  assert.equal(BRIEFING_LAYERS.length,7);assert.equal(new Set(BRIEFING_LAYERS.map(s=>s.id)).size,7);
-  for(const s of BRIEFING_LAYERS)assert.equal(new URL(s.service).hostname,'mapservices.weather.noaa.gov');
+test('guided steps distinguish seven NOAA feature layers from six WPC probability image selections',()=>{
+  assert.equal(BRIEFING_LAYERS.length,13);assert.equal(new Set(BRIEFING_LAYERS.map(s=>s.id)).size,13);
+  for(const s of BRIEFING_LAYERS.filter(s=>s.kind!=='probability'))assert.equal(new URL(s.service).hostname,'mapservices.weather.noaa.gov');
   assert.match(rain.relationship,/do not reproduce/);assert.match(ero.relationship,/latest published cycle/);assert.equal(winter.page,14);
 });
 test('UTC parsing accepts NOAA daily and WSSI formats without local time assumptions',()=>{

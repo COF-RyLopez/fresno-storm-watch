@@ -3,7 +3,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js';
-import { createMap } from './lib/map.js?v=0.24.0';
+import { createMap } from './lib/map.js?v=0.25.0';
 import { setupAuth } from './lib/auth.js';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -17,7 +17,7 @@ import { createPowerWatch } from './lib/power-ui.js?v=0.24.0';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.24.0';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.22.0';
 import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.24.0';
-import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.23.0';
+import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.25.0';
 import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.22.0';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.19.0';
 

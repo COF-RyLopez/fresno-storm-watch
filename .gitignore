@@ -10,3 +10,5 @@ Thumbs.db
 *.zip
 __pycache__/
 *.pyc
+site/data/precip-probability.json
+site/data/probability-images/

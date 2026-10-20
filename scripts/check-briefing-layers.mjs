@@ -1,6 +1,6 @@
 import {BRIEFING_LAYERS,briefingLayerCycle,briefingLayerLegend} from '../site/lib/briefing-layer-model.js';
 /** Read-only source contract smoke test; no credentials, feature geometry or private records. */
-const records=await Promise.all(BRIEFING_LAYERS.map(async step=>{
+const records=await Promise.all(BRIEFING_LAYERS.filter(s=>s.kind!=='probability').map(async step=>{
   try{
   const q=new URL(`${step.service}/${step.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(step.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});
   const json=async u=>{const r=await fetch(u,{signal:AbortSignal.timeout(25_000)});if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();};

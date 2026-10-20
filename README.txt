@@ -289,3 +289,15 @@ Reproduce with a separate Python environment (do not modify the Pro environment)
 Results, source download, rejected-record accounting and manifest go under
 work/waterways-geoparquet. --reuse-download repeats conversion of that snapshot.
 No credentials, private layers, AGOL writes or scheduled collection are used.
+
+0.25.0 WPC probability map images
+Weather > Briefing map tour now includes probability of at least 0.25 / 0.50
+inches for available successive 24-hour windows. Original WPC PNG colors,
+source cycle, valid window, collection time and related partner slides are shown.
+The supplied NWS States Borders PBF query is reference context, not a forecast.
+Run npm run collect:probability before local preview. The Pages workflow collects
+these public files before deploy; ignored site/data/precip-probability.json and
+site/data/probability-images are generated artifacts, never private data.
+Source contract/provenance: docs/wpc-probability-sources.json.
+Operating rules: planning.html#rainfall-probabilities.
+Rollback: redeploy 5105df9 (0.24.0); no data migration.

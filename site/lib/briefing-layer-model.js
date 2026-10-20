@@ -1,4 +1,5 @@
 import {sourceTime} from './environment-model.js';
+import {PROBABILITY_STEPS} from './precip-probability-model.js';
 const BASE='https://mapservices.weather.noaa.gov/vector/rest/services/';
 export const BRIEFING_LAYER_CHECK_MS=7*60_000;
 const rain={service:BASE+'precip/wpc_qpf/MapServer',field:'qpf',product:'24-hour QPF',maxAge:36*3_600_000,page:4,source:'https://www.wpc.ncep.noaa.gov/#page=qpf',meaning:'Forecast liquid-equivalent precipitation in inches, including melted snow. Not runoff, flood depth or probability of exceeding a rainfall threshold.',relationship:'Related rainfall guidance. WPC amounts do not reproduce Hanford’s local rainfall ranges or quarter-/half-inch probabilities.'};
@@ -6,7 +7,8 @@ const ero={service:BASE+'hazards/wpc_precip_hazards/MapServer',field:'dn',maxAge
 export const BRIEFING_LAYERS=Object.freeze([
   ...[1,2,3].map(day=>({...rain,id:`rain-day-${day}`,layer:day,label:`Rainfall amount · Day ${day}`})),
   ...[1,2,3].map(day=>({...ero,id:`ero-day-${day}`,layer:day-1,product:`Day ${day} Excessive Rainfall Potential Forecast`,label:`Excessive rainfall · Day ${day}`})),
-  {id:'winter',label:'Winter impacts · Days 1–3',service:BASE+'outlooks/wpc_wssi/MapServer',layer:4,field:'impact',product:'WINTER STORM SEVERITY INDEX',maxAge:12*3_600_000,page:14,source:'https://www.wpc.ncep.noaa.gov/wwd/wssi/wssi.php',meaning:'WPC Winter Storm Severity Index: anticipated winter-weather impacts. Not snow depth, snow probability or a road-access determination.',relationship:'Same WPC product family as partner slide 14. The full Days 1–3 window can differ from the slide’s window; read the source times.'}
+  {id:'winter',label:'Winter impacts · Days 1–3',service:BASE+'outlooks/wpc_wssi/MapServer',layer:4,field:'impact',product:'WINTER STORM SEVERITY INDEX',maxAge:12*3_600_000,page:14,source:'https://www.wpc.ncep.noaa.gov/wwd/wssi/wssi.php',meaning:'WPC Winter Storm Severity Index: anticipated winter-weather impacts. Not snow depth, snow probability or a road-access determination.',relationship:'Same WPC product family as partner slide 14. The full Days 1–3 window can differ from the slide’s window; read the source times.'},
+  ...PROBABILITY_STEPS
 ]);
 /** Parse only documented NOAA UTC formats; reject invalid dates rather than normalizing them. */
 export function briefingLayerTime(value){
