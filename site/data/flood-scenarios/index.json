@@ -3,51 +3,63 @@
  "scenarios": [
   {
    "id": "big-dry-creek",
-   "label": "Big Dry Creek Dam failure (hypothetical)"
+   "label": "Big Dry Creek Dam failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "big-dry-creek-outlet-2",
-   "label": "Big Dry Creek Dam Little Dry Creek outlet failure (hypothetical)"
+   "label": "Big Dry Creek Dam Little Dry Creek outlet failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "big-dry-creek-spillway",
-   "label": "Big Dry Creek Dam spillway failure (hypothetical)"
+   "label": "Big Dry Creek Dam spillway failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "fancher-creek",
-   "label": "Fancher Creek Dam failure (hypothetical)"
+   "label": "Fancher Creek Dam failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "big-dry-creek-outlet-1",
-   "label": "Big Dry Creek Dam outlet 1 failure (hypothetical)"
+   "label": "Big Dry Creek Dam outlet 1 failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "fancher-creek-spillway",
-   "label": "Fancher Creek Dam spillway failure (hypothetical)"
+   "label": "Fancher Creek Dam spillway failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "fancher-creek-detention",
-   "label": "Fancher Creek Detention Dam failure (hypothetical)"
+   "label": "Fancher Creek Detention Dam failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "fancher-creek-detention-spillway",
-   "label": "Fancher Creek Detention Dam spillway failure (hypothetical)"
+   "label": "Fancher Creek Detention Dam spillway failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "redbank-creek-detention",
-   "label": "Redbank Creek Detention Basin Dam failure (hypothetical)"
+   "label": "Redbank Creek Detention Basin Dam failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "redbank",
-   "label": "Redbank Dam failure (hypothetical)"
+   "label": "Redbank Dam failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "redbank-creek-detention-spillway",
-   "label": "Redbank Creek Detention Basin spillway failure (hypothetical)"
+   "label": "Redbank Creek Detention Basin spillway failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "alluvial-drain",
-   "label": "Alluvial Drain Detention Dam failure (hypothetical)"
+   "label": "Alluvial Drain Detention Dam failure (hypothetical)",
+   "evacuation": true
   },
   {
    "id": "muncie",

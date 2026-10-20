@@ -6,7 +6,7 @@
 <title>Storm Watch · Flood scenario playback</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css">
 <script src="./theme.js"></script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario.js?v=0.16.0"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario.js?v=0.17.0"></script>
 <style>
   html, body { margin: 0; height: 100%; background: var(--app-canvas); color: var(--app-text); }
   .stage { position: relative; height: 100%; }
@@ -27,6 +27,8 @@
     padding: 8px 12px; border-radius: 6px; background: var(--app-surface); border: 1px solid var(--app-border); box-shadow: 0 4px 18px #0005; }
   .player calcite-slider { flex: 1; } .player calcite-select { width: 92px; }
   .note { font-size: .75rem; color: var(--app-muted); margin: 0; }
+  .traffic { display: grid; gap: 8px; } .traffic calcite-label { --calcite-label-margin-bottom: 0; }
+  .key .trail { display: inline-block; width: 16px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: 2px; }
 </style>
 </head><body>
 <calcite-shell>
@@ -46,6 +48,24 @@
           <div><b id="s-people">0</b><span>residents (night) in wet buildings</span></div>
           <div style="grid-column: span 2"><b id="s-loss">$0</b><span>Hazus direct loss at buildings that have peaked</span></div>
         </div>
+        <div class="traffic" id="traffic" hidden>
+          <strong>Evacuation traffic</strong>
+          <calcite-segmented-control id="traffic-mode" scale="s" width="full" label="Departures">
+            <calcite-segmented-control-item value="base" checked>Realistic departures</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="fast">Stress test, 4&times;</calcite-segmented-control-item>
+          </calcite-segmented-control>
+          <calcite-label layout="inline" scale="s"><calcite-switch id="traffic-show" checked scale="s"></calcite-switch>Show cars and exit points</calcite-label>
+          <div class="stats">
+            <div><b id="t-road">0</b><span>cars on the road</span></div>
+            <div><b id="t-safe">0</b><span>people past an exit</span></div>
+            <div><b id="t-trap">0</b><span>people who never left</span></div>
+            <div><b id="t-exits">0</b><span>exit points</span></div>
+          </div>
+          <div class="key"><span><i class="trail" style="background:#ffb547"></i>Car (one household), last minute of travel</span>
+            <span><i class="trail" style="background:#ff5d73"></i>Car stopped by water on the road</span>
+            <span><i style="background:#7ef0c4"></i>Exit point</span></div>
+          <p class="note" id="traffic-note"></p>
+        </div>
         <div><strong>Depth (ft)</strong><div class="ramp" id="ramp"></div><div class="ramp-labels" id="ramp-labels"></div></div>
         <div class="key"><strong>Buildings · water vs first floor</strong><span class="note">Shown when zoomed in to neighbourhood scale.</span>
           <span><i style="background:#8b949e"></i>Dry</span><span><i style="background:#f2cc60"></i>Wet, below first floor</span>
@@ -60,7 +80,7 @@
   <div class="player" aria-label="Scenario playback">
     <calcite-button id="play" icon-start="play" scale="s" appearance="solid" label="Play">Play</calcite-button>
     <calcite-slider id="time" min="0" max="24" step="0.05" value="0" label-handles label="Scenario hour"></calcite-slider>
-    <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
+    <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.05">0.05 h/s</calcite-option><calcite-option value="0.1">0.1 h/s</calcite-option><calcite-option value="0.25">0.25 h/s</calcite-option><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
   </div></div>
 </calcite-shell>
 </body></html>

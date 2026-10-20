@@ -1,5 +1,6 @@
 import { loadSdk } from './lib/map.js';
 import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
+import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
@@ -17,10 +18,11 @@ const [scenario, buildingsJson, sdk] = await Promise.all([
   fetch(DATA + 'buildings.json').then(r => r.json()),
   loadSdk()
 ]);
-const [Map, MapView, Basemap, TileLayer, MediaLayer, ImageElement, ExtentAndRotationGeoreference, Extent, FeatureLayer, GeoJSONLayer, Graphic] = await sdk.import([
+const [Map, MapView, Basemap, TileLayer, MediaLayer, ImageElement, ExtentAndRotationGeoreference, Extent, FeatureLayer, GeoJSONLayer, Graphic, Point, reactiveUtils] = await sdk.import([
   '@arcgis/core/Map.js', '@arcgis/core/views/MapView.js', '@arcgis/core/Basemap.js', '@arcgis/core/layers/TileLayer.js',
   '@arcgis/core/layers/MediaLayer.js', '@arcgis/core/layers/support/ImageElement.js', '@arcgis/core/layers/support/ExtentAndRotationGeoreference.js',
-  '@arcgis/core/geometry/Extent.js', '@arcgis/core/layers/FeatureLayer.js', '@arcgis/core/layers/GeoJSONLayer.js', '@arcgis/core/Graphic.js'
+  '@arcgis/core/geometry/Extent.js', '@arcgis/core/layers/FeatureLayer.js', '@arcgis/core/layers/GeoJSONLayer.js', '@arcgis/core/Graphic.js',
+  '@arcgis/core/geometry/Point.js', '@arcgis/core/core/reactiveUtils.js'
 ]);
 
 const frames = scenario.frames;
@@ -121,6 +123,44 @@ function render(next) {
   $('s-people').textContent = fmt.format(s.people);
   $('s-loss').textContent = usd.format(s.loss);
   if (Math.abs(Number($('time').value) - t) > 0.01) $('time').value = Number(t.toFixed(2));
+  drawTraffic();
+}
+
+// Evacuation traffic (scenarios with "evacuation": true in index.json): cars from an evac-engine run, drawn over the map.
+const entry = index.scenarios.find(s => s.id === id);
+const carCanvas = entry.evacuation ? createTrafficCanvas(view, Point) : null;
+let traffic = null;
+let trafficLoad = 0;
+function drawTraffic() {
+  if (!carCanvas) return;
+  carCanvas.draw($('traffic-show').checked ? traffic : null, t * 3600);
+  if (!traffic) return;
+  const m = Math.min(traffic.meta.minute_on_road.length - 1, Math.max(0, Math.floor(t * 60)));
+  $('t-road').textContent = fmt.format(traffic.meta.minute_on_road[m]);
+  $('t-safe').textContent = fmt.format(traffic.meta.minute_people_safe[m]);
+}
+async function showTraffic(mode) {
+  const ticket = ++trafficLoad;
+  try {
+    const next = await loadTraffic(`./data/evacuation/${id}/${mode}/`);
+    if (ticket !== trafficLoad) return;
+    traffic = next;
+    $('t-trap').textContent = fmt.format(traffic.meta.outcome_people.Waiting);
+    $('t-exits').textContent = fmt.format(traffic.exits.length);
+    drawTraffic();
+  } catch (error) { console.warn('Evacuation traffic:', error.message); $('traffic').hidden = true; }
+}
+if (carCanvas) {
+  $('traffic').hidden = false;
+  $('traffic-note').textContent = 'Agent-based evacuation model following the LifeSim technical reference (Greenshields speed-density, spillback, '
+    + 'rerouting around roads deeper than 0.5 ft). One car per household of night-time residents (NSI) on OpenStreetMap roads; exits are major roads '
+    + 'half a mile beyond mapped water. Warning at 15 minutes; departure delays are a placeholder (mean 45 minutes), not a calibrated warning curve. '
+    + 'The stress test compresses them to a quarter. No intersection or signal delay is modelled.';
+  $('speed').value = '0.25'; // evacuations play out in the first hours
+  $('traffic-mode').addEventListener('calciteSegmentedControlChange', e => showTraffic(e.target.value));
+  $('traffic-show').addEventListener('calciteSwitchChange', drawTraffic);
+  reactiveUtils.watch(() => [view.extent, view.size], () => carCanvas.draw(), { initial: false });
+  showTraffic('base');
 }
 
 let playing = false;
@@ -141,7 +181,7 @@ function setPlaying(on) {
   if (on) { if (t >= hours.at(-1)) render(hours[0]); requestAnimationFrame(tick); }
 }
 $('play').addEventListener('click', () => setPlaying(!playing));
-$('time').addEventListener('calciteSliderInput', e => { setPlaying(false); render(Number(e.target.value)); });
+$('time').addEventListener('calciteSliderInput', e => { const v = Number(e.target.value); setPlaying(false); render(v); }); // read first: pausing re-renders and resets the slider
 
 // Open on the first hour with water, so the page does not start blank.
 const firstWet = frames.findIndex(f => f.wet_acres > 0);
