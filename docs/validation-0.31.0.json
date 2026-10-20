@@ -53,5 +53,6 @@
     "Public search geometry uses five-meter display simplification and EPSG:4326 XY; no elevation or datum accuracy is inferred.",
     "Private assets are available only after their authorized layers have been loaded; the interface does not grant access."
   ],
-  "rollback": "Redeploy 22d8810c95ae7e588d2afb775590cee3c8b1224e (0.30.0); no data migration."
+  "rollback": "Redeploy 27eb329 (preceding remote 0.30.0 content, including the additional flood playback scenarios); no data migration.",
+  "integration": "Merged remote 27eb329 (additional FMFCD flood playback data and guide changes) without conflicts; search code and public geometry unchanged."
 }
