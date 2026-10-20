@@ -1,17 +1,17 @@
 {
   "tilejson": "3.0.0",
-  "name": "F.R.O.G. Waterways — Dark · pilot",
+  "name": "F.R.O.G. Waterways — Dark",
   "scheme": "xyz",
   "tiles": [
-    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/tiles/{z}/{x}/{y}.pbf"
+    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/tiles-v0.29.0/{z}/{x}/{y}.pbf"
   ],
-  "minzoom": 10,
+  "minzoom": 0,
   "maxzoom": 14,
   "bounds": [
-    -119.86,
-    36.72,
-    -119.13,
-    37.16
+    -120.91873100010041,
+    35.906914000095696,
+    -118.36058599987905,
+    37.58583700006363
   ],
   "tileSize": 512,
   "attribution": "USGS 3DHP; Esri and its data providers",
@@ -23,6 +23,7 @@
         "name": "String",
         "kind": "Number",
         "role": "String",
+        "rank": "Number",
         "source_id": "String"
       }
     },
@@ -32,6 +33,8 @@
       "fields": {
         "name": "String",
         "kind": "Number",
+        "role": "String",
+        "rank": "Number",
         "source_id": "String"
       }
     }

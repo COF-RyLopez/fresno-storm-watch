@@ -9,6 +9,13 @@ test('seven focused defaults never start with an unrelated operational stack',()
   assert.equal(workspaceDefaults('weather').layers.wind,true);assert.equal(workspaceDefaults('weather').layers.weather,true);assert.equal(workspaceDefaults('weather').layers.power,false);
   for(const id of Object.keys(WORKSPACES)){const s=workspaceDefaults(id);assert.equal(s.mode,'2d');assert.equal(s.imagery,false);assert.equal(s.cameras,false);assert.equal(s.layers.fema,false);assert.equal(s.layers.buildings,false);}
 });
+
+test('county waterways starts only in Rivers and Reservoirs; gallery preferences remain independent',()=>{
+  for(const id of Object.keys(WORKSPACES))assert.equal(workspaceDefaults(id).basemap,['rivers','reservoirs'].includes(id)?'waterways':'dark');
+  const memory=workspaceMemory();memory.get('rivers').basemap='imagery';
+  assert.equal(memory.get('reservoirs').basemap,'waterways');
+  assert.equal(memory.get('rivers').basemap,'imagery');assert.equal(workspaceMemory().get('rivers').basemap,'waterways');
+});
 test('saved tab preferences and viewpoints are isolated, remembered in memory, and reset for a new page',()=>{
   const m=workspaceMemory();m.activate('roads');const r=m.get('roads');r.basemap='imagery';r.imagery=true;r.mode='3d';r.viewpoint={scale:22000};r.layers.power=true;
   m.activate('weather');assert.equal(m.get('weather').basemap,'dark');assert.equal(m.get('weather').imagery,false);assert.equal(m.get('weather').layers.power,false);assert.equal(m.get('weather').viewpoint,null);

@@ -1,47 +1,139 @@
 {
   "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
   "publisher": "USGS 3D Hydrography Program",
-  "retrievedAt": "2026-10-20T04:45:37.572605+00:00",
+  "retrievalStartedAt": "2026-10-20T05:47:53.309371+00:00",
+  "retrievedAt": "2026-10-20T05:48:34.131743+00:00",
   "crs": "OGC:CRS84",
-  "areas": [
-    {
-      "id": "friant-millerton",
-      "name": "Friant / Millerton",
-      "bounds": [
-        -119.86,
-        36.89,
-        -119.5,
-        37.16
-      ]
-    },
-    {
-      "id": "pine-flat",
-      "name": "Pine Flat / Kings River",
-      "bounds": [
-        -119.52,
-        36.72,
-        -119.13,
-        37.02
-      ]
-    }
+  "bounds": [
+    -120.91873100010041,
+    35.906914000095696,
+    -118.36058599987905,
+    37.58583700006363
   ],
-  "sourceSha256": "815a62ecaf60b0c4a3f77c4f653ec2cc93c639a3f220b0c48abcc280e7c1c86a",
-  "downloaded": 23997,
-  "outsideCounty": 4896,
-  "accepted": 19101,
+  "countyGeoid": "06019",
+  "boundarySha256": "caca43ac4a58464db728d5e92461ff0fcf03b3ca0a63afc796caa9d2f7f066f2",
+  "sourceSha256": "72a58ff2dbdd51d20385e6a8323dd9198b9aef618943a86f270765ad03b7625a",
+  "inventorySha256": "87b2e2e7b648357ad870574e808656050bc54c6737738e69348bdd5d33b2beb3",
+  "downloaded": 142595,
+  "accepted": 142595,
+  "outsideCounty": 0,
   "rejected": 0,
   "featureTypes": {
-    "1": 17177,
-    "2": 47,
-    "3": 1,
-    "4": 42,
-    "5": 1798,
-    "7": 36
+    "1": 122967,
+    "2": 4291,
+    "3": 3,
+    "4": 1766,
+    "5": 13283,
+    "7": 285
   },
-  "scope": "County-intersecting source segments clipped to pilot boxes. Border segments may extend outside Fresno County.",
-  "limitations": "Reference snapshot, not live flow or a complete ditch inventory. County/district additions and local names require review.",
+  "namedSegments": 16184,
+  "unnamedSegments": 126411,
+  "scope": "Every USGS flowline intersecting the app Fresno County polygon, including named and unnamed canals, ditches, streams and network connectors. Full intersecting segments retained within the county envelope; border-crossing parts can lie outside the county.",
+  "limitations": "Countywide USGS reference coverage, not a complete verified irrigation-district ditch inventory. Not live flow, gate state, hydraulic routing or predicted inundation.",
+  "networkAudit": {
+    "fields": {
+      "mainstemid": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 142595
+      },
+      "flowdirection": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 138062
+      },
+      "flowdirectionlabel": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 142595
+      },
+      "waterbodyid3dhp": {
+        "nonNull": 13283,
+        "nonBlankNonZero": 13283
+      },
+      "catchmentid3dhp": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 0
+      },
+      "flowpathid3dhp": {
+        "nonNull": 0,
+        "nonBlankNonZero": 0
+      },
+      "streamorder": {
+        "nonNull": 137837,
+        "nonBlankNonZero": 137837
+      },
+      "hydrosequence": {
+        "nonNull": 137837,
+        "nonBlankNonZero": 137837
+      },
+      "uphydrosequence": {
+        "nonNull": 137837,
+        "nonBlankNonZero": 77466
+      },
+      "dnhydrosequence": {
+        "nonNull": 137837,
+        "nonBlankNonZero": 137612
+      },
+      "divergence": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 1023
+      },
+      "divergencelabel": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 142595
+      },
+      "workunitid": {
+        "nonNull": 142595,
+        "nonBlankNonZero": 142595
+      }
+    },
+    "mappedFlowDirectionCodes": {
+      "0": 4533,
+      "1": 138062
+    },
+    "bySourceFeatureType": {
+      "1": {
+        "records": 122967,
+        "hydrosequencePopulated": 122758,
+        "downstreamPointerPopulated": 122643,
+        "unknownMappedDirection": 23
+      },
+      "2": {
+        "records": 4291,
+        "hydrosequencePopulated": 290,
+        "downstreamPointerPopulated": 272,
+        "unknownMappedDirection": 3988
+      },
+      "3": {
+        "records": 3,
+        "hydrosequencePopulated": 3,
+        "downstreamPointerPopulated": 3,
+        "unknownMappedDirection": 0
+      },
+      "4": {
+        "records": 1766,
+        "hydrosequencePopulated": 1560,
+        "downstreamPointerPopulated": 1553,
+        "unknownMappedDirection": 201
+      },
+      "5": {
+        "records": 13283,
+        "hydrosequencePopulated": 13125,
+        "downstreamPointerPopulated": 13043,
+        "unknownMappedDirection": 142
+      },
+      "7": {
+        "records": 285,
+        "hydrosequencePopulated": 101,
+        "downstreamPointerPopulated": 98,
+        "unknownMappedDirection": 179
+      }
+    },
+    "interpretation": "Population counts only. Primary upstream/downstream pointers do not include every branch. No connectivity or live operating state is inferred from visual crossings, names or null fields.",
+    "idPolicy": "id3dhp identifies features in this snapshot; USGS does not guarantee persistence across releases. Preserve retrieval version and GNIS/mainstem identifiers where supplied."
+  },
   "license": "USGS public-domain federal reference data; Esri background attribution retained separately.",
-  "basemapVersion": "0.28.0",
+  "dimensionPolicy": "Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.",
+  "basemapVersion": "0.29.0",
+  "tileDirectory": "tiles-v0.29.0",
   "backgroundStyle": {
     "itemId": "c11ce4f7801740b2905eb03ddc963ac8",
     "owner": "esri_vector",
@@ -55,7 +147,7 @@
     "buffer": 128,
     "maxzoom": 14,
     "simplificationTolerance": 2,
-    "labelAnchors": 66,
+    "labelAnchors": 496,
     "labelTargets": {
       "san joaquin river": [
         -119.733,
@@ -74,10 +166,15 @@
         36.986
       ]
     },
-    "labelRule": "One point anchor per normalized published name; four principal names snap to source paths near the dam areas, others use the midpoint of the longest clipped source path. Native collision avoidance may hide crowded names.",
-    "symbolRule": "Canal: source types 2/3 or published name containing canal/ditch. River: type 1 or named type 5 containing river. Other network connectors dotted. Named waterbody centerlines remain references, not channel beds."
+    "labelRule": "One point anchor per normalized published name; four principal names snap to source paths near the dam areas, others use the midpoint of the longest clipped source path. Matching Esri water-area names suppressed; other lake names retained. Native collision avoidance may hide crowded names.",
+    "symbolRule": "Canal: source type 2 or published name containing canal/ditch; source type 3 is a drainageway. River: type 1 or named type 5 containing river. Other network connectors dotted. Drainageways are distinct from canals. Named waterbody centerlines remain references, not channel beds."
   },
-  "tileCount": 1219,
-  "tileBytes": 7794374,
-  "tilesSha256": "54297f382333f625684ef22290a59ce7c42e3fac7be4d5a0801a10c783db6656"
+  "displayAccounting": {
+    "inputFeatures": 142595,
+    "representedAtMaxZoom": 142595,
+    "notRepresentedAtMaxZoom": []
+  },
+  "tileCount": 15250,
+  "tileBytes": 61479495,
+  "tilesSha256": "4ba2fbdc1a3eb6e98275a2972d68a95125a83634a432681df0ec1cc0f85385d0"
 }

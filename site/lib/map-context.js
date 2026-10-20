@@ -1,4 +1,5 @@
 import {installWaterwayLabels} from './waterway-labels.js?v=0.27.1';
+import {viewEventData} from './map-events.js?v=0.29.0';
 /** Public reference context; no facility attributes, matching or hazard inference. */
 export const CONTEXT_SOURCES = Object.freeze({
   waterways: 'https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50',
@@ -40,7 +41,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const buildingViews = new WeakMap();
   const boundViews = new WeakSet();
   let buildings = null, buildingsLoading = false, buildingsWanted = false, buildingsError = false;
-  let waterEnabled = false, waterError = false, basemapPilot=false;
+  let waterEnabled = false, waterError = false, basemapReference=false;
   let namesError=false,namesCount=null;
   const waterSymbol = (color, width, style = 'solid') => ({type:'simple-line', color, width, style});
   const waterRenderer = () => ({type:'unique-value',field:'featuretype',defaultLabel:'Other network connector',defaultSymbol:waterSymbol('#a6b9c3',0.8,'dot'),uniqueValueInfos:[
@@ -58,14 +59,24 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
       {type:'fields',fieldInfos:[
         {fieldName:'gnisidlabel',label:'Published name'},
         {fieldName:'featuretypelabel',label:'Mapped feature type'},
-        {fieldName:'id3dhp',label:'USGS feature ID'},
+        {fieldName:'id3dhp',label:'USGS feature ID (release-specific)'},
         {fieldName:'gnisid',label:'Geographic name ID'},
         {fieldName:'featuredate',label:'Source feature date (not observation time)',format:{dateFormat:'short-date'}},
         {fieldName:'lengthkm',label:'Full source segment length (km)',format:{places:2,digitSeparator:true}}
       ]},
-      {type:'text',text:`<a href="${CONTEXT_SOURCES.waterways}" target="_blank" rel="noopener noreferrer">USGS layer and schema</a>`}]
+      {type:'text',text:'Mapped network reference: primary-path pointers omit other branches; null/zero fields do not establish disconnection. These are not current canal flow, gate state, downstream arrival times or verified operational connectivity.'},
+      {type:'fields',fieldInfos:[{fieldName:'mainstemid',label:'Published mainstem identifier'},
+        {fieldName:'flowdirectionlabel',label:'Mapped direction relative to digitization'},
+        {fieldName:'hydrosequence',label:'Hydrologic sequence'},
+        {fieldName:'uphydrosequence',label:'Primary upstream sequence'},
+        {fieldName:'dnhydrosequence',label:'Primary downstream sequence'},
+        {fieldName:'streamorder',label:'Published stream order'},
+        {fieldName:'divergencelabel',label:'Mapped divergence'},
+        {fieldName:'waterbodyid3dhp',label:'Related waterbody feature ID'},
+        {fieldName:'catchmentid3dhp',label:'Related catchment ID (may be unavailable)'}]},
+      {type:'text',text:`<a href="${CONTEXT_SOURCES.waterways}" target="_blank" rel="noopener noreferrer">USGS layer and schema</a> · <a href="${new URL('../planning.html#waterway-network',import.meta.url).href}" target="_blank" rel="noopener noreferrer">County network coverage and limitations</a>`}]
   });
-  const common = {url:CONTEXT_SOURCES.waterways,outFields:['id3dhp','gnisidlabel','gnisid','featuretype','featuretypelabel','featuredate','lengthkm'],
+  const common = {url:CONTEXT_SOURCES.waterways,outFields:['id3dhp','gnisidlabel','gnisid','featuretype','featuretypelabel','featuredate','lengthkm','mainstemid','flowdirectionlabel','hydrosequence','uphydrosequence','dnhydrosequence','streamorder','divergencelabel','waterbodyid3dhp','catchmentid3dhp'],
     elevationInfo:{mode:'on-the-ground'},popupTemplate:popup(),renderer:waterRenderer(),opacity:0.9};
   const named = new FeatureLayer({...common,id:'fresno-named-waterways',title:'USGS named rivers, canals and ditches — reference',
     minScale:CONTEXT_SOURCES.waterwaysScale,definitionExpression:"gnisidlabel IS NOT NULL AND gnisidlabel <> ''",
@@ -74,15 +85,16 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const unnamed = new FeatureLayer({...common,id:'fresno-unnamed-waterways',title:'USGS unnamed waterways — close-scale reference',
     minScale:CONTEXT_SOURCES.detailScale,definitionExpression:"gnisidlabel IS NULL OR gnisidlabel = ''",opacity:0.55});
   const detailSource=new FeatureLayer({...common,title:'Nearby USGS waterway reference — current publisher attributes'});
+  let intersectsPromise;
   // Reference geometry is beneath operational points/lines. Each view is filtered
   // by the same complete county polygon; panning never changes source scope.
   map.addMany([unnamed,named],1);
-  const names=installWaterwayLabels({map,sdk,reactiveUtils,getView,enabled:()=>waterEnabled&&!basemapPilot,minScale:CONTEXT_SOURCES.namesScale,onError:error=>{namesError=!!error;updateStatus();},onCount:count=>{namesCount=count;updateStatus();}}).catch(error=>{namesError=true;updateStatus();console.warn('Waterway names:',error.message);return null;});
+  const names=installWaterwayLabels({map,sdk,reactiveUtils,getView,enabled:()=>waterEnabled&&!basemapReference,minScale:CONTEXT_SOURCES.namesScale,onError:error=>{namesError=!!error;updateStatus();},onCount:count=>{namesCount=count;updateStatus();}}).catch(error=>{namesError=true;updateStatus();console.warn('Waterway names:',error.message);return null;});
   const updateStatus = () => {
     const view = getView(), state = waterViews.get(view);
     waterButton.textContent = `Waterways: ${waterEnabled?'on':'off'}`;
     waterButton.setAttribute('aria-pressed',String(waterEnabled));
-    waterStatus.textContent = basemapPilot ? 'USGS pilot geometry / names are in the basemap · select another basemap for countywide reference'
+    waterStatus.textContent = basemapReference ? 'Countywide USGS reference is built into this basemap · small unnamed waterways appear closer in'
       : !waterEnabled ? 'USGS waterway context off'
       : waterError || namesError || state?.some(s=>s==='error') ? 'Waterway reference incomplete — check USGS source'
       : !state || state.some(s=>s==='loading') ? 'Loading USGS waterway reference'
@@ -134,11 +146,11 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
     });
     view.addHandles(reactiveUtils.watch(()=>view.scale,updateStatus));
     view.on('layerview-create-error',event=>{
-      if(event.layer===buildings){buildingViews.set(view,'error');updateStatus();}
+      if(viewEventData(event).layer===buildings){buildingViews.set(view,'error');updateStatus();}
     });
   };
   waterButton.addEventListener('click',()=>{
-    waterEnabled=!waterEnabled; named.visible=waterEnabled&&!basemapPilot; unnamed.visible=waterEnabled&&!basemapPilot;void names.then(labels=>labels?.sync());updateStatus();
+    waterEnabled=!waterEnabled; named.visible=waterEnabled&&!basemapReference; unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());updateStatus();
   });
   buildingButton.addEventListener('click',()=>{
     buildingsWanted=!buildingsWanted;
@@ -148,19 +160,25 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   for (const layer of [named,unnamed]) void layer.load().catch(()=>{waterError=true;updateStatus();});
   return {
     bindView,
-    async queryPilot(point){
-      if(!basemapPilot||!point)return [];
+    async queryWaterway(point){
+      if(!basemapReference||!point){console.debug('County waterway lookup: no mapped click point');return [];}
       const lon=point.longitude,lat=point.latitude;
-      if(!((lon>=-119.86&&lon<=-119.50&&lat>=36.89&&lat<=37.16)||(lon>=-119.52&&lon<=-119.13&&lat>=36.72&&lat<=37.02)))return [];
+      if(lon < -120.919 || lon > -118.360 || lat < 35.906 || lat > 37.586){console.debug('County waterway lookup: outside county envelope');return [];}
+      // Match source segments to the same county polygon as the normal overlay;
+      // boundary-crossing geometry is retained, with no inferred connections.
       // Query current publisher attributes near the click; cached tile IDs never
       // masquerade as a live observation. Bounded tolerance, no analysis buffer.
       const distance=Math.min(150,Math.max(8,getView().scale*.00028*5));
       const query=detailSource.createQuery();query.where='1=1';query.geometry=point;
-      query.distance=distance;query.units='meters';query.num=5;query.returnGeometry=true;
-      const result=await detailSource.queryFeatures(query);return result.features;
+      query.distance=distance;query.units='meters';query.num=20;query.returnGeometry=true;query.outSpatialReference=fresnoGeometry.spatialReference;
+      intersectsPromise??=sdk.import(['@arcgis/core/geometry/operators/intersectsOperator.js']);
+      const [result,[intersects]]=await Promise.all([detailSource.queryFeatures(query),intersectsPromise]);
+      const retained=result.features.filter(f=>intersects.execute(fresnoGeometry,f.geometry)).slice(0,5);
+      console.debug(`County waterway lookup: ${result.features.length} publisher records, ${retained.length} county-intersecting records`);
+      return retained;
     },
-    setBasemapPilot:value=>{basemapPilot=!!value;named.visible=waterEnabled&&!basemapPilot;unnamed.visible=waterEnabled&&!basemapPilot;void names.then(labels=>labels?.sync());updateStatus();},
-    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;named.visible=waterEnabled&&!basemapPilot;unnamed.visible=waterEnabled&&!basemapPilot;void names.then(labels=>labels?.sync());if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
+    setBasemapReference:value=>{basemapReference=!!value;named.visible=waterEnabled&&!basemapReference;unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());updateStatus();},
+    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;named.visible=waterEnabled&&!basemapReference;unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
     onViewChanged:()=>{
       const view=getView();void names.then(labels=>labels?.changeView());
       if(buildings){

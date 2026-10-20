@@ -1,3 +1,5 @@
 * text=auto eol=lf
 # Preserve the exact vendor bytes checked by scripts/check.mjs.
 site/vendor/*.js -text
+# MVT protobuf bytes must not undergo line-ending conversion.
+*.pbf binary

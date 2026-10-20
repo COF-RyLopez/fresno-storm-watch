@@ -4,9 +4,10 @@ import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { blend } from './flood-scenario-model.js';
-import { installMapContext } from './map-context.js?v=0.28.0';
-import {createWaterwayBasemap,WATERWAY_PILOT} from './waterway-basemap.js?v=0.28.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.26.0';
+import { installMapContext } from './map-context.js?v=0.29.0';
+import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.29.0';
+import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.29.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -20,6 +21,8 @@ export function loadSdk() {
 export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
+  let mapPick=0;
+  const waterwayPickStatus=text=>{const host=document.querySelector('#waterway-selection-status');host.hidden=!text;host.textContent=text;};
   const sdk = await loadSdk();
   const [Map, MapView, Basemap, TileLayer, GraphicsLayer, Graphic, Polygon, reactiveUtils, webMercatorUtils, FeatureLayer, Extent, VectorTileLayer] = await sdk.import([
     '@arcgis/core/Map.js', '@arcgis/core/views/MapView.js', '@arcgis/core/Basemap.js',
@@ -74,7 +77,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   };
   const setLayerEligibility=(layer,eligible)=>{const r=registry.get(layer);if(r){r.eligible=!!eligible;syncVisibility();}};
   const imageryBasemap=new Basemap({id:'frog-basemap-imagery',title:'Imagery Hybrid · roads and labels',thumbnailUrl:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-120.9,36.3,-118.6,37.6&bboxSR=4326&imageSR=3857&size=240,160&format=png&transparent=false&f=image',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
-  const waterwayBasemap=await createWaterwayBasemap({Basemap,VectorTileLayer}).catch(error=>{console.warn('Waterways pilot style:',error.message);return null;});
+  let waterwayStyleError=null;
+  const waterwayBasemap=await createWaterwayBasemap({Basemap,VectorTileLayer}).catch(error=>{waterwayStyleError=error.message;console.warn('County waterways style:',error.message);return null;});
   const galleryBasemaps={dark:themedBasemap('Dark'),light:themedBasemap('Light'),imagery:imageryBasemap,...(waterwayBasemap?{waterways:waterwayBasemap.basemap}:{})};
   let basemapKey='dark',imagery=false,imageryFailure=false,gallery=null;
   const imageryStatus=()=>{const host=document.querySelector('#imagery-status');host.hidden=!imagery;host.textContent=imageryFailure?'Imagery hybrid incomplete — road labels or imagery unavailable':'Imagery hybrid · roads and labels · historical imagery';};
@@ -86,20 +90,20 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }
     map.basemap=galleryBasemaps[basemapKey];
     document.querySelector('#map').dataset.basemap=basemapKey;
-    const pilot=basemapKey===WATERWAY_PILOT.key,note=document.querySelector('#waterway-basemap-note');
-    note.hidden=!pilot;note.textContent=pilot?WATERWAY_PILOT.note:'';
-    mapContext.setBasemapPilot(pilot);
-    if(pilot)void waterwayBasemap.load().catch(failWaterwayBasemap);
+    const reference=basemapKey===WATERWAY_BASEMAP.key,note=document.querySelector('#waterway-basemap-note'),missing=key===WATERWAY_BASEMAP.key&&!waterwayBasemap;
+    note.hidden=!reference&&!missing;note.textContent=reference?waterwayBasemap.note:missing?`County waterways style unavailable — ${waterwayStyleError}. Dark gray context restored.`:'';
+    mapContext.setBasemapReference(reference);
+    if(reference)void waterwayBasemap.load().catch(failWaterwayBasemap);
     updateContextSymbols();
     document.querySelector('#imagery-note').hidden=!imagery;
     imageryStatus();
-    syncVisibility();
+    syncControls();
   }
   function failWaterwayBasemap(error){
-    if(basemapKey!==WATERWAY_PILOT.key)return;
+    if(isMapLoadCancellation(error)||basemapKey!==WATERWAY_BASEMAP.key)return;
     currentState().basemap='dark';setBasemap('dark');
     const note=document.querySelector('#waterway-basemap-note');note.hidden=false;
-    note.textContent=`Waterways pilot unavailable — ${error?.message||'tile source failed'}. Dark gray context restored.`;
+    note.textContent=`County waterways unavailable — ${error?.message||'tile source failed'}. Dark gray context restored.`;
   }
   let region, fresnoGeometry;
   for (const feature of counties) {
@@ -160,7 +164,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   function updateContextSymbols() {
     boundaryLayer.graphics.forEach(graphic => {
       const symbol = graphic.symbol.clone();
-      symbol.outline.color = basemapKey!=='light' ? '#86c6d6' : graphic.attributes.countyId==='06019'?'#246482':'#737f89';
+      symbol.outline.color = basemapKey==='waterways'?[140,154,159,0.55]:basemapKey!=='light' ? '#86c6d6' : graphic.attributes.countyId==='06019'?'#246482':'#737f89';
+      symbol.outline.width = basemapKey==='waterways'?0.8:graphic.attributes.countyId==='06019'?2:1;
       graphic.symbol = symbol;
     });
     labels.graphics.forEach(graphic => {
@@ -183,9 +188,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   };
   window.addEventListener('storm-theme-change', applyMapTheme);
   applyMapTheme();
-  const navigate = target => view.goTo(target, { animate: false }).catch(error => {
+  const navigate = target => {mapPick++;waterwayPickStatus('');return view.goTo(target, { animate: false }).catch(error => {
     if (error.name !== 'AbortError') { const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map navigation failed. Select records in the list for details.'; }
-  });
+  });};
   // Calcite can resize the panel after MapView becomes ready. Keep the initial
   // region fitted until the operator deliberately navigates the map.
   let followRegion = true;
@@ -201,13 +206,12 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return view.type==='3d'?{target:extent,tilt:45,heading:0}:extent;
   };
   const geographicTarget=bounds=>{const extent=new Extent({...bounds,spatialReference:{wkid:4326}});return view.type==='3d'?{target:extent,tilt:35,heading:0}:webMercatorUtils.geographicToWebMercator(extent);};
-  for (const type of ['pointerdown', 'wheel', 'keydown']) document.querySelector('#map').addEventListener(type, () => { followRegion = false; }, { passive: true });
-  let mapPick=0;
+  for (const type of ['pointerdown', 'wheel', 'keydown']) document.querySelector('#map').addEventListener(type, () => { followRegion = false;mapPick++;waterwayPickStatus(''); }, { passive: true });
   const bindView=targetView=>{
     mapContext.bindView(targetView);
     targetView.addHandles(reactiveUtils.watch(()=>[targetView.stationary,targetView.scale],()=>{if(view===targetView)document.querySelector('#map-scale').textContent='Scale 1:'+Math.round(targetView.scale).toLocaleString('en-US');},{initial:true}));
     targetView.on('layerview-create-error',event=>{
-      if(imageryBasemap&&[...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].includes(event.layer)){imageryFailure=true;imageryStatus();}
+      if(imageryBasemap&&[...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].includes(viewEventData(event).layer)){imageryFailure=true;imageryStatus();}
     });
     // Apply the same county display filter independently to both layer views.
     void targetView.whenLayerView(fema).then(layerView=>{
@@ -221,8 +225,10 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       if(error&&view===targetView){const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map graphics failed. Try 2D, or use the lists and camera panel.';}
     }));
     targetView.on('click',async event=>{
+      const pick=++mapPick,version=workspaceVersion;
       try{
-        const pick=++mapPick,version=workspaceVersion,hit=await targetView.hitTest(event);
+        const data=viewEventData(event),point=data.mapPoint?.clone()??data.mapPoint??targetView.toMap({x:data.x,y:data.y});
+        const hit=await targetView.hitTest(data);
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
@@ -239,14 +245,18 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         if(key){onSelect(key);return;}
         const seen=new Set(),graphics=hit.results.filter(r=>r.graphic?.layer?.popupEnabled!==false&&(r.graphic?.popupTemplate||r.graphic?.layer?.popupTemplate)).map(r=>r.graphic).filter(g=>{const id=`${g.layer?.uid}:${g.getObjectId?.()??g.uid}`;if(seen.has(id))return false;seen.add(id);return true;});
         if(graphics.length)onFeatureSelect({graphics,view:targetView});
-        else if(basemapKey===WATERWAY_PILOT.key){
-          const nearby=await mapContext.queryPilot(event.mapPoint);
-          if(nearby.length&&view===targetView&&version===workspaceVersion&&pick===mapPick&&basemapKey===WATERWAY_PILOT.key)onFeatureSelect({graphics:nearby,view:targetView});
+        else if(basemapKey===WATERWAY_BASEMAP.key){
+          waterwayPickStatus('Checking nearby USGS waterway / network reference…');
+          const nearby=await mapContext.queryWaterway(point);
+          if(view===targetView&&version===workspaceVersion&&pick===mapPick&&basemapKey===WATERWAY_BASEMAP.key){
+            waterwayPickStatus(nearby.length?'':'No nearby USGS record returned. Cached reference geometry may differ from current publisher data.');
+            if(nearby.length)onFeatureSelect({graphics:nearby,view:targetView});
+          }
         }
-      }catch{const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map selection unavailable; select a record in the list.';}
+      }catch{if(pick!==mapPick||view!==targetView||version!==workspaceVersion)return;waterwayPickStatus('');const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map selection unavailable; select a record in the list.';}
     });
     targetView.on('layerview-create-error',event=>{
-      if(event.layer===waterwayBasemap?.layer)failWaterwayBasemap(event.error);
+      const data=viewEventData(event);if(view===targetView&&data.layer===waterwayBasemap?.layer)failWaterwayBasemap(data.error);
     });
   };
   bindView(mapView);
@@ -314,7 +324,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   }
   function drawAreas(){areaLayer.removeAll();const seen=new Set();for(const row of planningRows.filter(r=>planningFilter==='all'||r.review))for(const p of row.samplePoints){const key=`${p.longitude}:${p.latitude}`;if(seen.has(key))continue;seen.add(key);areaLayer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},attributes:{areaId:row.area.id},symbol:{type:'simple-marker',style:row.review?'triangle':row.gaps.length?'diamond':'circle',size:12,color:color(row.review?'--gauge-change':row.gaps.length?'--gauge-gap':'--gauge-monitor'),outline:{color:'#202427',width:1.5}}}));}}
   function syncControls(){
-    for(const c of document.querySelectorAll('[data-context-layer]')){c.checked=!!currentState().layers[c.dataset.contextLayer];c.closest('calcite-label').hidden=c.dataset.contextLayer==='upstream'&&activeProfile!=='reservoirs';}
+    for(const c of document.querySelectorAll('[data-context-layer]')){const builtIn=c.dataset.contextLayer==='waterways'&&basemapKey==='waterways';c.checked=builtIn||!!currentState().layers[c.dataset.contextLayer];c.disabled=builtIn;c.closest('calcite-label').hidden=c.dataset.contextLayer==='upstream'&&activeProfile!=='reservoirs';}
+    document.querySelector('#waterway-basemap-context-note').hidden=basemapKey!=='waterways';
     for(const [id,key]of [['power-map-toggle','power'],['facility-map-toggle','facilities'],['wind-map-toggle','wind']])document.querySelector('#'+id).checked=!!currentState().layers[key];
     mapContext.setVisibility(currentState().layers.waterways,currentState().layers.buildings);femaStatus();syncVisibility();
   }
@@ -337,7 +348,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   function setWorkspace(id){
     if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
     if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
-    selectionFocus.cancel();activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
+    selectionFocus.cancel();waterwayPickStatus('');activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
     mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
     drawGauges();drawPower();drawAreas();syncControls();
     transition=transition.catch(()=>{}).then(async()=>{

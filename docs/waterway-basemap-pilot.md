@@ -1,3 +1,105 @@
+# Countywide F.R.O.G. Waterways — Dark (0.29.0)
+
+Rivers and Reservoirs now start with this basemap. Other workspace defaults stay
+unchanged. An explicit gallery choice is remembered independently in page memory.
+No AGOL items, permissions, private records or live operational data are changed.
+Experience Builder and the private EOC workspace are preserved.
+
+## Current scope and audit
+
+All 142,595 public USGS flowlines intersecting the app Fresno County polygon were
+retrieved and validated. Named and unnamed features are included: 16,184 named
+segments and 126,411 unnamed segments, with 496 normalized published names.
+Every input source ID is represented in the maximum-zoom MVT cache; zero rejected
+or omitted segments. Tiles are display-generalized and do not replace the source.
+
+The snapshot includes 4,291 source-classified canals. Additional named canals
+are represented by waterbody / other connectors. The source geometry is retained
+in ignored resumable batches; only XY coordinates were requested. Display geometry
+clips to the county envelope, retaining boundary-crossing segments. No publisher
+Z/M values or hydraulic elevations are bundled. Local district inventory
+completeness and current operating states remain unverified.
+
+The network audit is deliberately separate from the map's coverage claim:
+137,837 records have hydrologic sequence values, but only 290 of the 4,291
+canal-classified records do; 272 have primary downstream pointers, and 3,988 have
+unknown mapped direction. Catchment IDs are blank here. Attribute presence is
+not validation of network topology; primary-path pointers omit other branches.
+Source IDs may change across USGS releases. GNIS/mainstem IDs and the retrieval
+version must accompany future cross-release reconciliation.
+
+Read the app guide at `site/planning.html#waterway-network` and the public
+`site/basemaps/frog-waterways-dark/manifest.json` for provenance, hashes,
+class-by-class field population and limitations. Public sources:
+
+- [USGS Flowline layer](https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50)
+- [3DHP network derivatives](https://www.usgs.gov/3d-hydrography-program/3dhp-flow-network-derivatives)
+- [Flowline specification and identifier policy](https://www.usgs.gov/ngp-standards-and-specifications/3d-hydrography-program-3dhpall-flowline)
+
+## Cartography and behavior
+
+Web Mercator XYZ MVT, 512 px tiles / extent 4096 / 128 buffer, source zoom 0–14
+with overzoom. The 15,250 current tiles total approximately 61.5 MB; the browser
+requests tiles for its view rather than downloading the 87.6 MB build GeoJSON.
+The full source download remains ignored, never included in the Pages artifact.
+
+Major waterways are emphasized in county overview views. Other named waterways,
+unnamed canals, small streams and network connectors appear progressively closer
+in. Solid blue channels, dashed cyan canals, dotted waterbody/network connectors,
+and separate short gray-blue drainageway dashes do not encode hazard severity.
+Source type 3 drainageways are not reclassified as artificial canals.
+
+One label anchor per normalized published name, with four principal anchors near
+the dam areas, avoids segment repetition. Other anchors use the longest clipped
+source path. Matching names are suppressed in Esri's remaining water-area label
+classes (some ditches are classified there); unmatched lake names remain. Native
+collision avoidance can suppress crowded names, and an anchor can lie outside a
+close-up. Labels drape on terrain in SceneView. County boundaries are subdued
+behind the waterways; operational gauges and other records remain foreground.
+
+When selected, waterways are built into the basemap. The context checkbox is
+disabled with an explanation; selecting another gallery basemap restores the
+independent optional overlay preference. Current publisher attributes can be
+queried near a waterway, with up to five county-intersecting features displayed
+from a bounded query. This is a selection tolerance, not a risk buffer. Network
+fields do not show live flow, gate settings, capacity or downstream arrival times.
+
+## Rebuild and deployment
+
+1. Use Python with `scripts/requirements-waterways.txt`. Run
+   `python scripts/acquire-waterways-county.py`; three workers download exact
+   validated batches of 500 source IDs. Interrupted downloads resume from ignored
+   cache files keyed to the inventory / schema / boundary. Clear the chosen cache
+   explicitly when a fresh retrieval of an unchanged source inventory is needed.
+   The acquisition is a recorded retrieval window, not an atomic edit snapshot.
+2. Review `work/waterways-county/manifest.json` and `rejected.json`. The script
+   rechecks inventory IDs and refuses incomplete or changed inventories. Then run
+   `npm ci --ignore-scripts` and `npm run build:waterway-basemap`.
+3. For a new snapshot release, bump `version` / `tileDirectory` in the builder
+   and `WATERWAY_BASEMAP.version`, rebuild, and update application module query
+   versions. Versioned tile paths prevent mixing old and new snapshots. The
+   previous pilot tile files remain for older open clients; no active item points
+   to them in 0.29.0.
+4. Run `npm test`, `npm run check`, offline Python network / publisher checks,
+   and visual acceptance in 2D/3D. Tests decode all current tiles, reconcile all
+   source IDs, and verify independent workspace defaults. Standard 15-minute
+   feed collectors do not rebuild hydrography.
+
+The preview server rewrites only the public TileJSON's canonical Pages URL to its
+localhost port, preserving its versioned path. The style references original Esri
+fonts/sprites and preserves attribution. Official dark source style is pinned in
+`scripts/basemap-dark-source.json`. No ArcGIS account or new item is required to
+read these static files. A county AGOL registration can be done later.
+
+Rollback: redeploy commit `7ae5bf00b8387f817eeb76268578e755418569b6` (0.28.0).
+No operational data migration is required. A load/render failure automatically
+restores Dark gray context and displays a persistent qualification.
+
+---
+
+The original two-area pilot record is retained below for historical context.
+Its scope, defaults and paths are superseded by the countywide release above.
+
 # F.R.O.G. Waterways — Dark pilot (0.28.0)
 
 Choose **Map tools → Basemaps → F.R.O.G. Waterways — Dark · pilot**.

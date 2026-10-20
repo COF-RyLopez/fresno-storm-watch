@@ -17,7 +17,7 @@ const server = http.createServer(async (request, response) => {
     // Published TileJSON uses canonical absolute URLs (the SDK treats relative
     // templates as service-directory paths). Preview only: keep tiles local.
     if(path.endsWith(`${sep}frog-waterways-dark${sep}tilejson.json`)){
-      const json=JSON.parse(data);json.tiles=[`http://127.0.0.1:${port}/basemaps/frog-waterways-dark/tiles/{z}/{x}/{y}.pbf`];data=Buffer.from(JSON.stringify(json));
+      const json=JSON.parse(data);json.tiles=json.tiles.map(template=>template.replace('https://cof-rylopez.github.io/fresno-storm-watch/',`http://127.0.0.1:${port}/`));data=Buffer.from(JSON.stringify(json));
     }
     response.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
     response.end(request.method === 'HEAD' ? undefined : data);

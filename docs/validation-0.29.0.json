@@ -1,0 +1,51 @@
+{
+  "release": "0.29.0",
+  "checkedDateLocal": "2026-10-19",
+  "scope": "Countywide public USGS waterways reference basemap; default for Rivers and Reservoirs only. No AGOL items, memberships, private records or permissions changed.",
+  "automated": {
+    "nodeTests": 294,
+    "failures": 0,
+    "offlineNetworkAuditTests": 2,
+    "privatePublisherContractTests": 18,
+    "geometryExportTests": 4,
+    "syntaxAndPublicConfig": "passed",
+    "currentVersionMvtTilesDecoded": 15250,
+    "allSourceIdsRepresentedAtMaxZoom": 142595,
+    "displayOmissions": 0,
+    "uniqueNormalizedNameAnchors": 496
+  },
+  "sourceAccounting": {
+    "manifest": "../site/basemaps/frog-waterways-dark/manifest.json",
+    "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
+    "retrievedAt": "2026-10-20T05:48:34.131743+00:00",
+    "countyGeoid": "06019",
+    "downloaded": 142595,
+    "accepted": 142595,
+    "rejected": 0,
+    "unnamedSegments": 126411,
+    "canalClassifiedSegments": 4291,
+    "canalClassifiedHydrosequencePopulated": 290,
+    "canalClassifiedUnknownMappedDirection": 3988,
+    "scope": "County-intersecting segments retained inside county envelope, including border-crossing portions. Not a complete verified irrigation-district inventory.",
+    "dimensionPolicy": "XY display geometry; no source Z/M or vertical-datum interpretation."
+  },
+  "localBrowser": {
+    "observed": [
+      "Cold Rivers load starts on F.R.O.G. Waterways; county overview includes western waterways outside original pilot boxes.",
+      "Reservoirs starts on F.R.O.G. Waterways; Weather retains Dark Gray.",
+      "Mendota selection opens 3D with named canals/ditches and unnamed channel detail.",
+      "Weather then Rivers restores the 3D viewpoint and waterways basemap; cancelled layer loads do not trigger false fallback.",
+      "Helm Ditch map selection opens evidence with source Canal classification, mainstem link, unknown mapped direction and missing sequence fields explicitly visible.",
+      "Esri duplicate water-area names are excluded for the 496 custom name anchors."
+    ],
+    "proofDirectory": "work/qa-0.29.0"
+  },
+  "limitations": [
+    "Reference snapshot, not live water flow, gate operation, hydraulic routing, predicted inundation or a complete ditch inventory.",
+    "Mapped primary network pointers do not establish all irrigation-system connections; unknown/blank fields remain unknown.",
+    "One anchor per normalized name can omit labels from close-up extents where its anchor is offscreen or collides.",
+    "Publisher feature lookups can be slow; a visible progress message and superseded-selection guards preserve context.",
+    "3D terrain source is unchanged; this release adds hydrographic reference, not improved elevation."
+  ],
+  "rollback": "Redeploy 7ae5bf00b8387f817eeb76268578e755418569b6 (0.28.0); no data migration. Prior pilot tiles retained for existing open clients."
+}
