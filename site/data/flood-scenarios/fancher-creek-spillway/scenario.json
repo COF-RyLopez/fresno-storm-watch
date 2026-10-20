@@ -1,0 +1,357 @@
+{
+ "title": "Fancher Creek Dam spillway \u00b7 hypothetical sunny-day failure",
+ "depth_model": "ramp",
+ "source": "Inundation map approved by the California Division of Safety of Dams (DSOD), prepared for Fresno Metropolitan Flood Control District (National Dam ID CA01327, spillway, Scenario 1, 2020): arrival-time, maximum-depth and maximum-velocity rasters. Buildings: USACE National Structure Inventory. Losses: Hazus 7.2 per-building flood method (bugs fixed).",
+ "notice": "<strong>HYPOTHETICAL DAM FAILURE \u00b7 PLANNING EXERCISE \u00b7 NOT A FORECAST OR EVACUATION MAP.</strong> Arrival times and maximum depths come from the DSOD-approved inundation map. Time to peak is not published here, so depth is shown at its maximum from arrival on; recession is not shown. Evacuation areas and timing are set by emergency managers.",
+ "clock_note": "Hours after the dam failure begins",
+ "arrival_labels": [
+  "Water reaches 1 ft, hour",
+  "(not published)"
+ ],
+ "popup_note": "Arrival and maximum depth from the DSOD-approved inundation map; maximum depth shown from arrival on. Losses use the Hazus 7.2 per-building flood method at maximum depth.",
+ "extent": {
+  "xmin": -13340376.025578815,
+  "ymin": 4394869.495110442,
+  "xmax": -13304984.810194867,
+  "ymax": 4418649.669447272,
+  "wkid": 3857
+ },
+ "frames": [
+  {
+   "hour": 0.0,
+   "image": "depth_00.png",
+   "wet_acres": 194.9
+  },
+  {
+   "hour": 0.25,
+   "image": "depth_01.png",
+   "wet_acres": 384.2
+  },
+  {
+   "hour": 0.5,
+   "image": "depth_02.png",
+   "wet_acres": 565.3
+  },
+  {
+   "hour": 0.75,
+   "image": "depth_03.png",
+   "wet_acres": 720.2
+  },
+  {
+   "hour": 1.0,
+   "image": "depth_04.png",
+   "wet_acres": 860.2
+  },
+  {
+   "hour": 1.25,
+   "image": "depth_05.png",
+   "wet_acres": 1014.9
+  },
+  {
+   "hour": 1.5,
+   "image": "depth_06.png",
+   "wet_acres": 1176.6
+  },
+  {
+   "hour": 1.75,
+   "image": "depth_07.png",
+   "wet_acres": 1366.8
+  },
+  {
+   "hour": 2.0,
+   "image": "depth_08.png",
+   "wet_acres": 1497.9
+  },
+  {
+   "hour": 2.25,
+   "image": "depth_09.png",
+   "wet_acres": 1630.2
+  },
+  {
+   "hour": 2.5,
+   "image": "depth_10.png",
+   "wet_acres": 1772.8
+  },
+  {
+   "hour": 2.75,
+   "image": "depth_11.png",
+   "wet_acres": 1853.2
+  },
+  {
+   "hour": 3.0,
+   "image": "depth_12.png",
+   "wet_acres": 1938.6
+  },
+  {
+   "hour": 3.5,
+   "image": "depth_13.png",
+   "wet_acres": 2018.8
+  },
+  {
+   "hour": 4.0,
+   "image": "depth_14.png",
+   "wet_acres": 2088.4
+  },
+  {
+   "hour": 4.5,
+   "image": "depth_15.png",
+   "wet_acres": 2167.6
+  },
+  {
+   "hour": 5.0,
+   "image": "depth_16.png",
+   "wet_acres": 2257.0
+  },
+  {
+   "hour": 5.5,
+   "image": "depth_17.png",
+   "wet_acres": 2336.3
+  },
+  {
+   "hour": 6.0,
+   "image": "depth_18.png",
+   "wet_acres": 2437.8
+  },
+  {
+   "hour": 7,
+   "image": "depth_19.png",
+   "wet_acres": 2798.0
+  },
+  {
+   "hour": 8,
+   "image": "depth_20.png",
+   "wet_acres": 3311.0
+  },
+  {
+   "hour": 9,
+   "image": "depth_21.png",
+   "wet_acres": 3736.8
+  },
+  {
+   "hour": 10,
+   "image": "depth_22.png",
+   "wet_acres": 4074.2
+  },
+  {
+   "hour": 11,
+   "image": "depth_23.png",
+   "wet_acres": 4366.6
+  },
+  {
+   "hour": 12,
+   "image": "depth_24.png",
+   "wet_acres": 4610.2
+  },
+  {
+   "hour": 14,
+   "image": "depth_25.png",
+   "wet_acres": 5118.0
+  },
+  {
+   "hour": 16,
+   "image": "depth_26.png",
+   "wet_acres": 5504.4
+  },
+  {
+   "hour": 18,
+   "image": "depth_27.png",
+   "wet_acres": 5867.6
+  },
+  {
+   "hour": 20,
+   "image": "depth_28.png",
+   "wet_acres": 6151.7
+  },
+  {
+   "hour": 22,
+   "image": "depth_29.png",
+   "wet_acres": 6384.5
+  },
+  {
+   "hour": 24,
+   "image": "depth_30.png",
+   "wet_acres": 6600.8
+  },
+  {
+   "hour": 26,
+   "image": "depth_31.png",
+   "wet_acres": 6756.3
+  },
+  {
+   "hour": 28,
+   "image": "depth_32.png",
+   "wet_acres": 6837.3
+  },
+  {
+   "hour": 30,
+   "image": "depth_33.png",
+   "wet_acres": 6889.8
+  },
+  {
+   "hour": 32,
+   "image": "depth_34.png",
+   "wet_acres": 6922.6
+  },
+  {
+   "hour": 34,
+   "image": "depth_35.png",
+   "wet_acres": 7080.4
+  },
+  {
+   "hour": 36,
+   "image": "depth_36.png",
+   "wet_acres": 7183.8
+  },
+  {
+   "hour": 38,
+   "image": "depth_37.png",
+   "wet_acres": 7257.8
+  },
+  {
+   "hour": 40,
+   "image": "depth_38.png",
+   "wet_acres": 7300.5
+  },
+  {
+   "hour": 42,
+   "image": "depth_39.png",
+   "wet_acres": 7349.6
+  },
+  {
+   "hour": 44,
+   "image": "depth_40.png",
+   "wet_acres": 7378.5
+  },
+  {
+   "hour": 46,
+   "image": "depth_41.png",
+   "wet_acres": 7403.9
+  },
+  {
+   "hour": 48,
+   "image": "depth_42.png",
+   "wet_acres": 7414.7
+  },
+  {
+   "hour": 52,
+   "image": "depth_43.png",
+   "wet_acres": 7433.5
+  },
+  {
+   "hour": 56,
+   "image": "depth_44.png",
+   "wet_acres": 7443.3
+  },
+  {
+   "hour": 60,
+   "image": "depth_45.png",
+   "wet_acres": 7449.2
+  },
+  {
+   "hour": 64,
+   "image": "depth_46.png",
+   "wet_acres": 7498.6
+  },
+  {
+   "hour": 68,
+   "image": "depth_47.png",
+   "wet_acres": 7509.1
+  },
+  {
+   "hour": 72,
+   "image": "depth_48.png",
+   "wet_acres": 7520.1
+  },
+  {
+   "hour": 84,
+   "image": "depth_49.png",
+   "wet_acres": 7529.2
+  },
+  {
+   "hour": 96,
+   "image": "depth_50.png",
+   "wet_acres": 7534.2
+  },
+  {
+   "hour": 108,
+   "image": "depth_51.png",
+   "wet_acres": 7535.9
+  },
+  {
+   "hour": 120,
+   "image": "depth_52.png",
+   "wet_acres": 7537.7
+  },
+  {
+   "hour": 132,
+   "image": "depth_53.png",
+   "wet_acres": 7538.6
+  },
+  {
+   "hour": 144,
+   "image": "depth_54.png",
+   "wet_acres": 7539.6
+  }
+ ],
+ "legend": [
+  {
+   "ft": 0.0,
+   "rgba": [
+    190,
+    235,
+    255,
+    90
+   ]
+  },
+  {
+   "ft": 1.0,
+   "rgba": [
+    120,
+    200,
+    245,
+    170
+   ]
+  },
+  {
+   "ft": 3.0,
+   "rgba": [
+    50,
+    140,
+    220,
+    200
+   ]
+  },
+  {
+   "ft": 6.0,
+   "rgba": [
+    25,
+    85,
+    190,
+    215
+   ]
+  },
+  {
+   "ft": 10.0,
+   "rgba": [
+    25,
+    45,
+    140,
+    225
+   ]
+  },
+  {
+   "ft": 16.0,
+   "rgba": [
+    40,
+    15,
+    90,
+    235
+   ]
+  }
+ ],
+ "totals": {
+  "buildings": 4554,
+  "wet": 4554,
+  "loss_usd": 724674489
+ }
+}

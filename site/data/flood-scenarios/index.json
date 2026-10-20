@@ -1,7 +1,58 @@
 {
  "default": "big-dry-creek",
  "scenarios": [
-  {"id": "big-dry-creek", "label": "Big Dry Creek Dam failure (hypothetical)"},
-  {"id": "muncie", "label": "Muncie, IN · HEC-RAS example (demo)", "main_map": false}
+  {
+   "id": "big-dry-creek",
+   "label": "Big Dry Creek Dam failure (hypothetical)"
+  },
+  {
+   "id": "big-dry-creek-outlet-2",
+   "label": "Big Dry Creek Dam Little Dry Creek outlet failure (hypothetical)"
+  },
+  {
+   "id": "big-dry-creek-spillway",
+   "label": "Big Dry Creek Dam spillway failure (hypothetical)"
+  },
+  {
+   "id": "fancher-creek",
+   "label": "Fancher Creek Dam failure (hypothetical)"
+  },
+  {
+   "id": "big-dry-creek-outlet-1",
+   "label": "Big Dry Creek Dam outlet 1 failure (hypothetical)"
+  },
+  {
+   "id": "fancher-creek-spillway",
+   "label": "Fancher Creek Dam spillway failure (hypothetical)"
+  },
+  {
+   "id": "fancher-creek-detention",
+   "label": "Fancher Creek Detention Dam failure (hypothetical)"
+  },
+  {
+   "id": "fancher-creek-detention-spillway",
+   "label": "Fancher Creek Detention Dam spillway failure (hypothetical)"
+  },
+  {
+   "id": "redbank-creek-detention",
+   "label": "Redbank Creek Detention Basin Dam failure (hypothetical)"
+  },
+  {
+   "id": "redbank",
+   "label": "Redbank Dam failure (hypothetical)"
+  },
+  {
+   "id": "redbank-creek-detention-spillway",
+   "label": "Redbank Creek Detention Basin spillway failure (hypothetical)"
+  },
+  {
+   "id": "alluvial-drain",
+   "label": "Alluvial Drain Detention Dam failure (hypothetical)"
+  },
+  {
+   "id": "muncie",
+   "label": "Muncie, IN \u00b7 HEC-RAS example (demo)",
+   "main_map": false
+  }
  ]
 }
