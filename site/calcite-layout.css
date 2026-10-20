@@ -475,3 +475,5 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
   #map-search-evidence .map-search-controls calcite-label{margin:0;min-width:0;--calcite-label-margin-bottom:0}
   #planning-workspace.evidence-stacked:has(#map-search-evidence[open]){grid-template-rows:minmax(150px,1fr) minmax(280px,60%)}
 }
+
+.waterbody-swatch{display:inline-block;width:1rem;height:.65rem;margin-inline-end:.35rem;background:#294d60;border:1px solid #6997aa}

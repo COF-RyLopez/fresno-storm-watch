@@ -1,0 +1,40 @@
+{
+  "tilejson": "3.0.0",
+  "name": "Fresno waterbody reference footprints",
+  "scheme": "xyz",
+  "tiles": [
+    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/waterbodies-v0.33.0/{z}/{x}/{y}.pbf"
+  ],
+  "minzoom": 0,
+  "maxzoom": 12,
+  "bounds": [
+    -120.91873100010041,
+    35.906914000095696,
+    -118.36058599987905,
+    37.58583700006363
+  ],
+  "tileSize": 512,
+  "attribution": "USGS 3DHP; reference outlines, not current water levels",
+  "vector_layers": [
+    {
+      "id": "waterbodies",
+      "geometry_type": "polygon",
+      "fields": {
+        "source_id": "String",
+        "name": "String",
+        "kind": "Number",
+        "kind_label": "String",
+        "area_sqkm": "Number"
+      }
+    },
+    {
+      "id": "waterbodyNames",
+      "geometry_type": "point",
+      "fields": {
+        "source_id": "String",
+        "name": "String",
+        "area_sqkm": "Number"
+      }
+    }
+  ]
+}

@@ -44,7 +44,7 @@ test('gallery entry is constructed with a valid style immediately; unavailable s
   let created=0;
   class Layer{constructor(props){created++;assert.equal(props.style.version,8);this.props=props;}load(){return Promise.resolve(this);}}
   class Basemap{constructor(props){Object.assign(this,props);}}
-  const fetchImpl=async(url,options)=>{assert.match(url.href,/root.json\?v=0.29.0$/);assert.equal(options.credentials,'omit');return {ok:true,json:async()=>style};};
+  const fetchImpl=async(url,options)=>{assert.match(url.href,/root.json\?v=0.33.0$/);assert.equal(options.credentials,'omit');return {ok:true,json:async()=>style};};
   const result=await createWaterwayBasemap({Basemap,VectorTileLayer:Layer,fetchImpl});
   assert.equal(result.basemap.baseLayers[0],result.layer);assert.equal(await result.load(),result.layer);
   await assert.rejects(createWaterwayBasemap({Basemap,VectorTileLayer:Layer,fetchImpl:async()=>({ok:false,status:503})}),/HTTP 503/);

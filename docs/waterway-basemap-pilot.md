@@ -1,3 +1,9 @@
+# Water-body extension (0.33.0)
+
+F.R.O.G. Waterways — Dark now includes 7,118 Fresno-intersecting public USGS waterbody polygons and 394 label anchors. The separate polygon cache adds approximately 3.9 MB across 1,031 tiles. Existing 0.29 flowline tiles are unchanged. Muted blue footprints draw below roads and channel linework in both 2D and 3D. These are reference outlines, not current shorelines, water levels or inundation.
+
+The public `site/basemaps/frog-waterways-dark/waterbodies-DATA_SOURCES.md` and `waterbodies-manifest.json` record source, acquisition, CRS, validation and display accounting. Acquire with `scripts/acquire-waterbodies-county.py`, then build with `node scripts/build-waterbody-basemap.mjs`. The full flowline builder also preserves the committed water-body extension when rebuilding the original cache. No AGOL items or permissions change. Rollback: redeploy the preceding app release; no data migration.
+
 # Countywide F.R.O.G. Waterways — Dark (0.29.0)
 
 Rivers and Reservoirs now start with this basemap. Other workspace defaults stay

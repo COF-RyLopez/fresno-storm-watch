@@ -3,6 +3,7 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import geojsonvt from 'geojson-vt';
 import vtpbf from 'vt-pbf';
+import {addWaterbodyStyle} from './waterbody-cartography.mjs';
 import {waterwayRole,overviewRank} from './waterway-cartography.mjs';
 
 const root=new URL('../',import.meta.url),input=new URL('work/waterways-county/',root);
@@ -10,7 +11,7 @@ const output=new URL('site/basemaps/frog-waterways-dark/',root);
 const data=JSON.parse(await readFile(new URL('county.geojson',input),'utf8'));
 const manifest=JSON.parse(await readFile(new URL('manifest.json',input),'utf8'));
 const baseBytes=await readFile(new URL('scripts/basemap-dark-source.json',root));
-const style=JSON.parse(baseBytes);
+let style=JSON.parse(baseBytes);
 const bounds=manifest.bounds,maxzoom=14,version='0.29.0',tileDirectory='tiles-v'+version;
 if(!Array.isArray(bounds)||bounds.length!==4||bounds.some(n=>!Number.isFinite(n)))throw new Error('Missing county bounds');
 if(data.features.length!==manifest.accepted||manifest.rejected!==0)throw new Error('County source accounting mismatch');
@@ -105,6 +106,8 @@ style.layers.push({...structuredClone(nameStyle),id:'frog-overview-names',minzoo
   {...nameStyle,filter:['all',['!=','name','Madera Canal'],['!=','rank',0]]},
   {...structuredClone(nameStyle),id:'frog-madera-intake-name',filter:['==','name','Madera Canal'],layout:{...nameStyle.layout,'text-anchor':'bottom-right','text-offset':[-1,-1]}});
 style.metadata={...(style.metadata??{}),frog:{version,retrievedAt:manifest.retrievedAt,bounds,countyGeoid:manifest.countyGeoid}};
+const waterbodies=JSON.parse(await readFile(new URL('waterbodies-manifest.json',output),'utf8'));
+style=addWaterbodyStyle(style,waterbodies,publicUrl);
 await writeFile(new URL('root.json',output),JSON.stringify(style,null,2)+'\n');
 const preview=data.features.filter(f=>f.properties.rank===0).flatMap(f=>(f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates).flatMap(path=>{
   const projected=path.map(p=>[(p[0]-bounds[0])/(bounds[2]-bounds[0])*240,145-(p[1]-bounds[1])/(bounds[3]-bounds[1])*125]);
@@ -112,7 +115,8 @@ const preview=data.features.filter(f=>f.properties.rank===0).flatMap(f=>(f.geome
   if(Math.hypot(points.at(-1)[0]-points[0][0],points.at(-1)[1]-points[0][1])<.4&&points.length<=2)return [];
   return [`<path d="M${points.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' L')}" stroke="${f.properties.role==='canal'?'#83d4e6':'#70b9f4'}"${f.properties.role==='canal'?' stroke-dasharray="3 2"':''}/>`];
 }));
-await writeFile(new URL('thumbnail.svg',output),`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" fill="#252a2d"/><g fill="none" stroke-width="1.4">${preview.join('')}</g><rect width="240" height="24" fill="#17252e"/><text x="9" y="17" fill="#b5e3ff" font-family="Arial" font-size="12">Fresno County waterways</text></svg>`);
+const waterbodyPreview=(await readFile(new URL('thumbnail.svg',output),'utf8')).match(/<g id="frog-waterbody-preview"[^>]*>[\s\S]*?<\/g>/)?.[0]??'';
+await writeFile(new URL('thumbnail.svg',output),`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" fill="#252a2d"/>${waterbodyPreview}<g fill="none" stroke-width="1.4">${preview.join('')}</g><rect width="240" height="24" fill="#17252e"/><text x="9" y="17" fill="#b5e3ff" font-family="Arial" font-size="12">Fresno County waterways</text></svg>`);
 await writeFile(new URL('manifest.json',output),JSON.stringify({...manifest,basemapVersion:version,tileDirectory,
   backgroundStyle:{itemId:'c11ce4f7801740b2905eb03ddc963ac8',owner:'esri_vector',url:'https://www.arcgis.com/sharing/rest/content/items/c11ce4f7801740b2905eb03ddc963ac8/resources/styles/root.json',sha256:createHash('sha256').update(baseBytes).digest('hex')},
   cartography:{projection:'EPSG:3857 web tiles',tileSize:512,extent:4096,buffer:128,maxzoom,simplificationTolerance:2,labelAnchors:names.features.length,labelTargets,labelRule:'One point anchor per normalized published name; four principal names snap to source paths near the dam areas, others use the midpoint of the longest clipped source path. Matching Esri water-area names suppressed; other lake names retained. Native collision avoidance may hide crowded names.',symbolRule:'Canal: source type 2 or published name containing canal/ditch; source type 3 is a drainageway. River: type 1 or named type 5 containing river. Other network connectors dotted. Drainageways are distinct from canals. Named waterbody centerlines remain references, not channel beds.'},

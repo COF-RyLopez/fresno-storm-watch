@@ -1,6 +1,6 @@
 {
   "name": "fresno-storm-watch-prototype",
-  "version": "0.32.0",
+  "version": "0.33.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -18,7 +18,8 @@
     "collect:wind": "node --use-system-ca scripts/collect-wind.mjs",
     "collect:briefing": "node --use-system-ca scripts/collect-briefing.mjs",
     "collect:probability": "node --use-system-ca scripts/collect-probability.mjs",
-    "build:waterway-basemap": "node scripts/build-waterway-basemap.mjs"
+    "build:waterway-basemap": "node scripts/build-waterway-basemap.mjs",
+    "build:waterbody-basemap": "node scripts/build-waterbody-basemap.mjs"
   },
   "devDependencies": {
     "@mapbox/vector-tile": "2.0.4",
