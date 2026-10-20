@@ -1,3 +1,4 @@
+import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
 import {createSelectionFocus,validLocation} from './selection-focus.js?v=0.31.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { powerMapStyle } from './power-symbols.js';
@@ -65,7 +66,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     })] });
   };
   const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities, areaLayer] });
-  map.add(searchSelection);
+  const searchContext=new GraphicsLayer({title:'Nearby search references — proximity only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
+  map.add(searchContext);map.add(searchSelection);
   const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
   let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
   const currentState=()=>memory.get(activeProfile);
@@ -347,7 +349,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
   const searchFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
   let searchRevision=0;
-  function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();document.querySelector('#map').dataset.searchSelected='false';}
+  function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();searchContext.removeAll();document.querySelector('#map').dataset.searchSelected='false';}
   async function focusSearchSelection(shape){
     clearSearchSelection();
     const revision=searchRevision;
@@ -361,6 +363,29 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     const ok=await searchFocus.focus(mode=>({target:geometry,...(type==='point'||Math.max(geometry.extent?.width??0,geometry.extent?.height??0)<.04?{scale:12000}:{}),...(mode==='3d'?{tilt:45,heading:0}:{})}));
     if(revision!==searchRevision)return false;if(!ok)clearSearchSelection();return ok;
   }
+  let distanceModule;
+  async function findNearbySearch(shape,rows,options){
+    distanceModule??=sdk.import('@arcgis/core/geometry/operators/geodeticDistanceOperator.js').catch(error=>{distanceModule=null;throw error;});
+    const operator=await distanceModule;if(!operator.isLoaded())await operator.load();
+    const target=new Graphic({geometry:{...shape,type:shape.paths?'polyline':shape.rings?'polygon':'point'}}).geometry;
+    const parts=shape.paths?.map(path=>searchGeometry({paths:[path],spatialReference:{wkid:4326}})).filter(Boolean);
+    return nearbyEntries(shape,rows,{...options,distance:(_a,b)=>{
+      // Retain every potentially nearby part; discard only conservative envelope misses.
+      // This avoids repeatedly comparing hundreds of distant NHD segments in the SDK.
+      let local=target;
+      if(parts){const bounds=searchGeometry(b).bounds,paths=parts.filter(part=>envelopesNear(part.bounds,bounds,options.miles*1609.344)).map(part=>part.shape.paths[0]);if(!paths.length)return options.miles*1609.344+1;local=new Graphic({geometry:{type:'polyline',paths,spatialReference:{wkid:4326}}}).geometry;}
+      return operator.execute(local,new Graphic({geometry:b}).geometry,{unit:'meters'});
+    }});
+  }
+  function setSearchContext(rows){
+    searchFocus.cancel(false);searchContext.removeAll();
+    for(const row of rows){
+      const type=row.geometry.paths?'polyline':row.geometry.rings?'polygon':'point',color='#8bd6e8';
+      const geometry=new Graphic({geometry:{...row.geometry,type}}).geometry;
+      searchContext.add(new Graphic({geometry,attributes:{key:row.key},symbol:type==='point'?{type:'simple-marker',style:row.kind==='gauge'?'circle':row.kind==='asset'?'diamond':'square',size:12,color:[0,0,0,0],outline:{color,width:2}}:type==='polygon'?{type:'simple-fill',style:'none',outline:{color,width:2,style:'dash'}}:{type:'simple-line',color,width:3,style:'dash'}}));
+    }
+  }
+  function focusSearchContext(key){const graphic=searchContext.graphics.find(g=>g.attributes.key===key);return graphic?searchFocus.focus(mode=>({target:graphic.geometry,...(graphic.geometry.type==='point'?{scale:12000}:{}),...(mode==='3d'?{tilt:45,heading:0}:{})})):Promise.resolve(false);}
   const focusPoints=(points,padding=.04)=>{const valid=points.filter(validLocation);if(!valid.length)return focusGeometry(null);const xs=valid.map(p=>p.longitude),ys=valid.map(p=>p.latitude);return focusGeometry(new Extent({xmin:Math.min(...xs)-padding,ymin:Math.min(...ys)-padding,xmax:Math.max(...xs)+padding,ymax:Math.max(...ys)+padding,spatialReference:{wkid:4326}}));};
   function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;state.basemap=basemapKey;}
   function setWorkspace(id){
@@ -397,7 +422,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return {hours,setTime};
   }
   return {
-    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,focusSearchSelection,clearSearchSelection,
+    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));

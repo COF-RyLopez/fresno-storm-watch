@@ -51,12 +51,12 @@ test('every public search geometry is accounted for, bounded and in the declared
 });
 
 /** Exercise the actual controller's asynchronous invalidation with no private persistence. */
-function setup(fetchImpl){
+function setup(fetchImpl,nearby=null){
   class Node extends EventTarget{constructor(id){super();this.id=id;this.children=[];this.attrs={};this.value='';}append(...n){this.children.push(...n);}replaceChildren(...n){this.children=n;}setAttribute(k,v){this.attrs[k]=v;}hasAttribute(k){return k in this.attrs;}setFocus(){return Promise.resolve();}}
-  const nodes=new Map(),ids=['map-search-evidence','map-search-input','map-search-scope','map-search-results','map-search-status','map-search-selection','map-search-clear','search-selection-note','search-selection-label','map-search-coverage','map-search-open','search-clear-highlight'];
+  const nodes=new Map(),ids=['map-search-quick','map-search-submit','map-search-nearby','map-search-nearby-status','map-search-nearby-list','map-search-nearby-detail','map-search-radius','map-search-history','map-search-evidence','map-search-input','map-search-scope','map-search-results','map-search-status','map-search-selection','map-search-clear','search-selection-note','search-selection-label','map-search-coverage','map-search-open','search-clear-highlight'];
   ids.forEach(id=>nodes.set(id,new Node(id)));nodes.get('map-search-scope').value='all';nodes.get('map-search-evidence').setAttribute('open','');
   globalThis.document={getElementById:id=>nodes.get(id),createElement:tag=>new Node(tag)};globalThis.customElements={whenDefined:()=>Promise.resolve()};
-  const controller=createMapSearch({fetchImpl}),calls=[];controller.setMap({clearSearchSelection:()=>calls.push('clear'),focusSearchSelection:async g=>{calls.push(g);return true;}});
+  const controller=createMapSearch({fetchImpl}),calls=[];controller.setMap({clearSearchSelection:()=>calls.push('clear'),setSearchContext:rows=>calls.push({context:rows}),findNearbySearch:nearby,focusSearchContext:async()=>true,focusSearchSelection:async g=>{calls.push(g);return true;}});
   const search=text=>{nodes.get('map-search-input').value=text;nodes.get('map-search-input').dispatchEvent(Object.assign(new Event('keydown'),{key:'Enter'}));};
   return {nodes,controller,calls,search,flush:()=>new Promise(r=>setImmediate(r))};
 }
@@ -66,7 +66,7 @@ test('sign-out/unloaded assets clear results, selected details and highlight wit
   h.controller.setFacilities({sites:[{site:{key:'a',id:'fake9',name:'EXERCISE pump',kind:'Pump',geometry:{x:-119.8,y:36.8,spatialReference:{wkid:4326}},sourceTitle:'EXERCISE'}}]});
   h.search('fake9');assert.equal(h.nodes.get('map-search-results').children.length,1);
   h.nodes.get('map-search-results').children[0].dispatchEvent(new Event('click'));await h.flush();assert(h.nodes.get('map-search-selection').children.length);
-  h.controller.setFacilities({sites:[]});assert.equal(h.nodes.get('map-search-selection').children.length,0);assert.equal(h.nodes.get('map-search-results').children.length,0);assert.equal(h.calls.at(-1),'clear');
+  h.controller.setFacilities({sites:[]});assert.equal(h.nodes.get('map-search-selection').children.length,0);assert.equal(h.nodes.get('map-search-results').children.length,0);assert(h.calls.some(call=>call==='clear'));
   assert.equal(h.nodes.get('search-selection-label').textContent,'');
 });
 
@@ -82,5 +82,34 @@ test('clearing while public geometry is pending prevents late selection or navig
   const h=setup(async url=>url.pathname.endsWith('index.json')?{ok:true,json:async()=>({countyGeoid:'06019',entries:[row],sources:{}})}:new Promise(resolve=>{resolveGeometry=resolve;}));
   h.nodes.get('map-search-open').dispatchEvent(new Event('click'));await h.flush();h.search('shaw');h.nodes.get('map-search-results').children[0].dispatchEvent(new Event('click'));await h.flush();
   h.nodes.get('map-search-clear').dispatchEvent(new Event('click'));resolveGeometry({ok:true,json:async()=>({'street:123':{paths:[[[-120,36],[-119,37]]],spatialReference:{wkid:4326}}})});await h.flush();
-  assert(h.calls.every(call=>call==='clear'));assert.equal(h.nodes.get('map-search-selection').children.length,0);
+  assert(h.calls.every(call=>call==='clear'||call.context?.length===0));assert.equal(h.nodes.get('map-search-selection').children.length,0);
+});
+
+
+test('visible quick search opens evidence with its query; nearby private references disappear when unloaded',async()=>{
+  const shape={paths:[[[-119.8,36.8],[-119.7,36.8]]],spatialReference:{wkid:4326}},row={key:'street:near',name:'EXERCISE ROAD',kind:'street',shard:'00.json'};
+  const h=setup(async url=>({ok:true,json:async()=>url.pathname.endsWith('index.json')?{countyGeoid:'06019',entries:[row]}:{[row.key]:shape}}),async(_shape,entries,options)=>{
+    return Object.fromEntries(['gauge','road-record','asset'].map(kind=>[kind,{rows:entries.filter(row=>row.kind===kind).map(row=>({...row,distanceMeters:100})),total:entries.filter(row=>row.kind===kind).length,available:entries.filter(row=>row.kind===kind).length,unknown:0,historyExcluded:0}]));
+  });
+  h.controller.setFacilities({sites:[{site:{key:'private',name:'EXERCISE private pump',geometry:{x:-119.8,y:36.8,spatialReference:{wkid:4326}}}}]});
+  h.nodes.get('map-search-quick').value='EXERCISE ROAD';h.nodes.get('map-search-submit').dispatchEvent(new Event('click'));await h.flush();
+  assert.equal(h.nodes.get('map-search-input').value,'EXERCISE ROAD');
+  h.nodes.get('map-search-results').children[0].dispatchEvent(new Event('click'));await h.flush();
+  assert.equal(h.nodes.get('map-search-nearby').hidden,false);assert(h.calls.some(call=>call.context?.[0]?.key==='private'));
+  const lastBefore=h.calls.length;h.controller.setFacilities({sites:[]});await h.flush();
+  assert(h.calls.slice(lastBefore).filter(call=>call.context).every(call=>!call.context.some(row=>row.private)));
+  assert.equal(h.nodes.get('map-search-nearby-detail').children.length,0);
+  h.nodes.get('map-search-clear').dispatchEvent(new Event('click'));assert.equal(h.nodes.get('map-search-nearby').hidden,true);
+});
+
+
+test('a delayed vicinity calculation cannot restore private references after sign-out',async()=>{
+  const row={key:'street:a',name:'Exercise road',kind:'street',shard:'00.json'},shape={paths:[[[-119.8,36.8],[-119.7,36.8]]],spatialReference:{wkid:4326}};
+  let finishFirst,queries=0;const empty=Object.fromEntries(['gauge','road-record','asset'].map(kind=>[kind,{rows:[],total:0,available:0,unknown:0,historyExcluded:0}]));
+  const h=setup(async url=>({ok:true,json:async()=>url.pathname.endsWith('index.json')?{countyGeoid:'06019',entries:[row]}:{[row.key]:shape}}),async()=>++queries===1?new Promise(resolve=>finishFirst=resolve):empty);
+  h.controller.setFacilities({sites:[{site:{key:'private',name:'Private fixture',geometry:{x:-119.8,y:36.8,spatialReference:{wkid:4326}}}}]});
+  h.nodes.get('map-search-quick').value='Exercise road';h.nodes.get('map-search-submit').dispatchEvent(new Event('click'));await h.flush();h.nodes.get('map-search-results').children[0].dispatchEvent(new Event('click'));await h.flush();
+  assert(finishFirst);h.controller.setFacilities({sites:[]});await h.flush();const mark=h.calls.length;
+  finishFirst({...empty,asset:{...empty.asset,rows:[{key:'private',private:true,name:'Private fixture'}],total:1}});await h.flush();
+  assert(h.calls.slice(mark).every(call=>!call.context?.some(row=>row.private)));assert.equal(h.nodes.get('map-search-nearby-detail').children.length,0);
 });

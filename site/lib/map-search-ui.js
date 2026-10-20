@@ -1,16 +1,17 @@
-import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js?v=0.31.0';
+import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js?v=0.32.0';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
 const BASE=new URL('../data/search/v0.31.0/',import.meta.url);
 const KIND={waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir'};
 
 /** Shared nonmodal search. No query is sent to a geocoder, source service or storage. */
-export function createMapSearch({showMap=()=>{},fetchImpl=fetch}={}){
-  let map=null,publicIndex=null,indexError=null,pending=null,generation=0,selected=null,selectionBusy=false,typingTimer;
+export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}}={}){
+  let map=null,publicIndex=null,indexError=null,pending=null,generation=0,selected=null,selectionBusy=false,typingTimer,selectedShape=null,nearbyRevision=0;
   const groups=new Map(),groupSignatures=new Map(),shards=new Map(),panel=$('map-search-evidence'),input=$('map-search-input'),results=$('map-search-results'),status=$('map-search-status');
+  const nearbyHost=$('map-search-nearby'),nearbyList=$('map-search-nearby-list'),nearbyStatus=$('map-search-nearby-status'),nearbyDetail=$('map-search-nearby-detail'),quick=$('map-search-quick'),sourceNotes={gauges:'Gauge sources loading / not available',roads:'Road source loading / not available',assets:'No authorized assets loaded'};
   const all=()=>[...(publicIndex?.entries??[]),...[...groups.values()].flat()];
   const date=value=>{const timestamp=Number.isFinite(value)?value:typeof value==='string'?Date.parse(value):NaN;return Number.isFinite(timestamp)?new Intl.DateTimeFormat('en-US',{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:'America/Los_Angeles'}).format(timestamp):'Not supplied';};
   function clearSelection(message='Search highlight cleared.'){
-    generation++;selected=null;selectionBusy=false;map?.clearSearchSelection();$('map-search-selection').replaceChildren();$('map-search-clear').disabled=true;$('search-selection-note').hidden=true;$('search-selection-label').textContent='';
+    nearbyRevision++;selectedShape=null;nearbyHost.hidden=true;nearbyList.replaceChildren();nearbyDetail.replaceChildren();nearbyStatus.textContent='';map?.setSearchContext?.([]);generation++;selected=null;selectionBusy=false;map?.clearSearchSelection();$('map-search-selection').replaceChildren();$('map-search-clear').disabled=true;$('search-selection-note').hidden=true;$('search-selection-label').textContent='';
     if(message)status.textContent=message;
   }
   function coverage(){
@@ -53,25 +54,68 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch}={}){
       if(!map){clearSelection('Map is still initializing. Select the result again when the map is available.');return;}
       showMap();const located=await map.focusSearchSelection(shape);if(revision!==generation)return;
       if(!located){clearSelection('Map navigation was interrupted or unavailable. Select the result to retry.');return;}
-      selectionBusy=false;
+      selectionBusy=false;selectedShape=shape;
       const source=publicIndex?.sources?.[row.kind],detail=$('map-search-selection');
-      detail.replaceChildren(el('h3',row.name),el('p',`${KIND[row.kind]} · ${row.detail??`${row.segments} source segments with this name`}`),el('p',row.reference||'Grouped mapped segments may be disconnected. This is reference geometry, not a route, current flow or proof of open access.'),el('p',`Source date / retrieval: ${date(row.sourceTime??source?.retrievedAt)}`));
-      if(row.sourceUrl||source?.url){const a=el('a','Official source');a.href=row.sourceUrl||source.url;a.target='_blank';a.rel='noopener noreferrer';detail.append(a);}
+      const reference=el('details');reference.append(el('summary','Selected reference & source'),el('p',row.reference||'Grouped mapped segments may be disconnected. This is reference geometry, not a route, current flow or proof of open access.'),el('p',`Source date / retrieval: ${date(row.sourceTime??source?.retrievedAt)}`));
+      detail.replaceChildren(el('h3',row.name),el('p',`${KIND[row.kind]} · ${row.detail??`${row.segments} source segments with this name`}`),reference);
+      if(row.sourceUrl||source?.url){const a=el('a','Official source');a.href=row.sourceUrl||source.url;a.target='_blank';a.rel='noopener noreferrer';reference.append(a);}
       $('map-search-clear').disabled=false;$('search-selection-note').hidden=false;$('search-selection-label').textContent=`Search selection: ${row.name} · reference only`;
-      status.textContent='Selection highlighted in magenta with a white outline. Use Clear highlight to remove it.';
+      status.textContent='Selection highlighted in magenta with a white outline. Use Clear highlight to remove it.';void renderNearby();
     }catch(error){if(revision===generation)clearSelection(`Could not locate this result: ${error.message}. Select another result or retry.`);}
   }
+  async function renderNearby(){
+    const revision=++nearbyRevision,shape=selectedShape;
+    nearbyList.replaceChildren();nearbyDetail.replaceChildren();map?.setSearchContext?.([]);
+    nearbyHost.hidden=!shape||!['waterway','street','road-record'].includes(selected?.kind);
+    if(nearbyHost.hidden)return;
+    const current=()=>revision===nearbyRevision&&shape===selectedShape;
+    nearbyStatus.textContent='Checking loaded planning references…';
+    try{
+      if(!map?.findNearbySearch)throw new Error('Map proximity tools are not ready');
+      const miles=Number($('map-search-radius').value||2),history=!!$('map-search-history').checked;
+      const found=await map.findNearbySearch(shape,[...groups.values()].flat(),{miles,history,current});
+      if(!found||!current())return;
+      const shown=Object.values(found).flatMap(group=>group.rows);map.setSearchContext(shown);
+      nearbyStatus.textContent=`Within ${miles} miles of all mapped parts of ${selected.name}. ${shown.length} references shown in cyan; counts below include all matches. No match does not establish safe conditions. Rechecked ${date(Date.now())}.`;
+      for(const [kind,title,groupName]of [['gauge','Gauges','gauges'],['road-record','Closure / detour records','roads'],['asset','Loaded county assets','assets']]){
+        const group=found[kind],heading=el('h4',`${title} · ${group.total} nearby`),note=el('p',`${sourceNotes[groupName]}. ${group.available} available records${group.historyExcluded?`; ${group.historyExcluded} explicitly inactive records excluded`:''}${group.unknown?`; ${group.unknown} locations / distances unknown`:''}${group.total>group.rows.length?`; showing nearest ${group.rows.length}`:''}.`);
+        nearbyList.append(heading,note);
+        if(!group.total)nearbyList.append(el('p','No nearby matches in available records. Coverage may be incomplete.'));
+        const list=el('calcite-list');list.setAttribute('label',`Nearby ${title}`);list.setAttribute('selection-mode','single');
+        for(const row of group.rows){
+          const item=el('calcite-list-item');item.label=row.name;item.description=`${(row.distanceMeters/1609.344).toFixed(1)} mi · ${row.detail}`;
+          const inspect=()=>{if(!current())return;nearbyDetail.replaceChildren(el('h4',row.name),el('p',row.detail),el('p',`Source observation / update: ${date(row.sourceTime)}`),el('p',row.reference));
+            if(row.kind==='road-record')nearbyDetail.append(el('p',`Source active flag: ${row.active||'Not supplied'} · Start: ${date(row.start)} · End: ${date(row.end)}. An elapsed end date does not confirm reopening.`));
+            const locate=el('calcite-button','Locate nearby reference');locate.setAttribute('scale','s');locate.addEventListener('click',()=>{if(current())void map.focusSearchContext(row.key).then(ok=>{if(current()&&!ok)nearbyDetail.append(el('p','Map navigation was interrupted; select Locate to retry.'));});});nearbyDetail.append(locate);
+            if(row.sourceUrl){const link=el('a','Official source / evidence');link.href=row.sourceUrl;link.target='_blank';link.rel='noopener noreferrer';nearbyDetail.append(el('p'),link);}
+            const open=el('calcite-button','Open full workspace evidence');open.setAttribute('appearance','outline');open.setAttribute('scale','s');open.addEventListener('click',()=>{if(current())onInspect(row);});nearbyDetail.append(el('p'),open);
+          };
+          item.addEventListener('click',inspect);item.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();inspect();}});list.append(item);
+        }
+        nearbyList.append(list);
+      }
+    }catch(error){if(current())nearbyStatus.textContent=`Nearby references unavailable: ${error.message}. Missing results do not establish safe conditions. Change the distance or select the feature again to retry.`;}
+  }
   function setEntries(group,rows){
-    const signature=JSON.stringify(rows);if(groupSignatures.get(group)===signature)return;
+    const signature=JSON.stringify([rows,sourceNotes[group]]);if(groupSignatures.get(group)===signature)return;
     const old=groups.get(group)??[];groups.set(group,rows);groupSignatures.set(group,signature);
-    if(selected&&old.some(row=>row.key===selected.key)&&!rows.some(row=>row.key===selected.key))clearSelection('Selected record is no longer available in the loaded data. Search highlight and details cleared.');
+    if(selected&&old.some(row=>row.key===selected.key)&&JSON.stringify(old.find(row=>row.key===selected.key))!==JSON.stringify(rows.find(row=>row.key===selected.key)))clearSelection('Selected record changed or is no longer available. Search highlight and details cleared; select its updated record again.');
+    if(selectedShape)void renderNearby();
     if(panel.hasAttribute('open'))render();
   }
-  $('map-search-open').addEventListener('click',()=>{panel.setAttribute('open','');render();void loadIndex();void customElements.whenDefined('calcite-input').then(()=>input.setFocus());});
-  input.addEventListener('calciteInputInput',()=>{clearTimeout(typingTimer);clearSelection('');typingTimer=setTimeout(render,180);});
+  function openSearch(fromQuick=false){
+    if(fromQuick){input.value=quick.value;clearSelection('');}
+    showMap();panel.setAttribute('open','');render();void loadIndex();void customElements.whenDefined('calcite-input').then(()=>input.setFocus());
+  }
+  $('map-search-open').addEventListener('click',()=>openSearch());
+  $('map-search-submit').addEventListener('click',()=>openSearch(true));
+  quick.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();openSearch(true);}});
+  $('map-search-radius').addEventListener('calciteSelectChange',()=>void renderNearby());
+  $('map-search-history').addEventListener('calciteCheckboxChange',()=>void renderNearby());
+  input.addEventListener('calciteInputInput',()=>{clearTimeout(typingTimer);quick.value=input.value;clearSelection('');typingTimer=setTimeout(render,180);});
   input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(typingTimer);render();}});
   $('map-search-scope').addEventListener('calciteSelectChange',()=>{clearSelection('');render();});
   $('map-search-clear').addEventListener('click',()=>clearSelection());$('search-clear-highlight').addEventListener('click',()=>clearSelection());
   panel.addEventListener('stormEvidenceClose',()=>{clearTimeout(typingTimer);if(selectionBusy)clearSelection('Pending map search cancelled.');});
-  return {setMap(controller){map=controller;},setFacilities:data=>setEntries('assets',facilitySearchEntries(data)),setRoads:data=>setEntries('roads',roadSearchEntries(data)),setGauges:data=>setEntries('gauges',gaugeSearchEntries(data)),setReservoirs:data=>setEntries('reservoirs',reservoirSearchEntries(data)),clear:clearSelection};
+  return {setMap(controller){map=controller;},setFacilities(data){sourceNotes.assets=data?.sites?.length?'Authorized inventory loaded; readiness requires verification':'No authorized assets loaded; sign in and load county layers in Power / PSPS';setEntries('assets',facilitySearchEntries(data));},setRoads(data){sourceNotes.roads=data?.exercise?'Exercise mode; live road records disabled':data?.error?'Road feed failed; retained records require verification':data?.snapshot?`County road feed checked ${date(data.snapshot.checked)}; dates and active flags require review`:'Road source unavailable';setEntries('roads',roadSearchEntries(data));},setGauges(data){sourceNotes.gauges='Configured NWS watchpoints only; open gauge evidence to verify freshness and forecast';setEntries('gauges',gaugeSearchEntries(data));},setReservoirs:data=>setEntries('reservoirs',reservoirSearchEntries(data)),clear:clearSelection};
 }
