@@ -1,0 +1,39 @@
+{
+  "release": "0.27.1",
+  "checkedAt": "2026-10-20T03:59:33.837898+00:00",
+  "scope": "Display-only waterway label thinning; original USGS hydrography, county filter, popups and all operational workflows preserved.",
+  "automated": {
+    "nodeTests": 284,
+    "failures": 0,
+    "syntaxAndPublicConfig": "passed",
+    "cases": [
+      "one normalized name across source segments",
+      "viewport clipping without joining disconnected paths",
+      "spacing and deterministic priority",
+      "missing names and invalid projections",
+      "late/aborted queries and visible failure handling",
+      "bounded projection work for 100000-vertex paths",
+      "alternate positions around operational markers"
+    ]
+  },
+  "localBrowser": {
+    "viewport": "1280x900",
+    "observed": [
+      "Friant 3D: duplicate San Joaquin River labels removed; San Joaquin River and Friant-Kern Canal appear once after source loading",
+      "Madera Canal uses another position when spacing permits; withheld near crowded operational markers",
+      "Source lines and dam symbol remain available; 2D mode and resize transitions remain usable"
+    ]
+  },
+  "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
+  "sdkReferences": [
+    "https://developers.arcgis.com/javascript/latest/references/core/layers/support/LabelClass/",
+    "https://developers.arcgis.com/javascript/latest/references/core/views/layers/FeatureLikeLayerView/",
+    "https://developers.arcgis.com/javascript/latest/references/core/symbols/TextSymbol/"
+  ],
+  "limitations": [
+    "Labels use loaded source features; names can be omitted while USGS tiles load, at map edges or where spacing cannot be maintained.",
+    "Screen-space sampling is a presentation optimization, not geometry simplification or hydrological aggregation.",
+    "Publisher name variants are only normalized for whitespace and case; separate source line records remain intact."
+  ],
+  "rollback": "Redeploy 38064470990e62e547fe6a26bd791299f6d661f3 (0.27.0); no data migration."
+}

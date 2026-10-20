@@ -4,7 +4,7 @@ import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { blend } from './flood-scenario-model.js';
-import { installMapContext } from './map-context.js?v=0.19.0';
+import { installMapContext } from './map-context.js?v=0.27.1';
 import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.26.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 

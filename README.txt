@@ -330,3 +330,17 @@ sources, thresholds, persistence, permissions or AGOL items are introduced.
 Operating notes: planning.html#location-selection.
 Rollback: redeploy d1b3407322cb68b4da60d9f6e53963ec7d6f4b26 (0.26.0);
 no data migration.
+
+
+0.27.1 Waterway label cleanup
+USGS source-segment labels are replaced by a separate display-only names layer.
+Each normalized name is shown at most once in the visible map, in 2D and 3D,
+with conservative screen spacing and alternate source-segment anchor positions.
+Original line geometry, source popups and county filtering remain unchanged.
+Projection work is bounded for highly detailed lines; no source vertices are
+connected across skipped samples. Pending local queries are invalidated on a
+view change, resize or visibility change. Labels use loaded LayerView features,
+not a second national hydrography download or a new AGOL item.
+Operating notes: planning.html#waterway-labels.
+Rollback: redeploy 38064470990e62e547fe6a26bd791299f6d661f3 (0.27.0);
+no data migration.
