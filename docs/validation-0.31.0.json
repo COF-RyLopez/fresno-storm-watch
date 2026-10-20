@@ -1,0 +1,57 @@
+{
+  "release": "0.31.0",
+  "checkedDateLocal": "2026-10-20",
+  "scope": "Shared map search for public Fresno named waterways/streets, all returned closure/detour records, loaded gauges/reservoirs and authorized loaded county sites. No permissions or AGOL items changed.",
+  "automated": {
+    "nodeTests": 305,
+    "failures": 0,
+    "privatePublisherContractTests": 18,
+    "syntaxAndPublicConfig": "passed",
+    "allPublicGeometryShardsValidated": 256
+  },
+  "sourceAccounting": {
+    "publicNamedGroups": 6162,
+    "sourceCounts": {
+      "street": {
+        "input": 50839,
+        "accepted": 50839,
+        "unnamed": 0,
+        "rejected": 0
+      },
+      "waterway": {
+        "input": 142595,
+        "accepted": 16184,
+        "unnamed": 126411,
+        "rejected": 0
+      }
+    },
+    "manifest": "../site/data/search/v0.31.0/manifest.json",
+    "provenance": "../site/data/search/DATA_SOURCES.md"
+  },
+  "localBrowser": {
+    "viewports": [
+      "1280x900",
+      "390x844"
+    ],
+    "observed": [
+      "Fresno Canal search selects and highlights actual generalized canal geometry in 3D with white/magenta selection style.",
+      "Shaw Avenue matches county streets and distinct closure/detour records; E SHAW AVE locates its line geometry.",
+      "Keyboard Enter locates the fictional EXERCISE pump station by ID P1.",
+      "Closing the pane preserves a completed highlight; Clear highlight removes it.",
+      "Tab change clears search geometry and the selected asset label.",
+      "Phone page has no horizontal overflow; results remain selectable alongside the map."
+    ],
+    "privacyTests": [
+      "Unloaded / signed-out assets clear results, details, hidden selection label and highlight.",
+      "Clearing a pending geometry lookup prevents late navigation.",
+      "Private asset name search performs no external lookup."
+    ]
+  },
+  "limits": [
+    "Named references only; unnamed waterways and arbitrary imagery/basemap labels are not indexed.",
+    "Same-name groups can contain disconnected segments and fit a broad extent. This is not routing, live flow, safe access or current road status.",
+    "Public search geometry uses five-meter display simplification and EPSG:4326 XY; no elevation or datum accuracy is inferred.",
+    "Private assets are available only after their authorized layers have been loaded; the interface does not grant access."
+  ],
+  "rollback": "Redeploy 22d8810c95ae7e588d2afb775590cee3c8b1224e (0.30.0); no data migration."
+}

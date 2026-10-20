@@ -3,16 +3,16 @@
  */
 export function createSelectionFocus({workspace,ready,setMode,view,navigate,save,missing,failed}) {
   let revision=0;
-  function cancel(){revision++;view().animation?.stop();}
+  function cancel(stopAnimation=true){revision++;if(stopAnimation)view().animation?.stop();}
   async function focus(target){
     cancel();const request=revision,scope=workspace(),current=()=>request===revision&&scope===workspace();
     try {
-      await ready();if(!current())return;
-      if(!target(view().type)){missing();return;}
-      await setMode('3d');if(!current())return;
-      const destination=target(view().type);if(!destination){missing();return;}
-      await navigate(destination);if(current())save();
-    }catch(error){if(current()&&error.name!=='AbortError')failed(error);}
+      await ready();if(!current())return false;
+      if(!target(view().type)){missing();return false;}
+      await setMode('3d');if(!current())return false;
+      const destination=target(view().type);if(!destination){missing();return false;}
+      await navigate(destination);if(current()){save();return true;}return false;
+    }catch(error){if(current()&&error.name!=='AbortError')failed(error);return false;}
   }
   return {focus,cancel};
 }

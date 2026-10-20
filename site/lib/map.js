@@ -1,4 +1,4 @@
-import {createSelectionFocus,validLocation} from './selection-focus.js?v=0.27.0';
+import {createSelectionFocus,validLocation} from './selection-focus.js?v=0.31.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
@@ -41,6 +41,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const facilities = new GraphicsLayer({title:'Connected county sites — power unconfirmed',elevationInfo:{mode:'relative-to-ground'}});
   const roads = new GraphicsLayer({title:'County road records — verify access',elevationInfo:{mode:'on-the-ground'}});
   const briefingContext=new GraphicsLayer({title:'Selected briefing context — proximity, not exposure',elevationInfo:{mode:'on-the-ground'}});
+  const searchSelection=new GraphicsLayer({title:'Search selection — reference only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
   const fema = new FeatureLayer({
     url:'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28',
     title:'FEMA mapped flood hazard — planning reference', minScale:100_000, opacity:0.55, elevationInfo:{mode:'on-the-ground'},
@@ -64,6 +65,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     })] });
   };
   const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities, areaLayer] });
+  map.add(searchSelection);
   const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
   let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
   const currentState=()=>memory.get(activeProfile);
@@ -343,12 +345,28 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return {target:[longitude,latitude],scale,...(type==='3d'?{tilt:55,heading:0}:{})};
   });
   const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
+  const searchFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
+  let searchRevision=0;
+  function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();document.querySelector('#map').dataset.searchSelected='false';}
+  async function focusSearchSelection(shape){
+    clearSearchSelection();
+    const revision=searchRevision;
+    const type=shape.paths?'polyline':shape.rings?'polygon':'point';
+    const geometry=new Graphic({geometry:{...shape,type}}).geometry;
+    if(!geometry||geometry.spatialReference?.wkid!==4326)throw new Error('Unsupported or missing search geometry reference');
+    const coords=type==='point'?[[geometry.x,geometry.y]]:type==='polygon'?geometry.rings.flat():geometry.paths.flat();
+    if(!coords.length||coords.some(([x,y])=>!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>180||Math.abs(y)>90))throw new Error('Invalid search coordinates');
+    for(const [color,width]of [['#ffffff',6],['#ff65e5',3]])searchSelection.add(new Graphic({geometry,symbol:type==='point'?{type:'simple-marker',style:'circle',size:24,color:[0,0,0,0],outline:{color,width}}:type==='polygon'?{type:'simple-fill',style:'none',outline:{color,width}}:{type:'simple-line',color,width}}));
+    document.querySelector('#map').dataset.searchSelected='true';
+    const ok=await searchFocus.focus(mode=>({target:geometry,...(type==='point'||Math.max(geometry.extent?.width??0,geometry.extent?.height??0)<.04?{scale:12000}:{}),...(mode==='3d'?{tilt:45,heading:0}:{})}));
+    if(revision!==searchRevision)return false;if(!ok)clearSearchSelection();return ok;
+  }
   const focusPoints=(points,padding=.04)=>{const valid=points.filter(validLocation);if(!valid.length)return focusGeometry(null);const xs=valid.map(p=>p.longitude),ys=valid.map(p=>p.latitude);return focusGeometry(new Extent({xmin:Math.min(...xs)-padding,ymin:Math.min(...ys)-padding,xmax:Math.max(...xs)+padding,ymax:Math.max(...ys)+padding,spatialReference:{wkid:4326}}));};
   function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;state.basemap=basemapKey;}
   function setWorkspace(id){
     if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
     if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
-    selectionFocus.cancel();waterwayPickStatus('');activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
+    selectionFocus.cancel();clearSearchSelection();waterwayPickStatus('');activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
     mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
     drawGauges();drawPower();drawAreas();syncControls();
     transition=transition.catch(()=>{}).then(async()=>{
@@ -379,7 +397,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return {hours,setTime};
   }
   return {
-    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,
+    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,focusSearchSelection,clearSearchSelection,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));

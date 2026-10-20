@@ -454,3 +454,9 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
   #planning-workspace.evidence-stacked .map-toolbar-stack{max-height:18cqh;}
   #planning-workspace.evidence-stacked .legend-stack{max-height:12cqh;}
 }
+
+.map-search-controls{padding:var(--calcite-spacing-md);background:var(--calcite-color-foreground-1)}
+.map-search-controls p{font-size:var(--calcite-font-size-small);margin-block:.4rem}
+.search-selection-note{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:.8rem;padding:.35rem .5rem}
+.search-selection-note[hidden]{display:none}
+.search-selection-swatch{display:inline-block;width:1.4rem;height:.3rem;background:#ff65e5;border:2px solid white}
