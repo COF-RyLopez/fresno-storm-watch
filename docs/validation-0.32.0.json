@@ -1,0 +1,60 @@
+{
+  "release": "0.32.0",
+  "checkedDateLocal": "2026-10-20",
+  "scope": "Visible search field above every workspace map and in-memory nearby gauges, county road records and authorized loaded assets for stream/road selections. No new AGOL items, access changes, hazard thresholds or dispatch logic.",
+  "automated": {
+    "nodeTests": 314,
+    "failures": 0,
+    "privatePublisherContractTests": 18,
+    "syntaxAndPublicConfig": "passed",
+    "geometryShardsValidated": 256
+  },
+  "implementation": {
+    "sdk": "ArcGIS Maps SDK for JavaScript 5.1, existing unified loader",
+    "distance": "geodeticDistanceOperator in meters between WGS84 XY geometries; conservative envelope prefilter includes every potentially nearby part",
+    "defaultMiles": 2,
+    "availableMiles": [
+      0.5,
+      1,
+      2,
+      5
+    ],
+    "displayLimitPerCategory": 20,
+    "counts": "All matches; independent of map extent and sidebar display filters",
+    "publicIndex": "Existing versioned v0.31.0 name/geometry snapshot unchanged",
+    "persistence": "None for queries, vicinity results, private records or credentials"
+  },
+  "primaryDocumentation": {
+    "checked": "2026-10-20",
+    "url": "https://developers.arcgis.com/javascript/latest/references/core/geometry/operators/geodeticDistanceOperator/"
+  },
+  "localBrowser": {
+    "viewports": [
+      "1920x1080",
+      "1280x720",
+      "390x844"
+    ],
+    "observed": [
+      "San Joaquin River: six configured gauges and 16 returned road records within two miles; zero unloaded assets remains qualified as incomplete coverage.",
+      "E SHAW AVE: 46 nearby road records, nearest 20 shown; zero configured gauges and no loaded assets remain qualified.",
+      "Exercise inventory: three of four fictional assets appear within five miles of San Joaquin River, with owner and unknown-backup-power qualifications.",
+      "Nearby gauge selection shows last observation value/time, source link and full workspace evidence; Locate retains selected river highlight.",
+      "Phone: Map opens visible search field; Shaw Ave and E SHAW AVE selection work with usable results and no page horizontal overflow (390px scroll width = viewport width).",
+      "Local SDK integration fixture: 1109.74m ground separation; crossing road distance zero; half-mile excludes and one-mile includes northern gauge. Temporary diagnostic page removed before release."
+    ]
+  },
+  "privacyAndFailureTests": [
+    "Sign-out/unload clears private vicinity details and map graphics immediately.",
+    "Delayed calculations cannot restore private results after sign-out.",
+    "New selection, clearing and source refresh invalidate superseded calculations.",
+    "Missing CRS, malformed locations and failed distance measurements remain unknown.",
+    "Failed road feeds preserve warnings; explicitly inactive records are optional history. Elapsed dates never establish reopening."
+  ],
+  "limits": [
+    "Nearby is geographic vicinity along every same-name mapped part, including disconnected segments. It is not network connectivity, travel time, predicted flooding, safe access or a resource deployment recommendation.",
+    "Only configured gauges, returned road records and currently loaded authorized assets participate. Private asset acceptance used fictional records; no additional real-account sign-in or permission change was performed.",
+    "Public display geometry is generalized by five meters; no engineering survey or elevation accuracy is implied."
+  ],
+  "integration": "Preserved and merged remote c49b3dc flood-scenario traffic playback changes without conflicts; post-merge regression suite passes.",
+  "rollback": "Redeploy c49b3dc (preceding 0.31.0 site including scenario traffic); no data migration."
+}
