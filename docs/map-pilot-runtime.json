@@ -1,0 +1,23 @@
+{
+  "package": "maplibre-gl",
+  "version": "6.15.0",
+  "license": "BSD-3-Clause",
+  "files": [
+    {
+      "file": "site/vendor/maplibre-6.15.0/maplibre-gl.mjs",
+      "sha256": "41198b23679a7d8892183408bbef2eabdc74745beb90261f6be0f660b7aeb2fd"
+    },
+    {
+      "file": "site/vendor/maplibre-6.15.0/maplibre-gl-worker.mjs",
+      "sha256": "1c69066368331aae63967ed24a9affcf962cf55fcc6d8f532a8b040f736dbcfa"
+    },
+    {
+      "file": "site/vendor/maplibre-6.15.0/maplibre-gl-shared.mjs",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "site/vendor/maplibre-6.15.0/maplibre-gl.css",
+      "sha256": "a90798a1953017790e590f7e1bd35ff103a8a4263972cb47290b78adf86f8c20"
+    }
+  ]
+}

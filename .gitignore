@@ -13,3 +13,4 @@ __pycache__/
 site/data/precip-probability.json
 site/data/probability-images/
 site/data/hrrr/
+site/data/map-pilot-latest.json
