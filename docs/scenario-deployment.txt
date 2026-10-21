@@ -1,0 +1,182 @@
+F.R.O.G. SCENARIO EXERCISE SERVICE — COUNTY IT HANDOFF
+Version 0.39.0 • Checked 2026-10-20
+
+DEPLOYMENT STATUS
+The application interface and portable service are implemented. No county cloud
+account, provider/region, budget or production service has been selected or
+provisioned. No complete Fresno hydraulic package or baseline reviewer has been
+verified. Custom computation remains disabled until both gates pass. This is a
+specific prerequisite, not a claim that the existing map animations can compute.
+
+ARCHITECTURE
+GitHub Pages + county AGOL OAuth PKCE → HTTPS scenario API → SQLite WAL queue on
+an encrypted persistent local volume → one model worker → private result storage.
+Public Pages contains only code, public reference data and a non-sensitive model
+inventory. Private model/input/result files never enter site/, Pages artifacts,
+Actions logs, browser persistence or service access logs. No API keys in Pages.
+Reuse AGOL for identity and existing EOC exercise records; use a real transactional
+queue rather than a hosted feature table as a competing-worker lock.
+
+RUNTIME / SECURITY
+Node 22.22.3 was tested; node:sqlite is experimental in Node 22. Pin and review this
+runtime before county deployment. There are no new npm server dependencies.
+API binds loopback by default and must sit behind the approved HTTPS gateway.
+The gateway must limit request size/rate, forward no credentials to logs, restrict
+network origins and provide availability/failure monitoring. Do not expose the
+Node HTTP listener directly to the Internet.
+The service validates the ArcGIS user token with county community/self and checks
+actual organization/group membership on every protected request. An account label
+or a UI role cannot grant access. Review membership is distinct from submission.
+All authorized EOC members may view exercise runs. Cancellation is restricted to
+the submitter/reviewer. Review requires exact completed-result digest.
+Output range requests require the same authorization as normal artifact reads.
+
+INSTALL / CONFIGURE (AFTER CLOUD APPROVAL)
+1. Place the repository's services/scenarios/ and site/lib/scenario-contract.js on
+   the API/worker host with a pinned Node runtime. Keep the private data volume
+   outside this source tree and outside any web publishing root.
+2. Start with one API instance and one worker sharing a local persistent SQLite
+   volume. Do not use network shares or horizontally replicated SQLite writers.
+   For a distributed worker deployment, replace this storage adapter with the
+   selected provider's transactional queue/database and preserve the API contract.
+3. Set environment values through the cloud secret/config manager:
+   SCENARIO_PORTAL=https://cofgisonline.maps.arcgis.com
+   SCENARIO_ORG_ID=ibgDyuD2DLBge82s
+   SCENARIO_EOC_GROUPS=<approved ordinary EOC group IDs, comma-separated>
+   SCENARIO_REVIEW_GROUPS=<approved technical-review group IDs>
+   SCENARIO_ORIGINS=https://cof-rylopez.github.io
+   SCENARIO_DATA_ROOT=<private persistent absolute directory, created first>
+   SCENARIO_REGISTRY=<private reviewed registry JSON absolute path>
+   SCENARIO_MAX_PENDING=20
+   SCENARIO_MAX_RUNS_DAY=100
+   SCENARIO_PORT=8791
+   SCENARIO_BIND=127.0.0.1
+   Do not reuse existing EOC groups without administrator confirmation.
+4. Start: node services/scenarios/server.mjs
+   Worker pass: node services/scenarios/worker.mjs
+   Schedule worker passes serially through the chosen cloud job runner. One claim
+   exists globally; an active run prevents any second claim. A worker pass with
+   no job exits idle. The cloud scheduler is not GitHub Actions.
+5. Set serviceUrl in site/scenario-config.js to the approved HTTPS API base URL.
+   Test identity, failed/expired tokens and two different EOC accounts first.
+
+REGISTRY AND ADAPTER
+The private registry has {models:[public template metadata],executors:{modelId:{
+id,packageRoot,program,programSha256,args,maxRuntimeMs}}}. Template parameters are
+bounded numeric model-specific values with explicit units. Model metadata must
+include geometry coverage, coordinate/vertical references, solver version,
+baseline.packageHash (SHA256 of canonical package-manifest.json), baseline.passed,
+review.status=approved, review.reviewer and enabled=true. A parameter declared
+rainfall requires capabilities.rainfallRunoff=true.
+package-manifest.json contains {files:[{file,sha256}]} with all required model and
+adapter files. The worker verifies each file and copies the package per job.
+Only a preinstalled, operations-owned executable and allowlisted arguments run;
+arguments can use {jobDir} and {input}. No user scripts, model ZIP uploads,
+filesystem paths, command strings or arbitrary geometry edits are accepted.
+The version-specific model adapter must be supplied/tested with the actual model;
+there is no claim of a universal HEC-RAS command-line adapter. Its first obligation
+is exact baseline reproduction and cancellation of its process tree.
+
+API CONTRACT
+GET /health — non-sensitive liveness and count of enabled models.
+GET /v1/catalog — authenticated approved-template metadata.
+GET /v1/runs — authenticated exercise queue/results (latest 100).
+POST /v1/runs — {requestId,modelId,modelVersion,areaId,title,parameters,sourceSnapshots:[]}
+  returns 202 with stable run ID. Reusing requestId with different input fails.
+  Caller-provided live source snapshots are deliberately not enabled. Forecast
+  forcing needs a model-specific frozen, validated hydrologic input adapter.
+GET /v1/runs/{id} — status; owner, times and technical review are separate.
+POST /v1/runs/{id}/cancel — owner/reviewer; process stop must be reconciled.
+GET /v1/runs/{id}/result — verified immutable manifest only when complete.
+GET /v1/runs/{id}/artifacts/{assetId} — authenticated bytes/range reads.
+POST /v1/runs/{id}/review — {decision,evidence,resultDigest}; reviewer only.
+All responses use no-store; tokens travel in Authorization, never query strings.
+
+RESULT CONTRACT
+result.json includes schemaVersion=1, environment=exercise, hypothetical=true,
+runId/modelId/modelVersion, exact inputs, solver.version, packageHash,
+spatialReference {horizontal,vertical,verticalUnits}, validation {passed,checks},
+depthLegend (source units/color explanation), previewExtent,
+frames [{hour,preview:assetId,depth:numericAssetId}], artifacts
+[{id,file,bytes,mediaType,sha256}]. Preview images are not numeric depth.
+Publish Complete only after every artifact hash/length and validation passes.
+baseline must contain packageHash and frames with the same model hours, each
+referencing its own preserved preview/numeric assets. The UI switches baseline
+and scenario at the same time. Optional exposurePreview and
+baseline.exposurePreview reference verified JSON artifacts (not public URLs).
+Building previews use WGS84 polygons with stable building_id, display_height_m,
+height_quality and optional depth_m arrays at the corresponding model frames.
+Unknown heights remain flat references; unknown depths remain gray. The initial
+display limit is 5,000 footprints / 250,000 vertices; larger output needs tiling.
+True 3D water-surface and velocity rendering is not enabled by a draped depth PNG.
+Artifacts and manifest are read-only to the API identity. Model worker writes
+new result directories; never modify a completed run. Reviews append audit events.
+
+OPERATIONS / RECOVERY
+Queue caps default to 20 outstanding and 100 per day, to be lowered to fit the
+approved cost envelope. Each executor must set its own runtime cap (max 24 hours).
+Cloud VM size, CPU/memory limits and auto-stop are configured by county IT.
+Heartbeat age >2 minutes is conspicuous. No automatic duplicate execution after
+a crash. First confirm that the solver/process tree stopped, then reconcile:
+node services/scenarios/worker.mjs --reconcile-interrupted
+Run reconciliation only while the scheduler/worker is stopped. Create a new
+request ID for a deliberate rerun; preserve the old run and failure history.
+Back up the queue using SQLite's online backup/checkpoint procedure, not by
+copying a live database without its WAL. Back up the immutable artifact volume.
+Monitor API latency/failure rates, queue depth, oldest queued job, worker heartbeat,
+runtime, failed output validation and storage usage; send failures through the
+county's approved unattended notification mechanism.
+
+COST / APPROVAL WORKSHEET (NO UNAPPROVED CLOUD SPENDING)
+County IT supplies provider/region, subscription/project owner and monthly cap.
+Estimate monthly API/gateway + persistent disk + backup + storage/requests/egress
++ worker hourly rate × active worker hours. Benchmark one frozen baseline to
+measure VM-hours, RAM, output bytes and transfer before choosing VM size.
+Record expected scenarios/day, retention period, budget alert thresholds and the
+hard submission/worker shutdown procedure at the approved limit. No provider
+price is assumed. Do not leave an expensive model VM running continuously by
+default; measured startup/model duration determines the scheduler policy.
+
+ACCEPTANCE / ROLLBACK
+Exercise non-member/expired sign-in; duplicate/conflicting IDs; simultaneous
+claims; restart during compute; cancellation; missing/changed outputs; partial
+uploads; approval/withdrawal; wrong datum/units; and two actual EOC accounts.
+The regression tests use labeled computation fixtures, not hydraulic validation.
+No local model baseline, full hydrodynamics or real cloud endpoint has passed
+acceptance yet. Usability with two non-specialist staff is a county tabletop task.
+Rollback: unset serviceUrl and redeploy 0.38.0 for the former topic interface.
+Keep private exercise queue/artifacts/history; no AGOL migration is required.
+
+PRIMARY REFERENCES
+https://developers.arcgis.com/rest/users-groups-and-items/self/
+https://www.hec.usace.army.mil/software/hec-ras/download.aspx
+https://www.hec.usace.army.mil/confluence/rasdocs/rmum/latest/mapping-results/managing-results-maps
+https://www.hec.usace.army.mil/confluence/nsi/technicalreferences/latest/technical-documentation
+https://docs.overturemaps.org/schema/reference/buildings/building/
+https://docs.protomaps.com/pmtiles/cloud-storage
+
+EXPOSURE PREPARATION (GIS / MODEL OWNER)
+Use bounded model-domain extracts from NSI 2026, Overture and verified county
+footprints. Preserve their access classifications and exact release identifiers.
+Input: RFC7946 GeoJSON or WKB GeoParquet with defined CRS. NSI uses fd_id points,
+found_ht in feet and grnd_elv_m in meters. County footprints use asset_id and
+optional height_m; Overture uses id, version and optional height in meters.
+Run in the isolated pinned environment (PowerShell):
+  python -m venv work/exposure-env
+  & ./work/exposure-env/Scripts/python.exe -m pip install -r scripts/exposure-requirements.txt
+  & ./work/exposure-env/Scripts/python.exe scripts/conflate-buildings.py --nsi <bounded-file> --overture <bounded-file> --county <optional-file> --nsi-release 2026 --overture-release <release-id> --output <new-private-directory>
+Omit --county when no verified footprint file is available. The output directory
+must be new/empty and outside site/. Outputs: footprints.parquet (GeoParquet 1.1),
+links/unmatched/rejected reports, provenance/accounting and bounded preview.
+Containment prefers a unique county footprint, then a unique Overture footprint;
+ambiguous and unmatched NSI records remain in reports. No nearest-neighbor guess.
+One footprint can have several NSI occupancy records. County-overlapping Overture
+footprints are retained analytically but suppressed in the display derivative;
+review this suppression, roofprint offsets and repaired polygons locally.
+The method labels matches unreviewed and preserves unknown foundation/ground
+values. It does not calculate hydraulic depth, interior flooding, loss or safety.
+Source-ID crosswalk review and numerical model sampling are separate onboarding
+steps. Inspect at least three local examples, including ambiguous matches.
+For more than 5,000 footprints, produce a viewport/tile subset for the initial app
+adapter. Keep complete GeoParquet as the analysis source. Preserve Overture ODbL
+attribution/derivative obligations and county restrictions on private assets.
