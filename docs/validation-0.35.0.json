@@ -1,0 +1,27 @@
+{
+  "version": "0.35.0",
+  "checkedDate": "2026-10-20",
+  "scope": "Six configured Fresno river review groups, point forecasts only",
+  "javascriptTests": 333,
+  "focusedForecastTests": 9,
+  "deploymentCheck": "passed",
+  "manualChecks": [
+    "Weather comparison launcher",
+    "Area Watch passes selected river area",
+    "Three-source summary with same 24h window",
+    "Kings/Pine Flat raw normalized values cross-checked",
+    "Rapid James-to-Redinger change shows final Redinger sample",
+    "390x844 phone layout and scrolling without page/table overflow"
+  ],
+  "dataSemantics": [
+    "Model rates integrated over preceding intervals; lead-zero excluded",
+    "NWS full interval precipitation totals; partial periods stay unknown",
+    "10m vector magnitude to mph; no invented GFS gusts",
+    "Source initialization/update times separate from app check and valid window",
+    "Unknown coverage and source failures are independent",
+    "Comparison remains separate from existing WPC72h labels and countywide notification rules"
+  ],
+  "privacy": "Credential-free public points, bounded in-memory cache; no private record or browser persistence",
+  "rollback": "30cfac23a85c9bca5b7515dd2798cb7ab7558a48",
+  "publishedVerification": "pending"
+}

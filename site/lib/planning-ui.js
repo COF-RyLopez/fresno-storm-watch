@@ -18,7 +18,7 @@ function el(tag,text='',css=''){const n=document.createElement(tag);n.textConten
 function link(text,href){const n=el('a',text);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Fixed-area review banner; separate from official NWS alerts and team acknowledgements. */
-export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onTrends=()=>{},onExercise=()=>{},onData=()=>{}}){
+export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onCompare=()=>{},onTrends=()=>{},onExercise=()=>{},onData=()=>{}}){
   let areaConfig=null,points=[],gaugeSettings=[],reservoirSettings=null,entries=new Map(),reservoirs={},rain=null,busy=false,next=0,map=null,signature='',scenario='combined';
   let associations=null,windSites=[],wind=null,power=null,previousRows=[],filterMode='review';
   const expanded=new Set(),clock=Date.now();
@@ -122,6 +122,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
       const mapButton=button('Map watchpoints',()=>{onMap();map?.focusPlanningPoints(r.samplePoints);});mapButton.setAttribute('icon-start','extent');mapButton.toggleAttribute('disabled',!map);
       actions.append(mapButton);
       actions.append(button('Wind forecasts',onConditions));
+      actions.append(button('Compare forecasts',()=>onCompare(r.area.id)));
       if(r.power.matches.length||r.power.followups.length)actions.append(button('Power / PSPS records',onPower));
       if(r.area.id==='san-joaquin-lower'||r.area.id==='kings-lower')actions.append(button('Release & gauge trends',()=>onTrends(r.area.id==='san-joaquin-lower'?'MIL':'PNF')));
       card.append(actions);

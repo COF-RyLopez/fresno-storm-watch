@@ -1,0 +1,31 @@
+Dynamical / NWS river-area comparison — 0.35.0
+Checked: 2026-10-20 (America/Los_Angeles)
+
+Public sources
+- https://dynamical.org/prompt.md and https://dynamical.org/llms.txt
+- https://stac.dynamical.org/catalog.json
+- https://stac.dynamical.org/noaa-hrrr-forecast-48-hour/collection.json
+- https://stac.dynamical.org/noaa-gfs-forecast/collection.json
+- https://dynamical.org/api/ and https://api.dynamical.org/v1/forecasts
+- https://api.weather.gov/points/{latitude},{longitude} then the validated grid ID/X/Y at https://api.weather.gov/gridpoints/{office}/{x},{y}
+
+Attribution (shown with each model's source evidence)
+NOAA NWS NCEP HRRR data processed by dynamical.org from NOAA Open Data Dissemination archives.
+NOAA NWS NCEP GFS data processed by dynamical.org from NOAA Open Data Dissemination archives.
+Both checked collections: CC-BY-4.0, https://creativecommons.org/licenses/by/4.0/ . Runtime metadata validates product identity, required units, attribution and license before reading values.
+
+Inventory and scope
+Uses the six river-areas.json review groups. Explicit area-concerns.json wind samples are retained (three along Friant–Mendota). Redinger has no assigned wind sample, so the existing RJQC1 river gauge location supplies an explicitly labeled new point forecast. No corridor, catchment or flood boundary is invented. Published NWS/model cells differ and requested/selected cells or NWS grid IDs are retained.
+
+Time and units
+One common 24-hour window starts at the next full UTC six-hour boundary. Four six-hour periods are identical across sources. Model initTime is distinct from NWS updateTime, forecast valid intervals, and app check time. All display times include America/Los_Angeles timezone. Comparisons do not follow the separate map slider or WPC Days 1–3 polygon labels.
+Dynamical precipitation_surface: kg m-2 s-1, average since the previous forecast step. Integrate each preceding interval in seconds to millimeters, divide by 25.4 for inches. Discard lead-zero rate. This includes snow water equivalent; not rainfall-only, runoff or predicted river flow.
+NWS quantitativePrecipitation: wmoUnit:mm interval amount. Sum only complete aligned intervals; never apportion across boundaries. Missing intervals, invalid axes, missing units or old sources remain unknown/unavailable, not zero.
+Model 10 m speed = hypot(U,V) * 2.2369362920544 mph, even on HRRR's native grid; rotation is not needed for vector magnitude. Direction is not compared. Model wind/gust are hourly samples; NWS wind/gust are publisher intervals. Maxima can occur at different times. HRRR surface gusts included; GFS gusts are explicitly not supplied. Missing U or V is not calm. Require full window coverage for a reported maximum or total.
+Model runs older than 18 hours or future by >5 minutes are rejected; NWS updates older than 24 hours or future by >5 minutes are rejected. Collection older than 15 minutes is withheld. No fallback to an unreported run. Highest period/first tied period is not storm onset or confidence.
+
+Operations and privacy
+Fetches on demand, credential-free, for the selected public sample. Checks repeat while the comparison pane is open (15-minute target, no delivery guarantee). No new backend, environment, scheduler, AGOL item, permission or credential. Memory cache only, <=24 point/window entries. Rapid selections cancel and invalidate superseded queries; source failures stay independent. Source failures appear independently inside the comparison pane; countywide monitoring counts are unchanged. Existing hazard/review rules remain unchanged. No automatic dispatch/prepositioning trigger.
+
+Recovery
+Deploy preceding commit 30cfac23a85c9bca5b7515dd2798cb7ab7558a48 to roll back. No data migration. Source failure does not change official NWS, gauge, road, power or private operational records.

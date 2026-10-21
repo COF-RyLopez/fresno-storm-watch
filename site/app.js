@@ -1,3 +1,4 @@
+import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.35.0';
 import {createMapSearch} from './lib/map-search-ui.js?v=0.34.0';
 import {createIrrigationReference} from './lib/irrigation-ui.js?v=0.30.0';
 import {createEvidencePane} from './lib/evidence-ui.js';
@@ -12,7 +13,7 @@ import { exerciseBatches } from './lib/exercise.js';
 import { createRiverWatch } from './lib/river-ui.js?v=0.27.0';
 import { createCameraWatch } from './lib/camera-ui.js?v=0.27.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.27.0';
-import { createPlanningWatch } from './lib/planning-ui.js?v=0.27.0';
+import { createPlanningWatch } from './lib/planning-ui.js?v=0.35.0';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.31.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
 import { createPowerWatch } from './lib/power-ui.js?v=0.27.0';
@@ -65,9 +66,10 @@ const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:o
 const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:workspace.showMap,onData:data=>{context.setRoads(data);mapSearch.setRoads({...data,exercise});}});
 createIrrigationReference({onLocate:id=>{workspace.showMap();if(!map)return false;if(id==='SJMC1')map.focusGauge(id);else environment?.focusReservoir(id);return true;}});
+const forecastComparison=createForecastComparison({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onLocate:p=>map?.focusWind(p.longitude,p.latitude)});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onLocate:(id,gauge)=>{workspace.showMap();if(gauge)map?.focusGauge(gauge);else environment?.focusReservoir(id);}});
 $('eoc-link').addEventListener('click',()=>location.assign(exercise?'./eoc.html?exercise=1':'./eoc.html'));
-planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:context.setPlanning,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
+planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:context.setPlanning,onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onCompare:id=>forecastComparison.open(id),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
 environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onOverlayChange:()=>{briefings.setFollow(false);briefingLayers?.stop(false);},onTrends:id=>{openReservoirs();releaseTrends.open(id);},onReservoirData:data=>{mapSearch.setReservoirs(data);planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data)});
 briefingLayers=createBriefingLayers({timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onStart:()=>environment.selectOverlay('off',false),onStop:()=>environment.selectOverlay('radar',false),onBriefing:(...args)=>briefings.open(...args),onManual:()=>briefings.setFollow(false)});
