@@ -12,3 +12,4 @@ __pycache__/
 *.pyc
 site/data/precip-probability.json
 site/data/probability-images/
+site/data/hrrr/

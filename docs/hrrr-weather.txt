@@ -1,0 +1,74 @@
+F.R.O.G. 0.37.0 — HRRR WIND FIELD
+Source/API check: October 20, 2026 (America/Los_Angeles)
+
+OPERATOR USE
+Weather -> HRRR animated winds & gusts. The field starts enabled in Weather
+only. Use the shared planning-time slider, Earlier/Later or Next forecast hour.
+Pale trails show forecast 10 m wind flow. Gust shading uses a fixed 0–75+ mph
+scale; these colors do not define action categories. Pause/Animate affects
+trail motion at the selected model step, not forecast time. Reduced-motion
+preferences start with paused trails. Surface gust shading can be disabled.
+Fit HRRR coverage keeps the current 2D/3D mode. Map tools switches modes.
+The original NWS point forecasts, intervals and 72-hour chart remain below;
+the HRRR section shows the nearest prepared cell for that selected NWS point.
+
+TIME / SCOPE CONTRACT
+One coherent NOAA HRRR 48-hour model run: 49 instantaneous hourly snapshots
+including lead 0, every six-hour run. Choose the earlier explicit model step
+within the following hour; never interpolate across missing hours, reuse a
+prior step beyond 48 hours, or infer an observation. Run time and step time
+are displayed separately from collection and application-check times.
+The public collection targets 15 minutes in the existing Pages workflow;
+the open app polls every five minutes. A failed collection, check older than
+45 minutes or model run older than 18 hours hides the field. Other weather
+sources retain their own availability and times. No unattended notification.
+
+Grid cell centers: longitude -121.25 to -118.25; latitude 38.12 to 35.75.
+101 columns x 80 rows, north-to-south row order, EPSG:4326. Rectangular context
+covers Fresno County and the upper San Joaquin/Kings approaches. It is not a
+delineated watershed. HRRR native spacing is 3 km; prepared spacing is 0.03
+degrees. Neither spacing resolves local buildings, drainage or gust extremes.
+No flood routing, atmospheric-river classification, dispatch or PSPS trigger.
+
+COLLECTION / PROVENANCE
+https://dynamical.org/prompt.md
+https://dynamical.org/llms.txt
+https://stac.dynamical.org/catalog.json
+https://stac.dynamical.org/noaa-hrrr-forecast-48-hour/collection.json
+https://dynamical.org/catalog/noaa-hrrr-forecast-48-hour/
+License CC-BY-4.0; display the catalog's attribution verbatim in the app.
+Storage is resolved at runtime through dynamical-catalog, never retired URLs.
+Read only three variables: wind_u_10m, wind_v_10m, wind_gust_surface (m/s).
+Select one run, all 49 leads and bounded native x/y before loading. Prefer the
+latest complete run within 18 hours; partial runs are skipped and logged.
+Rotate grid-relative UV using local geodesic basis vectors, then bilinearly
+resample to the regular geographic grid. Preserve null cells independently
+from true zero. Write run-qualified frames before atomically replacing the
+manifest. Mixed run/frame identities are rejected in the browser. Only four
+frames remain in its in-memory cache; no private records/browser persistence.
+
+Esri SDK 5.1: ImageryTileLayer with PixelData, a two-band Vector-UV RasterInfo
+and FlowRenderer. A separate one-band gust layer converts m/s to mph, with
+fixed min/max stretch and equally spaced 15 mph color-ramp stops. Animation
+speed is illustrative. Both map modes retain the same scalar/vector sources.
+https://developers.arcgis.com/javascript/latest/references/core/layers/ImageryTileLayer/
+https://developers.arcgis.com/javascript/latest/references/core/renderers/FlowRenderer/
+https://developers.arcgis.com/javascript/latest/references/core/layers/support/RasterInfo/
+
+LOCAL / MAINTENANCE
+Python >=3.12 in a project-local environment; pinned scripts/hrrr-requirements.txt.
+python -m pip install -r scripts/hrrr-requirements.txt
+python -m unittest discover -s tests -p test_hrrr_collector.py
+python scripts/collect-hrrr.py
+npm test
+npm run check
+The data/hrrr directory is generated and excluded from Git. GitHub Actions
+rebuilds it before upload. The optional-feed CLI boundary logs the actual
+exception and emits a workflow warning plus an explicit unavailable manifest
+on failure, allowing the other operational feeds to deploy. Run download,
+dependency or timeout failures remain visible in Actions. No server, API key,
+AGOL publishing or Pro environment changes are required.
+
+ROLLBACK
+Redeploy preceding commit 31f5dd0638507e55a5e22f68657a5591f2db422d (0.36.0).
+No data migration, ArcGIS item or permissions changes.

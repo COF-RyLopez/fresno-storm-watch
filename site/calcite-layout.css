@@ -486,3 +486,8 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 
 #forecast-review-list calcite-block{margin-block:0.8rem}
 .forecast-difference-summary{border-inline-start:2px solid var(--calcite-color-border-1);padding-inline-start:0.6rem}
+
+.hrrr-color-key{height:12px;background:linear-gradient(to right,#304560,#436d9b,#629bc0,#9bc5be,#ded59b,#e6a16e);border:1px solid var(--calcite-color-border-2)}
+.hrrr-color-labels{display:flex;justify-content:space-between;font-size:.75rem;font-variant-numeric:tabular-nums}
+#hrrr-legend{display:grid;gap:.35rem}
+#hrrr-legend[hidden]{display:none}

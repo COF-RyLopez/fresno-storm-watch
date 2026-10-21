@@ -5,7 +5,7 @@ import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateRe
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.27.0';
+import {createWeatherTimeline} from './weather-ui.js?v=0.37.0';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);

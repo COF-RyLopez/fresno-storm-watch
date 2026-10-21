@@ -9,7 +9,7 @@ import { blend } from './flood-scenario-model.js';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.29.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.37.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -472,6 +472,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusEnvironment:(longitude,latitude)=>focusLocation(longitude,latitude,45000,'reservoirs'),
     focusWind:(longitude,latitude)=>focusLocation(longitude,latitude,90000,'wind'),
     fitEnvironment:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
+    fitHrrr:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.265,ymin:35.735,xmax:-118.235,ymax:38.135}));},
     focusPlanningPoints:points=>{setLayerPreference('areas',true);return focusPoints(points);},
     updateCameras: rows=>{cameraRows=rows;drawCameras();},
     selectCamera: id=>{selectedCamera=id;drawCameras();},

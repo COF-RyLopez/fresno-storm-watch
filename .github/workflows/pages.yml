@@ -40,6 +40,14 @@ jobs:
       - name: Collect public NWS wind and gust forecasts
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:wind -- --published
+      - name: Prepare regional public HRRR winds and gusts
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        timeout-minutes: 8
+        run: |
+          python3 -m venv work/hrrr-env
+          work/hrrr-env/bin/python -m pip install --disable-pip-version-check -r scripts/hrrr-requirements.txt
+          work/hrrr-env/bin/python -m unittest discover -s tests -p 'test_hrrr_collector.py'
+          work/hrrr-env/bin/python scripts/collect-hrrr.py
       - name: Collect public NWS and Dynamical river-area comparisons
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:comparisons

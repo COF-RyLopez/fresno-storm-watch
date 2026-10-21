@@ -1,7 +1,13 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.15.0 | October 18, 2026 | Named waterways and Open 3D buildings
+Version 0.37.0 | October 20, 2026 | HRRR animated winds and gusts
 
-MAP CONTEXT (v0.15.0)
+HRRR WEATHER (v0.37.0)
+Weather now has a public regional HRRR wind field and surface gust shading.
+Use the shared weather timeline; NWS point forecasts remain alongside.
+See docs/hrrr-weather.txt and site/planning.html#hrrr-weather for source, time,
+processing, local setup and rollback. Public grids rebuild during Pages deploy.
+
+MAP CONTEXT (introduced v0.15.0)
 USGS 3DHP named waterways and close-scale unnamed features are county-filtered
 in 2D/3D. Open 3D Buildings loads on demand in 3D. Source geometry is reference
 context; private county-to-building matches remain pending. Waze is not connected:

@@ -1,4 +1,5 @@
 import {reportHealth} from './source-health.js';
+import {createHrrrWeather} from './hrrr-ui.js?v=0.37.0';
 import {loadSdk} from './map.js';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.19.0';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
@@ -18,6 +19,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   const windVisible=()=>!exercise;
   const sourceLink=site=>`https://forecast.weather.gov/MapClick.php?lat=${site.latitude}&lon=${site.longitude}`;
   const selectTime=stamp=>{fixed=stamp;render();onChange();};
+  const hrrr=createHrrrWeather({time,exercise,target,onTime:selectTime,onMap});
 
   function chart(site){
     const host=$('wind-chart');host.replaceChildren();
@@ -88,6 +90,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     $('wind-map-legend').hidden=!windVisible();$('wind-map-legend').textContent=`◆ Cyan diamonds: NWS wind / gust forecasts · mph · ${available}/9 samples · select for values`;
     if(sites.length&&$('wind-site').children.length!==sites.length){$('wind-site').replaceChildren(...sites.map(s=>{const o=el('calcite-option',s.name);o.setAttribute('value',s.id);o.toggleAttribute('selected',s.id===selected);return o;}));}
     const site=sites.find(s=>s.id===selected),s=site?windAt(site,stamp,now,overdue()||!!windError):null;
+    hrrr.update(site);
     $('wind-speed').textContent=s?`${value(s.speed)}${s.speed===null?'':' mph'}`:'Unknown';$('wind-gust').textContent=s?`${value(s.gust)}${s.gust===null?'':' mph'}`:'Unknown';$('wind-direction').textContent=s&&s.direction!==null?`${windCompass(s.direction)} · ${Math.round(s.direction)}°`:'Unknown';
     $('wind-issued').textContent=site?.forecast?`Forecast updated ${time(site.forecast.issued)} · 10 m above ground`:'No forecast update available';
     $('wind-intervals').textContent=s?.reason||(['windSpeed','windGust'].map(k=>`${k==='windSpeed'?'Wind':'Gust'}: ${s?.samples[k]?`${time(s.samples[k].start)} → ${time(s.samples[k].end)}`:'No value for selected time'}`).join(' · '));
@@ -117,6 +120,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   $('wind-site').addEventListener('calciteSelectChange',e=>{selected=e.target.value;render();const site=wind?.sites.find(s=>s.id===selected);if(site){onMap();controller?.focusWind(site.longitude,site.latitude);}});
   $('wind-locate').addEventListener('click',()=>{const s=wind?.sites.find(s=>s.id===selected);if(s){onMap();controller?.focusWind(s.longitude,s.latitude);}});
   $('weather-refresh').addEventListener('click',()=>void refresh());
+  $('weather-refresh').addEventListener('click',()=>void hrrr.refresh());
   $('satellite-legend-image').addEventListener('error',()=>{$('satellite-legend-note').textContent='Publisher legend unavailable; verify the NOAA source before interpreting image colors.';});
   const tick=()=>{if(document.hidden)return;render();if(Date.now()>=next)void refresh();};
   setInterval(tick,60_000);document.addEventListener('visibilitychange',tick);
@@ -132,6 +136,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     status(){return `${overlay==='satellite'?`${GOES_PRODUCTS.find(p=>p.id===product).label} · ${satelliteFrame()?time(satelliteFrame()):'no matching observation'}`:''}${windVisible()?' · wind/gust samples · '+time(target()):''}`;},
     async setMap(map){
       controller=map;
+      void hrrr.setMap(map);
       try{
         const sdk=await loadSdk();const [WMSLayer,GraphicsLayer,Graphic]=await sdk.import(['@arcgis/core/layers/WMSLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);
         const satellite=new WMSLayer({url:GOES_URL,title:'NOAA GOES observed imagery · selected frame',copyright:'NOAA nowCOAST · GOES imagery',sublayers:[{name:product}],opacity:0.65,visible:false,imageFormat:'image/png'});
