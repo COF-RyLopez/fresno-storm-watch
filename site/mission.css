@@ -3,3 +3,4 @@
 .scenario-color-stop{border-inline-start:16px solid;padding:.2rem .45rem;font-size:.82rem;background:var(--calcite-color-foreground-2)}
 @media(min-width:901px) and (max-width:1400px){#tools-shell{--calcite-shell-panel-width:290px}#evidence-shell{--calcite-shell-panel-width:330px}}
 @media(min-width:901px) and (max-width:1199px){#storm-shell:has(#evidence-shell:not([hidden])) #tools-shell{display:none}}
+.mission-content{min-width:0;overflow-wrap:anywhere}.mission-content calcite-button{min-width:0;max-width:100%}.mission-content .mission-actions{min-width:0}

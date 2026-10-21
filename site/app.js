@@ -1,4 +1,4 @@
-import {createMission} from './lib/mission-ui.js?v=0.39.0';
+import {createMission} from './lib/mission-ui.js?v=0.39.0-r2';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.36.0';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.36.0';
 import {createMapSearch} from './lib/map-search-ui.js?v=0.34.0';
