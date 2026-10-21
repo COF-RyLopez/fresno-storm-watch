@@ -1,5 +1,5 @@
 import {reportHealth} from './source-health.js';
-import { loadSdk } from './map.js';
+import { loadSdk } from './map.js?v=0.39.0';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';

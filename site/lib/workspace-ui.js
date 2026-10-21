@@ -1,8 +1,8 @@
-import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.37.0';
+import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.39.0';
 /** One active topic, independent map state, and no persisted operational data. */
 export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
-  let section=workspaceRoute(location.href),panelOpen=true,camerasOpen=false,map=null,syncing=false;
+  let section=workspaceRoute(location.href),mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch',panelOpen=true,camerasOpen=false,map=null,syncing=false;
   const cameraStates=new Map(),cameraPanel=$('camera-panel');
   function mapLabels(){
     const narrow=compact.matches||$('map-panel').getBoundingClientRect().width<520;
@@ -11,7 +11,8 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   }
   function render(){
     const actionHost=compact.matches?$('header-tools-host'):$('header-actions-host');if($('header-actions').parentElement!==actionHost)actionHost.append($('header-actions'));if(!compact.matches)$('header-tools-menu').removeAttribute('open');
-    for(const [id,p] of Object.entries(WORKSPACES))$(p.panel).hidden=id!==section;
+    for(const [id,p] of Object.entries(WORKSPACES))$(p.panel).hidden=mission!=='watch'||id!==section;
+    $('scenarios-panel').hidden=mission!=='scenarios';$('mission-briefing-panel').hidden=mission!=='briefing';
     for(const id of ['river-metrics','weather-metrics','weather-footer'])$(id).hidden=false;
     $('weather-banner-wrap').hidden=false;
     $('tools-shell').toggleAttribute('collapsed',compact.matches&&!panelOpen);
@@ -26,22 +27,23 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
     syncing=false;
     $('storm-shell').dataset.workspace=section;
-    $('map-panel').setAttribute('heading',WORKSPACES[section].title+' map');$('scope-note').textContent=WORKSPACES[section].description;
-    $('scope-label').textContent=section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
+    $('map-panel').setAttribute('heading',mission==='scenarios'?'Hypothetical scenario map':mission==='briefing'?'Briefing map':WORKSPACES[section].title+' map');$('scope-note').textContent=mission==='scenarios'?'Hypothetical model/library domain · independent scenario clock':mission==='briefing'?'Captured evidence · verify source timing and access':WORKSPACES[section].description;
+    $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Scenarios':'Briefing'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     mapLabels();
   }
   function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
   function showPanel(name,{history:push=true}={}){
     name=name==='environment'?'weather':name;if(!WORKSPACES[name])return;
-    const changed=name!==section;cameraStates.set(section,camerasOpen);section=name;panelOpen=true;
+    mission='watch';const changed=name!==section;cameraStates.set(section,camerasOpen);section=name;panelOpen=true;
     if(changed){for(const id of ['map-search-evidence','river-dialog','power-dialog','facility-dialog','road-dialog','release-trend-dialog','alert-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
     render();if(map)void map.setWorkspace(section);if(changed)onCameraChange(camerasOpen);onActivate(section);
-    if(push){const u=new URL(location.href);u.searchParams.set('view',section);u.searchParams.delete('trends');if(u.href!==location.href)window.history.pushState({},'',u);}
+    if(push){const u=new URL(location.href);u.searchParams.set('view',section);u.searchParams.delete('mission');u.searchParams.delete('trends');if(u.href!==location.href)window.history.pushState({},'',u);}
+    window.dispatchEvent(new Event('stormWorkspaceChange'));
   }
   function showMap(){panelOpen=!compact.matches;render();}
   $('workspace-tabs').addEventListener('calciteTabsActivate',e=>{const id=e.target.dataset.workspace;if(!syncing&&id&&id!==section)showPanel(id);});
   for(const title of document.querySelectorAll('[data-workspace]'))title.addEventListener('click',()=>{if(title.dataset.workspace!==section)showPanel(title.dataset.workspace);});
-  window.addEventListener('popstate',()=>showPanel(workspaceRoute(location.href),{history:false}));
+  window.addEventListener('popstate',()=>{section=workspaceRoute(location.href);mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';render();if(map)void map.setWorkspace(section);});
   $('workspace-list').addEventListener('click',()=>{panelOpen=true;render();});
   $('view-map').addEventListener('click',showMap);
   $('view-cameras').addEventListener('click',()=>onCameraChange(!camerasOpen));
@@ -50,5 +52,5 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   compact.addEventListener('change',()=>{if(evidence?.isOpen)panelOpen=!compact.matches;render();});dock.addEventListener('change',render);
   new ResizeObserver(mapLabels).observe($('map-panel'));
   render();
-  return {showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
+  return {setMission(id,{history:push=true}={}){if(!['watch','scenarios','briefing'].includes(id))return;mission=id;panelOpen=true;evidence?.close({restoreFocus:false});render();if(push){const u=new URL(location.href);if(id==='watch')u.searchParams.delete('mission');else u.searchParams.set('mission',id);if(u.href!==location.href)window.history.pushState({},'',u);}window.dispatchEvent(new Event('stormWorkspaceChange'));},get mission(){return mission;},showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
 }

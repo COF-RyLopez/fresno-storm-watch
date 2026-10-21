@@ -1,5 +1,22 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.37.0 | October 20, 2026 | HRRR animated winds and gusts
+Version 0.39.0 | October 20, 2026 | Mission workspace and private scenario foundation
+
+MISSION WORKSPACE (v0.39.0)
+County Watch, Scenarios and Briefing are the primary destinations. Topic tools
+retain the existing map workspaces and direct links. Live monitoring continues
+while hypothetical playback uses an independent clock. County Watch selections
+open right-side evidence; briefing captures are frozen in tab memory and may be
+saved to existing private EOC exercise storage with eligible accounts/permissions.
+
+The protected scenario service and single-slot durable queue are implemented and
+tested with labeled fixtures. Actual custom hydraulic runs remain disabled until
+county cloud provisioning and a reviewed runnable local model/baseline are ready.
+Existing local inundation playback is map visualization, not a new computation.
+See site/scenario-guide.html and docs/scenario-deployment.txt for county tasks,
+API/worker setup, recovery, costs, exposure preparation and acceptance boundaries.
+services/scenarios is never part of Pages' public artifact. Private result files
+must live outside site/ and git. NSI/Overture conflation uses the pinned exposure
+environment and explicitly retains ambiguous matches and unknown heights/depths.
 
 HRRR WEATHER (v0.37.0)
 Weather now has a public regional HRRR wind field and surface gust shading.

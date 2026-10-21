@@ -1,0 +1,13 @@
+{
+ "schemaVersion":1,
+ "environment":"exercise",
+ "checked":"2026-10-20",
+ "serviceReady":false,
+ "readiness":["County-approved cloud host, region, administrator and spending limit are pending.","No complete runnable Fresno hydraulic package has passed baseline reproduction and technical review in this project."],
+ "models":[
+  {"id":"redbank-fancher-candidate","version":"inventory-2026-10-20","kind":"candidate","label":"Redbank / Fancher creeks · model package needed","enabled":false,"parameters":[],"source":"https://www.spk.usace.army.mil/Portals/12/documents/usace_project_public_notices/Review%20Plans/Redbank_and_Fancher_ReviewPlan_Mar2025.pdf","note":"USACE’s project review plan identifies hydraulic modeling work. This is a documented lead, not a downloadable or reviewed runnable package."},
+  {"id":"san-joaquin-candidate","version":"inventory-2026-10-20","kind":"candidate","label":"San Joaquin / Friant · model package needed","enabled":false,"parameters":[],"source":"https://water.ca.gov/Programs/Flood-Management","note":"Request applicable hydraulic models, structures, baseline results and permitted-use information from county/DWR/USACE model owners. Gauge records and LiDAR alone do not form a hydraulic model."},
+  {"id":"kings-pine-flat-candidate","version":"inventory-2026-10-20","kind":"candidate","label":"Kings / Pine Flat · model package needed","enabled":false,"parameters":[],"source":"https://www.spk.usace.army.mil/","note":"Model ownership, domain, releases, distributary controls and baseline validation remain to be confirmed."}
+ ],
+ "selectionRule":"First complete Fresno package with permitted use, documented references/structures, reproducible baseline and an accountable reviewer. Existing static library maps do not satisfy this gate."
+}

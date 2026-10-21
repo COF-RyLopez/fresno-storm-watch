@@ -1,0 +1,42 @@
+F.R.O.G. LIVE FEED ADAPTER CONTRACT — v0.39.0
+
+New sources join an existing mission evidence type rather than adding a tab.
+Preserve the existing domain assessment rules unless a separately reviewed
+change explicitly replaces them. A new publisher or format is not a new trigger.
+
+ONBOARDING RECORD
+Publisher and official URL; maintenance owner/contact; geographic/model coverage;
+stable record ID and revision semantics; observation/issue/valid timestamps and
+time zones; units and horizontal/vertical references; expected update interval;
+freshness limit; access classification; data license/attribution; incomplete
+geometry and missing-value behavior; source outage/fallback procedure.
+
+ADAPTER OUTPUT
+Normalized source records + successful-check time + publisher times + explicit
+errors/coverage gaps. Use the existing reportHealth event for public source
+diagnostics, with a stable underlying check key so each issue is counted once.
+Never put private feature payloads, credentials or token-bearing URLs in that
+event. Keep private layers behind their source permissions and clear them on
+session loss. Snapshot collectors preserve stale dates and do not claim that
+a successful browser refresh renewed the publisher's observations.
+
+DISPLAY / ANALYSIS
+Prefer direct authoritative services for current records. Use prepared vector
+tiles for heavy reference drawing, GeoParquet for bounded analysis, numeric COGs
+for raster queries and time-qualified Zarr/frames for multidimensional fields.
+Preserve the full analytical record separately from any simplified display.
+HTTP range/CORS/auth behavior must be verified before choosing archive delivery.
+Do not assume smaller serialized size means faster load or map movement.
+
+SCENARIO USE
+Live updates never mutate submitted model inputs. To use a forecast as forcing,
+onboard a model-specific hydrologic adapter that freezes the exact source run,
+variables, units, domain and time axis. The first queued-service contract accepts
+only approved numeric template assumptions and no caller-provided forcing URLs.
+Model-derived depth/WSE/velocity must retain solver, package and result hashes.
+
+ACCEPTANCE
+Compare representative records/times/units to the publisher; test missing and
+duplicate records, revisions, stale/failed source checks, authorization expiry,
+geometry CRS/holes, render legends and phone behavior. Confirm background
+refresh does not enable an unrelated layer or change a hypothetical scenario.

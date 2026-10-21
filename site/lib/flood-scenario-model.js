@@ -19,11 +19,14 @@ export function blend(t, hours) {
 export function depthAt(props, t, hours) {
   if (props.d0 === undefined) return rampDepth(props.arrive_hr, props.peak_hr, props.depth_max, t);
   const { i0, i1, w } = blend(t, hours);
-  return (props[`d${i0}`] ?? 0) * (1 - w) + (props[`d${i1}`] ?? 0) * w;
+  const a=props[`d${i0}`],b=props[`d${i1}`];
+  if(!Number.isFinite(a)||!Number.isFinite(b))return null;
+  return a * (1 - w) + b * w;
 }
 
 export function rampDepth(arrive, peak, max, t) {
-  if (arrive == null || !(max > 0) || t < arrive) return 0;
+  if(!Number.isFinite(max)||!Number.isFinite(arrive)||!Number.isFinite(peak))return null;
+  if (!(max > 0) || t < arrive) return 0;
   const first = Math.min(1, max);
   if (t >= peak || peak <= arrive) return max;
   return first + ((max - first) * (t - arrive)) / (peak - arrive);
@@ -42,7 +45,7 @@ export function summarize(buildings, t, hours) {
     if (!(d > 0)) continue;
     out.wet += 1;
     out.people += p.pop_night || 0;
-    if (d > (p.found_ht || 0)) out.inside += 1;
+    if (Number.isFinite(p.found_ht) && d > p.found_ht) out.inside += 1;
     if (p.peak_hr >= 0 && t >= p.peak_hr) out.loss += p.loss_usd || 0; // ponytail: loss counted once the building has peaked
   }
   return out;

@@ -3,7 +3,7 @@ import {POWER_STATES} from './power-model.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,action)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=action;return n;};
 /** @param {object} options @returns {object} Private asset data stays in this controller's memory and is cleared with its source session. */
-export function createBriefingContextView({timeZone,exercise=false,onBriefing,onArea,onRoad,onFacility,onConnect,onMap}){
+export function createBriefingContextView({timeZone,exercise=false,onBriefing,onArea,onRoad,onFacility,onConnect,onMap,onData=()=>{}}){
   const host=document.getElementById('briefing-context-list'),status=document.getElementById('briefing-context-status'),block=document.getElementById('briefing-context-block');
   let associations=null,briefing={rows:[]},planning=null,roads=null,facilities=null,radiusKm=5,history=false,error=null,map=null,selected=null,signature='',model=null;
   const expanded=new Set(),limits=new Map(),dateFormat=new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}),time=value=>Number.isFinite(value)?dateFormat.format(value):'Not supplied';
@@ -13,7 +13,7 @@ export function createBriefingContextView({timeZone,exercise=false,onBriefing,on
   function updateMap(){if(!map||!selected)return;const g=model?.groups.find(g=>g.id===selected);map.setBriefingContext(g?{id:g.id,points:g.points,roads:g.roads.map(i=>i.row),facilities:g.facilities.map(i=>i.row)}:{points:[],roads:[],facilities:[]});}
   function render(){
     model=correlateBriefingContext({associations,briefing,planning,roads,facilities,radiusKm,history});
-    const key=JSON.stringify([model,error,exercise],(k,v)=>k==='geometry'?undefined:v);if(key===signature)return;signature=key;updateMap();
+    onData(model);const key=JSON.stringify([model,error,exercise],(k,v)=>k==='geometry'?undefined:v);if(key===signature)return;signature=key;updateMap();
     for(const item of host.querySelectorAll('[data-context-area]'))item.expanded?expanded.add(item.dataset.contextArea):expanded.delete(item.dataset.contextArea);
     block.description=exercise?'Live briefing associations disabled':`${model.groups.filter(g=>g.contextReview).length} groups with context to review · not impact predictions`;
     status.textContent=exercise?'Exercise · live briefings are not mixed with fictional records':error||(!associations?'Loading reviewed briefing associations…':!planning?'Waiting for river watch areas…':`Roads ${model.roadCurrent?'checked':'unavailable / overdue / failed'} ${time(model.roadChecked)}. ${model.facilityConnected?'Authorized connected asset layers only':'Facilities not assessed · sign in and load county layers'}.`);

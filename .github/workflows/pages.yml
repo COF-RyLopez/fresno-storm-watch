@@ -31,6 +31,11 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_county_waterways.py'
       - name: Check irrigation source-audit semantics offline
         run: python3 -m unittest discover -s tests -p 'test_irrigation_audit.py'
+      - name: Validate private exposure format and conflation with synthetic data
+        run: |
+          python3 -m venv work/exposure-env
+          work/exposure-env/bin/python -m pip install --disable-pip-version-check -r scripts/exposure-requirements.txt
+          work/exposure-env/bin/python -m unittest discover -s tests -p 'test_building_conflation.py'
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published

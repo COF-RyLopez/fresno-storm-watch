@@ -1,4 +1,4 @@
-import { loadSdk } from './map.js';
+import { loadSdk } from './map.js?v=0.39.0';
 /** Shared PKCE sign-in. Private controllers clear memory before sign-out or expiry. */
 export async function setupAuth(config,exercise,onChange=()=>{}) {
   const button=document.querySelector('#sign-in'),status=document.querySelector('#identity-status');
@@ -15,7 +15,7 @@ export async function setupAuth(config,exercise,onChange=()=>{}) {
       checking=(async()=>{try{
         await identity.checkSignInStatus(`${config.portalUrl}/sharing`);
         if(epoch!==generation)return false;
-        if(!portal){const p=new Portal({url:config.portalUrl,authMode:'immediate'});await p.load();if(epoch!==generation)return false;portal=p;onChange({portal,username:p.user.username});}
+        if(!portal){const p=new Portal({url:config.portalUrl,authMode:'immediate'});await p.load();if(epoch!==generation)return false;portal=p;onChange({portal,username:p.user.username,getToken:async()=>{const c=identity.findCredential(`${config.portalUrl}/sharing`);if(!c?.token||c.expires<=Date.now())throw Error('County sign-in expired.');return c.token;}});}
         status.textContent=`Signed in as ${portal.user.username}`;label('Sign out');return true;
       }catch{if(epoch===generation)clear('Sign-in required · private workspace cleared');return false;}finally{checking=null;}})();return checking;
     };

@@ -1,7 +1,7 @@
-import { loadSdk } from './lib/map.js';
-import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
+import { loadSdk } from './lib/map.js?v=0.39.0';
+import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js?v=0.39.0';
 import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js?v=0.19.0';
-import { createFrameWindow } from './lib/frame-window.js';
+import { createFrameWindow } from './lib/frame-window.js?v=0.39.0';
 
 const ROOT = './data/flood-scenarios/';
 // Phones get the map first: the panel starts collapsed behind Details, and traffic loads only when switched on.

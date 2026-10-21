@@ -1,15 +1,15 @@
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
-import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js?v=0.34.0';
+import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js?v=0.39.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
-import { createFrameWindow } from './frame-window.js';
+import { createFrameWindow } from './frame-window.js?v=0.39.0';
 import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
-import { blend } from './flood-scenario-model.js';
+import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.37.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.39.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -70,15 +70,15 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const searchContext=new GraphicsLayer({title:'Nearby search references — proximity only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
   map.add(searchContext);map.add(searchSelection);
   const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
-  let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
+  let scenarioMode=false;let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
   const currentState=()=>memory.get(activeProfile);
-  const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=layerVisible(currentState(),key,eligible);};
+  const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=(!scenarioMode||['waterways','buildings'].includes(key))&&layerVisible(currentState(),key,eligible);};
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   const syncVisibility=()=>{
-    for(const [layer,r]of registry)layer.visible=layerVisible(currentState(),r.key,r.eligible);
+    for(const [layer,r]of registry)layer.visible=(!scenarioMode||['waterways','buildings'].includes(r.key))&&layerVisible(currentState(),r.key,r.eligible);
     const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways||basemapKey==='waterways')visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
     document.querySelector('#map').dataset.layers=visibleKeys.join(' ');document.querySelector('#map').dataset.workspace=activeProfile;
-    for(const el of document.querySelectorAll('[data-layer-key]'))el.classList.toggle('workspace-layer-off',!currentState().layers[el.dataset.layerKey]&&!(el.dataset.layerKey==='waterways'&&basemapKey==='waterways'));
+    for(const el of document.querySelectorAll('[data-layer-key]'))el.classList.toggle('workspace-layer-off',!visibleKeys.includes(el.dataset.layerKey));
   };
   const setLayerEligibility=(layer,eligible)=>{const r=registry.get(layer);if(r){r.eligible=!!eligible;syncVisibility();}};
   const imageryBasemap=new Basemap({id:'frog-basemap-imagery',title:'Imagery Hybrid · roads and labels',thumbnailUrl:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-120.9,36.3,-118.6,37.6&bboxSR=4326&imageSR=3857&size=240,160&format=png&transparent=false&f=image',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
@@ -339,7 +339,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const options=document.querySelector('#context-options');for(const [key,label]of Object.entries(LAYER_LABELS)){if(key==='cameras')continue;const host=document.createElement('calcite-label');host.layout='inline';const box=document.createElement('calcite-checkbox');box.dataset.contextLayer=key;box.addEventListener('calciteCheckboxChange',()=>setLayerPreference(key,box.checked));host.append(box,document.createTextNode(label));options.append(host);}
   const focusNavigate=target=>{selectionFocus.cancel();const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
   const focusMessage=text=>{const host=document.querySelector('#map-status');host.hidden=false;host.textContent=text;};
-  const selectionFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,
+  const selectionFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,preferredMode:()=>view.type,
     navigate:target=>{followRegion=false;const status=document.querySelector('#map-status');if(/^(No usable source location|The selected location)/.test(status.textContent))status.hidden=true;return navigate(target);},save:capture,
     missing:()=>focusMessage('No usable source location for this selection. Evidence remains available; map position unchanged.'),
     failed:()=>focusMessage('The selected location could not be shown. Evidence remains available; use Fit workspace to recover.')});
@@ -349,7 +349,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return {target:[longitude,latitude],scale,...(type==='3d'?{tilt:55,heading:0}:{})};
   });
   const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
-  const searchFocus=createSelectionFocus({settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
+  const searchFocus=createSelectionFocus({settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,preferredMode:()=>view.type,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
   let searchRevision=0;
   function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();searchContext.removeAll();document.querySelector('#map').dataset.searchSelected='false';}
   async function focusSearchSelection(shape){
@@ -432,15 +432,19 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     // only the frames on screen are layer elements (see frame-window.js): all ~50 at once exhausted phone memory
     inundation=new MediaLayer({title:`${scenario.title} · modeled depth`,opacity:0.85,source:[]});
     map.add(inundation,1);
-    const showFrames=createFrameWindow(inundation.source.elements,i=>new ImageElement({image:base+scenario.frames[i].image,opacity:0,georeference:new ExtentAndRotationGeoreference({extent})}),hours.length);
+    const frameElements=new globalThis.Map();const showFrames=createFrameWindow(inundation.source.elements,i=>{const element=new ImageElement({image:base+scenario.frames[i].image,opacity:0,georeference:new ExtentAndRotationGeoreference({extent})});frameElements.set(i,element);return element;},hours.length,i=>frameElements.delete(i));
     const setTime=t=>{const {i0,i1,w}=blend(t,hours);showFrames(i0,i1,w);};
     const target=view.type==='3d'?{target:extent,tilt:35,heading:0}:extent.clone().expand(1.1),workspace=workspaceVersion;
     void transition.then(()=>{if(version!==inundationVersion||workspace!==workspaceVersion)return;followRegion=false;
-      return view.goTo(target,{duration:1500}).catch(error=>{if(error.name!=='AbortError')console.warn('Inundation fly-to:',error.message);});});
-    return {hours,setTime};
+      return view.goTo(target,{animate:!matchMedia('(prefers-reduced-motion:reduce)').matches,duration:1500}).catch(error=>{if(error.name!=='AbortError')console.warn('Inundation fly-to:',error.message);});});
+    return {hours,setTime,setFrameImage(i,url){scenario.frames[i].image=url;const element=frameElements.get(i);if(element)element.image=url;}};
   }
+  const scenarioStructures=new GraphicsLayer({title:'Scenario building context · approximate heights',elevationInfo:{mode:'on-the-ground'},listMode:'hide'});map.add(scenarioStructures);let structureFeatures=[],structureFrame=0;
+  function drawStructures(){scenarioStructures.removeAll();for(const f of structureFeatures){const p=f.properties,d=p.depth_m?.[structureFrame],height=Number.isFinite(p.display_height_m)?p.display_height_m:null,shade=!Number.isFinite(d)?'#9b9b9b':d>0?'#5bb4dc':'#b9c3c8';scenarioStructures.add(new Graphic({geometry:{type:'polygon',...countyGeometry(f.geometry)},attributes:{building_id:p.building_id,height_m:height,height_quality:p.height_quality||'unknown',depth_m:Number.isFinite(d)?d:null},symbol:view.type==='3d'&&height!==null?{type:'polygon-3d',symbolLayers:[{type:'extrude',size:height,material:{color:shade},edges:{type:'solid',color:'#26343b',size:.5}}]}:{type:'simple-fill',color:height===null?[155,155,155,.15]:shade+'66',outline:{color:shade,width:.7}},popupTemplate:{title:'Approximate building context',content:[{type:'text',text:'Model sample depth is not confirmed interior flooding. Display height is not a floor elevation. Unknown samples remain unknown.'},{type:'fields',fieldInfos:[{fieldName:'building_id',label:'Linked building ID'},{fieldName:'height_m',label:'Display height (m)'},{fieldName:'height_quality',label:'Height source quality'},{fieldName:'depth_m',label:'Modeled sample depth (m)'}]}]}}));}}
+  const scenarioDomain=new GraphicsLayer({title:'Reviewed model domain',listMode:'hide',elevationInfo:{mode:'on-the-ground'}});map.add(scenarioDomain);viewListeners.add(drawStructures);
   return {
-    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
+    setScenarioDomain(geometry){scenarioDomain.removeAll();if(!geometry)return;const polygon=new Polygon(countyGeometry(geometry));scenarioDomain.add(new Graphic({geometry:polygon,symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#f6c85f',width:2,style:'dash'}}}));void focusNavigate(polygon.extent.clone().expand(1.1));},setScenarioBuildings(features){structureFeatures=features;structureFrame=0;drawStructures();},setScenarioBuildingFrame(index){if(index!==structureFrame){structureFrame=index;drawStructures();}},
+    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setScenarioMode(active){scenarioMode=!!active;scenarioDomain.visible=scenarioMode;scenarioStructures.visible=scenarioMode;searchSelection.visible=!active;searchContext.visible=!active;syncVisibility();},setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints:points=>{setLayerPreference('areas',true);const valid=points.filter(validLocation);if(!valid.length)return Promise.resolve(false);const xs=valid.map(p=>p.longitude),ys=valid.map(p=>p.latitude),extent=new Extent({xmin:Math.min(...xs)-.025,ymin:Math.min(...ys)-.025,xmax:Math.max(...xs)+.025,ymax:Math.max(...ys)+.025,spatialReference:{wkid:4326}});return focusNavigate(view.type==='3d'?{target:extent,tilt:45}:extent);},focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));

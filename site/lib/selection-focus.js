@@ -1,7 +1,7 @@
 /** Latest selection wins across deferred workspace restores and 3D initialization.
  * Targets are built after switching views, so fallback navigation uses 2D geometry.
  */
-export function createSelectionFocus({workspace,ready,setMode,view,navigate,save,missing,failed,settled=()=>Promise.resolve()}) {
+export function createSelectionFocus({workspace,ready,setMode,view,navigate,save,missing,failed,settled=()=>Promise.resolve(),preferredMode=()=> '3d'}) {
   let revision=0;
   function cancel(stopAnimation=true){revision++;if(stopAnimation)view().animation?.stop();}
   async function focus(target){
@@ -9,7 +9,7 @@ export function createSelectionFocus({workspace,ready,setMode,view,navigate,save
     try {
       await ready();if(!current())return false;
       if(!target(view().type)){missing();return false;}
-      await setMode('3d');if(!current())return false;
+      await setMode(preferredMode());if(!current())return false;
       await settled();if(!current())return false;
       const destination=target(view().type);if(!destination){missing();return false;}
       await navigate(destination);if(current()){save();return true;}return false;

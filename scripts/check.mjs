@@ -13,7 +13,7 @@ import {validateWindSnapshot} from '../site/lib/weather-model.js';
 import {validateAreaConcerns} from '../site/lib/area-concern-model.js';
 
 const root = new URL('../', import.meta.url);
-for (const folder of ['site/', 'site/lib/', 'scripts/']) {
+for (const folder of ['site/', 'site/lib/', 'scripts/', 'services/scenarios/']) {
   for (const entry of await readdir(new URL(folder, root))) {
     if (!/\.(js|mjs)$/.test(entry)) continue;
     const result = spawnSync(process.execPath, ['--check', fileURLToPath(new URL(folder + entry, root))], { encoding: 'utf8' });
@@ -26,7 +26,7 @@ const config = await readFile(new URL('site/config.js', root), 'utf8');
 assert(!/clientSecret\s*:|password\s*:|accessToken\s*:/i.test(config), 'Public config must not contain secret settings.');
 const html = await readFile(new URL('site/index.html', root), 'utf8');
 assert(html.includes('https://js.arcgis.com/5.1/'), 'Pinned SDK stylesheet expected');
-for (const file of ['index.html','setup.html','planning.html','terrain.html','eoc.html','eoc-guide.html','flood-scenario.html','map-pilot.html']) {
+for (const file of ['index.html','setup.html','planning.html','terrain.html','eoc.html','eoc-guide.html','flood-scenario.html','map-pilot.html','scenario-guide.html']) {
   const page=await readFile(new URL(`site/${file}`,root),'utf8');
   for (const match of page.matchAll(/(?:href|src)="(\.\/[^"?#]+)"/g)) await readFile(new URL(match[1], new URL('site/', root)));
 }

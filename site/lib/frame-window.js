@@ -6,11 +6,11 @@
  * elements: the layer's element collection (add/remove); makeElement(i) builds frame i; count: number of frames.
  * Returns show(i0, i1, w): frames i0 and i1 cross-faded by w, frame i1 + 1 preloaded at opacity 0.
  */
-export function createFrameWindow(elements, makeElement, count) {
+export function createFrameWindow(elements, makeElement, count, onDrop=()=>{}) {
   const live = new Map();
   return function show(i0, i1, w) {
     const keep = new Set([i0, i1, Math.min(i1 + 1, count - 1)]);
-    for (const [i, el] of live) if (!keep.has(i)) { elements.remove(el); live.delete(i); }
+    for (const [i, el] of live) if (!keep.has(i)) { elements.remove(el); live.delete(i); onDrop(i,el); }
     for (const i of keep) if (!live.has(i)) { const el = makeElement(i); live.set(i, el); elements.add(el); }
     for (const [i, el] of live) el.opacity = i === i0 ? 1 - w : i === i1 && i1 !== i0 ? w : 0;
   };

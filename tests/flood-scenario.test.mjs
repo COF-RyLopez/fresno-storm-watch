@@ -25,9 +25,16 @@ test('ramp model: dry before arrival, 1 ft at arrival, linear to peak, then held
   assert.equal(rampDepth(2, 6, 9, 4), 5);
   assert.equal(rampDepth(2, 6, 9, 30), 9);
   assert.equal(rampDepth(2, 6, 0.4, 3), 0.4); // shallower than 1 ft: maximum at arrival
-  assert.equal(rampDepth(null, 6, 9, 30), 0);
+  assert.equal(rampDepth(null, 6, 9, 30), null);
   assert.equal(depthAt({ arrive_hr: 2, peak_hr: 6, depth_max: 9 }, 4, [0, 48]), 5);
   assert.deepEqual(rowsToObjects({ fields: ['a', 'b'], rows: [[1, 2]] }), [{ a: 1, b: 2 }]);
+});
+
+test('missing depth or foundation does not imply dry ground or water inside a building',()=>{
+  assert.equal(depthAt({d0:2,d1:null},0.5,[0,1]),null);
+  assert.equal(rampDepth(1,null,3,4),null);
+  assert.equal(summarize([{d0:2,d1:2,found_ht:null}],0.5,[0,1]).inside,0);
+  assert.equal(summarize([{d0:2,d1:2,found_ht:0}],0.5,[0,1]).inside,1);
 });
 
 test('published scenario data is consistent', async () => {
