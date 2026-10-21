@@ -483,3 +483,6 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 .comparison-table caption{text-align:left;padding:0.4rem 0;font-weight:600}
 #forecast-comparison .comparison-controls{padding:0.75rem}
 #comparison-results calcite-block{margin-block:0.75rem}
+
+#forecast-review-list calcite-block{margin-block:0.8rem}
+.forecast-difference-summary{border-inline-start:2px solid var(--calcite-color-border-1);padding-inline-start:0.6rem}

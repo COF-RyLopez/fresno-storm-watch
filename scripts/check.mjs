@@ -1,3 +1,5 @@
+import {comparisonAreas} from '../site/lib/forecast-comparison-model.js';
+import {uniqueComparisonPoints,validateComparisonSnapshot} from '../site/lib/forecast-review-model.js';
 import { readdir, readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -46,3 +48,10 @@ validateAreaConcerns(JSON.parse(await readFile(new URL('site/data/area-concerns.
 const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
 assert.equal(createHash('sha256').update(player).digest('hex'),'0c4f60fc126ef62dc18e8e5e7b1984cf77628aa2a230688dcf5bea7f3966e052','Pinned HLS library changed');
 console.log('Syntax, county geometry, nine river watchpoints, eight cameras, two reservoir contracts/snapshot, pinned player integrity, page links and public config checks passed.');
+
+const comparisonInputs=await Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>JSON.parse(await readFile(new URL(`site/data/${name}.json`,root),'utf8'))));
+const [comparisonAreaConfig,comparisonAssociations,comparisonWinds,comparisonGauges]=comparisonInputs;
+const comparisonSites=uniqueComparisonPoints(comparisonAreas(comparisonAreaConfig.areas,comparisonAssociations.areas,comparisonWinds.sites,comparisonGauges.stations));
+assert.equal(comparisonSites.length,7);
+validateComparisonSnapshot(JSON.parse(await readFile(new URL('site/data/comparison-latest.json',root),'utf8')),comparisonSites);
+console.log('Seven public forecast-comparison points and scheduled snapshot schema checked.');

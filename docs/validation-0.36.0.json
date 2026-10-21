@@ -1,0 +1,32 @@
+{
+  "version": "0.36.0",
+  "checkedDate": "2026-10-20",
+  "javascriptTests": 350,
+  "focusedComparisonAndReviewTests": 26,
+  "scheduledLiveCollection": {
+    "uniquePoints": 7,
+    "sourceRows": 21,
+    "failures": 0
+  },
+  "manualChecks": [
+    "Banner opens ranked comparison queue",
+    "Area Watch cards and banner count six distinct groups",
+    "Independent rainfall and wind timing ranking",
+    "Tied peak periods retained and top-area ties disclosed",
+    "Evidence opens exact ranked sample and same source check",
+    "Counts remain fixed across Weather and Area Watch",
+    "390x844 page and queue widths both 390; scrolling works"
+  ],
+  "sourceReferences": [
+    "https://dynamical.org/scorecard/",
+    "https://dynamical.org/scorecard/metrics/",
+    "https://dynamical.org/scorecard/observation-data/"
+  ],
+  "limits": [
+    "Point liquid-equivalent precipitation, not basin rainfall or river routing",
+    "No current confidence, wind skill, model weights or hazard/action thresholds inferred from scorecard",
+    "Missing source coverage remains unknown/partial",
+    "Only public sources; no ArcGIS items, memberships, private records or persistence changes"
+  ],
+  "rollback": "67e837ebbba3043fc3524228e4e457611a56bef8"
+}

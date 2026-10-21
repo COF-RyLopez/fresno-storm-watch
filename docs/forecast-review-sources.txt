@@ -1,0 +1,33 @@
+Forecast-difference review integration — 0.36.0
+Checked 2026-10-20 (America/Los_Angeles).
+
+Authoritative references
+https://dynamical.org/llms.txt
+https://dynamical.org/api/
+https://stac.dynamical.org/catalog.json
+https://stac.dynamical.org/noaa-hrrr-forecast-48-hour/collection.json
+https://stac.dynamical.org/noaa-gfs-forecast/collection.json
+https://dynamical.org/scorecard/
+https://dynamical.org/scorecard/metrics/
+https://dynamical.org/scorecard/observation-data/
+https://api.weather.gov/
+Dataset units, interval meaning and attribution remain as documented in forecast-comparison-sources.txt. Both model collections are CC-BY-4.0. No storage buckets, dataset versions, credentials or retired data.dynamical.org URLs are embedded.
+
+Acquisition and accounting
+Six named river review groups use eight sample associations at seven distinct public points. Shared FRIANT is queried once. Two point workers reuse the existing source collector; each point independently reports NWS, HRRR and GFS success or failure. The scheduled snapshot is schema version 1, seven point rows and 21 source rows; failures are retained as failures, never dropped. No private facilities, operational records, tokens or county asset data are queried or written by this component. snapshot file: site/data/comparison-latest.json; idempotent atomic replacement via collect-comparisons.mjs.
+The existing Pages schedule targets 15-minute collection/deployment. Browser checks the public copy every five minutes while visible; copies/point checks older than 45 minutes fall back to two-worker live collection. Source run ages remain independent (18h model / 24h NWS maximum). Future checks and source runs are rejected. Page-visible refreshes and manual checks are not unattended emergency notification. No new hosting, credentials, environment or ArcGIS permissions.
+
+Comparison contract
+Same upcoming 24h window aligned to UTC six-hour boundaries across all samples. Source-run initialization, NWS update, sample collection and app-check times are separate. Totals remain point liquid-equivalent precipitation, including snow, not basin rainfall or river routing. NWS plus at least one model must have complete variable coverage before a difference can be computed. Partial two-source results are labeled incomplete; missing data rank below measured zero, not as zero. Current-run availability can differ by point and all source times stay in the evidence.
+Precipitation spread is max minus min of complete point totals across available NWS/HRRR/GFS. Ranking uses the same 0.01-inch display precision; a nonzero displayed spread is a planning review cue, not a flood or action threshold. Source disagreements are not independent votes or confidence.
+Wind timing and precipitation timing compare six-hour peak-period starts relative to NWS. All tied peak periods are retained at display precision (0.1 mph wind, 0.01 in precipitation). For each model, use the minimum separation between its tied peak-period starts and NWS's tied peak-period starts; report the largest available NWS/model separation. A nonzero separation is a review cue; zero means at least one peak period overlaps, not exact arrival-time agreement. Flat/calm/dry sequences have no positive timing peak. This is not storm onset, downstream arrival or safe access. NWS published wind intervals differ from model hourly samples.
+Area metrics use the largest available sample difference per metric and retain its named location. Rain and wind maxima can come from different samples; neither implies a uniform river-corridor condition. Areas are ranked separately by precipitation amount, wind peak timing or precipitation peak timing; no blended risk score. Equal displayed values use alphabetical order and tie counts are disclosed in the summary. Rankings are provisional where coverage is incomplete.
+
+Integration and failures
+Area Watch adds comparison context to each card and unions the comparison cue with existing hydrology/power review flags. An area counts once, not once per cue. Official NWS hazard severity, PSPS status, river rules, action thresholds, acknowledgements, assignments and private EOC permissions are unchanged. Forecast differences get their own labeled notification button and evidence queue. One source-health entry monitors the shared collection, not one duplicate per area. Stale/failed sources remain apparent. Evidence opens the specific point used by the selected ranking metric, sharing the same dated sample with the comparison pane.
+
+Scorecard use
+The provider documents historical station/lead-time performance over 90/180-day windows. Documented verification variables are temperature and precipitation; precipitation metrics use six-hour resampling. Airport observation skill is not river-corridor or Sierra-terrain validation. No wind skill, current-event confidence, automatic model weights or bias corrections are inferred. The app links to the scorecard and methods as separate context.
+
+Recovery
+Redeploy preceding release commit 67e837ebbba3043fc3524228e4e457611a56bef8. No data migration, operational record change or permission rollback is required.

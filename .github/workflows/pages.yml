@@ -40,6 +40,9 @@ jobs:
       - name: Collect public NWS wind and gust forecasts
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:wind -- --published
+      - name: Collect public NWS and Dynamical river-area comparisons
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npm run collect:comparisons
       - name: Collect public NWS Hanford briefing
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:briefing -- --published

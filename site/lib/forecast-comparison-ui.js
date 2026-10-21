@@ -1,14 +1,15 @@
 import {comparisonAreas,comparisonWindow,compareForecasts} from './forecast-comparison-model.js';
 import {fetchComparison} from './forecast-comparison-data.js';
 import {formatTime} from './model.js';
+import {REVIEW_MAX_AGE,pointDifferences} from './forecast-review-model.js';
 const $=id=>document.getElementById(id);
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const num=(v,unit)=>Number.isFinite(v)?`${v.toFixed(unit==='in'?2:1)} ${unit}`:'Unknown';
 const link=(label,url)=>{const n=el('a',label);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
-const MAX_AGE=15*60000;
+const MAX_AGE=REVIEW_MAX_AGE;
 
 /** Public point forecasts in tab memory only; no private assets or action thresholds. */
-export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocate=()=>{}}){
+export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocate=()=>{},getSnapshot=()=>null,onPointUpdate=()=>{}}){
   const pane=$('forecast-comparison'),host=$('comparison-results'),cache=new Map();
   let areas=[],areaId='san-joaquin-lower',pointId=null,request=0,abort=null,busy=false,snapshot=null,error=null;
   const time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Unknown';
@@ -29,7 +30,7 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
     const w=snapshot.window,stale=Date.now()-snapshot.checked>MAX_AGE;
     $('comparison-window').textContent=`Common 24-hour window: ${time(w.start)} → ${time(w.end)}. Starts at the next full UTC six-hour boundary; not a rolling next-24-hour total. Independent of the map slider.`;
     if(stale){host.append(el('p','Forecast check overdue. Previous values are withheld until checked again.'));return;}
-    const rows=compareForecasts(snapshot.rows,w),nws=rows.find(r=>r.id==='nws');
+    const rows=compareForecasts(pointDifferences(snapshot).rows,w),nws=rows.find(r=>r.id==='nws');
     const overview=el('table');overview.className='comparison-table';overview.append(el('caption','Same-window comparison · full coverage required'));
     const headings=el('tr');for(const label of ['Source','Precip. in','Wind mph','Gust mph']){const th=el('th',label);th.scope='col';headings.append(th);}const top=el('thead');top.append(headings);overview.append(top);
     const values=el('tbody');for(const row of rows){const tr=el('tr'),name=el('th',row.id==='nws'?'NWS':row.id.includes('hrrr')?'HRRR':'GFS');name.scope='row';tr.append(name);for(const [key,places]of [['rain',2],['wind',1],['gust',1]])tr.append(el('td',row.error?'Unavailable':key==='gust'&&!row.gustProvided?'Not supplied':Number.isFinite(row.summary[key].value)?row.summary[key].value.toFixed(places):'Unknown'));values.append(tr);}overview.append(values);host.append(overview);
@@ -61,17 +62,20 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
     const p=point(),w=comparisonWindow(),key=`${p.id}:${w.start}`,prior=cache.get(key);
     abort?.abort();const generation=++request;
     error=null;snapshot=null;$('comparison-window').textContent='Forecast windows are being checked for this point.';
+    const shared=force?null:getSnapshot(p.id);
+    if(shared&&Date.now()-shared.checked<MAX_AGE){snapshot={...shared,window:w};busy=false;render();return;}
     if(!force&&prior&&Date.now()-prior.checked<MAX_AGE){snapshot=prior;busy=false;render();return;}
     abort=new AbortController();busy=true;render();
     try{
       const result=await fetchComparison(p,{signal:abort.signal});if(generation!==request)return;
       snapshot={...result,window:w};cache.set(key,snapshot);if(cache.size>24)cache.delete(cache.keys().next().value);
+      onPointUpdate(result);
     }catch(e){if(generation===request)error=e.message;}
     finally{if(generation===request){busy=false;render();}}
   }
-  async function open(id){
+  async function open(id,requestedPoint){
     onMap();pane.setAttribute('open','');
-    try{await ready;if(id&&areas.some(a=>a.id===id)){areaId=id;pointId=null;}controls();if(pane.hasAttribute('open'))await load();}catch(e){error=e.message;render();}
+    try{await ready;if(id&&areas.some(a=>a.id===id)){areaId=id;pointId=area()?.points.some(p=>p.id===requestedPoint)?requestedPoint:null;}controls();if(pane.hasAttribute('open'))await load();}catch(e){error=e.message;render();}
   }
   const ready=Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>{const r=await fetch(new URL(`../data/${name}.json`,import.meta.url),{credentials:'omit',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Comparison inventory unavailable.');return r.json();})).then(([a,c,w,g])=>{areas=comparisonAreas(a.areas,c.areas,w.sites,g.stations);controls();});
   // Catch startup failure immediately; open() still reports the rejection to the user.
@@ -82,6 +86,11 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
   $('comparison-refresh').addEventListener('click',()=>void load(true));
   $('comparison-locate').addEventListener('click',()=>{const p=point();if(p){onMap();onLocate(p);}});
   pane.addEventListener('stormEvidenceClose',()=>{abort?.abort();request++;busy=false;});
-  setInterval(()=>{if(!document.hidden&&pane.hasAttribute('open')&&!busy&&snapshot&&Date.now()-snapshot.checked>MAX_AGE)void load();},60000);
+  setInterval(()=>{
+    if(document.hidden||!pane.hasAttribute('open')||busy)return;
+    const shared=getSnapshot(point()?.id),revision=p=>JSON.stringify(p?.rows.map(r=>[r.id,r.error,r.issued]));
+    if(shared&&(!snapshot||shared.checked!==snapshot.checked||revision(shared)!==revision(snapshot)||snapshot.window.start!==comparisonWindow().start)){snapshot={...shared,window:comparisonWindow()};render();}
+    if(snapshot&&Date.now()-snapshot.checked>MAX_AGE)void load();
+  },60000);
   return {open};
 }
