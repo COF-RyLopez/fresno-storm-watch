@@ -11,7 +11,7 @@ const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** @param {object} options @returns {object} Fixed county power status, independent of the map extent and selected workspace. */
-export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){
+export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now(),onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){
   for(const host of document.querySelectorAll('[data-power-key]'))renderPowerLegend(host);
   for(const id of ['power-key-open','map-power-key-open'])$(id).onclick=()=>$('power-key-dialog').setAttribute('open','');
   $('power-key-close').onclick=()=>$('power-key-dialog').removeAttribute('open');
@@ -97,8 +97,8 @@ export function createPowerWatch({timeZone,exercise=false,onOpen=()=>{},onMap=()
   for(const [id,key] of [['pge-map-link','pge'],['sce-map-link','sce']])$(id).setAttribute('href',POWER_LINKS[key]);
   if(exercise){
     $('power-refresh').setAttribute('disabled','');const controls=el('div','','power-actions');controls.append(el('strong','EXERCISE · fictional power records'));
-    for(const [name,label] of [['watch','Watch / shutoff'],['symbols','All symbols'],['restored','Restoration / cancellation'],['failure','Feed failure']])controls.append(button(label,()=>{accept(powerExercise(name));checked=Date.now();render();}));
-    $('power-panel').prepend(controls);accept(powerExercise());checked=Date.now();render();
+    for(const [name,label] of [['watch','Watch / shutoff'],['symbols','All symbols'],['restored','Restoration / cancellation'],['failure','Feed failure']])controls.append(button(label,()=>{accept(powerExercise(name,exerciseNow));checked=exerciseNow;render();}));
+    $('power-panel').prepend(controls);accept(powerExercise("watch",exerciseNow));checked=exerciseNow;render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
   return {setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;render();if(selectedKey)map.focusPower(selectedKey);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};

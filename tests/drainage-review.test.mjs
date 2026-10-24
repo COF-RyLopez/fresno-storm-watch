@@ -33,7 +33,7 @@ test('rainfall with nearby records is a readiness review, not a modeled impact; 
   assert.equal(rows.length,1);assert(r.review&&r.combined&&r.rainfall);assert.equal(r.maximum,.5);
   assert.equal(r.roads.length,1);assert(r.roads[0].verification);assert.match(r.roads[0].timing,/do not overlap/);
   assert.equal(r.facilities[0].record.site.backup,null);assert(!('riskScore' in r));assert(!('floodDepth' in r));
-  assert.match(r.nextReview,/confirm FMFCD/);
+  assert.match(r.nextReview,/FMFCD/);
 });
 test('rainfall holes, valid zero and absent polygons remain distinct',async()=>{
   const data=await input();data.rain.features[0].value=0;

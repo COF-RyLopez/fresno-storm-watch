@@ -1,0 +1,85 @@
+F.R.O.G. 0.42.0 — FMFCD PUMP POWER AND RAINFALL REVIEW
+
+Purpose
+Private County Watch drainage groups now include existing FMFCD pump records
+that intersect the published PG&E or SCE outage / PSPS polygons already collected
+by F.R.O.G. This is a planning review, not proof of electrical service, loss of
+pump operation, hydraulic impact or a resource order. Proposed / future and other
+pump classifications remain outside these reviews.
+
+Matching and timing
+- Exact normalized WGS84 pump points are tested against utility polygons with
+  polygon holes and boundaries retained. Basin overlap, proximity, point-only
+  outage markers and nearby generators cannot establish pump service coverage.
+- Reuse the existing areaPowerEvidence source checks, utility statuses, source
+  update limits and fixed next-72-hour planning horizon. A failed source,
+  overdue retrieval, unknown status or contradictory / old record remains
+  verification evidence. Later published utility windows remain separate context.
+- Compute rainfall at the individual pump point from current WPC contours.
+  Rainfall elsewhere in a source-code group cannot become rainfall at the pump.
+  No contour is unknown; valid zero is zero. The highest touching polygon label
+  is not a point-exact rain prediction, runoff, flood depth or capacity estimate.
+- Compare actual published utility start/end dates with the current 72-hour WPC
+  accumulation window. Show before, overlap, after or unknown explicitly.
+  Neither the window start nor an estimated restoration time establishes when
+  rain arrives or when a pump will have power. Positive rain with a current
+  utility concern is a coordination cue, not a new hazard / dispatch threshold.
+- Deduplicate each utility key at each pump record. Pump counts are source
+  records, not physical installations, circuit counts or affected customers.
+
+Follow-up and presentation
+County Watch shows a separate pump-power review count inside the Area reviews
+button. Group-list filters, map extent and utility-display filters do not change
+that count. Pump power reviews appear before the prior rainfall / vicinity
+ordering; this is not a severity score. The evidence pane preserves source dates,
+raw ambiguous time text, utility links, gaps, unknown backup and the requested
+owner verification. Capture and assignment use the existing private exercise
+briefing / coordination workflows and existing server permissions.
+
+White-outlined cyan diamonds distinguish existing pump records needing power
+verification; other existing pumps remain cyan circles. Utility symbols retain
+their existing legend and statuses. Referenced utility polygons are eligible in
+County Watch; selecting a group enables them without changing background user
+layer choices. Reported restored / cancelled polygons retain the optional history
+layer behavior. A missing polygon is not synthesized from its prior outline.
+
+A changed/disappeared match remains a follow-up in this tab. A current restored
+or cancelled source revision replaces its old status in that follow-up. This does
+not verify pump power or close an assignment. Record owner confirmation through
+the private follow-up workflow; coordination completion and utility status remain
+separate. Follow-up memory resets on disconnect / sign-out / a new page; it is
+not a complete utility-event archive. Moving the pump invalidates its previous
+location association. New utility source checks require reopening the evidence
+pane and invalidate an unsaved assignment based on the earlier source view.
+
+Owner verification before any prepositioning recommendation
+FMFCD / Operations should establish the electrical service and critical load,
+operating state, generator connection / compatibility, availability, fuel/runtime,
+staffing, responsible contact and approved access. Ask NWS about rain arrival
+timing and compare it with resource lead times. The FMFCD source currently has
+none of these backup-readiness attributes; unknown is not a confirmed absence
+of backup power. No automatic dispatch, activation or public message is added.
+
+Privacy and operation
+All joins occur locally after existing county authorization. No private pump
+coordinates are sent to utility publishers or NOAA. No new AGOL items, accounts,
+permissions, collectors or hosting are required. Private pump associations,
+history, highlighted pump keys and captured drainage drafts clear with the FMFCD
+connection. Briefing evidence includes source identifiers, revisions and dates,
+but excludes pump coordinates, utility geometries and the private location cache.
+No private data enters GitHub files or persistent browser storage.
+
+Validation / rollback
+Synthetic tests cover proposed exclusion, point-only sources, polygon holes,
+boundary inclusion, per-pump rainfall, duplicate representations, statuses,
+stale/failed feeds, restoration / disappearance, moved locations, interval timing,
+CRS rejection and frozen handoff evidence. The labeled exercise aligns the
+fictional pump with the existing PG&E exercise polygon. No live county inventory
+is bundled. Second-account and FMFCD operator acceptance remain pending.
+Rollback: redeploy 0.41.0; no data migration is needed.
+
+Primary public source pages checked 2026-10-24:
+https://pgealerts.alerts.pge.com/outage-tools/outage-map/
+https://www.sce.com/outages-safety/outage-center/check-outage-status
+Existing NOAA source:
+https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer/9

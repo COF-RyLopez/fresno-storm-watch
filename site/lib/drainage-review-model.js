@@ -1,6 +1,7 @@
 import {powerGeometry,powerScope} from './power-geometry.js';
 import {DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {FACILITY_MAX_AGE} from './facility-model.js';
+import {assessDrainagePumpPower,freezeDrainagePumpPower} from './drainage-power-model.js';
 export const DRAINAGE_REVIEW_MILES=1;
 export const DRAINAGE_REVIEW_LIMIT=1000;
 export const DRAINAGE_RAIN_BOUNDS=Object.freeze([-120.95,35.88,-118.3,37.65]);
@@ -44,13 +45,16 @@ export function drainageRoadTiming(row,cycle){
 }
 
 /** Explainable coordination cues, with separate inventory, rain, road and facility freshness. No risk score. */
-export function assessDrainageReviews({groups,vicinity,snapshot,rain,roads,facilities,config},now=Date.now()){
+export function assessDrainageReviews({groups,vicinity,snapshot,rain,roads,facilities,power,previousPower,config},now=Date.now()){
   const inventoryCurrent=!!snapshot?.connected&&!snapshot.error&&fresh(snapshot.checked,DRAINAGE_MAX_AGE,now);
   const cycle=rain?.cycle,rainCurrent=!!cycle&&!rain.error&&fresh(rain.checked,config.weatherCheckMaxAgeMs,now)&&fresh(cycle.issue,config.qpfMaxAgeMs,now)&&cycle.end>now&&cycle.hours===72;
   const roadCurrent=!!roads?.snapshot&&!roads.error&&fresh(roads.snapshot.checked,420000,now);
   const prepared=rainCurrent?(rain.features||[]).map(f=>({value:f.value,scope:powerScope(f.geometry)})):[];
+  const pumpAssessments=assessDrainagePumpPower({records:groups.flatMap(g=>g.records),state:power,contours:prepared,cycle,rainCurrent,inventoryCurrent,previous:previousPower},now);
   return groups.map(group=>{
     const nearby=vicinity?.get(group.id),gaps=[];let maximum=null;
+    const pumpPower=group.records.map(r=>pumpAssessments.get(r.key)).filter(Boolean),powerReview=pumpPower.some(p=>p.review),powerRain=pumpPower.some(p=>p.powerRain);
+    if(pumpPower.some(p=>p.evidence.gaps.length))gaps.push('Utility source coverage incomplete at pump locations; no overlap is not proof of power.');
     if(!inventoryCurrent)gaps.push('FMFCD retrieval overdue / unavailable; source maintenance age remains unknown.');
     if(!rainCurrent)gaps.push(rain?.error||'Rainfall source missing, expired or overdue.');
     else {const values=prepared.filter(f=>group.records.some(r=>f.scope.intersects(powerGeometry(r.geometry)))).map(f=>f.value);if(values.length)maximum=Math.max(...values);else gaps.push('No WPC polygon intersects this inventory group; amount unknown.');}
@@ -63,11 +67,11 @@ export function assessDrainageReviews({groups,vicinity,snapshot,rain,roads,facil
     if(nearFacilities.some(i=>!i.current))gaps.push('Nearby facility records have unverified / old retrievals.');
     const rainfall=inventoryCurrent&&rainCurrent&&maximum!==null&&maximum>0;
     const combined=rainfall&&(nearFacilities.length>0||nearRoads.some(i=>i.timing!=='Published dates do not overlap rainfall window'));
-    const roadVerification=nearRoads.some(i=>i.verification),review=rainfall||roadVerification||gaps.length>0;
-    return {...group,roads:nearRoads,facilities:nearFacilities,gaps,maximum,cycle,checked:rain?.checked,inventoryChecked:snapshot?.checked,inventoryCurrent,rainCurrent,roadCurrent,roadChecked:roads?.snapshot?.checked,review,combined,rainfall,
-      change:combined?'Forecast precipitation + nearby county records: review readiness':rainfall?'Forecast precipitation: verify basin / pump readiness':roadVerification?'Nearby road status needs verification':gaps.length?'Evidence incomplete: verification needed':'No current drainage review cue; check source coverage',
-      nextReview:'Planning / Operations: confirm FMFCD capacity and pump operation, rainfall timing with NWS, site backup power, resource lead time and approved staging access before recommending prepositioning.'};
-  }).sort((a,b)=>Number(b.combined)-Number(a.combined)||Number(b.rainfall)-Number(a.rainfall)||Number(b.review)-Number(a.review)||a.name.localeCompare(b.name));
+    const roadVerification=nearRoads.some(i=>i.verification),review=rainfall||powerReview||roadVerification||gaps.length>0;
+    return {...group,roads:nearRoads,facilities:nearFacilities,pumpPower,powerReview,powerRain,gaps,maximum,cycle,checked:rain?.checked,inventoryChecked:snapshot?.checked,inventoryCurrent,rainCurrent,roadCurrent,roadChecked:roads?.snapshot?.checked,review,combined,rainfall,
+      change:powerRain?'Pump power concern + forecast precipitation: review backup readiness':powerReview?'Pump power needs verification':combined?'Forecast precipitation + nearby county records: review readiness':rainfall?'Forecast precipitation: verify basin / pump readiness':roadVerification?'Nearby road status needs verification':gaps.length?'Evidence incomplete: verification needed':'No current drainage review cue; check source coverage',
+      nextReview:powerReview?pumpPower.find(p=>p.review).nextReview:'Planning / Operations: confirm FMFCD capacity and pump operation, rainfall timing with NWS, site backup power, resource lead time and approved staging access before recommending prepositioning.'};
+  }).sort((a,b)=>Number(b.powerRain)-Number(a.powerRain)||Number(b.powerReview)-Number(a.powerReview)||Number(b.combined)-Number(a.combined)||Number(b.rainfall)-Number(a.rainfall)||Number(b.review)-Number(a.review)||a.name.localeCompare(b.name));
 }
 
 /** Immutable, tab-only handoff evidence. Source ObjectIDs remain qualified as retrieval-session references. */
@@ -75,6 +79,7 @@ export function freezeDrainageReview(row,now=Date.now()){
   return structuredClone({schemaVersion:1,kind:'drainage-planning-evidence',classification:'Private planning review cue',id:row.id,name:row.name,capturedAt:now,change:row.change,nextReview:row.nextReview,gaps:row.gaps,
     inventory:{retrieved:row.inventoryChecked,records:row.records.map(r=>({selectionKey:r.key,kind:r.kind,code:r.code,sourceUpdated:r.updated,status:r.status})),note:'ObjectIDs identify this retrieval only. A shared source code is not a validated hydraulic connection.'},
     rainfall:{maximumIntersectingLabel:row.maximum,units:'inches liquid equivalent',cycle:row.cycle,checked:row.checked,current:row.rainCurrent,note:'Highest WPC polygon label touching inventory geometry, not basin average, onset, runoff or flood depth.'},
+    pumpPower:freezeDrainagePumpPower(row.pumpPower),
     roads:row.roads.map(i=>({key:i.key,name:i.record.name,status:i.record.status,start:i.record.start,end:i.record.end,sourceTime:i.record.sourceTime,edited:i.record.edited,distanceMeters:i.distanceMeters,timing:i.timing,verification:i.verification})),
     facilities:row.facilities.map(i=>({key:i.key,name:i.record.site.name,owner:i.record.site.owner||null,backup:i.record.site.backup||null,retrieved:i.record.site.fetched,current:i.current,distanceMeters:i.distanceMeters})),
     note:'Within one mile by shortest horizontal geometry distance; proximity is not flood exposure, hydraulic connectivity, a safe route or a deployment order.'});

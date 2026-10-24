@@ -15,6 +15,7 @@
 .drainage-review-row calcite-button { justify-self: start; max-width: 100%; }
 #drainage-review-detail { padding: 16px; display: grid; gap: 12px; }
 #drainage-review-detail h3 { margin: 12px 0 0; font-size: 1rem; }
+#drainage-review-detail h4 { margin: 8px 0 0; font-size: 1rem; }
 #drainage-review-detail p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 #drainage-review-detail calcite-button { justify-self: start; max-width: 100%; }
 #drainage-review-detail form { display: grid; gap: 12px; }
