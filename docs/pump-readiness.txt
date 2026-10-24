@@ -1,0 +1,77 @@
+F.R.O.G. 0.43.0 — private FMFCD pump readiness pilot
+
+Operator workflow
+1. Sign in to county AGOL. In County Watch / Area Watch, load FMFCD;
+   complete its separate Enterprise sign-in if requested.
+2. Search the basin / drainage inventory code and open the group.
+3. Under the selected pump, choose Confirm pump readiness.
+4. Check the map location and actual pump identification. Record backup
+   availability, connection / compatibility check, fuel status, estimated
+   remaining runtime and its load / fuel assumptions, responsible work
+   contact, check time, next review time, and confirmation evidence.
+   Leave runtime blank if unknown; enter 0 only if no runtime remains.
+5. Save private exercise readiness. Reopen the group to inspect history.
+   The local submitter's review counts refresh immediately after receipt;
+   other open signed-in apps query confirmations every minute. Delivery
+   is not guaranteed; query failures and overdue checks remain apparent.
+
+Interpretation
+- Current complete details remove only the missing-readiness follow-up.
+  A utility-area concern / PSPS notice stays visible. No pump-operating,
+  safe-access, generator-adequacy or dispatch determination is made.
+- Runtime is an owner estimate under stated conditions. Do not assume
+  it covers a published outage or an entire rain accumulation window.
+- Blank values are unknown, not zero. Unavailable backup, refueling,
+  unknown runtime, overdue confirmations, source failures and conflicting
+  updates require follow-up. Existing county / FMFCD communications are
+  still needed when the app is closed.
+- Proposed / future pumps cannot receive these confirmations.
+
+Storage / access
+- Existing private AGOL EXERCISE checklist parent and read / add-only
+  views are reused. No datasets, permissions or memberships are changed.
+- Scope: fmfcd-pump-readiness-exercise.
+  Rehearsal page scope: fmfcd-pump-readiness-acceptance; isolated from
+  normal Area Watch and banner counts. Use fictional test data there.
+- Only the owner or existing EOC coordinators may submit; viewers may
+  inspect. Server view sharing and Create capability enforce access.
+  The coordinators group also permits other EOC coordination work.
+  Do not grant that broader role merely to enable this form. Before
+  onboarding FMFCD-only reporters, GIS should approve their appropriate
+  access or provision a dedicated restricted submission view / group.
+- Eligible named AGOL accounts are required. The interface does not grant
+  access. No personal accounts, contacts or readiness reports are bundled
+  into GitHub, exported public files or persistent browser storage.
+- Each save appends an event with editor-tracked account and server time.
+  Corrections preserve earlier payloads. Concurrent edits stay conflicting
+  until an operator reviews the current versions and reconfirms. An uncertain
+  retry retains its request ID; the server event index prevents duplicates.
+- Readiness is independent of incident activation and needs no incident
+  creation. These are exercise records, not a production readiness system.
+
+Pump identity limitation
+The source has no permanent pump GlobalID. Each confirmation is bound to
+the exact source URL, retrieval selection key, code and WGS84 point, plus
+an operator confirmation of actual identity. The hash identifies that
+association, NOT a permanent pump asset. Renumbering, movement or changed
+codes stop automatic reuse and create a rematching follow-up. No nearest
+pump, same-code-only or generator-proximity inference is made. FMFCD should
+provide maintained asset IDs before production rollout. GIS / FMFCD must
+reconcile unmatched historic associations; the pilot never transfers them.
+
+Verified in this release
+- 430 automated tests and static checks.
+- Fictional in-app submission changes the readiness count while preserving
+  the PSPS concern.
+- County owner account saved and reread two isolated AGOL acceptance events;
+  the correction retained both versions and server author / time. Reload
+  preserved the saved result; sign-out cleared private contact and history.
+
+Acceptance still required before operational use
+- FMFCD named account / role approval; restricted reporter access if needed.
+- Two-account receipt / refresh, denied-writer and expired-session tests.
+- Owner-reviewed actual pump identity and runtime assumptions.
+- County / FMFCD agreement on review deadlines and operating procedures.
+
+Rollback: redeploy 0.42.0. Appended exercise records remain private in AGOL;
+no source-layer edits or data migrations are required.

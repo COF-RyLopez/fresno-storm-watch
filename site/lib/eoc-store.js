@@ -1,5 +1,5 @@
 import {loadSdk} from './map.js?v=0.42.0';
-import {COLLECTIONS,emptyRecords,validateEvent,validatePayload,canonical} from './eoc-model.js';
+import {COLLECTIONS,emptyRecords,validateEvent,validatePayload,canonical} from './eoc-model.js?v=0.43.0';
 export const GROUP_FOR={incidents:'recorders',periods:'coordinators',reports:'reporters',verifications:'reviewers',coordination:'coordinators',checklists:'coordinators',staging:'reviewers',briefings:'coordinators',approvals:'approvers',references:'coordinators',reviews:'reporters'};
 const idPattern=/^[a-zA-Z0-9_-]{1,80}$/;
 function safeService(url){if(!/^https:\/\/services\d*\.arcgis\.com\/[A-Za-z0-9]+\/arcgis\/rest\/services\/[^?#]+\/FeatureServer\/\d+$/.test(url))throw new Error('Private storage must use configured AGOL hosted table views.');return url;}
@@ -44,6 +44,7 @@ export async function createPrivateStore(config,session){
     allowed,username:session.username,
     close(){alive=false;for(const layer of [...Object.values(read),...Object.values(write)])layer.destroy();},
     async incidents(){return query('incidents','1=1');},
+    async loadCollection(name,incident){if(!COLLECTIONS.includes(name)||!idPattern.test(incident))throw new Error('Invalid private collection or scope.');return query(name,`incident_id = '${incident}'`);},
     async load(incident){if(!idPattern.test(incident))throw new Error('Invalid incident identifier');const pairs=await Promise.all(COLLECTIONS.map(async name=>[name,await query(name,`incident_id = '${incident}'`)]));ensure();return Object.fromEntries(pairs);},
     async append(event,records){
       ensure();if(!allowed.has(event.collection))throw new Error('Your account is not assigned to this editing group.');validateEvent(event,records);const name=event.collection;
@@ -59,5 +60,5 @@ export async function createPrivateStore(config,session){
 /** Fictional rehearsal in memory only; no remote writes or persistent browser storage. */
 export function createExerciseStore(seed=emptyRecords()){
   let data=structuredClone(seed),alive=true;
-  return {allowed:new Set(COLLECTIONS),username:'EXERCISE operator',close(){data=emptyRecords();alive=false;},async incidents(){return structuredClone(data.incidents);},async load(incident){if(!alive)throw new Error('Exercise closed');return Object.fromEntries(COLLECTIONS.map(k=>[k,structuredClone(data[k].filter(r=>r.incident===incident))]));},async append(event,records){if(!alive)throw new Error('Exercise closed');const same=data[event.collection].find(r=>r.id===event.id);if(same){if(canonical(same.payload)!==canonical(event.payload))throw new Error('Duplicate event ID has different content');return structuredClone(same);}validateEvent(event,records);const saved={...structuredClone(event),created:Date.now(),author:'EXERCISE operator'};data[event.collection].push(saved);return structuredClone(saved);}};
+  return {allowed:new Set(COLLECTIONS),username:'EXERCISE operator',close(){data=emptyRecords();alive=false;},async incidents(){return structuredClone(data.incidents);},async loadCollection(name,incident){if(!alive)throw new Error('Exercise closed');if(!COLLECTIONS.includes(name)||!idPattern.test(incident))throw new Error('Invalid private collection or scope.');return structuredClone(data[name].filter(r=>r.incident===incident));},async load(incident){if(!alive)throw new Error('Exercise closed');return Object.fromEntries(COLLECTIONS.map(k=>[k,structuredClone(data[k].filter(r=>r.incident===incident))]));},async append(event,records){if(!alive)throw new Error('Exercise closed');const same=data[event.collection].find(r=>r.id===event.id);if(same){if(canonical(same.payload)!==canonical(event.payload))throw new Error('Duplicate event ID has different content');return structuredClone(same);}validateEvent(event,records);const saved={...structuredClone(event),created:Date.now(),author:'EXERCISE operator'};data[event.collection].push(saved);return structuredClone(saved);}};
 }

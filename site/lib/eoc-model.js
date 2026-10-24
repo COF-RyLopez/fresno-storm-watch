@@ -1,3 +1,4 @@
+import {validatePumpReadiness} from './pump-readiness-contract.js';
 /** Append-only EOC records. No source cue changes activation or official status. */
 export const LEVELS=['Duty Officer monitoring','Level 3 minimum','Level 2 partial','Level 1 full'];
 export const AUTHORITIES=['CAO / Director of Emergency Services','Public Health Director / Assistant Director','County Emergency Manager'];
@@ -21,7 +22,7 @@ export function validatePayload(collection,p){
   else if(collection==='reports'){required(p,['location','condition','evidence','requestedFollowup']);time(p.observed,'Observation time');if(p.observed>Date.now()+300000)throw new Error('An observation cannot be in the future.');if(p.latitude!==null||p.longitude!==null){if(!Number.isFinite(p.latitude)||!Number.isFinite(p.longitude)||p.latitude<35||p.latitude>38.5||p.longitude< -122||p.longitude> -117)throw new Error('Use WGS84 coordinates near Fresno County, or leave both coordinates blank.');}}
   else if(collection==='verifications'){required(p,['reportEvent','finding','evidence']);oneOf(p.outcome,['Confirmed','Corrected','Unable to verify'],'Verification outcome');time(p.verifiedAt,'Verification time');}
   else if(collection==='coordination'){required(p,['title','location','owner','nextReview']);oneOf(p.kind,['Follow-up','Decision','Information gap'],'Coordination kind');oneOf(p.status,['Open','In progress','Complete','Canceled'],'Coordination status');time(p.due,'Due time');if(['Complete','Canceled'].includes(p.status))required(p,['evidence']);}
-  else if(collection==='checklists'){oneOf(p.check,CHECKS,'Readiness check');oneOf(p.status,['Not started','In progress','Complete','Blocked'],'Readiness status');required(p,['owner','evidence']);}
+  else if(collection==='checklists'){if(p.kind==='pump-readiness')validatePumpReadiness(p);else {oneOf(p.check,CHECKS,'Readiness check');oneOf(p.status,['Not started','In progress','Complete','Blocked'],'Readiness status');required(p,['owner','evidence']);}}
   else if(collection==='staging'){required(p,['location','owner','evidence']);oneOf(p.status,['Unconfirmed','Owner confirmed','Unavailable'],'Staging status');if(p.status==='Owner confirmed'){time(p.confirmedAt,'Access confirmed time');time(p.validUntil,'Access review due');if(p.validUntil<=p.confirmedAt)throw new Error('Access review must follow confirmation.');}}
   else if(collection==='briefings'){required(p,['title','periodEvent','snapshot','digest']);if(!/^[a-f0-9]{64}$/.test(p.digest))throw new Error('Invalid snapshot digest.');}
   else if(collection==='approvals'){required(p,['briefingEvent','digest','evidence']);oneOf(p.status,['Approved','Withdrawn'],'Approval status');}

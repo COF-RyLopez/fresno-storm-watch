@@ -19,4 +19,17 @@
 #drainage-review-detail p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 #drainage-review-detail calcite-button { justify-self: start; max-width: 100%; }
 #drainage-review-detail form { display: grid; gap: 12px; }
+.pump-readiness-form { border-block: 1px solid var(--calcite-color-border-2); padding-block: 16px; min-width: 0; }
+.pump-readiness-form label { display: grid; gap: 6px; font-size: .9rem; line-height: 1.5; }
+.pump-readiness-form input, .pump-readiness-form select, .pump-readiness-form textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid var(--calcite-color-border-input); background: var(--calcite-color-background); color: var(--calcite-color-text-1); font: inherit; color-scheme: dark light; }
+.pump-readiness-form textarea { min-height: 88px; resize: vertical; }
+.pump-readiness-form :is(input,select,textarea):focus-visible { outline: 2px solid var(--calcite-color-focus-color); outline-offset: 2px; }
+.pump-readiness-form .pump-readiness-identity { display: flex; align-items: flex-start; gap: 10px; }
+.pump-readiness-form input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--calcite-color-brand); }
+.pump-readiness-form small { color: var(--calcite-color-text-2); line-height: 1.5; }
+.readiness-rehearsal { max-width: 780px; margin-inline: auto; padding: 24px 16px; }
+.county-pump-counts { flex-basis: 100%; padding: 4px 8px; font-size: 12px; line-height: 1.5; color: var(--calcite-color-text-1); }
+@media (max-width:900px) {
+  #evidence-mobile-host:has(.pump-readiness-form) { position: fixed; inset: 60px 0 0; height: auto; max-height: none; z-index: 1000; background: var(--calcite-color-foreground-1); }
+}
 @media (max-width: 600px) { .drainage-actions calcite-button { flex: 1 1 140px; } }

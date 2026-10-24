@@ -3,10 +3,14 @@ import {unhealthyChecks} from './workspace-model.js?v=0.40.0';
 export function reportHealth(key,label,{checked=null,error=null,maxAgeMs=420000,detail=''}={}){window.dispatchEvent(new CustomEvent('storm-source-health',{detail:{key,label,checked,error,maxAgeMs,detail}}));}
 /** Countywide counts remain independent of workspace presentation. */
 export function createCountyStrip({onOpen,exercise=false,timeZone}){
-  const $=id=>document.getElementById(id),checks=new Map();let areaCount=null,drainageCount=null,pumpPowerCount=null,powerCount=null,alertCount=null,dialogSignature=null,briefingUpdated=false;
+  const $=id=>document.getElementById(id),checks=new Map();let areaCount=null,drainageCount=null,pumpPowerCount=null,readinessCount=null,powerCount=null,alertCount=null,dialogSignature=null,briefingUpdated=false;
+  const compact=matchMedia('(max-width:600px)'),pumpCounts=document.createElement('small');pumpCounts.className='county-pump-counts';$('notify-areas').parentElement.append(pumpCounts);
   const time=t=>Number.isFinite(t)?new Intl.DateTimeFormat('en-US',{timeZone,dateStyle:'short',timeStyle:'long'}).format(t):'No successful check';
   function render(){const now=Date.now(),list=new Map([...checks].map(([k,s])=>[k,{...s,status:s.error?'failed':!Number.isFinite(s.checked)?'unknown':s.checked>now+120000?'unknown':now-s.checked>s.maxAgeMs?'stale':'current'}]));const issues=unhealthyChecks(list);
-    $('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage${pumpPowerCount?` · ${pumpPowerCount} pump power`:""}`}`;$('notify-alerts').textContent=`Weather alerts · ${alertCount??'checking'}${briefingUpdated?' · briefing updated':''}`;$('notify-power').textContent=`Power / PSPS · ${powerCount??'checking'}`;$('notify-health').textContent=exercise?'Source issues · exercise':`Source issues · ${checks.size?issues.length:'checking'}`;
+    $('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage${pumpPowerCount?` · ${pumpPowerCount} pump power`:""}${readinessCount?` · ${readinessCount} pump readiness`:""}`}`;$('notify-alerts').textContent=`Weather alerts · ${alertCount??'checking'}${briefingUpdated?' · briefing updated':''}`;$('notify-power').textContent=`Power / PSPS · ${powerCount??'checking'}`;$('notify-health').textContent=exercise?'Source issues · exercise':`Source issues · ${checks.size?issues.length:'checking'}`;
+    $('notify-areas').setAttribute('aria-label',$('notify-areas').textContent);
+    if(compact.matches)$('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage`}`;
+    pumpCounts.hidden=!compact.matches||!(pumpPowerCount||readinessCount);pumpCounts.textContent=`Pump power · ${pumpPowerCount??'unassessed'} / Pump readiness follow-ups · ${readinessCount??'unassessed'}`;
     $('notify-health').setAttribute('icon-start',issues.length?'exclamation-mark-triangle':'information');
     if(!$('source-health-dialog').hasAttribute('open'))return;const signature=JSON.stringify([exercise,[...list]]);if(signature===dialogSignature)return;dialogSignature=signature;
     const host=$('source-health-list');host.replaceChildren();
@@ -17,5 +21,6 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
   for(const [id,topic]of [['notify-areas','watch'],['notify-alerts','alerts'],['notify-power','power']])$(id).onclick=()=>onOpen(topic);
   $('notify-health').onclick=()=>{$('source-health-dialog').setAttribute('open','');render();};
   setInterval(()=>{if(!document.hidden)render();},30000);render();
-  return {drainage:(n,pumps=null)=>{drainageCount=n;pumpPowerCount=n===null?null:pumps;render();},briefing:n=>{briefingUpdated=!!n;render();},areas:n=>{areaCount=n;render();},alerts:n=>{alertCount=n;render();},power:n=>{powerCount=n;render();}};
+  compact.addEventListener('change',render);
+  return {drainage:(n,pumps=null,readiness=null)=>{drainageCount=n;pumpPowerCount=n===null?null:pumps;readinessCount=n===null?null:readiness;render();},briefing:n=>{briefingUpdated=!!n;render();},areas:n=>{areaCount=n;render();},alerts:n=>{alertCount=n;render();},power:n=>{powerCount=n;render();}};
 }

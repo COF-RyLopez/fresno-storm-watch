@@ -1,0 +1,12 @@
+import {CONFIG} from './config.js';
+import {setupAuth} from './lib/auth.js?v=0.40.0';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.43.0';
+import {PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
+import {pumpReadiness} from './lib/pump-readiness-model.js';
+import {drainageReviewExercise} from './lib/drainage-review-exercise.js?v=0.42.0';
+const $=id=>document.getElementById(id),record=drainageReviewExercise().snapshot.rows[1];
+let controller,state=null;
+controller=createPumpReadiness({timeZone:CONFIG.timeZone,scope:PUMP_READINESS_TEST_SCOPE,onData:value=>{state=value;$('test-open').disabled=!value.connected;const host=$('test-summary');host.replaceChildren();if(controller)controller.renderSummary(host,{readiness:pumpReadiness(record,state)});},onSaved:()=>{$('test-form').replaceChildren();$('test-result').textContent='Private test saved. Reload or use Refresh saved test to verify persistence. Normal Area Watch is unchanged.';}});
+$('test-open').onclick=()=>controller.open($('test-form'),record);
+$('test-refresh').onclick=()=>controller.refresh();
+void setupAuth(CONFIG.arcgis,false,session=>controller.setSession(session));

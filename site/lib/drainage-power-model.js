@@ -1,5 +1,6 @@
 import {areaPowerEvidence} from './area-concern-model.js';
 import {powerGeometry} from './power-geometry.js';
+import {pumpReadiness,freezePumpReadiness} from './pump-readiness-model.js';
 
 /** Compare published intervals, never an estimated restoration time or an inferred rain onset. */
 export function drainagePowerTiming(match,cycle,rainCurrent){
@@ -15,7 +16,7 @@ export function drainagePowerTiming(match,cycle,rainCurrent){
 /** Exact existing-pump / utility-polygon matches only. No buffers, circuit inference or generator association.
  * Runtime is bounded by the existing 1,000-record drainage and utility source limits.
  */
-export function assessDrainagePumpPower({records,state,contours=[],cycle,rainCurrent=false,inventoryCurrent=false,previous=new Map()},now=Date.now()){
+export function assessDrainagePumpPower({records,state,contours=[],cycle,rainCurrent=false,inventoryCurrent=false,previous=new Map(),readinessState},now=Date.now()){
   const result=new Map();
   for(const record of records){
     if(record.kind!=='pump'||record.category!=='existing'||result.has(record.key))continue;
@@ -35,8 +36,9 @@ export function assessDrainagePumpPower({records,state,contours=[],cycle,rainCur
         returned:!!current,followup:evidence.followups.some(i=>i.row.key===m.row.key),previousRevision:previousMatch.row.revision!==m.row.revision?previousMatch.row.revision:null};
     });
     const review=candidates.length>0;
+    const readiness=pumpReadiness(record,readinessState,now),readinessReview=readiness.needsReview&&(review||rainCurrent&&maximum>0||readiness.history.length>0);
     const powerRain=inventoryCurrent&&rainCurrent&&maximum!==null&&maximum>0&&reviews.some(m=>m.eligible&&!m.followup&&!['after','ended'].includes(m.timing.relation));
-    result.set(record.key,{key:record.key,name:record.name,code:record.code,location,evidence,reviews,review,powerRain,maximum,rainCurrent,inventoryCurrent,backup:null,
+    result.set(record.key,{key:record.key,name:record.name,code:record.code,location,evidence,reviews,review,powerRain,maximum,rainCurrent,inventoryCurrent,readiness,readinessReview,backup:readiness.current?readiness.event?.payload.backup||null:null,
       label:powerRain?'Pump power concern + rainfall: verify timing and backup':review?'Pump power needs verification':reviews.length?'Future utility-area match outside the next 72 hours':evidence.gaps.length?'Utility coverage incomplete at pump':'No published utility-area match at pump',
       nextReview:'FMFCD / Operations: confirm this pump’s electrical service and operating state, backup connection and generator compatibility, critical load, fuel/runtime, staffing and approved access. Coordinate resource lead time with NWS rainfall timing before recommending prepositioning.'});
   }
@@ -45,7 +47,7 @@ export function assessDrainagePumpPower({records,state,contours=[],cycle,rainCur
 
 /** Freeze only evidence attributes; private pump coordinates and utility polygons stay out of handoff payloads. */
 export function freezeDrainagePumpPower(pumps=[]){
-  return structuredClone(pumps.map(p=>({pumpKey:p.key,name:p.name,code:p.code,backup:p.backup,review:p.review,label:p.label,nextReview:p.nextReview,
+  return structuredClone(pumps.map(p=>({pumpKey:p.key,name:p.name,code:p.code,backup:p.backup,review:p.review,label:p.label,nextReview:p.nextReview,readiness:freezePumpReadiness(p.readiness),readinessReview:p.readinessReview,
     rainfall:{maximumIntersectingLabel:p.maximum,units:'inches liquid equivalent',current:p.rainCurrent},checked:p.evidence.checked,gaps:p.evidence.gaps,pointOnly:p.evidence.pointOnly,
     utility:p.reviews.map(m=>({key:m.row.key,revision:m.row.revision,previousRevision:m.previousRevision,utility:m.row.utility,name:m.row.name,status:m.row.status,official:m.row.official,start:m.row.start,end:m.row.end,restoration:m.row.restoration,updated:m.row.updated,sourceRetrieved:m.sourceRetrieved,issues:m.row.issues,problem:m.problem,eligible:m.eligible,outside:m.outside,returned:m.returned,followup:m.followup,timing:m.timing})),
     note:'A utility polygon contains the mapped pump point; electrical service, loss of power, backup operation and hydraulic consequences remain unconfirmed.'})));

@@ -1,0 +1,29 @@
+{
+  "version": "0.43.0",
+  "date": "2026-10-24",
+  "automatedTestsPassed": 430,
+  "staticChecks": "passed",
+  "privateStorage": "Existing AGOL exercise checklist read/add views; no item, membership or permission changes",
+  "privateAcceptance": {
+    "account": "Existing county builder account, explicitly authorized for testing",
+    "scope": "fmfcd-pump-readiness-acceptance",
+    "records": "Two fictional events: initial confirmation and correction",
+    "verified": ["Server editor-tracked author and creation time", "Correction preserves both versions", "Reload rereads both saved events", "Sign-out removes private summary, contacts and history"],
+    "anonymousReadQuery": "denied, ArcGIS 499",
+    "anonymousWriteViewQuery": "denied, ArcGIS 499",
+    "remaining": "Independent FMFCD named-account / denied-writer acceptance before operational onboarding"
+  },
+  "areaWatchExercise": {
+    "before": "1 pump power concern and 1 readiness follow-up",
+    "afterCompleteConfirmation": "Readiness follow-up removed; pump power concern and PSPS evidence retained",
+    "unknownAndFailureCases": "Expired confirmation, zero/unknown runtime, refuel request, source failure, changed association and concurrent corrections remain review cues"
+  },
+  "visualChecks": {
+    "workstation": "1280x720: form in right evidence pane beside map",
+    "phone": "390x844: full-height dismissible editing pane, 319px input widths, page width 390px, no horizontal page overflow",
+    "phoneBanner": "Short Area Watch button and visible pump follow-up count line",
+    "temporaryViewport": "reset after validation"
+  },
+  "privacy": "No private reports, contacts, geometries or credentials in GitHub or persistent browser storage. Saved screenshot evidence stays outside repository.",
+  "rollback": "Redeploy preceding app. No data migration; appended exercise events remain private."
+}

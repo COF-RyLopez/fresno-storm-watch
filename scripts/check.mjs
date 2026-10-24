@@ -26,7 +26,7 @@ const config = await readFile(new URL('site/config.js', root), 'utf8');
 assert(!/clientSecret\s*:|password\s*:|accessToken\s*:/i.test(config), 'Public config must not contain secret settings.');
 const html = await readFile(new URL('site/index.html', root), 'utf8');
 assert(html.includes('https://js.arcgis.com/5.1/'), 'Pinned SDK stylesheet expected');
-for (const file of ['index.html','setup.html','planning.html','terrain.html','eoc.html','eoc-guide.html','flood-scenario.html','map-pilot.html','scenario-guide.html']) {
+for (const file of ['index.html','setup.html','planning.html','terrain.html','eoc.html','eoc-guide.html','flood-scenario.html','map-pilot.html','scenario-guide.html','pump-readiness-test.html']) {
   const page=await readFile(new URL(`site/${file}`,root),'utf8');
   for (const match of page.matchAll(/(?:href|src)="(\.\/[^"?#]+)"/g)) await readFile(new URL(match[1], new URL('site/', root)));
 }
