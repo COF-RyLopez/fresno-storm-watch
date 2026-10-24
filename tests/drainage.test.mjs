@@ -65,7 +65,9 @@ test('complete adapters use POST only and read all three fixed layers without an
     return {data:{spatialReference:{wkid:4326},features:[{attributes:{OBJECTID:1,SUBTYPE:1,BASIN:'Fictional',DA:'Fictional',DRAINAGE:'Fictional'},geometry}]}};
   };
   const source=await openDrainage(config,session(),async()=>({import:async()=>[request]}));
-  const rows=await source.read();assert.equal(rows.length,3);assert.deepEqual(drainageCounts(rows),{basins:1,pumps:1,proposed:0,other:0,catchments:1});
+  const primary=await source.read();assert.equal(primary.length,2);assert(primary.every(r=>r.kind!=='catchment'));assert(calls.every(c=>!c.url.includes('/16')));
+  const rows=await source.read({includeBoundaries:true});assert.equal(rows.length,3);assert.deepEqual(drainageCounts(rows),{basins:1,pumps:1,proposed:0,other:0,catchments:1});
+  assert.equal(calls.find(c=>c.url.includes('/16/query')&&c.options.query.objectIds).options.query.maxAllowableOffset,0.00002);
   assert(calls.every(c=>c.options.method==='post'&&c.options.cacheBust&&c.options.signal));assert(calls.every(c=>!/applyEdits|addFeatures|updateFeatures|deleteFeatures/.test(c.url)));source.close();
 });
 test('disconnect aborts an outstanding request and ignores its late response',async()=>{

@@ -9,7 +9,10 @@ groups, hosted items, sharing changes or permissions are created by this release
 Complete any county Enterprise sign-in prompt within the ArcGIS SDK dialog.
 
 Select Load private FMFCD layers. The fixed county service is queried read-only
-over HTTPS POST. Basins (17), Pumps (0) and Drainage Boundary (16) are loaded with
+over HTTPS POST. Basins (17) and Pumps (0) load first. Optional Drainage Boundary
+(16) loads only on request in 20-record batches, generalized at 0.00002 degree
+query tolerance for display; this is not an accuracy claim or analysis geometry.
+All queried layers use
 exact ID/batch/CRS accounting. Each layer is bounded at 5,000 records. Any failed,
 truncated, changed or invalid batch clears the complete drainage snapshot.
 

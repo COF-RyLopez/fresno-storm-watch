@@ -67,7 +67,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     $('environment-map-status').dataset.tone=usable&&!activeLayerError()?'normal':'gap';
     $('environment-legend').hidden=overlay==='off';$('radar-legend').hidden=overlay!=='radar';$('qpf-legend').hidden=overlay!=='qpf';
     $('environment-refresh').toggleAttribute('loading',busy);$('environment-refresh').toggleAttribute('disabled',busy||exercise);
-    syncLayers();onWeatherData({overlay,period,qpf,usable:!!qpfUsable(),status:$('environment-map-status').textContent});
+    syncLayers();onWeatherData({overlay,period,qpf,usable:!!qpfUsable(),rainfallHealth:$('qpf-health').textContent,layerError:!!activeLayerError(),status:$('environment-map-status').textContent});
   }
 
   function updateFramePicker(){

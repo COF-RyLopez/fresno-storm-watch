@@ -9,7 +9,7 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
   let session=null,adapter=null,map=null,rows=[],checked=null,error=null,busy=false,generation=0,selected=null,weather=null,roads=null,facilities=null,listSignature='';
   const time=v=>Number.isFinite(v)?formatTime(v,timeZone):'Unknown';
   const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
-  function clear({message=null}={}){generation++;adapter?.close();adapter=null;rows=[];checked=null;selected=null;busy=false;error=message;$('drainage-detail').replaceChildren();$('drainage-search').value='';$('drainage-facility-message').textContent='';$('drainage-evidence').removeAttribute('open');map?.clearEnvironmentPopup();map?.setDrainage([]);render();}
+  function clear({message=null}={}){generation++;adapter?.close();adapter=null;rows=[];checked=null;selected=null;busy=false;error=message;$('drainage-detail').replaceChildren();$('drainage-search').value='';$('drainage-facility-message').textContent='';$('drainage-boundary-status').textContent='';$('drainage-catchments').checked=false;map?.setLayerPreference('drainageCatchments',false);$('drainage-evidence').removeAttribute('open');map?.clearEnvironmentPopup();map?.setDrainage([]);render();}
   function select(key,focus=true){
     const row=rows.find(r=>r.key===key);if(!row)return;selected=key;
     const host=$('drainage-detail');host.replaceChildren();$('drainage-evidence').heading=row.name;
@@ -26,7 +26,7 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
     $('drainage-summary').textContent=connected?`${counts.basins} existing basin polygons · ${counts.pumps} existing pump records`:'No private drainage records loaded';
     $('drainage-proposed-count').textContent=connected?`Proposed / future assets (${counts.proposed})`:'Proposed / future assets';
     $('drainage-other-count').textContent=connected?`Other / unclassified assets (${counts.other})`:'Other / unclassified assets';
-    $('drainage-weather-status').textContent=weather?.status||'Checking published rainfall forecast dates…';
+    $('drainage-weather-status').textContent=weather?.qpf?`WPC ${weather.period.hours}h · issued ${time(weather.qpf.issue)} · valid ${time(weather.qpf.start)} to ${time(weather.qpf.end)}. ${weather.overlay==='qpf'?(weather.rainfallHealth||'Check the shared weather timeline.'):'Rainfall is not selected; use Show rainfall forecast.'}${weather.layerError?' Map layer failed; use Weather to check source health.':''}`:weather?.status||'Checking published rainfall forecast dates…';
     if(weather?.period&&$('drainage-qpf').value!==String(weather.period.id))$('drainage-qpf').value=String(weather.period.id);
     $('drainage-roads-status').textContent=roads?.snapshot?`${roads.snapshot.rows.length} road records loaded · current display filters retained. A drawn road is not confirmed open.`:'Road source checking / unavailable. Use Roads to inspect source health.';
     $('drainage-facilities-status').textContent=facilities?.connected?`${facilities.sites.length} authorized asset records loaded · power and access unconfirmed.`:'County facilities are not loaded. Use Load county facilities below; source permissions apply.';
@@ -41,13 +41,14 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
   }
   async function load(){
     if(exercise)return;if(!session){$('sign-in').click();return;}if(busy)return;busy=true;error=null;const epoch=generation;render();
-    try{if(!adapter){const opened=await openDrainage(EOC_CONFIG,session,loadSdk);if(epoch!==generation){opened.close();return;}adapter=opened;}const loaded=await adapter.read();if(epoch!==generation)return;rows=loaded;checked=Date.now();selected=null;$('drainage-evidence').removeAttribute('open');$('drainage-detail').replaceChildren();map?.clearEnvironmentPopup();map?.setDrainage(rows);}
+    try{if(!adapter){const opened=await openDrainage(EOC_CONFIG,session,loadSdk);if(epoch!==generation){opened.close();return;}adapter=opened;}const first=!checked,loaded=await adapter.read({includeBoundaries:$('drainage-catchments').checked});if(epoch!==generation)return;rows=loaded;checked=Date.now();selected=null;$('drainage-evidence').removeAttribute('open');$('drainage-detail').replaceChildren();map?.clearEnvironmentPopup();map?.setDrainage(rows);if(first&&!$('drainage-panel').hidden){onMap();void map?.fitDrainage();}}
     catch(e){if(epoch===generation)clear({message:e.message});}
     finally{if(epoch===generation){busy=false;render();}}
   }
   $('drainage-load').onclick=()=>void load();$('drainage-disconnect').onclick=()=>clear();
   $('drainage-filter').addEventListener('calciteSelectChange',render);$('drainage-search').addEventListener('calciteInputInput',render);
-  for(const [id,key]of [['drainage-existing','drainage'],['drainage-proposed','drainageProposed'],['drainage-other','drainageOther'],['drainage-catchments','drainageCatchments']])$(id).addEventListener('calciteCheckboxChange',()=>map?.setLayerPreference(key,$(id).checked));
+  for(const [id,key]of [['drainage-existing','drainage'],['drainage-proposed','drainageProposed'],['drainage-other','drainageOther']])$(id).addEventListener('calciteCheckboxChange',()=>map?.setLayerPreference(key,$(id).checked));
+  $('drainage-catchments').addEventListener('calciteCheckboxChange',async()=>{const wanted=$('drainage-catchments').checked;map?.setLayerPreference('drainageCatchments',wanted);if(!wanted||!adapter||rows.some(r=>r.kind==='catchment'))return;const epoch=generation;$('drainage-boundary-status').textContent='Loading optional boundaries in small batches…';try{const boundaries=await adapter.readBoundaries();if(epoch!==generation)return;if($('drainage-catchments').checked){rows=[...rows.filter(r=>r.kind!=='catchment'),...boundaries];map?.setDrainage(rows);$('drainage-boundary-status').textContent='Drainage boundaries generalized for display. Use FMFCD source geometry for engineering.';render();}}catch(e){if(epoch===generation)clear({message:e.message});}});
   $('drainage-rainfall').onclick=()=>{onRainfall(Number($('drainage-qpf').value));map?.setLayerPreference('weather',true);};
   $('drainage-qpf').addEventListener('calciteSelectChange',()=>{onRainfall(Number($('drainage-qpf').value));map?.setLayerPreference('weather',true);});
   $('drainage-fit').onclick=()=>{onMap();void map?.fitDrainage();};
