@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js?v=0.40.0';
+import {loadSdk} from './map.js?v=0.41.0';
 import {reportHealth} from './source-health.js';
 import {validateHrrrManifest,validateHrrrFrame,hrrrAt,hrrrPoint,hrrrPixels,GUST_STOPS} from './hrrr-model.js';
 

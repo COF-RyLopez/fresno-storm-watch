@@ -1,11 +1,11 @@
 import {EOC_CONFIG} from '../eoc-config.js';
-import {loadSdk} from './map.js?v=0.40.0';
+import {loadSdk} from './map.js?v=0.41.0';
 import {formatTime} from './model.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts} from './drainage-model.js';
 import {openDrainage} from './drainage-data.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Private, read-only drainage context; memory cleared on sign-out, expiry, disconnect and failure. */
-export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRainfall=()=>{},onFacilities=()=>{},onRoad=()=>{}}){
+export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRainfall=()=>{},onFacilities=()=>{},onRoad=()=>{},onData=()=>{}}){
   let session=null,adapter=null,map=null,rows=[],checked=null,error=null,busy=false,generation=0,selected=null,weather=null,roads=null,facilities=null,listSignature='';
   const time=v=>Number.isFinite(v)?formatTime(v,timeZone):'Unknown';
   const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
@@ -20,6 +20,7 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
   }
   function render(){
     const counts=drainageCounts(rows),connected=!!adapter&&!!checked;
+    onData({rows,checked,error,connected,busy});
     $('drainage-load').textContent=!session?'County sign-in':connected?'Refresh FMFCD layers':'Load private FMFCD layers';$('drainage-load').disabled=busy||exercise;$('drainage-load').loading=busy;
     $('drainage-disconnect').hidden=!adapter;
     $('drainage-status').textContent=error||(!session?'County AGOL sign-in and private EOC viewer access required. County Enterprise separately controls this service.':busy?'Reading FMFCD layers; complete the county Enterprise sign-in dialog if prompted.':connected?`Retrieved ${time(checked)}. Source age and operating conditions unknown.${Date.now()-checked>DRAINAGE_MAX_AGE?' Retrieval overdue — refresh required.':''}`:'Signed in. Load the private FMFCD layers for this session.');
@@ -57,5 +58,5 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
   setInterval(()=>{if(!document.hidden){if(adapter&&!busy)void load();else render();}},300000);
   setInterval(()=>{if(!document.hidden)render();},30000);
   window.addEventListener('pagehide',()=>{session=null;clear();});
-  render();return {setSession(next){session=next;clear();},setMap(controller){map=controller;map.setDrainage(rows);},select,setWeather(data){weather=data;render();},setRoads(data){roads=data;render();},setFacilities(data){facilities=data;render();}};
+  render();return {load,setSession(next){session=next;clear();},setMap(controller){map=controller;map.setDrainage(rows);},select,setWeather(data){weather=data;render();},setRoads(data){roads=data;render();},setFacilities(data){facilities=data;render();}};
 }

@@ -1,0 +1,87 @@
+F.R.O.G. 0.41.0 — FMFCD AREA WATCH REVIEWS
+
+County Watch / Area Watch now includes FMFCD drainage reviews. Select Load
+FMFCD for Area Watch and Load county facilities. Existing AGOL EOC-viewer
+authorization and county Enterprise source permissions continue to apply.
+No new AGOL items, groups, permissions, source edits or background server exist.
+
+Scope and evidence
+- Only source subtype 1 (existing) basin and pump records enter review groups.
+  Exact trimmed, upper-case source codes group records; missing codes remain
+  separate. A code is an inventory association, not a validated drainage network.
+  Proposed/future and other records remain in their separate Drainage map layers.
+- WPC Day 1–3 (72-hour) polygons are fetched for a FIXED PUBLIC Fresno envelope
+  [-120.95,35.88,-118.3,37.65]. Private inventory locations never enter a NOAA
+  request. Exact ObjectID batches, CRS, units and cycle times are reconciled.
+  The ArcGIS intersection operator clips public polygons locally without
+  generalizing the analysis geometry. A mixed/changed cycle fails conspicuously.
+- Highest WPC contour label touching any inventory geometry is shown with issue,
+  valid-window and retrieval times. This is not a basin average or onset/peak
+  forecast, runoff, available storage or flood depth. No polygon means unknown,
+  not zero. A positive contour creates a readiness review, not an action threshold.
+- County road and authorized facility geometries are matched within one mile
+  of complete basin outlines / pump points, using the existing SDK geodetic or
+  State Plane zone 4 metric geometry operators. This is shortest horizontal
+  distance, not road travel or proof of flood exposure / access / connectivity.
+  Multiple basin and pump matches deduplicate each road / facility within a group.
+- Explicitly inactive roads are excluded. Elapsed-date active records remain
+  for verification. Published start/end windows are compared with the rainfall
+  accumulation window; missing or reversed dates stay unknown. No reopening is
+  inferred from an elapsed end date or a missing feature. Road and site retrieval
+  failures/age remain separate from source maintenance dates and operating status.
+
+Presentation and workflow
+Rainfall plus nearby records appears first, then other rainfall cues and evidence
+gaps; equal groups are alphabetical. This is not severity or operational priority.
+Six groups are shown at a time with code search and an All existing groups filter.
+The notification strip distinguishes river-area and drainage-group counts; map
+panning, layer choices and list filters do not alter the underlying assessment.
+
+Select a group to fit its existing source records and open the right evidence
+pane. Road / asset links use existing inspection tools. Show this rainfall window
+opens the current WPC cycle; compare its dates to the captured evidence. The
+window is not precipitation arrival or river travel time. Evidence does not
+establish a hydraulic connection between a basin, pump, river or facility.
+
+Next-review guidance asks Planning / Operations to confirm FMFCD operation and
+capacity, NWS timing, facility backup power, resource lead time and approved
+staging access. Assign verification uses the existing private exercise follow-up
+workflow and its editing-group/server permissions. Add to briefing freezes
+evidence and timestamps in the tab's unapproved draft; approval / handoff remains
+the existing private workflow. No unattended notification, dispatch or automatic
+resource request is created.
+
+Privacy, resilience and operations
+Inventory, group results, assignments being edited and briefing drafts stay in
+memory, never public GitHub artifacts or persistent browser storage. Sign-out,
+source access failure and FMFCD disconnect clear private group results, cached
+joins, evidence panels and captured drainage draft entries. Generation checks
+discard superseded joins; requests cancel on disconnect. Public rainfall can
+refresh while visible without moving the shared weather clock. Inventory reads
+remain under the existing five-minute refresh, membership checks and bounds.
+Review inventory is capped at 1,000 existing source records; excess is an explicit
+failure, not silent truncation. Raw public geometry responses are bounded too.
+
+QA uses fictional fixtures at ?view=watch&exercise=1. These are labeled exercise;
+no live county inventory is mixed into the fixture. A second named account and
+owner/operator validation of source codes and operating procedures remain part
+of the private pilot acceptance, with no account or permission changes here.
+
+Verified 2026-10-24: 406 automated regression tests and the static deployment
+checks passed. The live signed-in preview returned 168 existing basin polygons,
+101 existing pump records and 177 source-code groups, with 427 authorized
+facility records available for matching. A sampled group returned one nearby
+road and one facility; uncovered WPC amounts remained unknown. The current
+public WPC polygon clipped locally to 42 vertices in about 1.7 seconds, including
+source retrieval and SDK initialization. These are a dated check, not an SLA.
+The fictional positive-rainfall case exercised the actual SDK proximity lookup,
+map focus and briefing capture. Disconnecting the live source cleared the group
+list, evidence, private count and captured drainage draft entries. Desktop and
+390-pixel-wide views were inspected. Source dates in this pane include the year
+so older road records cannot resemble the current forecast window.
+
+Primary sources checked 2026-10-24:
+https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer/9
+https://developers.arcgis.com/javascript/latest/references/core/geometry/operators/intersectionOperator/
+
+Rollback: redeploy 0.40.1. There is no data migration.

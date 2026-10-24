@@ -9,4 +9,13 @@
 .drainage-content dt { margin-top: 9px; font-weight: 600; }
 .drainage-content dd { margin: 0; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
 .drainage-content [role=status] { overflow-wrap: anywhere; }
+.drainage-review-row { padding-block: 12px; border-bottom: 1px solid var(--calcite-color-border-3); display: grid; gap: 8px; }
+.drainage-review-row p, .drainage-review-row small { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.drainage-review-row small { color: var(--calcite-color-text-2); }
+.drainage-review-row calcite-button { justify-self: start; max-width: 100%; }
+#drainage-review-detail { padding: 16px; display: grid; gap: 12px; }
+#drainage-review-detail h3 { margin: 12px 0 0; font-size: 1rem; }
+#drainage-review-detail p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+#drainage-review-detail calcite-button { justify-self: start; max-width: 100%; }
+#drainage-review-detail form { display: grid; gap: 12px; }
 @media (max-width: 600px) { .drainage-actions calcite-button { flex: 1 1 140px; } }
