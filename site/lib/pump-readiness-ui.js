@@ -1,28 +1,30 @@
 import {EOC_CONFIG} from '../eoc-config.js';
-import {createPrivateStore,createExerciseStore} from './eoc-store.js?v=0.43.0';
-import {emptyRecords,makeEvent,heads,digest,canonical} from './eoc-model.js?v=0.43.0';
+import {createPrivateStore,createExerciseStore} from './eoc-store.js?v=0.45.0';
+import {emptyRecords,makeEvent,heads,digest,canonical} from './eoc-model.js?v=0.45.0';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION_OPTIONS,FUEL_OPTIONS,pumpBinding,bindingKey,validatePumpReadiness} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
-import {reportHealth} from './source-health.js?v=0.43.0';
+import {openPumpTask,renderPumpTasks} from './pump-task-ui.js?v=0.45.0';
+import {reportHealth} from './source-health.js?v=0.45.0';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 
 /** Private append-only confirmations in the existing restricted checklist views. No browser persistence. */
 export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,scope=PUMP_READINESS_SCOPE,onData=()=>{},onSaved=()=>{}}){
   if(![PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE].includes(scope))throw Error('Unknown readiness workspace.');
-  let session=null,store=exercise?createExerciseStore(exerciseData?.readinessRecords):null,state={connected:exercise,records:[],checked:exercise?Date.now():null,error:null},epoch=0,loading=null,activeForm=null;
+  let session=null,store=exercise?createExerciseStore(exerciseData?.readinessRecords):null,state={connected:exercise,records:[],tasks:[],checked:exercise?Date.now():null,error:null},epoch=0,loading=null,activeForm=null;
   const stamp=v=>new Date(v).toLocaleString('en-US',{timeZone,timeZoneName:'short'});
-  const publish=()=>{const status=document.getElementById('pump-readiness-status');if(status)status.textContent=exercise?'Pump readiness · fictional rehearsal in this tab only':!session?'Pump readiness · county AGOL sign-in required':state.error||!state.connected?'Pump readiness · '+(state.error||'checking private exercise storage…'):`Private exercise pump readiness connected · ${store?.allowed.has('checklists')?'submission access':'read-only access'} · checked ${stamp(state.checked)}. Open a drainage group to confirm a pump.`;onData({...state});if(session&&!exercise)reportHealth('pump-readiness','Private pump readiness',{checked:state.checked,error:state.error,maxAgeMs:120000});};
+  const publish=()=>{const status=document.getElementById('pump-readiness-status');if(status)status.textContent=exercise?'Pump readiness · fictional rehearsal in this tab only':!session?'Pump readiness · county AGOL sign-in required':state.error||!state.connected?'Pump readiness · '+(state.error||'checking private exercise storage…'):`Private exercise pump readiness connected · ${store?.allowed.has('checklists')?'submission access':'read-only access'} · checked ${stamp(state.checked)}. Open a pump to confirm readiness or assign follow-up.`;onData({...state});if(session&&!exercise)reportHealth('pump-readiness','Private pump readiness / assignments',{checked:state.checked,error:state.error,maxAgeMs:120000});};
   const clearForm=()=>{activeForm?.replaceChildren();activeForm=null;};
   async function refresh(){
     if(loading)return loading;if(!exercise&&!session)return;
     const version=epoch;
     loading=(async()=>{try{
       if(!store){const opened=await createPrivateStore(EOC_CONFIG,session);if(version!==epoch){opened.close();return;}store=opened;}
-      const records=await store.loadCollection('checklists',scope);if(version!==epoch)return;
+      const [records,tasks]=await Promise.all([store.loadCollection('checklists',scope),store.loadCollection('coordination',scope)]);if(version!==epoch)return;
       if(records.some(r=>r.payload.kind!=='pump-readiness'))throw Error('Unexpected record in the pump-readiness scope.');
-      state={connected:true,records,checked:Date.now(),error:null};publish();
-    }catch{if(version===epoch){state={connected:false,records:[],checked:null,error:'Private readiness query failed. Reconnect county AGOL and refresh; previous confirmations are not current.'};publish();}}
+      if(tasks.some(r=>!r.payload.pumpTask))throw Error('Unexpected pump assignment record.');
+      state={connected:true,records,tasks,checked:Date.now(),error:null};publish();
+    }catch{if(version===epoch){state={connected:false,records:[],tasks:[],checked:null,error:'Private readiness / assignment query failed. Reconnect county AGOL and refresh; previous details are not current.'};publish();}}
     finally{if(version===epoch)loading=null;}})();return loading;
   }
   function renderSummary(host,pump){
@@ -31,7 +33,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     for(const reason of r.reasons)host.append(el('p',reason));
     const details=el('details');details.append(el('summary',`Readiness history · ${r.history.length} saved update(s)`));
     for(const e of [...r.history].sort((a,b)=>b.created-a.created))details.append(el('p',`${stamp(e.created)} · ${e.author} · ${e.payload.backup} backup · fuel ${e.payload.fuel} · runtime ${e.payload.runtimeHours??'unknown'}${e.payload.runtimeHours===null?'':' hours'} · review ${stamp(e.payload.validUntil)} · ${e.payload.evidence}`));
-    host.append(details);
+    host.append(details);renderPumpTasks(host,pump,stamp);
   }
   async function open(host,record,current=()=>true){
     clearForm();activeForm=host;const version=epoch;host.replaceChildren(el('p','Checking private readiness access…'));await refresh();
@@ -88,7 +90,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     };
     form.onsubmit=e=>{e.preventDefault();save.click();};host.append(form);fields.pumpLabel.focus();
   }
-  const controller={open,renderSummary,refresh,setSession(value){if(exercise)return;epoch++;session=value;clearForm();store?.close();store=null;loading=null;state={connected:false,records:[],checked:null,error:null};publish();if(value)void refresh();}};
+  const controller={openTask(host,record,current=()=>true){clearForm();activeForm=host;return openPumpTask({host,record,current:()=>activeForm===host&&current(),access:()=>({store,state,epoch,session}),refresh,scope,exercise,onSaved});},open,renderSummary,refresh,setSession(value){if(exercise)return;epoch++;session=value;clearForm();store?.close();store=null;loading=null;state={connected:false,records:[],tasks:[],checked:null,error:null};publish();if(value)void refresh();}};
   setInterval(()=>{if(!document.hidden&&(session||exercise))void refresh();},60000);
-  window.addEventListener('pagehide',()=>{epoch++;session=null;clearForm();store?.close();store=null;state={connected:false,records:[],checked:null,error:null};publish();});publish();if(exercise)void refresh();return controller;
+  window.addEventListener('pagehide',()=>{epoch++;session=null;clearForm();store?.close();store=null;state={connected:false,records:[],tasks:[],checked:null,error:null};publish();});publish();if(exercise)void refresh();return controller;
 }

@@ -2,6 +2,7 @@ import {powerGeometry,powerScope} from './power-geometry.js';
 import {DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {FACILITY_MAX_AGE} from './facility-model.js';
 import {assessDrainagePumpPower,freezeDrainagePumpPower} from './drainage-power-model.js?v=0.43.0';
+import {pumpTasks,freezePumpTasks} from './pump-task-model.js?v=0.45.0';
 export const DRAINAGE_REVIEW_MILES=1;
 export const DRAINAGE_REVIEW_LIMIT=1000;
 export const DRAINAGE_RAIN_BOUNDS=Object.freeze([-120.95,35.88,-118.3,37.65]);
@@ -51,6 +52,7 @@ export function assessDrainageReviews({groups,vicinity,snapshot,rain,roads,facil
   const roadCurrent=!!roads?.snapshot&&!roads.error&&fresh(roads.snapshot.checked,420000,now);
   const prepared=rainCurrent?(rain.features||[]).map(f=>({value:f.value,scope:powerScope(f.geometry)})):[];
   const pumpAssessments=assessDrainagePumpPower({records:groups.flatMap(g=>g.records),state:power,contours:prepared,cycle,rainCurrent,inventoryCurrent,previous:previousPower,readinessState},now);
+  for(const record of groups.flatMap(g=>g.records)){const p=pumpAssessments.get(record.key);if(p)p.tasks=pumpTasks(record,readinessState,p.readiness.event,now);}
   return groups.map(group=>{
     const nearby=vicinity?.get(group.id),gaps=[];let maximum=null;
     const pumpPower=group.records.map(r=>pumpAssessments.get(r.key)).filter(Boolean),powerReview=pumpPower.some(p=>p.review),powerRain=pumpPower.some(p=>p.powerRain),readinessReview=pumpPower.some(p=>p.readinessReview);
@@ -67,7 +69,8 @@ export function assessDrainageReviews({groups,vicinity,snapshot,rain,roads,facil
     if(nearFacilities.some(i=>!i.current))gaps.push('Nearby facility records have unverified / old retrievals.');
     const rainfall=inventoryCurrent&&rainCurrent&&maximum!==null&&maximum>0;
     const combined=rainfall&&(nearFacilities.length>0||nearRoads.some(i=>i.timing!=='Published dates do not overlap rainfall window'));
-    const roadVerification=nearRoads.some(i=>i.verification),review=rainfall||powerReview||readinessReview||roadVerification||gaps.length>0;
+    const taskReview=pumpPower.some(p=>p.tasks.rows.some(t=>t.active||t.needsReview));
+    const roadVerification=nearRoads.some(i=>i.verification),review=taskReview||rainfall||powerReview||readinessReview||roadVerification||gaps.length>0;
     return {...group,roads:nearRoads,facilities:nearFacilities,pumpPower,powerReview,powerRain,readinessReview,gaps,maximum,cycle,checked:rain?.checked,inventoryChecked:snapshot?.checked,inventoryCurrent,rainCurrent,roadCurrent,roadChecked:roads?.snapshot?.checked,review,combined,rainfall,
       change:powerRain?'Pump power concern + forecast precipitation: review backup readiness':powerReview?'Pump power needs verification':readinessReview?'Pump backup readiness needs follow-up':combined?'Forecast precipitation + nearby county records: review readiness':rainfall?'Forecast precipitation: verify basin / pump readiness':roadVerification?'Nearby road status needs verification':gaps.length?'Evidence incomplete: verification needed':'No current drainage review cue; check source coverage',
       nextReview:powerReview?pumpPower.find(p=>p.review).nextReview:'Planning / Operations: confirm FMFCD capacity and pump operation, rainfall timing with NWS, site backup power, resource lead time and approved staging access before recommending prepositioning.'};
@@ -80,6 +83,7 @@ export function freezeDrainageReview(row,now=Date.now()){
     inventory:{retrieved:row.inventoryChecked,records:row.records.map(r=>({selectionKey:r.key,kind:r.kind,code:r.code,sourceUpdated:r.updated,status:r.status})),note:'ObjectIDs identify this retrieval only. A shared source code is not a validated hydraulic connection.'},
     rainfall:{maximumIntersectingLabel:row.maximum,units:'inches liquid equivalent',cycle:row.cycle,checked:row.checked,current:row.rainCurrent,note:'Highest WPC polygon label touching inventory geometry, not basin average, onset, runoff or flood depth.'},
     pumpPower:freezeDrainagePumpPower(row.pumpPower),
+    pumpFollowups:row.pumpPower.map(p=>({pump:p.name,selectionKey:p.key,...freezePumpTasks(p.tasks)})),
     roads:row.roads.map(i=>({key:i.key,name:i.record.name,status:i.record.status,start:i.record.start,end:i.record.end,sourceTime:i.record.sourceTime,edited:i.record.edited,distanceMeters:i.distanceMeters,timing:i.timing,verification:i.verification})),
     facilities:row.facilities.map(i=>({key:i.key,name:i.record.site.name,owner:i.record.site.owner||null,backup:i.record.site.backup||null,retrieved:i.record.site.fetched,current:i.current,distanceMeters:i.distanceMeters})),
     note:'Within one mile by shortest horizontal geometry distance; proximity is not flood exposure, hydraulic connectivity, a safe route or a deployment order.'});

@@ -1,4 +1,4 @@
-import {pumpReadinessSummary,filterPumpSummary} from './pump-summary-model.js';
+import {pumpReadinessSummary,filterPumpSummary} from './pump-summary-model.js?v=0.45.0';
 const PAGE_SIZE=3;
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** No private records persist outside this tab. Counts always use the full loaded inventory. */
@@ -44,6 +44,7 @@ export function createPumpSummary({host,timeZone,onInspect=()=>{},exercise=false
       row.append(el('p',r.contact?`${r.contact.current?'Responsible':'Last reported contact · reconfirm'}: ${r.contact.owner} · ${r.contact.method}`:'Responsible contact unconfirmed · inspect and confirm with FMFCD.'));
       row.append(el('p',`Rainfall at pump: ${r.rain.value===null?'amount unknown':r.rain.value.toFixed(2)+' in liquid equivalent (polygon label)'}${r.rain.current?'':' · source overdue / unavailable'}.${r.powerRain?' Utility-area concern overlaps rainfall context; verify timing.':r.utilityConcern?' Utility-area concern needs verification.':''}`));
       row.append(el('p',`Runtime: ${r.runtimeHours===null?'unknown':r.runtimeHours+' h (owner estimate)'} · next readiness review: ${stamp(r.reviewDue)}.`));
+      for(const t of r.tasks||[])row.append(el('p',`${t.type}: ${t.status}${t.overdue?' · OVERDUE':''} · ${t.assigneeType}: ${t.owner} · due ${stamp(t.due)}${t.changed?' · readiness changed; review assignment':''}`));
       if(r.reasons.length||r.contact){const details=el('details');details.append(el('summary','Confirmation and follow-up evidence'));if(r.contact)details.append(el('small',`Confirmed ${stamp(r.contact.observed)} · saved by ${r.contact.author} at ${stamp(r.contact.submitted)}${r.current?'':' · confirmation / inventory match needs rechecking'}.`));for(const reason of r.reasons)details.append(el('p',reason));row.append(details);}
       list.append(row);
     }

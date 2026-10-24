@@ -1,5 +1,19 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.39.0 | October 20, 2026 | Mission workspace and private scenario foundation
+Version 0.45.0 | October 24, 2026 | Private pump assignments and FMFCD intake preview
+
+PUMP ASSIGNMENTS (v0.45.0)
+County Watch -> Pump readiness -> select a pump -> Assign / update pump follow-up.
+Backup power, refueling and verification tasks retain person/team, due time,
+status, update evidence and append-only history in existing private coordination
+views. Summary and banner use current records; briefing captures freeze exact
+versions. New readiness versions flag task review. No dispatch or messages.
+See docs/pump-followups.txt and eoc-guide.html#pump-followups for instructions.
+FMFCD field mappings support a local validation preview; actual external schema,
+maintained-ID crosswalk and approved integration remain pending. Preview files
+must stay outside this public checkout; the adapter performs no AGOL writes.
+448 JavaScript tests passed, plus desktop/mobile rehearsal and private owner
+acceptance (create, correction, reload, sign-out). Anonymous coordination queries
+were denied with ArcGIS 499. Tests with a second named account remain pending.
 
 MISSION WORKSPACE (v0.39.0)
 County Watch, Scenarios and Briefing are the primary destinations. Topic tools

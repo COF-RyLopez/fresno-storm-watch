@@ -1,10 +1,10 @@
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
 import {setupAuth} from './lib/auth.js?v=0.40.0';
-import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.43.0';
+import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.45.0';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';
-import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.43.0';
+import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.45.0';
 import {formatTime} from './lib/model.js';
 
 const $=id=>document.getElementById(id),el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};

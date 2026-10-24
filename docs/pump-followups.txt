@@ -1,0 +1,50 @@
+F.R.O.G. pump assignments — 0.45.0
+
+EOC workflow
+1. Sign in to county AGOL, then load the private FMFCD inventory in County Watch.
+2. Choose Pump readiness and select a pump name. Its location and evidence open beside the map.
+3. Choose Assign / update pump follow-up. Select Backup power, Refueling or Verification.
+4. Assign a person or team, enter the due time, requested work and update evidence. Confirm the pump identity, then save.
+5. Reopen the same work type to reassign, mark In progress, Complete, Canceled, or reopen it as Open. Prior versions remain in history.
+6. The summary and banner reflect current saved assignments. Reopen the evidence and Add to briefing after an update. Briefing snapshots do not silently change.
+
+Due times display in Pacific time; form entry uses the workstation's local time, explicitly labeled. Overdue means an active assignment's due time has passed. A new readiness version flags tasks for review even when a previous task is complete. Task completion does not confirm readiness, restore electrical service, clear a hazard, dispatch resources or send messages.
+
+Storage and access
+Uses the existing private exercise coordination read/write views, scope fmfcd-pump-readiness-exercise. No new AGOL items or group changes. Existing authorized viewers read; coordinators and the owner append. AGOL controls access and records author/time. A free-text assignee is coordination information, not an access grant or message recipient. Data and drafts stay in tab memory or private AGOL. Refresh every minute while visible; source failures make assignments unassessed.
+
+There is one assignment per exact pump retrieval association and work type. Deterministic entity IDs prevent separate first submissions from hiding duplicates; parallel updates show conflicts. Explicit corrections supersede all reviewed heads. Source ObjectIDs are not stable pump IDs; changed associations are not transferred to nearby pumps. Retain unmatched history for GIS / FMFCD reconciliation. Proposed assets are excluded.
+
+FMFCD options
+A. Named FMFCD users can use the same private readiness form after county GIS confirms an eligible account and appropriate access. Do not grant broader coordinator rights solely to onboard an external reporter without reviewing the existing group scope.
+B. FMFCD can supply its own JSON export or authenticated service with its own column names. Obtain its schema, maintained pump ID, record revision, categorical meanings, runtime units, observation/review timestamps with time zones and update owner. GIS prepares a reviewed one-to-one crosswalk from maintained IDs to the current inventory association. Code-only or nearest-point matches are not accepted.
+
+The included preview adapter accepts a mapping such as:
+{
+  "schema": 1,
+  "publisher": "FMFCD — confirm actual source",
+  "schemaVersion": "confirm version",
+  "runtimeUnits": "hours",
+  "fields": {
+    "assetId": "their_pump_id", "sourceRevision": "their_revision",
+    "pumpLabel": "their_name", "backup": "their_backup",
+    "connection": "their_connection", "fuel": "their_fuel",
+    "runtimeHours": "their_runtime", "runtimeBasis": "their_runtime_basis",
+    "owner": "their_owner", "contact": "their_work_contact",
+    "observed": "their_checked_at", "validUntil": "their_review_by",
+    "evidence": "their_notes"
+  },
+  "values": {
+    "backup": {"unknown":"Unknown", "yes":"Available", "no":"Unavailable"},
+    "connection": {"unknown":"Unknown", "tested":"Confirmed compatible / tested", "check":"Needs verification"},
+    "fuel": {"unknown":"Unknown", "ready":"Confirmed available", "refuel":"Refuel needed", "electric":"Not fuel powered"}
+  }
+}
+These are illustrative field names and codes, not FMFCD's confirmed schema. Crosswalk rows contain assetId, binding (source, selectionKey, code, x, y, wkid:4326), reviewedBy and reviewedAt. A county reviewer must validate associations against the current inventory.
+
+Run the local preview tool with four paths outside this public repository:
+node scripts/preview-fmfcd-readiness.mjs <rows.json> <mapping.json> <crosswalk.json> <preview.json>
+It writes a new private preview file, lists accepted/rejected counts, rejects unknown codes, duplicate IDs, ambiguous matches, expired reports, missing time zones and undocumented runtime units. It does not publish or update AGOL. Until the actual FMFCD schema and authentication are supplied, applying updates uses the reviewed readiness form. A protected scheduled importer can be added after that agreement; no unattended synchronization is claimed.
+
+Acceptance / rollback
+Test two assigned work types, reassignment, overdue state, completion/reopen, concurrent edits, changed readiness version, failed query, sign-out and frozen briefing evidence. Use fictional rehearsal records or isolated private acceptance scope. Deploying the preceding Pages release rolls back the interface without deleting append-only history.

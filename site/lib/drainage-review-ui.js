@@ -1,6 +1,7 @@
-import {drainageReviewGroups,drainageVicinity,assessDrainageReviews,freezeDrainageReview} from './drainage-review-model.js?v=0.43.0';
+import {drainageReviewGroups,drainageVicinity,assessDrainageReviews,freezeDrainageReview} from './drainage-review-model.js?v=0.45.0';
 import {unmatchedPumpReadiness,pumpBinding,bindingKey} from './pump-readiness-model.js';
-import {createPumpSummary} from './pump-summary-ui.js?v=0.44.0';
+import {pumpTaskCounts} from './pump-task-model.js?v=0.45.0';
+import {createPumpSummary} from './pump-summary-ui.js?v=0.45.0';
 import {fetchDrainageRain} from './drainage-review-data.js';
 import {drainageReviewExercise} from './drainage-review-exercise.js?v=0.42.0';
 import {reportHealth} from './source-health.js?v=0.42.0';
@@ -11,7 +12,7 @@ const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.crea
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 
 /** Private inventory and correlation results live in this tab only, including during asynchronous joins. */
-export function createDrainageReviews({config,timeZone,exercise=false,exerciseData=null,onSummary=()=>{},onConnect=()=>{},onFacilities=()=>{},onMap=()=>{},onRecord=()=>{},onRoad=()=>{},onFacility=()=>{},onPower=()=>{},onRainfall=()=>{},onCapture=()=>{},onAssign=()=>{},onClear=()=>{},onReadiness=()=>{},renderReadiness=()=>{}}){
+export function createDrainageReviews({config,timeZone,exercise=false,exerciseData=null,onSummary=()=>{},onConnect=()=>{},onFacilities=()=>{},onMap=()=>{},onRecord=()=>{},onRoad=()=>{},onFacility=()=>{},onPower=()=>{},onRainfall=()=>{},onCapture=()=>{},onAssign=()=>{},onClear=()=>{},onReadiness=()=>{},onPumpTask=()=>{},renderReadiness=()=>{}}){
   let snapshot=null,roads=null,facilities=null,rain=null,map=null,model=[],generation=0,queued=false,busy=false,error=null,selected=null,facilitySignature='',rainPromise=null,rainAbort=null,listSignature='';
   let power=null,previousPower=new Map(),powerSignature='',powerEpoch=0;
   let readinessState=null,readinessEpoch=0,unmatchedReadiness=0,selectedPump=null;
@@ -32,7 +33,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
     const request=fetchDrainageRain({clip:shape=>map.clipDrainageRain(shape),signal:controller.signal}).then(value=>{if(!controller.signal.aborted)rain=value;return value;}).catch(e=>{if(controller.signal.aborted)throw e;rain={cycle:null,features:[],checked:null,error:e.message};return rain;}).finally(()=>{if(rainPromise===request)rainPromise=null;});
     rainPromise=request;return request;
   }
-  function assess(){if(!snapshot?.connected){model=[];onSummary(null);return;}try{model=assessDrainageReviews({groups:cachedGroups,vicinity:cachedVicinity,snapshot,rain,roads,facilities,power,previousPower,readinessState,config},Date.now());previousPower=new Map(model.flatMap(r=>r.pumpPower.map(p=>[p.key,p])));unmatchedReadiness=unmatchedPumpReadiness(snapshot.rows,readinessState);map?.setDrainagePowerKeys([...new Set(model.flatMap(r=>r.pumpPower.flatMap(p=>p.reviews.filter(m=>m.returned).map(m=>m.row.key))))],[...previousPower.values()].filter(p=>p.review||p.readinessReview).map(p=>p.key));onSummary(model.filter(r=>r.review).length,[...previousPower.values()].filter(p=>p.review).length,[...previousPower.values()].filter(p=>p.readiness.needsReview||!p.inventoryCurrent).length+unmatchedReadiness);}catch(e){model=[];map?.setDrainagePowerKeys([]);error=e.message;onSummary(null);}}
+  function assess(){if(!snapshot?.connected){model=[];onSummary(null);return;}try{model=assessDrainageReviews({groups:cachedGroups,vicinity:cachedVicinity,snapshot,rain,roads,facilities,power,previousPower,readinessState,config},Date.now());previousPower=new Map(model.flatMap(r=>r.pumpPower.map(p=>[p.key,p])));unmatchedReadiness=unmatchedPumpReadiness(snapshot.rows,readinessState);map?.setDrainagePowerKeys([...new Set(model.flatMap(r=>r.pumpPower.flatMap(p=>p.reviews.filter(m=>m.returned).map(m=>m.row.key))))],[...previousPower.values()].filter(p=>p.review||p.readinessReview).map(p=>p.key));onSummary(model.filter(r=>r.review).length,[...previousPower.values()].filter(p=>p.review).length,[...previousPower.values()].filter(p=>p.readiness.needsReview||!p.inventoryCurrent).length+unmatchedReadiness,pumpTaskCounts(model,readinessState));}catch(e){model=[];map?.setDrainagePowerKeys([]);error=e.message;onSummary(null);}}
   let cachedGroups=[],cachedVicinity=null;
   function schedule(){generation++;if(!snapshot?.connected){clear();return;}model=[];cachedVicinity=null;onSummary(null);busy=true;render();if(queued)return;queued=true;queueMicrotask(()=>{queued=false;void rebuild();});}
   async function rebuild(){
@@ -68,7 +69,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
       renderReadiness(host,pump);
       const record=row.records.find(r=>r.key===pump.key),formHost=el('div'),association=bindingKey(pumpBinding(record));
       const current=()=>snapshot?.connected&&!snapshot.error&&Date.now()-snapshot.checked<=DRAINAGE_MAX_AGE&&snapshot.rows.some(r=>r.key===record.key&&r.category==='existing'&&bindingKey(pumpBinding(r))===association);
-      host.append(button('Confirm pump readiness',()=>onReadiness(formHost,record,current)),formHost);
+      host.append(button('Confirm pump readiness',()=>onReadiness(formHost,record,current)),button('Assign / update pump follow-up',()=>onPumpTask(formHost,record,current)),formHost);
       if(!exercise)host.append(sourceButton('Inspect pump inventory',()=>onRecord(pump.key)));
       if(!pump.inventoryCurrent)host.append(el('p','FMFCD location retrieval is overdue / unavailable; recheck before using this match.'));
       if(!pump.reviews.length)host.append(el('p','No current utility-area review returned at this pump. This does not establish electrical service or available power.'));
@@ -100,7 +101,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
     if(!row.facilities.length)host.append(el('p',facilities?.connected?'No loaded facility geometry returned within one mile. Other facilities may be absent.':'Sign in and load the county inventory.'));
     for(const i of row.facilities.slice(0,12)){const s=i.record.site;host.append(sourceButton(s.name,()=>onFacility(i.key)),el('p',`${miles(i.distanceMeters)} mi · owner / department ${s.owner||'unassigned'} · backup power ${s.backup||'unknown; verify'} · inventory retrieved ${time(s.fetched)}${i.current?'':' · old / unverified'}`));}
     if(row.roads.length>12||row.facilities.length>12)host.append(el('p','First 12 nearest records per category shown; group counts include all matches.'));
-    host.append(el('h3','Verification and possible prepositioning'),el('p',row.nextReview),el('p','Suggested lead: Planning / Operations with FMFCD and the facility owner. No person is assigned until a private follow-up is saved. No deployment or dispatch is created.'));
+    host.append(el('h3','Verification and possible prepositioning'),el('p',row.nextReview),el('p','Planning / Operations coordinates with FMFCD and the facility owner. Pump-specific assignments appear above; the general verification action is separate. No deployment or dispatch is created.'));
     for(const gap of row.gaps)host.append(el('p',gap));
     const actions=el('div');actions.className='drainage-actions';actions.append(button('Assign verification',()=>onAssign(capture(row),host,()=>epoch===generation&&powerVersion===powerEpoch&&readinessVersion===readinessEpoch&&snapshot?.connected)),button('Add to briefing',()=>{if(onCapture(capture(row)))$('drainage-review-feedback').textContent='Private evidence captured in the tab’s unapproved briefing draft.';}));host.append(actions);
     $('drainage-review-evidence').setAttribute('open','');onMap();if(row.powerReview)map?.setLayerPreference('power',true);if(!exercise){onRainfall();map?.setLayerPreference('weather',true);void map?.focusDrainageGroup(pumpKey?[pumpKey]:row.records.map(r=>r.key));}else {map?.setLayerPreference('drainage',true);void map?.focusSearchSelection((row.records.find(r=>r.key===pumpKey)||row.records[0]).geometry);}
