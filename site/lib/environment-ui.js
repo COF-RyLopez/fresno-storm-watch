@@ -1,7 +1,7 @@
 import {reportHealth} from './source-health.js';
 import { loadSdk } from './map.js?v=0.40.0';
 import { formatTime } from './model.js';
-import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js';
+import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js?v=0.40.1';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
@@ -20,6 +20,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
   let overlay='radar',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
   let nextWeather=0,nextReservoir=0,cycleRequest=0;
+  let rainfallTimeRequest=null;
   const layerErrors=new Map();
   let reservoirRenderKey='';
   const parameters=new URLSearchParams(location.search);
@@ -34,6 +35,14 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   const checkOverdue=checked=>checked===null||Date.now()-checked>config.weatherCheckMaxAgeMs;
   const radarUsable=()=>!exercise&&!radarError&&!checkOverdue(radarChecked)&&radar[0]&&Date.now()-radar[0].time<=config.radarMaxAgeMs&&currentFrame();
   const qpfUsable=()=>!exercise&&!qpfError&&!checkOverdue(qpfChecked)&&qpf&&qpf.hours===period.hours&&Date.now()-qpf.issue<=config.qpfMaxAgeMs&&qpf.end>Date.now()&&weather.target()>=qpf.start&&weather.target()<qpf.end&&weather.target()>=qpf.issue;
+
+  function alignRainfallTime(){
+    if(rainfallTimeRequest!==period.id||overlay!=='qpf'||!qpf)return;
+    rainfallTimeRequest=null;
+    if(qpfError||checkOverdue(qpfChecked))return;
+    const target=weather.target(),next=qpfPlanningTime(qpf,target,Date.now(),config.qpfMaxAgeMs);
+    if(next!==null&&next!==target)weather.selectTime(next);
+  }
 
   function syncLayers(){
     if(!layers)return;
@@ -67,7 +76,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     $('environment-map-status').dataset.tone=usable&&!activeLayerError()?'normal':'gap';
     $('environment-legend').hidden=overlay==='off';$('radar-legend').hidden=overlay!=='radar';$('qpf-legend').hidden=overlay!=='qpf';
     $('environment-refresh').toggleAttribute('loading',busy);$('environment-refresh').toggleAttribute('disabled',busy||exercise);
-    syncLayers();onWeatherData({overlay,period,qpf,usable:!!qpfUsable(),rainfallHealth:$('qpf-health').textContent,layerError:!!activeLayerError(),status:$('environment-map-status').textContent});
+    syncLayers();onWeatherData({overlay,period,qpf,selectedTime:weather.target(),usable:!!qpfUsable(),rainfallHealth:$('qpf-health').textContent,layerError:!!activeLayerError(),status:$('environment-map-status').textContent});
   }
 
   function updateFramePicker(){
@@ -86,7 +95,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     busy=true;renderWeather();const request=++cycleRequest,requestedPeriod=period;
     const results=await Promise.allSettled([fetchRadarFrames(),fetchQpfCycle(requestedPeriod)]);
     if(results[0].status==='fulfilled'){radar=results[0].value;radarChecked=Date.now();radarError=null;updateFramePicker();}else radarError=results[0].reason.message;
-    if(request===cycleRequest&&period.id===requestedPeriod.id){if(results[1].status==='fulfilled'){if(qpf&&qpf.issue!==results[1].value.issue)map?.clearEnvironmentPopup();qpf=results[1].value;qpfChecked=Date.now();qpfError=null;}else{qpfError=results[1].reason.message;if(overlay==='qpf')map?.clearEnvironmentPopup();}}
+    if(request===cycleRequest&&period.id===requestedPeriod.id){if(results[1].status==='fulfilled'){if(qpf&&qpf.issue!==results[1].value.issue)map?.clearEnvironmentPopup();qpf=results[1].value;qpfChecked=Date.now();qpfError=null;alignRainfallTime();}else{rainfallTimeRequest=null;qpfError=results[1].reason.message;if(overlay==='qpf')map?.clearEnvironmentPopup();}}
     busy=false;nextWeather=Date.now()+config.pollMs;renderWeather();
     if(request!==cycleRequest)void refreshWeather();
   }
@@ -140,12 +149,12 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
-  function selectOverlay(kind,notify=true){if(!['off','radar','qpf','satellite'].includes(kind))return;map?.clearEnvironmentPopup();overlay=kind;if(notify)onOverlayChange(kind);renderWeather();}
+  function selectOverlay(kind,notify=true){if(!['off','radar','qpf','satellite'].includes(kind))return;if(kind!=='qpf')rainfallTimeRequest=null;map?.clearEnvironmentPopup();overlay=kind;if(notify)onOverlayChange(kind);renderWeather();}
   for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>selectOverlay(kind));
   $('radar-frame').addEventListener('calciteSelectChange',e=>{const frame=radar.find(f=>String(f.id)===e.target.value);if(e.target.value==='latest')weather.selectTime(null);else if(frame)weather.selectTime(frame.time);});
   $('qpf-period').addEventListener('calciteSelectChange',e=>{
     const requested=QPF_PERIODS.find(p=>String(p.id)===e.target.value);if(!requested||requested.id===period.id)return;
-    map?.clearEnvironmentPopup();period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;renderWeather();void refreshWeather();
+    rainfallTimeRequest=null;map?.clearEnvironmentPopup();period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;renderWeather();void refreshWeather();
   });
   $('environment-refresh').addEventListener('click',()=>void refreshWeather());
   $('reservoir-refresh').addEventListener('click',()=>void refreshReservoirs());
@@ -159,7 +168,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   setInterval(tick,30_000);document.addEventListener('visibilitychange',tick);
   window.addEventListener('online',()=>{nextWeather=0;nextReservoir=0;tick();});
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});
-  return {selectRainfall(id){const requested=QPF_PERIODS.find(p=>p.id===id);if(requested&&requested.id!==period.id){period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;$('qpf-period').value=String(period.id);void refreshWeather();}selectOverlay('qpf');},selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
+  return {selectRainfall(id,{selectValidTime=false}={}){const requested=QPF_PERIODS.find(p=>p.id===id);if(requested&&requested.id!==period.id){period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;$('qpf-period').value=String(period.id);void refreshWeather();}rainfallTimeRequest=selectValidTime?period.id:null;selectOverlay('qpf');alignRainfallTime();},selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
     map=controller;reservoirRenderKey='';renderReservoirs();
     void weather.setMap(controller);
     try{

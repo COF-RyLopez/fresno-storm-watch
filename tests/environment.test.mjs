@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { realNumber,sourceTime,radarFrames,qpfCycle,cdecSeries,reservoirMetricState,validateReservoirSnapshot,QPF_PERIODS } from '../site/lib/environment-model.js';
+import { realNumber,sourceTime,radarFrames,qpfCycle,qpfPlanningTime,cdecSeries,reservoirMetricState,validateReservoirSnapshot,QPF_PERIODS } from '../site/lib/environment-model.js';
 import { fetchQpfCycle,fetchRadarFrames } from '../site/lib/environment-data.js';
 import { collectReservoirs } from '../scripts/collect-reservoirs.mjs';
 
@@ -42,6 +42,18 @@ test('QPF rejects unexpected units, future issuance and a wrong accumulation len
 test('a forecast update during its valid window is legitimate and keeps that fixed window',()=>{
   const result=qpfCycle({features:[feature(cycle({start_time:'2026-10-17 00:00:00',end_time:'2026-10-20 00:00:00'}))]},72,now);
   assert(result.issue>result.start);assert.equal(result.end-result.start,72*3600000);
+});
+test('explicit rainfall preview enters a valid window and preserves an already eligible planning time',()=>{
+  const forecast=qpfCycle({features:[feature(cycle())]},72,now),maxAge=24*3600000;
+  assert.equal(qpfPlanningTime(forecast,now,now,maxAge),forecast.start);
+  assert.equal(qpfPlanningTime(forecast,forecast.start+3600000,now,maxAge),forecast.start+3600000);
+  assert.equal(qpfPlanningTime(forecast,forecast.end,now,maxAge),forecast.start);
+  const updated=qpfCycle({features:[feature(cycle({start_time:'2026-10-17 00:00:00',end_time:'2026-10-20 00:00:00'}))]},72,now);
+  assert.equal(qpfPlanningTime(updated,updated.start,now,maxAge),now);
+});
+test('rainfall preview cannot choose an expired, stale, malformed or unavailable cycle',()=>{
+  const forecast=qpfCycle({features:[feature(cycle())]},72,now);
+  for(const bad of [null,{...forecast,end:now},{...forecast,issue:now-48*3600000},{...forecast,issue:NaN},{...forecast,issue:now+3600000},{...forecast,start:forecast.end}])assert.equal(qpfPlanningTime(bad,now,now,24*3600000),null);
 });
 test('CDEC values retain source identity and units; missing newest record is explicit',()=>{
   const result=cdecSeries([row(),row({obsDate:'2026-10-17 13:00',value:-9999}),row({stationId:'MIL',value:999})],'PNF',metric,now);

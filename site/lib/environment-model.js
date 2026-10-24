@@ -58,6 +58,13 @@ export function qpfCycle(payload,hours,now=Date.now()) {
   return {issue,start,end,issueText:a.issue_time,startText:a.start_time,endText:a.end_time,hours,units:'in',product:String(a.product||`${hours}-hour QPF`)};
 }
 
+/** @param {object|null} cycle @param {number} target @param {number} now @param {number} maxAgeMs @returns {number|null} Preserve an eligible planning time; otherwise enter a current forecast's valid window. */
+export function qpfPlanningTime(cycle,target,now,maxAgeMs) {
+  if(!cycle||![cycle.issue,cycle.start,cycle.end,target,now,maxAgeMs].every(Number.isFinite)||maxAgeMs<0||cycle.start>=cycle.end||cycle.issue>=cycle.end||cycle.issue>now+300_000||now-cycle.issue>maxAgeMs||cycle.end<=now)return null;
+  const first=Math.max(cycle.start,cycle.issue);
+  return target>=first&&target<cycle.end?target:Math.max(first,now);
+}
+
 /** @param {object[]} rows @param {string} station @param {object} metric @param {number} now @returns {object} Preserve missing/flagged records and report dates without turning them into zeros. */
 export function cdecSeries(rows,station,metric,now=Date.now(),{through=now+120_000}={}) {
   if(!Array.isArray(rows))throw new Error('CDEC response is not a record array.');

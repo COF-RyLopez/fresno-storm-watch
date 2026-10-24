@@ -1,4 +1,4 @@
-F.R.O.G. 0.40.0 — PRIVATE FMFCD DRAINAGE CONTEXT
+F.R.O.G. 0.40.1 — PRIVATE FMFCD DRAINAGE CONTEXT
 
 Open the EOC workspace link "Private FMFCD drainage map", or Topic tools >
 Drainage · private in the storm map. Direct link: ?view=drainage.
@@ -33,7 +33,12 @@ used to assign water level, depth or pump capacity. Unknown remains unknown.
 Rainfall controls use the existing WPC 24/72/168-hour forecast collector and
 shared weather clock. Forecast issue/valid dates and the inches legend remain
 visible on the map; source health and clock eligibility still hide unusable
-forecasts. Rainfall is not runoff or a flood-depth estimate. County road source
+forecasts. Explicitly selecting Show rainfall forecast or changing its window
+moves an ineligible shared planning time into the current forecast window.
+An already eligible time is retained. The selected time is stated in the
+drainage pane; background refresh and tab activation do not move the clock.
+Failed or stale source checks remain hidden. Rainfall is not runoff or a
+flood-depth estimate. County road source
 status rules and display filters remain unchanged. Load county facilities uses
 the existing protected site connector and retains its source permission checks.
 

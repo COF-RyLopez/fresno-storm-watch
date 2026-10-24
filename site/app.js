@@ -1,4 +1,4 @@
-import {createDrainageWatch} from './lib/drainage-ui.js?v=0.40.0';
+import {createDrainageWatch} from './lib/drainage-ui.js?v=0.40.1';
 import {createMission} from './lib/mission-ui.js?v=0.39.0-r2';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.36.0';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.36.0';
@@ -15,7 +15,7 @@ import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
 import { createRiverWatch } from './lib/river-ui.js?v=0.27.0';
 import { createCameraWatch } from './lib/camera-ui.js?v=0.27.0';
-import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.40.0';
+import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.40.1';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.39.0';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.40.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.20.0';
@@ -69,7 +69,7 @@ const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBri
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id),onSlide:context=>briefingLayers?.followSlide(context)});
 mapSearch=createMapSearch({showMap:workspace.showMap,onInspect:row=>{if(row.kind==='gauge')rivers?.select(row.key.slice(6));else if(row.kind==='road-record')roads?.select(row.key);else if(row.kind==='asset')facilities.select(row.key);}});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:data=>{context.setFacilities(data);mission.setFacilities(data);mapSearch.setFacilities(data);drainage?.setFacilities(data);}});
-drainage=createDrainageWatch({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onRainfall:id=>environment?.selectRainfall(id),onFacilities:async()=>{map?.setLayerPreference('facilities',true);return facilities.loadDefault();},onRoad:openRoads});
+drainage=createDrainageWatch({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onRainfall:id=>environment?.selectRainfall(id,{selectValidTime:true}),onFacilities:async()=>{map?.setLayerPreference('facilities',true);return facilities.loadDefault();},onRoad:openRoads});
 const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);}});
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:workspace.showMap,onData:data=>{context.setRoads(data);mission.setRoads(data);mapSearch.setRoads({...data,exercise});drainage.setRoads(data);}});
 createIrrigationReference({onLocate:id=>{workspace.showMap();if(!map)return false;if(id==='SJMC1')map.focusGauge(id);else environment?.focusReservoir(id);return true;}});
