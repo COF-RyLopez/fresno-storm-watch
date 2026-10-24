@@ -1,5 +1,5 @@
 import {reportHealth} from './source-health.js';
-import { loadSdk } from './map.js?v=0.39.0';
+import { loadSdk } from './map.js?v=0.40.0';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
@@ -15,7 +15,7 @@ function el(tag,text='',className=''){const n=document.createElement(tag);n.text
 function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Independent public weather/reservoir controller. */
-export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{},onOverlayChange=()=>{}}){
+export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{},onOverlayChange=()=>{},onWeatherData=()=>{}}){
   let map=null,layers=null,selection=null,snapshot=null,snapshotError=null,snapshotRead=null;
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
   let overlay='radar',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
@@ -67,7 +67,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     $('environment-map-status').dataset.tone=usable&&!activeLayerError()?'normal':'gap';
     $('environment-legend').hidden=overlay==='off';$('radar-legend').hidden=overlay!=='radar';$('qpf-legend').hidden=overlay!=='qpf';
     $('environment-refresh').toggleAttribute('loading',busy);$('environment-refresh').toggleAttribute('disabled',busy||exercise);
-    syncLayers();
+    syncLayers();onWeatherData({overlay,period,qpf,usable:!!qpfUsable(),status:$('environment-map-status').textContent});
   }
 
   function updateFramePicker(){
@@ -159,7 +159,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   setInterval(tick,30_000);document.addEventListener('visibilitychange',tick);
   window.addEventListener('online',()=>{nextWeather=0;nextReservoir=0;tick();});
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});
-  return {selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
+  return {selectRainfall(id){const requested=QPF_PERIODS.find(p=>p.id===id);if(requested&&requested.id!==period.id){period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;$('qpf-period').value=String(period.id);void refreshWeather();}selectOverlay('qpf');},selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
     map=controller;reservoirRenderKey='';renderReservoirs();
     void weather.setMap(controller);
     try{
@@ -175,7 +175,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
         layer.on('layerview-create',event=>{layerErrors.delete(`${id}:${event.view.type}`);renderWeather();});
       }
       map.onViewChanged(renderWeather);
-      map.registerLayer('weather',radarLayer,false);for(const l of forecasts.values())map.registerLayer('weather',l,false);map.registerLayer('reservoirs',reservoirs);drawReservoirs();renderWeather();
+      map.registerLayer('weather',radarLayer,false,1);for(const l of forecasts.values())map.registerLayer('weather',l,false,1);map.registerLayer('reservoirs',reservoirs);drawReservoirs();renderWeather();
       $('environment-extent').removeAttribute('disabled');
     }catch(error){layerError=error.message;renderWeather();}
   }};

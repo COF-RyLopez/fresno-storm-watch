@@ -1,6 +1,6 @@
 import {assessFacilities,facilityExercise,facilityFields,FACILITY_COLORS,FACILITY_MAX_AGE,POWER_STATES} from './facility-model.js';
 import {openFacilitySource,queryFacilities} from './facility-data.js';
-import {loadSdk} from './map.js?v=0.39.0';
+import {loadSdk} from './map.js?v=0.40.0';
 import {formatTime} from './model.js';
 import {FACILITY_PRESETS,COUNTY_ASSET_REFERENCES} from './facility-presets.js';
 
@@ -103,5 +103,5 @@ export function createFacilityWatch({timeZone,exercise=false,onOpen=()=>{},onMap
   setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!document.hidden)render();},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('pagehide',()=>{session=null;clear();});
   render();
-  return {setSession(next){session=next?.portal?.id==='ibgDyuD2DLBge82s'?next:null;clear();},setCounty(c){county=c;},setPower(rows,nextFeeds){powerRows=rows;feeds=nextFeeds;render();},setMap(m){map=m;render();if(selected)map.focusFacility(selected);},select(key){const row=assessment?.sites.find(r=>r.site.key===key);if(row){onOpen();show(row);}}};
+  return {async loadDefault(){if(!sources.some(s=>s.family==='county-buildings')){$('facility-preset').value='facilities';await $('facility-preset-load').onclick();}return $('facility-preset-message').textContent;},setSession(next){session=next?.portal?.id==='ibgDyuD2DLBge82s'?next:null;clear();},setCounty(c){county=c;},setPower(rows,nextFeeds){powerRows=rows;feeds=nextFeeds;render();},setMap(m){map=m;render();if(selected)map.focusFacility(selected);},select(key){const row=assessment?.sites.find(r=>r.site.key===key);if(row){onOpen();show(row);}}};
 }

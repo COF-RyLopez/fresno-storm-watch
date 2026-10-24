@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {WORKSPACES,workspaceRoute,workspaceDefaults,workspaceMemory,layerVisible,unhealthyChecks} from '../site/lib/workspace-model.js';
 
-test('seven focused defaults never start with an unrelated operational stack',()=>{
-  assert.deepEqual(Object.keys(WORKSPACES),['watch','rivers','weather','reservoirs','alerts','power','roads']);
+test('focused defaults and private drainage never start with an unrelated operational stack',()=>{
+  assert.deepEqual(Object.keys(WORKSPACES),['watch','rivers','weather','reservoirs','alerts','power','drainage','roads']);
   assert.deepEqual(Object.entries(workspaceDefaults('roads').layers).filter(([,v])=>v).map(([k])=>k),['roads']);
   assert.equal(workspaceDefaults('weather').layers.wind,true);assert.equal(workspaceDefaults('weather').layers.weather,true);assert.equal(workspaceDefaults('weather').layers.power,false);
   for(const id of Object.keys(WORKSPACES)){const s=workspaceDefaults(id);assert.equal(s.mode,'2d');assert.equal(s.imagery,false);assert.equal(s.cameras,false);assert.equal(s.layers.fema,false);assert.equal(s.layers.buildings,false);}

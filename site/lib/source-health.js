@@ -1,4 +1,4 @@
-import {unhealthyChecks} from './workspace-model.js?v=0.39.0';
+import {unhealthyChecks} from './workspace-model.js?v=0.40.0';
 /** Source status events carry public diagnostics, never feature payloads or credentials. */
 export function reportHealth(key,label,{checked=null,error=null,maxAgeMs=420000,detail=''}={}){window.dispatchEvent(new CustomEvent('storm-source-health',{detail:{key,label,checked,error,maxAgeMs,detail}}));}
 /** Countywide counts remain independent of workspace presentation. */

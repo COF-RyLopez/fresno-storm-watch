@@ -1,3 +1,4 @@
+import {DRAINAGE_COLORS} from './drainage-model.js';
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
 import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js?v=0.39.0';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
@@ -9,7 +10,7 @@ import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.39.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.40.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -20,7 +21,7 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{},onDrainageSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   let mapPick=0;
@@ -66,6 +67,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Reference/MapServer`
     })] });
   };
+  const drainageLayers=Object.fromEntries(['drainage','drainageProposed','drainageOther','drainageCatchments'].map(key=>[key,new GraphicsLayer({title:LAYER_LABELS[key],elevationInfo:{mode:'on-the-ground'},popupEnabled:false})]));
+  let drainageRows=[];
   const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities, areaLayer] });
   const searchContext=new GraphicsLayer({title:'Nearby search references — proximity only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
   map.add(searchContext);map.add(searchSelection);
@@ -74,6 +77,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const currentState=()=>memory.get(activeProfile);
   const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=(!scenarioMode||['waterways','buildings'].includes(key))&&layerVisible(currentState(),key,eligible);};
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
+  for(const [key,layer]of Object.entries(drainageLayers))registerLayer(key,layer,false,1);
   const syncVisibility=()=>{
     for(const [layer,r]of registry)layer.visible=(!scenarioMode||['waterways','buildings'].includes(r.key))&&layerVisible(currentState(),r.key,r.eligible);
     const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways||basemapKey==='waterways')visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
@@ -204,6 +208,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const scopeTarget=()=>{const extent=scopeExtent().clone().expand(1.15);return view.type==='3d'?{target:extent,tilt:45,heading:0}:extent;};
   const fitTarget=()=>{
     let points=[];
+    if(activeProfile==='drainage'&&drainageRows.length)points=drainageRows.flatMap(r=>r.geometry.rings?r.geometry.rings.flat().map(([longitude,latitude])=>({longitude,latitude})):[{longitude:r.geometry.x,latitude:r.geometry.y}]);
     if(activeProfile==='watch')points=planningRows.filter(r=>planningFilter==='all'||r.review).flatMap(r=>r.samplePoints);
     if(activeProfile==='rivers')points=gaugeRows.filter(r=>riverBasin==='All'||r.station.basin===riverBasin).map(r=>r.gauge||r.station);
     if(activeProfile==='reservoirs'){points=gaugeRows.filter(r=>currentState().layers.upstream||['SJXC1','RSBC1','GVAC1','SJMC1'].includes(r.station.id)).map(r=>r.gauge||r.station);for(const [l,r]of registry)if(r.key==='reservoirs')for(const g of l.graphics||[])points.push({longitude:g.geometry.longitude,latitude:g.geometry.latitude});}
@@ -237,6 +242,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         const hit=await targetView.hitTest(data);
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
+        const drainageKey=hit.results.find(r=>r.graphic?.attributes?.drainageKey)?.graphic.attributes.drainageKey;
+        if(drainageKey){onDrainageSelect(drainageKey);return;}
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
         const cameraId=hit.results.find(r=>r.graphic?.attributes?.cameraId)?.graphic.attributes.cameraId;
@@ -332,10 +339,10 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   function syncControls(){
     for(const c of document.querySelectorAll('[data-context-layer]')){const builtIn=c.dataset.contextLayer==='waterways'&&basemapKey==='waterways';c.checked=builtIn||!!currentState().layers[c.dataset.contextLayer];c.disabled=builtIn;c.closest('calcite-label').hidden=c.dataset.contextLayer==='upstream'&&activeProfile!=='reservoirs';}
     document.querySelector('#waterway-basemap-context-note').hidden=basemapKey!=='waterways';
-    for(const [id,key]of [['power-map-toggle','power'],['facility-map-toggle','facilities'],['wind-map-toggle','wind']])document.querySelector('#'+id).checked=!!currentState().layers[key];
+    for(const [id,key]of [['power-map-toggle','power'],['facility-map-toggle','facilities'],['wind-map-toggle','wind'],['drainage-existing','drainage'],['drainage-proposed','drainageProposed'],['drainage-other','drainageOther'],['drainage-catchments','drainageCatchments']])document.querySelector('#'+id).checked=!!currentState().layers[key];
     mapContext.setVisibility(currentState().layers.waterways,currentState().layers.buildings);femaStatus();syncVisibility();
   }
-  function setLayerPreference(key,wanted){if(!(key in LAYER_LABELS))return;currentState().layers[key]=!!wanted;drawGauges();drawPower();syncControls();}
+  function setLayerPreference(key,wanted){if(!(key in LAYER_LABELS))return;currentState().layers[key]=!!wanted;document.dispatchEvent(new CustomEvent('frogLayerPreference',{detail:{key,wanted:!!wanted}}));drawGauges();drawPower();syncControls();}
   const options=document.querySelector('#context-options');for(const [key,label]of Object.entries(LAYER_LABELS)){if(key==='cameras')continue;const host=document.createElement('calcite-label');host.layout='inline';const box=document.createElement('calcite-checkbox');box.dataset.contextLayer=key;box.addEventListener('calciteCheckboxChange',()=>setLayerPreference(key,box.checked));host.append(box,document.createTextNode(label));options.append(host);}
   const focusNavigate=target=>{selectionFocus.cancel();const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
   const focusMessage=text=>{const host=document.querySelector('#map-status');host.hidden=false;host.textContent=text;};
@@ -454,6 +461,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusBriefingContext:(points,radiusKm=5)=>{setLayerPreference('briefingContext',true);if(!points.some(validLocation))return focusGeometry(null);points=points.filter(validLocation);const b=points.reduce((a,p)=>[Math.min(a[0],p.longitude),Math.min(a[1],p.latitude),Math.max(a[2],p.longitude),Math.max(a[3],p.latitude)],[Infinity,Infinity,-Infinity,-Infinity]),pad=(radiusKm+1)/111,lonPad=pad/Math.cos((b[1]+b[3])/2*Math.PI/180);return focusGeometry(new Extent({spatialReference:{wkid:4326},xmin:b[0]-lonPad,ymin:b[1]-pad,xmax:b[2]+lonPad,ymax:b[3]+pad}));},
     setPlanningData:(rows,filter)=>{planningRows=rows;planningFilter=filter;drawAreas();drawPower();},
     setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
+    setDrainage(rows){if(!rows.length){selectionFocus.cancel();memory.get('drainage').viewpoint=null;}drainageRows=rows;for(const layer of Object.values(drainageLayers))layer.removeAll();for(const r of rows){const key=r.category==='existing'?'drainage':r.category==='proposed'?'drainageProposed':r.category==='catchment'?'drainageCatchments':'drainageOther',shade=DRAINAGE_COLORS[r.category],polygon=!!r.geometry.rings;drainageLayers[key].add(new Graphic({geometry:{...r.geometry,type:polygon?'polygon':'point'},attributes:{drainageKey:r.key},symbol:polygon?{type:'simple-fill',style:'none',outline:{color:shade,width:r.category==='catchment'?0.8:2,style:r.category==='existing'?'solid':'dash'}}:{type:'simple-marker',style:r.category==='existing'?'circle':r.category==='proposed'?'triangle':'x',size:12,color:r.category==='existing'?shade:[0,0,0,0],outline:{color:shade,width:2}}}));}for(const [key,layer]of Object.entries(drainageLayers))setLayerEligibility(layer,layer.graphics.length>0);},
+    focusDrainage(key){const row=drainageRows.find(r=>r.key===key);if(!row)return Promise.resolve(false);const group=row.category==='existing'?'drainage':row.category==='proposed'?'drainageProposed':row.category==='catchment'?'drainageCatchments':'drainageOther';setLayerPreference(group,true);const g=drainageLayers[group].graphics.find(g=>g.attributes.drainageKey===key);return focusGeometry(g.geometry,g.geometry.type==='point'?12000:null);},
+    fitDrainage(){if(drainageRows.length)return focusPoints(drainageRows.flatMap(r=>r.geometry.rings?r.geometry.rings.flat().map(([longitude,latitude])=>({longitude,latitude})):[{longitude:r.geometry.x,latitude:r.geometry.y}]),.015);return Promise.resolve(false);},
     setFacilitiesVisible:visible=>{setLayerPreference('facilities',visible);},
     focusFacility:key=>selectionFocus.focus(type=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(!g)return null;setLayerPreference('facilities',true);return {target:g.geometry,scale:14000,...(type==='3d'?{tilt:45,heading:0}:{})};}),
     setPower:rows=>{powerRows=rows;drawPower();},

@@ -1,6 +1,6 @@
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
-import {setupAuth} from './lib/auth.js?v=0.39.0';
+import {setupAuth} from './lib/auth.js?v=0.40.0';
 import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';

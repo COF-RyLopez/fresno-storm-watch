@@ -1,4 +1,4 @@
-import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.39.0';
+import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.40.0';
 /** One active topic, independent map state, and no persisted operational data. */
 export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
@@ -35,7 +35,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   function showPanel(name,{history:push=true}={}){
     name=name==='environment'?'weather':name;if(!WORKSPACES[name])return;
     mission='watch';const changed=name!==section;cameraStates.set(section,camerasOpen);section=name;panelOpen=true;
-    if(changed){for(const id of ['map-search-evidence','river-dialog','power-dialog','facility-dialog','road-dialog','release-trend-dialog','alert-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
+    if(changed){for(const id of ['map-search-evidence','river-dialog','power-dialog','facility-dialog','drainage-evidence','road-dialog','release-trend-dialog','alert-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
     render();if(map)void map.setWorkspace(section);if(changed)onCameraChange(camerasOpen);onActivate(section);
     if(push){const u=new URL(location.href);u.searchParams.set('view',section);u.searchParams.delete('mission');u.searchParams.delete('trends');if(u.href!==location.href)window.history.pushState({},'',u);}
     window.dispatchEvent(new Event('stormWorkspaceChange'));

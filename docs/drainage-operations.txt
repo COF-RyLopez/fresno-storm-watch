@@ -1,0 +1,58 @@
+F.R.O.G. 0.40.0 — PRIVATE FMFCD DRAINAGE CONTEXT
+
+Open the EOC workspace link "Private FMFCD drainage map", or Topic tools >
+Drainage · private in the storm map. Direct link: ?view=drainage.
+
+County AGOL sign-in, the existing EOC viewer group (or configured workspace
+owner), and county Enterprise source access are required. No new accounts,
+groups, hosted items, sharing changes or permissions are created by this release.
+Complete any county Enterprise sign-in prompt within the ArcGIS SDK dialog.
+
+Select Load private FMFCD layers. The fixed county service is queried read-only
+over HTTPS POST. Basins (17), Pumps (0) and Drainage Boundary (16) are loaded with
+exact ID/batch/CRS accounting. Each layer is bounded at 5,000 records. Any failed,
+truncated, changed or invalid batch clears the complete drainage snapshot.
+
+The source's numeric subtype 1 is existing; 0 is proposed/future. Caltrans, other
+and unknown subtypes stay in a separate unconfirmed group. Existing does not
+mean operational. Proposed/future and other/unclassified map layers begin off.
+Drainage boundaries are optional; EXEMPT and repeated polygon codes are retained.
+ObjectIDs identify selections only within the retrieved session, not durable
+assets. No source-record history or automatic capacity assessment is created.
+
+Map semantics
+Solid cyan outlines = existing basin polygons; filled cyan circles = existing
+pump records. Dashed amber outlines / hollow triangles = proposed basins / future
+pumps. Gray x symbols = other/unclassified records. Thin dashed violet outlines
+= master-plan drainage polygons, not flood extents. No elevation attributes are
+used to assign water level, depth or pump capacity. Unknown remains unknown.
+
+Rainfall controls use the existing WPC 24/72/168-hour forecast collector and
+shared weather clock. Forecast issue/valid dates and the inches legend remain
+visible on the map; source health and clock eligibility still hide unusable
+forecasts. Rainfall is not runoff or a flood-depth estimate. County road source
+status rules and display filters remain unchanged. Load county facilities uses
+the existing protected site connector and retains its source permission checks.
+
+Inspect a basin/pump from the list or map to zoom and open the right evidence
+pane. Fit FMFCD shows the loaded district footprint. Proposed selection explicitly
+enables its separate map layer. List filtering does not silently alter map layers.
+Other topics keep their own map preferences. Private FMFCD layers are not enabled
+on other topic maps unless the signed-in user chooses them as context.
+
+Records stay in memory only. No local/session storage, public snapshots, GitHub
+exports, source edits, model runs or automatic hazard notifications are added.
+Sign-out, access failure, disconnect and page exit clear records and selections;
+pending requests are canceled and superseded responses are ignored. EOC membership
+is rechecked before each load. Refresh target is five minutes while the tab is
+visible; ten-minute retrieval overdue notice is separate from unknown source age.
+The service's tested modification dates are empty. Retrieval is not maintenance.
+
+This release is inventory context. Basin levels, stage-storage/spill data,
+pump curves, control rules, power relationships, topology and vertical datum
+agreement remain prerequisites for local scenarios. River levee-breach modeling
+continues to require a reviewed San Joaquin/Kings hydraulic package.
+
+Rollback: redeploy the preceding application revision. No data migration exists.
+Keep real authenticated test screenshots and source responses outside this public
+repository. Automated tests use fictional features only.

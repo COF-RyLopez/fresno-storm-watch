@@ -1,0 +1,12 @@
+.drainage-content { padding: 16px; display: grid; gap: 14px; }
+.drainage-content p { margin: 0; line-height: 1.5; color: var(--calcite-color-text-2); }
+.drainage-content calcite-block p { margin-block: 12px; }
+.drainage-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.drainage-row { display: grid; gap: 4px; padding-block: 10px; border-bottom: 1px solid var(--calcite-color-border-3); }
+.drainage-row small { color: var(--calcite-color-text-2); }
+.drainage-row calcite-button { justify-self: start; max-width: 100%; }
+.drainage-content dl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; margin: 0; }
+.drainage-content dt { margin-top: 9px; font-weight: 600; }
+.drainage-content dd { margin: 0; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
+.drainage-content [role=status] { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .drainage-actions calcite-button { flex: 1 1 140px; } }
