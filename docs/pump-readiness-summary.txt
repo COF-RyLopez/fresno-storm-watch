@@ -1,0 +1,62 @@
+F.R.O.G. 0.44.0 — Area Watch pump readiness summary
+
+Open County Watch, sign in and load FMFCD, then choose Pump readiness.
+The shortcut focuses the private summary. Select a pump name to focus its
+point on the map and open its evidence / existing readiness form.
+
+The summary shows:
+- Backup power needed: current owner report explicitly says Unavailable.
+- Refueling requested: current owner report explicitly says Refuel needed.
+- Follow-up / unknown: missing, expired or conflicting confirmation;
+  unknown backup / connection / fuel / runtime; zero runtime; an outdated
+  inventory match; or a retained utility-area concern.
+- Responsible work contact, qualified as last reported when overdue.
+- Runtime in hours, next readiness review, pump-specific WPC polygon label,
+  and the published 72-hour rainfall accumulation window. Expand the rainfall
+  dates for exact local hours; source issue / retrieval times remain available.
+
+Counts refer to loaded existing pump records, not verified physical sites.
+Categories overlap. Proposed / future assets are excluded. Search and
+category filters do not change countywide counts or notification counts.
+Missing confirmations are included even without a current utility / rain
+overlap; they remain information gaps, not a new hazard classification.
+
+Review order is explicit: utility / rainfall overlap first; then current
+resource reports with forecast precipitation, other resource reports, and
+remaining review items. Earlier owner review deadlines appear first within
+each group. No risk score, runtime adequacy inference or dispatch is created.
+Rainfall window dates are accumulation intervals, not storm onset / peak
+timing. Blank or uncovered rainfall is unknown, never zero.
+
+A form update immediately refreshes the submitter's summary / banner after
+receipt. Other open authorized apps use the existing one-minute readiness
+query. A complete confirmation clears only the relevant readiness gap;
+utility follow-up remains distinct. Queries are not guaranteed delivery.
+
+Privacy / source integrity
+The existing private exercise checklist views and author tracking are reused.
+No AGOL items, privileges, sharing or memberships change. Source ObjectIDs
+are not permanent asset IDs. Exact code / point / source association changes
+require rematching; an unmatched-association count remains visible without
+transferring its contact or readiness to another pump. Source failures / stale
+readiness checks hide current need totals and contacts rather than showing
+zero requests. Disconnect / sign-out clears summary rows from memory.
+No private feature or contact is written to GitHub or browser persistence.
+
+Exercise view
+exercise=1 uses three synthetic pumps: a backup request, refueling request,
+and an unconfirmed pump. All contacts / operating facts are fictional and
+submissions stay in the tab. Existing private acceptance-test records use
+their separate scope and never seed the normal Area Watch summary.
+
+Verification
+438 automated checks plus static / link checks. Covered current, stale,
+expired, conflicting and missing confirmations; zero vs unknown runtime;
+missing rainfall; duplicate records; source identifiers / contacts in search;
+stable countywide counts; explicit ordering; and proposed-asset exclusion.
+Browser exercise confirmed form correction updates counts, retains history
+and leaves utility concerns visible. Pump selection focuses the exact point.
+1280x720 and 390x844 layouts checked; phone page width stays within viewport.
+Existing independent FMFCD account / operational acceptance remains pending.
+
+Rollback: redeploy 0.43.0. No data migration or source-layer changes.

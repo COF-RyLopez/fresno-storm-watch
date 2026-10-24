@@ -29,6 +29,17 @@
 .pump-readiness-form small { color: var(--calcite-color-text-2); line-height: 1.5; }
 .readiness-rehearsal { max-width: 780px; margin-inline: auto; padding: 24px 16px; }
 .county-pump-counts { flex-basis: 100%; padding: 4px 8px; font-size: 12px; line-height: 1.5; color: var(--calcite-color-text-1); }
+.pump-summary { padding-block: 12px 20px; border-block-end: 1px solid var(--calcite-color-border-2); margin-block: 8px 16px; }
+.pump-summary h4 { margin: 8px 0 12px; font-size: 1rem; position: sticky; top: 0; z-index: 1; padding-block: 6px; background: var(--calcite-color-foreground-1); }
+.pump-summary>p { margin-block: 6px; font-size: 13px; line-height: 1.5; }
+.pump-summary-controls { display: grid; gap: 8px; margin-block: 8px; }
+.pump-summary-weather { font-size: 13px; }
+.pump-summary-row { display: grid; gap: 6px; padding-block: 14px; border-block-end: 1px solid var(--calcite-color-border-3); min-width: 0; }
+.pump-summary-row :is(p,strong,small) { margin: 0; overflow-wrap: anywhere; line-height: 1.5; font-size: 13px; }
+.pump-summary-row calcite-button { justify-self: start; max-width: 100%; }
+.pump-summary .drainage-actions { align-items: center; margin-block: 12px; }
+.pump-summary>small,.pump-summary small { color: var(--calcite-color-text-2); }
+.pump-summary details { margin-block: 8px; line-height: 1.5; }
 @media (max-width:900px) {
   #evidence-mobile-host:has(.pump-readiness-form) { position: fixed; inset: 60px 0 0; height: auto; max-height: none; z-index: 1000; background: var(--calcite-color-foreground-1); }
 }

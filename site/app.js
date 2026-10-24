@@ -1,6 +1,7 @@
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.41.0';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.43.0';
-import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.43.0';
+import {pumpSummaryExercise} from './lib/pump-summary-exercise.js';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.44.0';
+import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.44.0';
 import {createMission} from './lib/mission-ui.js?v=0.43.0';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.36.0';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.36.0';
@@ -32,6 +33,7 @@ import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.27.0';
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
 const exerciseClock = Date.now();
+const drainageExercise=exercise?pumpSummaryExercise(exerciseClock):null;
 let scenario = 'baseline';
 let state = initialState();
 let counties;
@@ -71,8 +73,8 @@ const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise
 const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBriefing:(...args)=>briefings.open(...args),onArea:id=>planning?.selectArea(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onConnect:()=>{openPower();document.querySelector('.facility-section calcite-accordion-item').expanded=true;},onMap:workspace.showMap,onData:data=>mission.setContext(data)});
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id),onSlide:context=>briefingLayers?.followSlide(context)});
 mapSearch=createMapSearch({showMap:workspace.showMap,onInspect:row=>{if(row.kind==='gauge')rivers?.select(row.key.slice(6));else if(row.kind==='road-record')roads?.select(row.key);else if(row.kind==='asset')facilities.select(row.key);}});
-const drainageReviews=createDrainageReviews({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onSummary:(n,pumps,readiness)=>strip.drainage(n,pumps,readiness),onConnect:()=>drainage?.load(),onFacilities:()=>facilities.loadDefault(),onMap:workspace.showMap,onRecord:key=>drainage.select(key),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onPower:key=>power.select(key),onRainfall:()=>environment?.selectRainfall(9,{selectValidTime:true}),onCapture:item=>mission.addEvidence(item),onAssign:(...args)=>mission.assignEvidence(...args),onClear:()=>mission.clearDrainageEvidence(),onReadiness:(...args)=>pumpReadiness.open(...args),renderReadiness:(...args)=>pumpReadiness.renderSummary(...args)});
-pumpReadiness=createPumpReadiness({exercise,timeZone:CONFIG.timeZone,onData:value=>drainageReviews.setReadiness(value),onSaved:()=>{drainageReviews.refreshSelected();$('drainage-review-feedback').textContent='Readiness saved in private exercise storage. Area Watch and the banner use the latest version.';}});
+const drainageReviews=createDrainageReviews({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,exerciseData:drainageExercise,onSummary:(n,pumps,readiness)=>strip.drainage(n,pumps,readiness),onConnect:()=>drainage?.load(),onFacilities:()=>facilities.loadDefault(),onMap:workspace.showMap,onRecord:key=>drainage.select(key),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onPower:key=>power.select(key),onRainfall:()=>environment?.selectRainfall(9,{selectValidTime:true}),onCapture:item=>mission.addEvidence(item),onAssign:(...args)=>mission.assignEvidence(...args),onClear:()=>mission.clearDrainageEvidence(),onReadiness:(...args)=>pumpReadiness.open(...args),renderReadiness:(...args)=>pumpReadiness.renderSummary(...args)});
+pumpReadiness=createPumpReadiness({exercise,exerciseData:drainageExercise,timeZone:CONFIG.timeZone,onData:value=>drainageReviews.setReadiness(value),onSaved:()=>{drainageReviews.refreshSelected();$('drainage-review-feedback').textContent=exercise?'Fictional readiness saved in this tab; no AGOL write. Area Watch and the banner use the new version.':'Readiness saved in private exercise storage. Area Watch and the banner use the latest version.';}});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:data=>{context.setFacilities(data);mission.setFacilities(data);mapSearch.setFacilities(data);drainage?.setFacilities(data);drainageReviews.setFacilities(data);}});
 drainage=createDrainageWatch({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onRainfall:id=>environment?.selectRainfall(id,{selectValidTime:true}),onFacilities:async()=>{map?.setLayerPreference('facilities',true);return facilities.loadDefault();},onRoad:openRoads,onData:data=>drainageReviews.setSnapshot(data)});
 const power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,exerciseNow:exerciseClock,onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);drainageReviews.setPower(latestPlanningPower);}});

@@ -8,8 +8,9 @@ const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 
 /** Private append-only confirmations in the existing restricted checklist views. No browser persistence. */
-export function createPumpReadiness({exercise=false,timeZone,scope=PUMP_READINESS_SCOPE,onData=()=>{},onSaved=()=>{}}){  if(![PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE].includes(scope))throw Error('Unknown readiness workspace.');
-  let session=null,store=exercise?createExerciseStore():null,state={connected:exercise,records:[],checked:exercise?Date.now():null,error:null},epoch=0,loading=null,activeForm=null;
+export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,scope=PUMP_READINESS_SCOPE,onData=()=>{},onSaved=()=>{}}){
+  if(![PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE].includes(scope))throw Error('Unknown readiness workspace.');
+  let session=null,store=exercise?createExerciseStore(exerciseData?.readinessRecords):null,state={connected:exercise,records:[],checked:exercise?Date.now():null,error:null},epoch=0,loading=null,activeForm=null;
   const stamp=v=>new Date(v).toLocaleString('en-US',{timeZone,timeZoneName:'short'});
   const publish=()=>{const status=document.getElementById('pump-readiness-status');if(status)status.textContent=exercise?'Pump readiness · fictional rehearsal in this tab only':!session?'Pump readiness · county AGOL sign-in required':state.error||!state.connected?'Pump readiness · '+(state.error||'checking private exercise storage…'):`Private exercise pump readiness connected · ${store?.allowed.has('checklists')?'submission access':'read-only access'} · checked ${stamp(state.checked)}. Open a drainage group to confirm a pump.`;onData({...state});if(session&&!exercise)reportHealth('pump-readiness','Private pump readiness',{checked:state.checked,error:state.error,maxAgeMs:120000});};
   const clearForm=()=>{activeForm?.replaceChildren();activeForm=null;};
@@ -40,6 +41,7 @@ export function createPumpReadiness({exercise=false,timeZone,scope=PUMP_READINES
     if(!store||!state.connected){host.append(el('p',state.error||'County AGOL sign-in is required for the private readiness form.'));return;}
     if(!store.allowed.has('checklists')){host.append(el('p','Read-only access. A county GIS administrator must assign an eligible named FMFCD account to the existing EOC viewers and coordinators groups before it can submit readiness updates.'));return;}
     const binding=pumpBinding(record),key=bindingKey(binding),existing=state.records.filter(e=>bindingKey(e.payload.binding)===key),versions=heads(existing),r=pumpReadiness(record,state),prior=r.event?.payload;
+    if(versions.length>1){host.append(el('p','Multiple saved identities reference this pump. GIS / FMFCD must reconcile those associations before another confirmation; existing history is preserved.'));return;}
     const originalHeads=versions.flatMap(h=>h.heads.map(e=>e.id)).sort();
     const form=el('form');form.className='pump-readiness-form';form.setAttribute('aria-label','Pump readiness confirmation');
     form.append(el('h4',exercise?'EXERCISE · Confirm pump readiness':'Confirm pump readiness · private exercise'),el('p',`Selected: ${record.name}. Verify its map location and actual pump identity. Source ObjectIDs can change; an inventory change will require a new confirmation. This does not change FMFCD’s source layer.`));
@@ -70,7 +72,7 @@ export function createPumpReadiness({exercise=false,timeZone,scope=PUMP_READINES
           const payload={kind:'pump-readiness',schema:1,binding,identityConfirmed:identity.checked,pumpLabel:fields.pumpLabel.value.trim(),backup:fields.backup.value,connection:fields.connection.value,fuel:fields.fuel.value,runtimeHours:fields.runtimeHours.value===''?null:Number(fields.runtimeHours.value),runtimeBasis:fields.runtimeBasis.value.trim(),owner:fields.owner.value.trim(),contact:fields.contact.value.trim(),observed:Date.parse(fields.observed.value),validUntil:Date.parse(fields.validUntil.value),evidence:fields.evidence.value.trim()};
           validatePumpReadiness(payload);if(payload.validUntil<=Date.now())throw Error('Choose a future next-review time.');
           // Deterministic association ID prevents two first submissions silently creating separate records.
-          const entity='pump-'+await digest(binding);if(version!==epoch||!current())throw Error('Sources changed. Reopen this pump.');
+          const entity=versions[0]?.record.entity||'pump-'+await digest(binding);if(version!==epoch||!current())throw Error('Sources changed. Reopen this pump.');
           pending=makeEvent('checklists',payload,{incident:scope,entity,supersedes:originalHeads});
         }
         saving=true;save.loading=true;save.disabled=true;cancel.disabled=true;for(const input of [...Object.values(fields),identity])input.disabled=true;
