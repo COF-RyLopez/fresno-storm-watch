@@ -1,6 +1,6 @@
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.41.0';
 import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.45.0';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.46.0';
 import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.45.0';
 import {createMission} from './lib/mission-ui.js?v=0.45.0';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.36.0';

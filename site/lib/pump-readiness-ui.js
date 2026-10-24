@@ -9,7 +9,7 @@ const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 
 /** Private append-only confirmations in the existing restricted checklist views. No browser persistence. */
-export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,scope=PUMP_READINESS_SCOPE,onData=()=>{},onSaved=()=>{}}){
+export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,scope=PUMP_READINESS_SCOPE,onData=()=>{},onSaved=()=>{},onClosed=()=>{}}){
   if(![PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE].includes(scope))throw Error('Unknown readiness workspace.');
   let session=null,store=exercise?createExerciseStore(exerciseData?.readinessRecords):null,state={connected:exercise,records:[],tasks:[],checked:exercise?Date.now():null,error:null},epoch=0,loading=null,activeForm=null;
   const stamp=v=>new Date(v).toLocaleString('en-US',{timeZone,timeZoneName:'short'});
@@ -27,13 +27,13 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     }catch{if(version===epoch){state={connected:false,records:[],tasks:[],checked:null,error:'Private readiness / assignment query failed. Reconnect county AGOL and refresh; previous details are not current.'};publish();}}
     finally{if(version===epoch)loading=null;}})();return loading;
   }
-  function renderSummary(host,pump){
+  function renderSummary(host,pump,{includeTasks=true}={}){
     const r=pump.readiness;host.append(el('p',r.label));
     if(r.event){const e=r.event,p=e.payload;host.append(el('p',`${p.pumpLabel} · backup ${p.backup.toLowerCase()} · connection ${p.connection.toLowerCase()} · fuel ${p.fuel.toLowerCase()} · runtime ${p.runtimeHours===null?'unknown':p.runtimeHours+' hours (estimate)'}`),el('p',`Responsible: ${p.owner} · ${p.contact}`),el('p',`Confirmed ${stamp(p.observed)} · next review ${stamp(p.validUntil)}. Recorded by ${e.author} at ${stamp(e.created)}.`));if(p.runtimeHours!==null)host.append(el('p','Runtime basis: '+p.runtimeBasis));}
     for(const reason of r.reasons)host.append(el('p',reason));
     const details=el('details');details.append(el('summary',`Readiness history · ${r.history.length} saved update(s)`));
     for(const e of [...r.history].sort((a,b)=>b.created-a.created))details.append(el('p',`${stamp(e.created)} · ${e.author} · ${e.payload.backup} backup · fuel ${e.payload.fuel} · runtime ${e.payload.runtimeHours??'unknown'}${e.payload.runtimeHours===null?'':' hours'} · review ${stamp(e.payload.validUntil)} · ${e.payload.evidence}`));
-    host.append(details);renderPumpTasks(host,pump,stamp);
+    host.append(details);if(includeTasks)renderPumpTasks(host,pump,stamp);
   }
   async function open(host,record,current=()=>true){
     clearForm();activeForm=host;const version=epoch;host.replaceChildren(el('p','Checking private readiness access…'));await refresh();
@@ -45,9 +45,9 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     const binding=pumpBinding(record),key=bindingKey(binding),existing=state.records.filter(e=>bindingKey(e.payload.binding)===key),versions=heads(existing),r=pumpReadiness(record,state),prior=r.event?.payload;
     if(versions.length>1){host.append(el('p','Multiple saved identities reference this pump. GIS / FMFCD must reconcile those associations before another confirmation; existing history is preserved.'));return;}
     const originalHeads=versions.flatMap(h=>h.heads.map(e=>e.id)).sort();
-    const form=el('form');form.className='pump-readiness-form';form.setAttribute('aria-label','Pump readiness confirmation');
+    const form=el('form');form.className='pump-readiness-form';form.autocomplete='off';form.setAttribute('aria-label','Pump readiness confirmation');
     form.append(el('h4',exercise?'EXERCISE · Confirm pump readiness':'Confirm pump readiness · private exercise'),el('p',`Selected: ${record.name}. Verify its map location and actual pump identity. Source ObjectIDs can change; an inventory change will require a new confirmation. This does not change FMFCD’s source layer.`));
-    const fields={},field=(name,label,type='text',options=null,value='')=>{const l=el('label',label),n=el(type==='select'?'select':type==='textarea'?'textarea':'input');n.name=name;n.setAttribute('aria-label',label);if(n.tagName==='INPUT')n.type=type;if(options)for(const value of options){const o=el('option',value);o.value=value;n.append(o);}n.value=value??'';n.required=!['runtimeHours','runtimeBasis'].includes(name);if(type==='text'||type==='textarea')n.maxLength=1500;l.append(n);form.append(l);fields[name]=n;return n;};
+    const fields={},field=(name,label,type='text',options=null,value='')=>{const l=el('label',label),n=el(type==='select'?'select':type==='textarea'?'textarea':'input');n.name=name;n.autocomplete='off';n.setAttribute('aria-label',label);if(n.tagName==='INPUT')n.type=type;if(options)for(const value of options){const o=el('option',value);o.value=value;n.append(o);}n.value=value??'';n.required=!['runtimeHours','runtimeBasis'].includes(name);if(type==='text'||type==='textarea')n.maxLength=1500;l.append(n);form.append(l);fields[name]=n;return n;};
     field('pumpLabel','Pump / station identification','text',null,prior?.pumpLabel||record.name);
     field('backup','Backup power availability','select',BACKUP_OPTIONS,prior?.backup||'Unknown');
     field('connection','Backup connection / compatibility','select',CONNECTION_OPTIONS,prior?.connection||'Unknown');
@@ -62,7 +62,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     const identityLabel=el('label'),identity=el('input');identity.type='checkbox';identity.required=true;identityLabel.className='pump-readiness-identity';identityLabel.append(identity,document.createTextNode('I checked the selected map location and pump identity, and reviewed all prior versions shown above.'));form.append(identityLabel);
     const feedback=el('p');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     const save=el('calcite-button',exercise?'Save fictional readiness':'Save private exercise readiness');save.scale='s';save.type='button';
-    const cancel=el('calcite-button','Close form');cancel.scale='s';cancel.appearance='outline';cancel.onclick=()=>{if(activeForm===host)clearForm();};
+    const cancel=el('calcite-button','Close form');cancel.scale='s';cancel.appearance='outline';cancel.onclick=()=>{if(activeForm===host){clearForm();onClosed();}};
     const actions=el('div');actions.className='drainage-actions';actions.append(save,cancel);form.append(feedback,actions,el('small',exercise?'Fictional rehearsal only. Saved in this tab; no AGOL write.':'EXERCISE dataset. Updates are visible to authorized EOC viewers. AGOL records the signed-in author and server submission time. Each correction keeps the earlier record.'));
     fields.backup.onchange=()=>{if(fields.backup.value!=='Available')fields.connection.value='Unknown';};
     let pending=null,saving=false;
@@ -90,7 +90,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     };
     form.onsubmit=e=>{e.preventDefault();save.click();};host.append(form);fields.pumpLabel.focus();
   }
-  const controller={openTask(host,record,current=()=>true){clearForm();activeForm=host;return openPumpTask({host,record,current:()=>activeForm===host&&current(),access:()=>({store,state,epoch,session}),refresh,scope,exercise,onSaved});},open,renderSummary,refresh,setSession(value){if(exercise)return;epoch++;session=value;clearForm();store?.close();store=null;loading=null;state={connected:false,records:[],tasks:[],checked:null,error:null};publish();if(value)void refresh();}};
+  const controller={clearForm,openTask(host,record,current=()=>true){clearForm();activeForm=host;return openPumpTask({host,record,current:()=>activeForm===host&&current(),access:()=>({store,state,epoch,session}),refresh,scope,exercise,onSaved});},open,renderSummary,refresh,setSession(value){if(exercise)return;epoch++;session=value;clearForm();store?.close();store=null;loading=null;state={connected:false,records:[],tasks:[],checked:null,error:null};publish();if(value)void refresh();}};
   setInterval(()=>{if(!document.hidden&&(session||exercise))void refresh();},60000);
   window.addEventListener('pagehide',()=>{epoch++;session=null;clearForm();store?.close();store=null;state={connected:false,records:[],tasks:[],checked:null,error:null};publish();});publish();if(exercise)void refresh();return controller;
 }

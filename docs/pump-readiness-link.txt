@@ -1,0 +1,29 @@
+F.R.O.G. direct pump readiness form — 0.46.0
+
+Share this stable link after county GIS approves participant access:
+https://cof-rylopez.github.io/fresno-storm-watch/pump-readiness.html
+
+FMFCD workflow
+1. Open the link and choose County ArcGIS sign-in.
+2. Choose Load pump list. Complete county Enterprise sign-in if prompted.
+3. Find a pump by name or drainage code, select it, and check the mapped point and actual station identity. Only existing pump records are offered. Proposed, Caltrans and other/unclassified records are excluded.
+4. Update backup power and connection compatibility, fuel status, estimated runtime with its fuel/load basis, responsible work contact, confirmation time, next review time and notes. Blank runtime means unknown; zero is a reported zero.
+5. Confirm the identity check and choose Save private exercise readiness. A verified save shows a confirmation. Corrections preserve previous versions.
+
+The form preloads the last usable saved details for the selected pump. Reconfirm them rather than assuming a prior report is still current. An expired inventory retrieval or changed source association blocks submission until refreshed. The map is for identifying the inventory point, not for confirming pump operation or safe access. A source ObjectID is not a maintained pump ID.
+
+EOC workflow
+Area Watch and the banner use these same private checklist records on the next successful one-minute refresh while open and with FMFCD loaded. A changed readiness version flags related pump assignments for review. EOC staff reopen the evidence and choose Add to briefing to capture the latest version; previously saved/approved briefing snapshots remain frozen. Saving readiness does not complete a task, clear a utility hazard, send a message or dispatch resources.
+
+Onboarding / access
+This remains the private exercise pilot. No AGOL services, permissions or group memberships were created or changed for this link. The owner's account can test it. FMFCD named accounts still need county GIS review of organization eligibility, feature-editing privileges, private viewer access, the existing coordination editing permission and county Enterprise pump-service access. A link alone grants none of those rights. The current coordination group permits other EOC writes too; GIS should review that scope before adding external reporters. A narrower dedicated submission view/group is a future access-design task, not an automatic onboarding step.
+
+Credentials are entered only in ArcGIS sign-in screens. The application queries private records by authenticated POST. Inventory, contacts, drafts and private results stay in tab memory or private AGOL; they are not bundled into Pages, placed in share URLs or written to browser persistence. Copy form link emits the clean page address without sign-in parameters, pump IDs, contacts or fragments. Page refresh clears selection; sign-out clears private content and the location map.
+
+Test modes
+?exercise=1 uses synthetic pumps and in-memory records only; no sign-in or AGOL writes.
+?acceptance=1 uses one explicitly fictional pump and the isolated private acceptance scope. Normal Area Watch is unchanged. Use fictional details only.
+Neither mode can select an arbitrary incident or storage scope from the URL.
+
+Maintenance
+The page reuses the app's pinned ArcGIS/Calcite loader, readiness controller, validation and append receipts. The source adapter reads only the fixed FMFCD pump layer, with complete ID/CRS accounting. Watch source-health messages and handle denied access through county GIS; do not make data public to bypass an account problem. Publishing the previous Pages release rolls back the interface without deleting saved history.

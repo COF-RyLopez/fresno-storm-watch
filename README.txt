@@ -1,5 +1,12 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.45.0 | October 24, 2026 | Private pump assignments and FMFCD intake preview
+Version 0.46.0 | October 24, 2026 | Direct FMFCD pump readiness form
+
+DIRECT PUMP READINESS FORM (v0.46.0)
+Share https://cof-rylopez.github.io/fresno-storm-watch/pump-readiness.html
+Named-account sign-in, pump-only inventory, location check and readiness update
+run on one page, using the same private exercise records and correction history.
+County Enterprise may separately request sign-in. No new access or AGOL items.
+See docs/pump-readiness-link.txt for onboarding, test modes and rollback.
 
 PUMP ASSIGNMENTS (v0.45.0)
 County Watch -> Pump readiness -> select a pump -> Assign / update pump follow-up.
