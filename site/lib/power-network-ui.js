@@ -1,5 +1,5 @@
 import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js?v=0.50.0';
-import {createPowerNearby} from './power-nearby-ui.js?v=0.50.0-r1';
+import {createPowerNearby} from './power-nearby-ui.js?v=0.50.0-r2';
 import {reportHealth} from './source-health.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const n=el('a',text);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
