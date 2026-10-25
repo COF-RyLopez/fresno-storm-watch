@@ -1,12 +1,21 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.46.0 | October 24, 2026 | Direct FMFCD pump readiness form
+Version 0.47.0 | October 24, 2026 | Private AGOL pump inventory
 
-DIRECT PUMP READINESS FORM (v0.46.0)
+DIRECT PUMP READINESS FORM (v0.47.0)
 Share https://cof-rylopez.github.io/fresno-storm-watch/pump-readiness.html
 Named-account sign-in, pump-only inventory, location check and readiness update
 run on one page, using the same private exercise records and correction history.
-County Enterprise may separately request sign-in. No new access or AGOL items.
+The form now reads an existing-only private AGOL copy, with no Enterprise sign-in.
+The original FMFCD source and readiness storage remain unchanged.
 See docs/pump-readiness-link.txt for onboarding, test modes and rollback.
+
+PRIVATE INVENTORY MAINTENANCE (v0.47.0)
+County GIS uses pump-inventory.html to stage and verify complete pump snapshots.
+Only the query-only existing-pump view is used by form operators. Proposed and
+other classifications stay in the owner-private parent; source IDs and exact
+WGS84 coordinates preserve the existing readiness associations. Source-copy
+freshness and query freshness are separate. Refresh is manual; no unattended
+source credential or scheduler is configured. See docs/pump-inventory-copy.txt.
 
 PUMP ASSIGNMENTS (v0.45.0)
 County Watch -> Pump readiness -> select a pump -> Assign / update pump follow-up.

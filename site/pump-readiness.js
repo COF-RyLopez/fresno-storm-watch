@@ -2,10 +2,11 @@ import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
 import {setupAuth} from './lib/auth.js?v=0.40.0';
 import {loadSdk} from './lib/map.js?v=0.42.0';
-import {openDrainage} from './lib/drainage-data.js?v=0.46.0';
+import {openPumpCopy} from './lib/pump-copy-data.js';
+import {PUMP_INVENTORY_CONFIG} from './pump-inventory-config.js?v=0.47.0';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.46.0';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
-import {pumpFormChoices,pumpFormCurrent,pumpFormLink} from './lib/pump-form-model.js';
+import {pumpFormChoices,pumpFormCurrent,pumpFormLink} from './lib/pump-form-model.js?v=0.47.0';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
 import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';
 
@@ -22,7 +23,8 @@ function clearInventory(message=null){epoch++;adapter?.close();adapter=null;inve
 function renderInventory(){
   $('pump-form-load').disabled=busy||!fictional&&!session;$('pump-form-load').loading=busy;$('pump-form-load').textContent=inventory.connected?'Refresh pump list':'Load pump list';
   $('pump-picker-controls').hidden=!inventory.connected||busy;
-  $('pump-inventory-status').textContent=busy?'Loading the pump inventory. Complete county Enterprise sign-in if prompted.':inventory.error||!inventory.connected?inventory.error||'Sign in, then load the pump list. Proposed and unclassified assets are excluded.':`${pumpFormChoices(inventory.rows).length} existing pump records · retrieved ${time(inventory.checked)}. Source operation remains unconfirmed.${Date.now()-inventory.checked>600000?' Retrieval overdue; refresh before saving.':''}`;
+  const sourceOld=inventory.maxSourceAgeMs!==undefined&&Date.now()-inventory.sourceChecked>inventory.maxSourceAgeMs;
+  $('pump-inventory-status').textContent=busy?'Loading the private AGOL pump inventory…':inventory.error||!inventory.connected?inventory.error||'Sign in, then load the pump list. Proposed and unclassified assets are excluded.':`${pumpFormChoices(inventory.rows).length} existing pump records${inventory.sourceChecked?` · FMFCD copy checked ${time(inventory.sourceChecked)}`:''} · ${fictional?'Rehearsal list':'AGOL list'} retrieved ${time(inventory.checked)}. Source operation remains unconfirmed.${sourceOld?' Source copy is over seven days old. Ask county GIS to refresh the inventory before saving.':Date.now()-inventory.checked>600000?' Retrieval overdue; refresh before saving.':''}`;
 }
 function renderChoices(){
   const select=$('pump-form-select'),rows=pumpFormChoices(inventory.rows,$('pump-form-search').value),keep=selected?.key;select.replaceChildren(new Option(rows.length?'Choose a pump…':'No matching existing pump returned',''));
@@ -46,17 +48,17 @@ async function drawLocation(record,version){
 }
 async function choosePump(){
   const key=$('pump-form-select').value;resetSelection();feedback('');if(!key)return;
-  const record=inventory.rows.find(r=>r.key===key);if(!pumpFormCurrent(record,inventory)){feedback('The pump list is overdue or changed. Refresh it before selecting a pump.');return;}
+  const record=inventory.rows.find(r=>r.key===key);if(!pumpFormCurrent(record,inventory)){feedback('The pump list is overdue or changed. Refresh it; if the FMFCD copy is over seven days old, county GIS must refresh the source copy first.');return;}
   selected=record;const version=selectionEpoch;$('pump-selection').hidden=false;$('pump-selected-name').textContent=record.name;$('pump-selected-location').textContent=`Location: ${record.geometry.y.toFixed(6)}° N, ${Math.abs(record.geometry.x).toFixed(6)}° W · inventory retrieved ${time(inventory.checked)}. Record IDs can change; verify the actual pump.`;renderPrevious();
   if(await drawLocation(record,version))await controller.open($('pump-form-host'),record,()=>current(record,version));
 }
 async function loadPumps(){
   if(busy||!fictional&&!session)return;const version=epoch;busy=true;feedback('');resetSelection();renderInventory();
   try{
-    let rows;
+    let rows,provenance={};
     if(fictional)rows=acceptance?[fixture.snapshot.rows.find(r=>r.key==='fictional-pump')]:fixture.snapshot.rows;
-    else {if(!adapter){const opened=await openDrainage(EOC_CONFIG,session,loadSdk);if(version!==epoch){opened.close();return;}adapter=opened;}rows=await adapter.readPumps();}
-    if(version!==epoch)return;const verified=pumpFormChoices(rows);inventory={connected:true,rows:verified,checked:Date.now(),error:null};renderChoices();await controller.refresh();
+    else {if(!adapter){const opened=await openPumpCopy(PUMP_INVENTORY_CONFIG,EOC_CONFIG,session);if(version!==epoch){opened.close();return;}adapter=opened;}const copy=await adapter.read();rows=copy.rows;provenance={sourceChecked:copy.sourceChecked,snapshot:copy.snapshot,maxSourceAgeMs:copy.maxSourceAgeMs};}
+    if(version!==epoch)return;const verified=pumpFormChoices(rows);inventory={connected:true,rows:verified,checked:Date.now(),error:null,...provenance};renderChoices();await controller.refresh();
   }catch(e){if(version===epoch)clearInventory(e.message);}
   finally{if(version===epoch){busy=false;renderInventory();}}
 }

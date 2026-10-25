@@ -13,6 +13,7 @@ export function pumpFormChoices(rows,query=''){
 }
 export function pumpFormCurrent(record,inventory,now=Date.now()){
   if(!record||!inventory?.connected||inventory.error||!Number.isFinite(inventory.checked)||inventory.checked>now+60000||now-inventory.checked>DRAINAGE_MAX_AGE)return false;
+  if(inventory.maxSourceAgeMs!==undefined&&(!Number.isFinite(inventory.sourceChecked)||inventory.sourceChecked>now+60000||!Number.isFinite(inventory.maxSourceAgeMs)||inventory.maxSourceAgeMs<=0||now-inventory.sourceChecked>inventory.maxSourceAgeMs))return false;
   const key=bindingKey(pumpBinding(record));
   return inventory.rows.some(r=>r.kind==='pump'&&r.category==='existing'&&bindingKey(pumpBinding(r))===key);
 }

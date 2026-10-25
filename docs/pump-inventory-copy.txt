@@ -1,0 +1,82 @@
+F.R.O.G. private FMFCD pump inventory copy — 0.47.0
+Checked October 24, 2026
+
+Purpose
+The standalone readiness form uses county AGOL for both inventory and updates.
+Operators need an eligible named AGOL account and the approved private read/write
+permissions. They do not need a county Enterprise account for this form.
+The main drainage map still uses Enterprise for basins and other drainage layers.
+
+Source and accounting
+Read-only source: https://gisprod10.co.fresno.ca.us/server/rest/services/PublicWorks/FMFCD/MapServer/0
+Fields: OBJECTID, DA, SUBTYPE, MODIFIEDDATE. Original pump data is not edited.
+Complete source accounting: 192 records = 101 existing (SUBTYPE=1), 84 future /
+proposed (0), 7 other (2/3). These are records, not confirmed physical-site counts.
+Coordinates are requested explicitly in EPSG:4326 and checked against California.
+
+Private AGOL items
+Owner: rylopez_cofgisonline; county organization ibgDyuD2DLBge82s.
+Parent source snapshots: 11f74b6cc94e40e3a61261cfe20bd320
+Form read view: 20f479bb3708429d84bb8ab5a217e269
+Parent: owner-only; Query/Create only, no source updates or deletes.
+View: Query-only; restricted to one verified snapshot and source_subtype=1.
+View shared only with the existing FROG EOC EXERCISE 2026-27 - viewers group
+(a0b72040c524401d8a455e2bfaa25f0d), with user approval. No new group memberships.
+Never share the parent, the organization, or Everyone. Participant eligibility
+and readiness submission permissions must be reviewed before onboarding.
+
+Identity and history
+The hosted ObjectID is not used as a readiness association. source_oid,
+source_code, source_subtype, source_modified and exact source_x/source_y preserve
+the original FMFCD record association and WGS84 location. Existing checklist
+readiness records and coordination follow-ups keep their original scope and
+bindings. No copied contacts, readiness values or relationship guesses.
+Source ObjectIDs are not maintained physical asset IDs. Changed codes, locations
+or IDs do not silently transfer old confirmations. GIS/FMFCD must verify them.
+
+Refresh (manual pilot, no scheduled synchronization)
+1. Open https://cof-rylopez.github.io/fresno-storm-watch/pump-inventory.html
+2. Sign in as the existing county exercise owner.
+3. Choose Read FMFCD source. Only the maintainer may need Enterprise sign-in.
+4. Review counts/classifications and the source-check time.
+5. Choose Create / refresh private AGOL copy. Keep the page open until Verified.
+The maintainer stages an append-only generation, reads every row back, verifies
+its digest/count/identity, then updates the read view's server-side definition.
+The last verified view remains active if staging fails. Retry uses the prepared
+generation/unique row keys, not another copy of each pump. Do not recreate items
+when a response is uncertain. Inspect existing owner items first.
+Older source checks cannot replace a newer active copy. Avoid simultaneous
+maintainers; this small manual pilot does not provide a distributed refresh lock.
+
+Freshness
+The form shows FMFCD source-check time separately from its AGOL retrieval time.
+AGOL retrieval must be within ten minutes; the source copy must be within seven
+days. Seven days is a configurable pilot inventory policy, not pump readiness or
+a hazard threshold. Refresh after source edits and at least weekly during use.
+Stale source copies block new confirmations; they never imply safe operation.
+For an unattended refresh, county IT must approve a scheduler, source identity,
+secret storage, failure notification and maintenance owner. None is configured.
+
+Security and verification
+Named AGOL accounts, server-enforced private sharing, and Query-only view access
+protect inventory. The original readiness storage still enforces editing rights
+and author/time. The maintenance page checks the exact owner/org, while AGOL
+enforces item ownership. No credentials, inventory features or contacts are
+published to GitHub/Pages or persistent browser storage. Source snapshots retain
+provenance and corrections; retention/purge policy remains a county GIS task.
+Verify denied anonymous queries, Query-only view permissions and two different
+participant accounts before expanding the private exercise pilot.
+
+Rollback
+Redeploy the previous Pages release (0.46.0) to return the form to its original
+Enterprise inventory path. Keep copied items private; do not delete saved
+readiness history. A source snapshot can be reselected only after verifying its
+counts/digest and choosing its exact snapshot ID in the view definition. Never
+remove the existing-only filter or substitute an unverified source generation.
+
+API references checked October 24, 2026
+https://developers.arcgis.com/rest/users-groups-and-items/create-service/
+https://developers.arcgis.com/rest/services-reference/online/add-to-definition-feature-service/
+https://developers.arcgis.com/rest/services-reference/online/update-definition-feature-layer/
+ArcGIS Python API FeatureLayerCollectionManager.create_view implementation also
+confirms the viewDefinitionQuery/sourceServiceName properties used here.
