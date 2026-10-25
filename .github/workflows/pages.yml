@@ -44,6 +44,9 @@ jobs:
       - name: Collect public PG&E and SCE power records
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:power -- --published
+      - name: Refresh public utility network references when daily check is due
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npm run collect:power-network -- --published
       - name: Collect public NWS wind and gust forecasts
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:wind -- --published

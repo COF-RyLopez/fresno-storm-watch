@@ -1,5 +1,5 @@
-import {POWER_FEEDS,deduplicatePower,normalizePower} from './power-model.js';
-import {POWER_LAYERS} from './power-data.js';
+import {POWER_FEEDS,deduplicatePower,normalizePower} from './power-model.js?v=0.49.0';
+import {POWER_LAYERS} from './power-data.js?v=0.49.0';
 /** @param {string} scenario @param {number} now @returns {object} Fictional exercise only; never submitted to a utility or persisted. */
 export function powerExercise(scenario='watch',now=Date.now()){
   const polygon={rings:[[[-119.72,36.9],[-119.66,36.9],[-119.66,36.96],[-119.72,36.96],[-119.72,36.9]]],spatialReference:{wkid:4326}};

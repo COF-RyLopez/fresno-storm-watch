@@ -1,4 +1,4 @@
-import {POWER_FEEDS,normalizePower,deduplicatePower} from './power-model.js';
+import {POWER_FEEDS,normalizePower,deduplicatePower} from './power-model.js?v=0.49.0';
 import {powerScope} from './power-geometry.js';
 import {countyGeometry} from './model.js';
 
@@ -10,7 +10,7 @@ export const POWER_LAYERS=[
   {feedId:'pge-psps',utility:'PG&E',kind:'pge-psps',url:PGE+'psps_public/MapServer/1',fields:'EventID,EventName,TimePeriod,Stage,TotCustAff,DeEngStart,DeEngEnd,ETOR,LstUpdated'},
   ...[2,3,4,5,7,8].map(id=>({feedId:'pge-outages',utility:'PG&E',kind:'pge-outage',psps:[2,3,7].includes(id),url:PGE+`outages/MapServer/${id}`,fields:`${[3,5].includes(id)?'F_OUTAGE_ID,CITY':'OUTAGE_ID'},${outageFields}`})),
   ...[0,1].map(id=>({feedId:'sce-psps',utility:'SCE',kind:'sce-psps',url:SCE+`psps/MapServer/${id}`,fields:scePspsFields})),
-  {feedId:'sce-outages',utility:'SCE',kind:'sce-outage',url:SCE+'outage/MapServer/0',fields:'IncidentId,OanNo,CountyName,CityName,NoOfAffectedCust_Inci,Status,OutageStartDateTime,LastChngDateTime,ERT,MemoCauseCdDesc,CrewStatusCdDesc'}
+  {feedId:'sce-outages',utility:'SCE',kind:'sce-outage',url:SCE+'outage/MapServer/0',fields:'IncidentId,OanNo,CountyName,CityName,NoOfAffectedCust_Inci,Status,OutageStartDateTime,LastChngDateTime,ERT,MemoCauseCdDesc,CrewStatusCdDesc,Circuit_Number'}
 ];
 /** @param {string} url @param {Function} fetchImpl @returns {Promise<object>} Public read-only calls with no ArcGIS credentials. */
 async function json(url,fetchImpl){

@@ -1,5 +1,18 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.48.0 | October 24, 2026 | Pump refresh setup and automatic form checks
+Version 0.49.0 | October 25, 2026 | Public utility networks and circuit associations
+
+POWER NETWORK (v0.49.0)
+Power / PSPS starts with public PG&E and SCE distribution circuit lines,
+transmission lines and substations. Open Electric network for controls, name/ID
+search, source times and limitations. Reference features can be inspected in the
+right evidence pane and located in 2D or 3D. Other workspaces retain their defaults.
+Exact, unique SCE CIRCUIT_NAME / Circuit_Number associations highlight a circuit;
+leading zeros and punctuation are retained. Missing, ambiguous, stale or conflicting
+identifiers remain unverified. PG&E public outage/PSPS feeds expose no supported
+circuit identifier, so nearby geometry never becomes an electrical connection.
+No fault, switching, energized-state, capacity or facility-service inference is made.
+Only publisher county-intersecting full features are selected, generalized for
+map display. See docs/power-network-operations.txt for provenance and rollback.
 
 PUMP REFRESH (v0.48.0)
 Hourly Standard Notebook worker and private deployment template are prepared;

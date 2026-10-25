@@ -12,7 +12,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.42.0';
+import { createMap } from './lib/map.js?v=0.49.0';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -22,7 +22,7 @@ import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.40.1';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.39.0';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.40.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.45.0';
-import { createPowerWatch } from './lib/power-ui.js?v=0.42.0';
+import { createPowerWatch } from './lib/power-ui.js?v=0.49.0';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.40.0';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.27.0';
 import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.26.0';
@@ -287,7 +287,7 @@ try {
   void refresh();
   power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key)).then(controller => {
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key)).then(controller => {
     map = controller;
     workspace.setMap(map);mission.setMap(map);
     mapSearch.setMap(map);

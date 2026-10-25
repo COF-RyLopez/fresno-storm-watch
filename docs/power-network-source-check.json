@@ -1,0 +1,77 @@
+{
+  "checked": "2026-10-25T18:39:19.940Z",
+  "scope": "Fresno County 06019; whole intersecting features",
+  "snapshotSha256": "3a113920af28bca282d8b27fc4150f14ba75f8658113193d2c511deb8681d19d",
+  "bytes": 11373468,
+  "gzipBytes": 2553853,
+  "vertices": 454061,
+  "sources": [
+    {
+      "id": "pge-circuits",
+      "url": "https://services2.arcgis.com/mJaJSax0KPHoCNB6/arcgis/rest/services/DRPComplianceRelProd/FeatureServer/2",
+      "selected": 309,
+      "returned": 309,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": 1791501414902,
+      "error": null
+    },
+    {
+      "id": "pge-lines",
+      "url": "https://services2.arcgis.com/mJaJSax0KPHoCNB6/arcgis/rest/services/DRPComplianceRelProd/FeatureServer/5",
+      "selected": 211,
+      "returned": 211,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": 1787790707865,
+      "error": null
+    },
+    {
+      "id": "pge-substations",
+      "url": "https://services2.arcgis.com/mJaJSax0KPHoCNB6/arcgis/rest/services/DRPComplianceRelProd/FeatureServer/0",
+      "selected": 50,
+      "returned": 50,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": 1791501418123,
+      "error": null
+    },
+    {
+      "id": "pge-transmission-substations",
+      "url": "https://services2.arcgis.com/mJaJSax0KPHoCNB6/arcgis/rest/services/DRPComplianceRelProd/FeatureServer/1",
+      "selected": 0,
+      "returned": 0,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": 1787845429357,
+      "error": null
+    },
+    {
+      "id": "sce-circuits",
+      "url": "https://drpep.sce.com/arcgis_server/rest/services/Hosted/Distribution_circuits/FeatureServer/0",
+      "selected": 17,
+      "returned": 17,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": null,
+      "error": null
+    },
+    {
+      "id": "sce-lines",
+      "url": "https://drpep.sce.com/arcgis_server/rest/services/Hosted/ICA_Layer/FeatureServer/19",
+      "selected": 11,
+      "returned": 11,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": null,
+      "error": null
+    },
+    {
+      "id": "sce-substations",
+      "url": "https://drpep.sce.com/arcgis_server/rest/services/Hosted/ICA_Layer/FeatureServer/18",
+      "selected": 9,
+      "returned": 9,
+      "lastSuccess": "2026-10-25T18:39:19.940Z",
+      "publisherEdited": null,
+      "error": null
+    }
+  ],
+  "geometryNote": "Publisher county-polygon intersection; whole features retained, generalized for display at 0.00005 degrees with 6 decimal places. Not survey geometry or an electrical topology.",
+  "matchSemantics": "Unique exact supported SCE publisher circuit name/number; no electrical fault or energized-state inference",
+  "pgeEventCircuitId": "Not supplied in the configured public event feeds",
+  "privateDataIncluded": false
+}

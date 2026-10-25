@@ -33,13 +33,13 @@ export function normalizePower(feature,layer){
     row.issues.push('PG&E PSPS notice and outage records can overlap; do not add them as separate affected customers.');
   }else if(layer.kind==='sce-psps'){
     const status=({'Monitored':'consideration','Downstream':'consideration','De-Energized':'psps','Re-Energized':'restored'})[text(a.PSPS)]||'unknown';
-    row={...row,key:`sce:psps:${required(a.GlobalID).toLowerCase()}`,name:text(a.CIRCUIT_NAME)||'Unnamed circuit',status:status==='consideration'&&a.PSPS_Details==='De-Energization Expected'?'warning':status,rawStatus:text(a.PSPS),location:text(a.COUNTY)||'Area intersecting Fresno County',customers:count(a.GrandTotal),start:date(a.StartDate),end:date(a.EndDate),restoration:date(a.ERT),updated:date(a.EditDate),details:text(a.PSPS_Details),event:text(a.EventName)};
+    row={...row,key:`sce:psps:${required(a.GlobalID).toLowerCase()}`,name:text(a.CIRCUIT_NAME)||'Unnamed circuit',status:status==='consideration'&&a.PSPS_Details==='De-Energization Expected'?'warning':status,rawStatus:text(a.PSPS),location:text(a.COUNTY)||'Area intersecting Fresno County',customers:count(a.GrandTotal),start:date(a.StartDate),end:date(a.EndDate),restoration:date(a.ERT),updated:date(a.EditDate),details:text(a.PSPS_Details),event:text(a.EventName),networkCircuit:{type:'name',value:text(a.CIRCUIT_NAME),sourceField:'CIRCUIT_NAME'}};
     row.issues.push('Circuit customer counts may span counties and overlap. “Downstream” means electrical circuits, not river reaches.');
   }else if(layer.kind==='pge-outage'){
     row={...row,key:`pge:outage:${required(a.OUTAGE_ID||a.F_OUTAGE_ID)}`,name:`Outage ${a.OUTAGE_ID||a.F_OUTAGE_ID}`,status:layer.psps?'psps':'outage',rawStatus:text(a.CREW_CURRENT_STATUS),location:text(a.CITY)||'Mapped location / area in Fresno County',customers:count(a.EST_CUSTOMERS),start:date(a.OUTAGE_START_TEXT||a.OUTAGE_START),end:date(null),restoration:date(a.CURRENT_ETOR_TEXT||a.CURRENT_ETOR),updated:date(a.LAST_UPDATE_TEXT||a.LAST_UPDATE),details:[text(a.OUTAGE_CAUSE),text(a.CREW_CURRENT_STATUS)].filter(Boolean).join(' · ')};
   }else{
     const status=text(a.Status).toUpperCase()==='ACTIVE'?'outage':text(a.Status).toUpperCase()==='RESTORED'?'restored':'unknown';
-    row={...row,key:`sce:outage:${required(a.IncidentId)}`,name:`Outage ${a.OanNo||a.IncidentId}`,status,rawStatus:text(a.Status),location:text(a.CityName)||text(a.CountyName)||'Mapped point in Fresno County',customers:count(a.NoOfAffectedCust_Inci),start:date(a.OutageStartDateTime),end:date(null),restoration:date(a.ERT),updated:date(a.LastChngDateTime),details:[text(a.MemoCauseCdDesc),text(a.CrewStatusCdDesc)].filter(Boolean).join(' · ')};
+    row={...row,key:`sce:outage:${required(a.IncidentId)}`,name:`Outage ${a.OanNo||a.IncidentId}`,status,rawStatus:text(a.Status),location:text(a.CityName)||text(a.CountyName)||'Mapped point in Fresno County',customers:count(a.NoOfAffectedCust_Inci),start:date(a.OutageStartDateTime),end:date(null),restoration:date(a.ERT),updated:date(a.LastChngDateTime),details:[text(a.MemoCauseCdDesc),text(a.CrewStatusCdDesc)].filter(Boolean).join(' · '),networkCircuit:{type:'number',value:text(a.Circuit_Number),sourceField:'Circuit_Number'}};
     row.issues.push('SCE outage change times and restoration estimates are publisher text; the feed does not declare a time zone for those strings.');
   }
   if(row.status==='unknown')row.issues.push('Unrecognized or missing utility status. Verify the official map.');
@@ -51,13 +51,13 @@ export function deduplicatePower(input){
   for(const row of input){
     const old=rows.get(row.key);
     if(!old){rows.set(row.key,{...row,geometries:[...row.geometries]});continue;}
-    const different=old.status!==row.status||old.customers!==row.customers||JSON.stringify(old.updated)!==JSON.stringify(row.updated);
-    const rank=r=>JSON.stringify([r.status,r.rawStatus,r.customers,r.start,r.end,r.restoration,r.updated,r.details]);
+    const different=old.status!==row.status||old.customers!==row.customers||JSON.stringify(old.updated)!==JSON.stringify(row.updated)||JSON.stringify(old.networkCircuit)!==JSON.stringify(row.networkCircuit);
+    const rank=r=>JSON.stringify([r.status,r.rawStatus,r.customers,r.start,r.end,r.restoration,r.updated,r.details,r.networkCircuit]);
     const newer=(row.updated.time||0)-(old.updated.time||0);
     const next=newer>0||newer===0&&rank(row)>rank(old)?row:old;
     rows.set(row.key,{...next,geometries:[...new Map([...old.geometries,...row.geometries].map(g=>[JSON.stringify(g),g])).values()],issues:[...new Set([...old.issues,...row.issues,...(different?['Source representations differ; verify this record with the utility.']:[])])]});
   }
-  return [...rows.values()].sort((a,b)=>a.key.localeCompare(b.key)).map(row=>({...row,revision:fingerprint(JSON.stringify([row.status,row.rawStatus,row.customers,row.start,row.end,row.restoration,row.updated,row.details,row.issues,row.geometries.map(g=>JSON.stringify(g)).sort()]))}));
+  return [...rows.values()].sort((a,b)=>a.key.localeCompare(b.key)).map(row=>({...row,revision:fingerprint(JSON.stringify([row.status,row.rawStatus,row.customers,row.start,row.end,row.restoration,row.updated,row.details,row.networkCircuit,row.issues,row.geometries.map(g=>JSON.stringify(g)).sort()]))}));
 }
 /** @param {object} data @returns {object} Validate cached public snapshots before use. */
 export function validatePowerSnapshot(data){

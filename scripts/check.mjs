@@ -1,3 +1,4 @@
+import {validateNetworkSnapshot} from '../site/lib/power-network-model.js';
 import {comparisonAreas} from '../site/lib/forecast-comparison-model.js';
 import {uniqueComparisonPoints,validateComparisonSnapshot} from '../site/lib/forecast-review-model.js';
 import { readdir, readFile } from 'node:fs/promises';
@@ -40,6 +41,7 @@ const reservoirSettings=JSON.parse(await readFile(new URL('site/data/reservoir-w
 assert.deepEqual(reservoirSettings.stations.map(s=>s.id),['MIL','PNF']);
 for(const station of reservoirSettings.stations)assert(station.longitude>-121&&station.longitude<-118&&station.latitude>36&&station.latitude<38&&station.metrics.every(m=>['D','H'].includes(m.duration)&&['CFS','FEET','AF'].includes(m.units)),'Reservoir geography or metric contract changed');
 validateReservoirSnapshot(JSON.parse(await readFile(new URL('site/data/reservoir-latest.json',root),'utf8')));
+validateNetworkSnapshot(JSON.parse(await readFile(new URL('site/data/power-network.json',root),'utf8')));
 validatePowerSnapshot(JSON.parse(await readFile(new URL('site/data/power-latest.json',root),'utf8')));
 validateWindSnapshot(JSON.parse(await readFile(new URL('site/data/wind-latest.json',root),'utf8')));
 const areaSettings=JSON.parse(await readFile(new URL('site/data/river-areas.json',root),'utf8'));

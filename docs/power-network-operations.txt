@@ -1,0 +1,90 @@
+F.R.O.G. POWER NETWORK — 0.49.0 — October 25, 2026
+
+USER WORKFLOW
+Open Power / PSPS. Distribution feeder lines, transmission lines and substation
+points start enabled only here. Distribution lines draw below 1:350,000 to limit
+countywide clutter. Exact matched circuit highlights have no scale restriction.
+Open Electric network for checkboxes, name/ID search and source-check timestamps.
+Search results and map selections open the existing supporting-evidence pane.
+Select a power record to see its circuit association. Show matched circuit fits
+the full published geometry. Checkboxes use the existing per-workspace memory;
+background collection cannot re-enable another workspace's network layers.
+
+SOURCES / PROVENANCE
+All seven endpoints are public utility planning services; no partner portal,
+credential or private county asset export is used. The source list and query
+fields are pinned in site/lib/power-network-model.js. Public publisher references:
+https://www.pge.com/assets/pge/docs/about/doing-business-with-pge/pge-grip-quick-start-guide.pdf
+https://drpep.sce.com/
+The source checks and feature accounting accompany site/data/power-network.json.
+
+Initial county-polygon selection on October 25 returned 309 PG&E feeder records,
+211 PG&E transmission records, 50 PG&E distribution substation points, zero PG&E
+transmission substation points, 17 SCE distribution circuit records, 11 SCE
+transmission circuit records and 9 SCE substation points. These are source records,
+not deduplicated physical assets, customers affected or operational circuit totals.
+Zero selected points does not establish absence of a utility facility.
+
+Each query uses the complete Fresno County 06019 polygon, including its holes and
+multipart geometry, through the ArcGIS server's intersects predicate. Selected
+features are retained whole; some extend beyond county borders. The county polygon
+is not a circuit service territory. ObjectID inventories are reconciled before and
+after complete bounded batches; missing/repeated records, schema changes, unknown
+CRS and partial responses fail the source. Identifiers remain strings.
+
+GEOMETRY / PERFORMANCE
+Services have differing original horizontal CRS. Publishers transform display
+outputs to WGS84 (4326); response CRS is verified rather than guessed. Query
+parameters generalize the DISPLAY geometry at 0.00005 degrees and six decimals.
+This is a display derivative, not surveyed line position or electrical topology.
+The full snapshot is bounded to 5,000 features per source / 1.5 million vertices.
+It is loaded lazily in Power, not at every application launch.
+PG&E LineDetail has nearly 180,000 county-intersecting records and is deliberately
+not downloaded. Public feeder geometry supplies the distribution network overview.
+More detailed line-section delivery would require a separate tiled design.
+
+ASSOCIATION RULES
+SCE outage Circuit_Number matches only the public circuit_no field. SCE PSPS
+CIRCUIT_NAME matches only the original public circt_nam. Surrounding whitespace,
+case and Unicode compatibility are normalized; punctuation, leading zeros and
+voltage suffixes are not removed, padded or inferred. A single stable circuit_id
+must resolve the value; contradictory group attributes or utility representations
+suppress the match. Match semantics: agreement of published circuit identity,
+not independent utility confirmation of current switching or every affected line.
+The PG&E public outage/PSPS feeds used by this app do not supply a supported
+circuit identifier. They remain explicitly unverified even beside a feeder.
+
+Associated substations use the circuit publisher's name, restricted to an exact
+unique station identifier and location in this reference. Missing/ambiguous station
+coverage stays unknown; no nearest-line/site/station inference is performed.
+Facilities retain the existing polygon-overlap rules and private access. This
+release does not assert which circuit supplies a county building or pump.
+Some circuit attributes or geometry are redacted; preserve the publisher's note.
+No actual fault, electrical trace, energized/de-energized state or safe access is
+computed from this reference. Outage/PSPS counts and hazard rules are unchanged.
+
+REFRESH / FAILURES
+The existing Pages workflow runs collect-power-network with a verified published
+fallback. A successful reference check less than 24 hours old is reused; otherwise
+each source is checked independently. Failed sources retain only their own dated
+features and last successful time. No new paid service or credential is required.
+The open Power workspace checks the published copy every five minutes. It does
+not directly collect SCE planning services from each operator's browser.
+Publisher edit dates/record dates, source retrieval and browser checks stay separate.
+A failed reference, a check over 72 hours old, or an overdue outage source suppresses
+verified highlighting. Dotted lines retain last-known reference geometry. Source
+issues show each underlying check once and do not imply a power status change.
+Closing/replacing evidence, switching workspace, lost source identity or a new
+unverified revision clears the highlight. Refresh does not move the map.
+
+EXERCISE / ACCEPTANCE
+?view=power&exercise=1 uses entirely fictional utility/network records and no
+AGOL writes. The fictional mountain circuit demonstrates an exact SCE name match;
+the PG&E example demonstrates the unverified branch. Do not portray this as an
+actual SCE outage or an actual failed line. No live matching SCE event was required
+or fabricated for acceptance; current-event identity matching remains dependent
+on the publisher supplying a supported unique value.
+
+ROLLBACK
+Redeploy 117c62474df885409d7084e3fd824a63df380a25 (0.48.0). There is no AGOL data
+migration, private sharing change, membership change or readiness-record change.
