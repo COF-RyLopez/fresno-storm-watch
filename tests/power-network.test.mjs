@@ -56,7 +56,7 @@ test('circuit association changes are revisions and contradictory representation
 });
 test('network defaults are limited to Power and symbology never labels a line as energized or a fault',()=>{
   for(const id of Object.keys(WORKSPACES))for(const k of ['powerCircuits','powerLines','powerSubstations'])assert.equal(workspaceDefaults(id).layers[k],id==='power');
-  assert.equal(networkSymbol(circuit()).style,'dash');assert.equal(networkSymbol({...circuit(),utility:'PG&E'}).style,'solid');assert.equal(networkSymbol(station()).style,'square');assert.equal(networkSymbol(circuit(),{highlight:true}).width,4);assert.notEqual(networkSymbol(circuit(),{dark:false}).color,networkSymbol(circuit()).color);
+  assert.equal(networkSymbol(circuit()).style,'dash');assert.equal(networkSymbol({...circuit(),utility:'PG&E'}).style,'solid');assert.equal(networkSymbol(station()).type,'picture-marker');assert(decodeURIComponent(networkSymbol(station()).url).includes('<svg'));assert(networkSymbol({...circuit(),kind:'line'}).width>networkSymbol(circuit()).width);assert.equal(networkSymbol(circuit(),{highlight:true}).width,4);assert.notEqual(networkSymbol(circuit(),{dark:false}).color,networkSymbol(circuit()).color);
 });
 test('published network reconciles all sources, public geometry and stable display identities',async()=>{
   const d=validateNetworkSnapshot(JSON.parse(await readFile(new URL('../site/data/power-network.json',import.meta.url),'utf8')));assert(d.sources.every(s=>s.url.startsWith('https://')&&!s.url.includes('?')));assert(d.sources.filter(s=>s.features.length).every(s=>s.accounting.returned===s.accounting.selected));

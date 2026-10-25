@@ -1,8 +1,22 @@
-import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit} from './power-network-model.js';
+import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js?v=0.49.1';
 import {reportHealth} from './source-health.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const n=el('a',text);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
 const button=(text,action)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=action;return n;};
+/** Both network keys use the same symbols as the map, including light mode and the station badge. */
+function renderNetworkKeys(){
+  const dark=document.querySelector('#map')?.dataset.basemap!=='light';
+  for(const host of document.querySelectorAll('[data-power-network-key]')){
+    host.replaceChildren();
+    for(const [kind,label,highlight]of [['circuit','Distribution',false],['line','Transmission',false],['substation','Substation',false],['circuit','Verified match',true]]){
+      const item=el('span');item.className='network-key-item';const symbol=networkSymbol({kind,utility:'PG&E'},{dark,highlight});
+      const swatch=el(kind==='substation'?'img':'span');swatch.setAttribute('aria-hidden','true');
+      if(kind==='substation'){swatch.src=symbol.url;swatch.width=22;swatch.height=22;swatch.alt='';}
+      else {swatch.className='network-swatch';swatch.style.borderTopColor=symbol.color;swatch.style.borderTopWidth=symbol.width+'pt';}
+      item.append(swatch,document.createTextNode(label));host.append(item);
+    }
+  }
+}
 /** Lazy public network evidence. Closing/replacing evidence clears its selection; refresh never moves the map. */
 export function createPowerNetwork({timeZone,exercise=false,exerciseNow=Date.now(),onMap=()=>{},onFeatureOpen=()=>{}}={}){
   let snapshot=null,map=null,selected=null,associationHost=null,busy=false,checked=null,lastAttempt=0,loadError=null;
@@ -29,6 +43,7 @@ export function createPowerNetwork({timeZone,exercise=false,exerciseNow=Date.now
     $('power-dialog').setAttribute('heading','Utility network reference');$('power-dialog').setAttribute('open','');onMap();
   }
   function render(){
+    renderNetworkKeys();
     $('power-network-refresh').loading=busy;$('power-network-refresh').disabled=busy||exercise;
     const features=all(),counts=kind=>features.filter(f=>f.kind===kind).length,quantity=(kind,label)=>`${counts(kind)} ${label}${counts(kind)===1?'':'s'}`,issues=snapshot?.sources.filter(s=>networkSourceProblem(s,exercise?exerciseNow:Date.now())).length||0;
     $('power-network-block').description=snapshot?`${quantity('circuit','circuit record')} · ${quantity('line','line')} · ${quantity('substation','point')}${issues?' · coverage needs review':''}`:'Public planning references · loading';
@@ -50,6 +65,8 @@ export function createPowerNetwork({timeZone,exercise=false,exerciseNow=Date.now
   document.addEventListener('frogLayerPreference',e=>{for(const [kind,key]of Object.entries(NETWORK_LAYER_KEYS))if(e.detail.key===key)$('network-'+kind).checked=!!e.detail.wanted;});
   $('power-dialog').addEventListener('stormEvidenceClose',()=>{selected=null;associationHost=null;map?.clearPowerNetworkMatch();});
   window.addEventListener('stormWorkspaceChange',activate);window.addEventListener('popstate',activate);setInterval(()=>{if(!document.hidden&&active())activate();},60000);
+  window.addEventListener('storm-theme-change',renderNetworkKeys);
+  window.addEventListener('storm-basemap-change',renderNetworkKeys);
   if(exercise){snapshot=networkExercise(exerciseNow);checked=exerciseNow;}render();queueMicrotask(activate);
   return {setMap(value){map=value;if(snapshot)map.setPowerNetwork(snapshot);renderAssociation();},select(row,host){selected=row;associationHost=host;renderAssociation();activate();},clearSelection(){selected=null;associationHost=null;map?.clearPowerNetworkMatch();},showFeature:key=>{const f=all().find(f=>f.key===key);if(f)showFeature(f);}};
 }

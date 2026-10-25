@@ -1,12 +1,12 @@
-import {NETWORK_LAYER_KEYS,networkSymbol,networkSourceProblem} from './power-network-model.js';
+import {NETWORK_LAYER_KEYS,networkSymbol,networkSourceProblem} from './power-network-model.js?v=0.49.1';
 /** Small, county-selected public reference stack; no topology, tracing or energized-state inference. */
 export function createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect}){
   const layers=Object.fromEntries(Object.entries(NETWORK_LAYER_KEYS).map(([kind,key])=>{const layer=new GraphicsLayer({title:kind==='circuit'?'Published utility circuit lines · reference':kind==='line'?'Published transmission lines · reference':'Published substations · power state unknown',elevationInfo:{mode:'on-the-ground'},popupEnabled:false,minScale:kind==='circuit'?350000:0});registerLayer(key,layer,false,3);return [kind,layer];}));
   const highlight=new GraphicsLayer({title:'Verified published circuit identity · not a fault',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});registerLayer('powerCircuits',highlight,false);
   let snapshot=null,features=new Map(),match=null;
-  const dark=()=>document.documentElement.dataset.theme!=='light';
+  const dark=()=>document.querySelector?.('#map')?.dataset.basemap!=='light';
   const geometry=f=>({...f.geometry,type:f.kind==='substation'?'point':'polyline'});
   function drawHighlight(){highlight.removeAll();const chosen=match?.state==='matched'?match.circuits:[];highlight.addMany(chosen.map(f=>new Graphic({geometry:geometry(f),attributes:{networkKey:f.key},symbol:networkSymbol(f,{highlight:true,dark:dark()})})));setLayerEligibility(highlight,chosen.length>0);}
   const controller={setSnapshot(data,force=false){if(data===snapshot&&!force)return;snapshot=data;features=new Map();for(const [kind,layer] of Object.entries(layers)){layer.removeAll();const list=(data?.sources||[]).flatMap(s=>s.features.filter(f=>f.kind===kind).map(f=>({f,stale:!!networkSourceProblem(s)})));for(const {f,stale}of list)features.set(f.key,f);layer.addMany(list.map(({f,stale})=>new Graphic({geometry:geometry(f),attributes:{networkKey:f.key},symbol:networkSymbol(f,{stale,dark:dark()})})));setLayerEligibility(layer,list.length>0);}drawHighlight();},setMatch(value){match=value;drawHighlight();},clearMatch(){match=null;drawHighlight();},select:key=>{const f=features.get(key);if(f)onSelect(f);},focus(keys){const selected=keys.map(k=>features.get(k)).filter(Boolean);if(!selected.length)return false;const points=selected.flatMap(f=>f.geometry.paths?.flat()||[[f.geometry.x,f.geometry.y]]);const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);return focusGeometry(new Extent({xmin:Math.min(...xs)-.005,xmax:Math.max(...xs)+.005,ymin:Math.min(...ys)-.005,ymax:Math.max(...ys)+.005,spatialReference:{wkid:4326}}));},layers};
-  window.addEventListener('storm-theme-change',()=>controller.setSnapshot(snapshot,true));return controller;
+  window.addEventListener('storm-theme-change',()=>controller.setSnapshot(snapshot,true));window.addEventListener('storm-basemap-change',()=>controller.setSnapshot(snapshot,true));return controller;
 }

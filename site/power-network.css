@@ -6,11 +6,9 @@
 .power-network-results {display:grid;gap:8px;}
 .power-network-results calcite-button {text-align:left;}
 .power-network-key {display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
-.network-swatch {display:inline-block;width:22px;border-top:2px solid #40647b;}
-.network-swatch.sce {border-top:2px dashed #806832;}
-.network-station-swatch {display:inline-block;width:10px;height:10px;border:2px solid var(--app-text);}
-.calcite-mode-dark .network-swatch {border-color:#8eafc2;}
-.calcite-mode-dark .network-swatch.sce {border-color:#d3be93;}
+.network-key-item {display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.network-swatch {display:inline-block;width:26px;border-top-style:solid;flex:none;}
+.network-key-item img {display:inline-block;flex:none;vertical-align:middle;}
 .power-network-association {margin-top:20px;padding-top:12px;border-top:1px solid var(--app-border);}
 .power-network-association h3 {font-size:1rem;}
 .power-network-association p {line-height:1.55;}

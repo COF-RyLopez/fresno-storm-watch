@@ -1,4 +1,14 @@
-F.R.O.G. POWER NETWORK — 0.49.0 — October 25, 2026
+F.R.O.G. POWER NETWORK — 0.49.1 — October 25, 2026
+
+SYMBOLS
+Violet lines identify electrical infrastructure, distinct from blue waterways and
+gray roads. Distribution lines are thinner than transmission lines. PG&E uses
+solid lines; SCE uses dashed lines. Substations use a violet hexagon/bolt badge.
+Mint thick lines retain the existing verified-identity meaning. Retained stale
+references remain gray/dotted. Both map keys use the map symbol definitions.
+Symbols are reviewed in 2D and 3D, dark/light themes and Imagery Hybrid.
+SDK marker compatibility checked October 25, 2026:
+https://developers.arcgis.com/javascript/latest/references/core/symbols/PictureMarkerSymbol/
 
 USER WORKFLOW
 Open Power / PSPS. Distribution feeder lines, transmission lines and substation
@@ -86,5 +96,5 @@ or fabricated for acceptance; current-event identity matching remains dependent
 on the publisher supplying a supported unique value.
 
 ROLLBACK
-Redeploy 117c62474df885409d7084e3fd824a63df380a25 (0.48.0). There is no AGOL data
+For the 0.49.1 style change, redeploy 06ceeeb66f10b70896758e13dc6834b5f2c4f203 (0.49.0). There is no AGOL data
 migration, private sharing change, membership change or readiness-record change.

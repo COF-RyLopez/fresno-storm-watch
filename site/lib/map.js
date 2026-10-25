@@ -1,4 +1,4 @@
-import {createNetworkMap} from './power-network-map.js?v=0.49.0-r1';
+import {createNetworkMap} from './power-network-map.js?v=0.49.1';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
@@ -103,6 +103,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     }
     map.basemap=galleryBasemaps[basemapKey];
     document.querySelector('#map').dataset.basemap=basemapKey;
+    window.dispatchEvent(new CustomEvent('storm-basemap-change',{detail:{key:basemapKey}}));
     const reference=basemapKey===WATERWAY_BASEMAP.key,note=document.querySelector('#waterway-basemap-note'),missing=key===WATERWAY_BASEMAP.key&&!waterwayBasemap;
     note.hidden=!reference&&!missing;note.textContent=reference?waterwayBasemap.note:missing?`County waterways style unavailable — ${waterwayStyleError}. Dark gray context restored.`:'';
     document.querySelector('#waterbody-legend').hidden=!reference;

@@ -68,8 +68,13 @@ export function matchPowerCircuit(row,snapshot,now=Date.now()){
   const stationIds=new Set(stations.map(f=>f.code));if(new Set(stations.map(f=>JSON.stringify(f.geometry))).size>1)stationIds.add('ambiguous-location');
   return {state:'matched',reason:`Verified ${ref.type==='number'?'circuit-number':'circuit-name'} match in utility publications. This does not establish a fault, live switching or the full de-energized extent.`,sourceField:ref.sourceField,value:ref.value,circuits:found,substations:stationIds.size===1&&!stationIds.has('')?stations:[],stationNote:stations.length&&stationIds.size!==1?'Substation name is ambiguous.':!stations.length?'Associated substation point is not verified in this county reference.':''};
 }
-/** Central symbology contract: utility identity, not energized/de-energized status. */
+/** Violet identifies electrical infrastructure; weight identifies line type, not capacity or operating state. */
 export function networkSymbol(f,{highlight=false,stale=false,dark=true}={}){
-  const color=highlight?(dark?'#65cad1':'#007c86'):stale?(dark?'#a5afb8':'#67737c'):f.utility==='PG&E'?(dark?'#8eafc2':'#40647b'):(dark?'#d3be93':'#806832');
-  return f.kind==='substation'?{type:'simple-marker',style:'square',size:highlight?14:9,color:[0,0,0,0],outline:{color,width:highlight?3:1.8}}:{type:'simple-line',color,width:highlight?4:f.kind==='line'?1.8:1.1,style:stale?'dot':f.utility==='SCE'?'dash':'solid'};
+  const color=highlight?(dark?'#82e6c3':'#00795d'):stale?(dark?'#a5afb8':'#67737c'):(dark?'#d6a6ff':'#7931ad');
+  if(f.kind==='substation'){
+    // A hexagonal station badge is distinct from outage squares, asset diamonds and gauge circles.
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M8 3h12l6 11-6 11H8L2 14Z" fill="${dark?'#241b31':'#faf5ff'}" stroke="${color}" stroke-width="2.5"${stale?' stroke-dasharray="3 2"':''}/><path d="m16 6-7 10h5l-2 6 8-11h-5Z" fill="${color}"/></svg>`;
+    return {type:'picture-marker',url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg),width:22,height:22};
+  }
+  return {type:'simple-line',color,width:highlight?4:f.kind==='line'?2.7:1.5,style:stale?'dot':f.utility==='SCE'?'dash':'solid'};
 }

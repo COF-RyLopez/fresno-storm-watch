@@ -1,7 +1,10 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.49.0 | October 25, 2026 | Public utility networks and circuit associations
+Version 0.49.1 | October 25, 2026 | Distinct electrical network symbols
 
-POWER NETWORK (v0.49.0)
+POWER NETWORK (v0.49.1)
+Violet distribution/transmission lines, hexagonal station badges and matching
+legends distinguish the electrical network from streets and waterways. Symbol
+contrast follows the selected basemap. Circuit association rules are unchanged.
 Power / PSPS starts with public PG&E and SCE distribution circuit lines,
 transmission lines and substations. Open Electric network for controls, name/ID
 search, source times and limitations. Reference features can be inspected in the
