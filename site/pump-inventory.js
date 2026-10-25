@@ -4,7 +4,7 @@ import {setupAuth} from './lib/auth.js?v=0.40.0';
 import {loadSdk} from './lib/map.js?v=0.42.0';
 import {openDrainage} from './lib/drainage-data.js?v=0.46.0';
 import {preparePumpCopy} from './lib/pump-copy-model.js';
-import {authorizePumpCopyAdmin,openPumpCopyAdmin} from './lib/pump-copy-admin.js';
+import {authorizePumpCopyAdmin,openPumpCopyAdmin} from './lib/pump-copy-admin.js?v=0.48.0';
 const $=id=>document.getElementById(id),time=v=>new Date(v).toLocaleString('en-US',{timeZone:CONFIG.timeZone,timeZoneName:'short'});
 let session=null,source=null,admin=null,snapshot=null,busy=false,epoch=0;
 function controls(){let allowed=false;try{authorizePumpCopyAdmin(EOC_CONFIG,session);allowed=true;}catch{}$('inventory-read').disabled=busy||!allowed;$('inventory-publish').disabled=busy||!allowed||!snapshot;$('inventory-publish').loading=busy;$('inventory-read').loading=busy;}

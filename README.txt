@@ -1,5 +1,14 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.47.0 | October 24, 2026 | Private AGOL pump inventory
+Version 0.48.0 | October 24, 2026 | Pump refresh setup and automatic form checks
+
+PUMP REFRESH (v0.48.0)
+Hourly Standard Notebook worker and private deployment template are prepared;
+live scheduling awaits county Notebook privileges, a secured read-only source
+connection and credit approval. No source credential or active task is created.
+The form polls AGOL every five minutes while visible, retains unchanged-pump
+drafts and clears changed/removed associations. Matching private verification
+metadata distinguishes source checks from snapshot capture and app retrieval.
+See site/pump-refresh-setup.html for exact IT setup, costs and acceptance.
 
 DIRECT PUMP READINESS FORM (v0.47.0)
 Share https://cof-rylopez.github.io/fresno-storm-watch/pump-readiness.html

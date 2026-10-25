@@ -80,3 +80,21 @@ https://developers.arcgis.com/rest/services-reference/online/add-to-definition-f
 https://developers.arcgis.com/rest/services-reference/online/update-definition-feature-layer/
 ArcGIS Python API FeatureLayerCollectionManager.create_view implementation also
 confirms the viewDefinitionQuery/sourceServiceName properties used here.
+
+0.48.0 automatic-refresh preparation
+The self-contained notebooks/fmfcd-pump-inventory-refresh.ipynb is inactive by
+default; scripts/refresh-pump-inventory.py is its tested worker source. County
+Notebook create/schedule privileges, an approved owner-private stored source
+connection, credit approval and two live scheduled-run checks remain required.
+See site/pump-refresh-setup.html for setup and recovery. No live task is created.
+Owner-private setup Notebook staged in FROG EOC Exercise 2026-27:
+https://cofgisonline.maps.arcgis.com/home/item.html?id=6c67949a34dc43c59221e50f094ac4be
+Its activation flag is false. Uploading it did not grant run/schedule privileges.
+The form now polls AGOL every five minutes while visible without replacing a
+draft for an unchanged pump. A changed/removed identity clears selection.
+Private view item data under frogPumpRefresh records the matching snapshot,
+digest, last attempt and last successful complete source verification. Source
+checks of unchanged data do not append pump features. An enabled hourly task
+uses a three-hour verification freshness limit; manual mode retains seven days.
+Failed checks do not extend freshness. Active scheduled writer ownership blocks
+manual copy; pause the task and follow recovery instructions to return to manual.

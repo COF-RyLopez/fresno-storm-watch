@@ -17,6 +17,10 @@ export function pumpFormCurrent(record,inventory,now=Date.now()){
   const key=bindingKey(pumpBinding(record));
   return inventory.rows.some(r=>r.kind==='pump'&&r.category==='existing'&&bindingKey(pumpBinding(r))===key);
 }
+/** Preserve an open draft only while the original pump identity and location still match. */
+export function pumpFormRetainsSelection(record,rows){
+  return Boolean(record&&rows.some(r=>r.kind==='pump'&&r.category==='existing'&&r.key===record.key&&bindingKey(pumpBinding(r))===bindingKey(pumpBinding(record))));
+}
 export function pumpFormLink(base,{exercise=false,acceptance=false}={}){
   const url=new URL('./pump-readiness.html',base);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw Error('Unsupported form address.');
   if(exercise)url.searchParams.set('exercise','1');else if(acceptance)url.searchParams.set('acceptance','1');return url.href;

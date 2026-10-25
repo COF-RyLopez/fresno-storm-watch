@@ -27,6 +27,8 @@ jobs:
       - run: npm run check
       - name: Check private publisher contract without connecting to ArcGIS
         run: python3 -m unittest discover -s tests -p 'test_eoc_publisher.py'
+      - name: Check private pump refresh and inactive Notebook without connecting to ArcGIS
+        run: python3 -m unittest discover -s tests -p 'test_pump_refresh.py'
       - name: Check county network-attribute accounting offline
         run: python3 -m unittest discover -s tests -p 'test_county_waterways.py'
       - name: Check irrigation source-audit semantics offline
