@@ -1,4 +1,4 @@
-import {createPowerNetwork} from './power-network-ui.js?v=0.49.1';
+import {createPowerNetwork} from './power-network-ui.js?v=0.50.0';
 import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';
@@ -12,13 +12,13 @@ const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** @param {object} options @returns {object} Fixed county power status, independent of the map extent and selected workspace. */
-export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now(),onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){
+export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now(),exerciseData,onLoadFacilities,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){
   for(const host of document.querySelectorAll('[data-power-key]'))renderPowerLegend(host);
   for(const id of ['power-key-open','map-power-key-open'])$(id).onclick=()=>$('power-key-dialog').setAttribute('open','');
   $('power-key-close').onclick=()=>$('power-key-dialog').removeAttribute('open');
   let snapshot=null,county=null,map=null,busy=false,loadError=null,lastDirect=0,checked=null,selectedKey=null;
   let changes=null;
-  const network=createPowerNetwork({timeZone,exercise,exerciseNow,onMap,onFeatureOpen:()=>{selectedKey=null;}});
+  const network=createPowerNetwork({timeZone,exercise,exerciseNow,exerciseData,onLoadFacilities,onMap,onFeatureOpen:()=>{selectedKey=null;}});
   $('power-dialog').addEventListener('stormEvidenceClose',()=>{selectedKey=null;});
   const time=t=>t?formatTime(t,timeZone):'Not supplied';
   const stamp=d=>d?.time?time(d.time):d?.text?`${d.text} (publisher text; time zone unconfirmed)`:'Not supplied';
@@ -105,5 +105,5 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     $('power-panel').prepend(controls);accept(powerExercise("watch",exerciseNow));checked=exerciseNow;render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
-  return {setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);render();if(selectedKey)map.focusPower(selectedKey);},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
+  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);render();if(selectedKey)map.focusPower(selectedKey);},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
 }

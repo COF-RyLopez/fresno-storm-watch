@@ -1,4 +1,4 @@
-import {createNetworkMap} from './power-network-map.js?v=0.49.1';
+import {createNetworkMap} from './power-network-map.js?v=0.50.0';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
@@ -486,7 +486,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     setFacilitiesVisible:visible=>{setLayerPreference('facilities',visible);},
     focusFacility:key=>selectionFocus.focus(type=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(!g)return null;setLayerPreference('facilities',true);return {target:g.geometry,scale:14000,...(type==='3d'?{tilt:45,heading:0}:{})};}),
     setDrainagePowerKeys(keys,pumpKeys=[]){const signature=JSON.stringify([keys.slice().sort(),pumpKeys.slice().sort()]);if(signature===drainagePowerSignature)return;drainagePowerSignature=signature;drainagePowerKeys=new Set(keys);drainagePowerPumps=new Set(pumpKeys);drawPower();drawDrainagePower();},
-    setPowerNetwork:data=>utilityNetwork.setSnapshot(data),setPowerNetworkMatch:match=>utilityNetwork.setMatch(match),clearPowerNetworkMatch:()=>utilityNetwork.clearMatch(),focusPowerNetwork:keys=>utilityNetwork.focus(keys),
+    setPowerNetwork:data=>utilityNetwork.setSnapshot(data),setPowerNetworkSelection:keys=>utilityNetwork.setReference(keys),focusPowerNearby:(shape,category)=>utilityNetwork.showNearby(shape,category),clearPowerNearby:()=>utilityNetwork.clearNearby(),setPowerNetworkMatch:match=>utilityNetwork.setMatch(match),clearPowerNetworkMatch:()=>utilityNetwork.clearMatch(),focusPowerNetwork:keys=>utilityNetwork.focus(keys),
     setPower:rows=>{powerRows=rows;drawPower();},
     setPowerVisible:visible=>setLayerPreference('power',visible),
     focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;const geometries=power.graphics.toArray().filter(item=>item.attributes.powerKey===key).map(item=>item.geometry);if(geometries.length===1&&g.geometry.type==='point')return focusGeometry(g.geometry,25000);return focusPoints(geometries.flatMap(shape=>shape.type==='point'?[[shape.x,shape.y]]:shape.rings.flat()).map(([longitude,latitude])=>({longitude,latitude})),.012);}return focusGeometry(null);},

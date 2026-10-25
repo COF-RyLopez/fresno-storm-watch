@@ -12,6 +12,7 @@ export const NETWORK_SOURCES=Object.freeze([
   {id:'sce-substations',utility:'SCE',kind:'substation',label:'SCE substations',url:SCE+'ICA_Layer/FeatureServer/18',fields:'objectid,subst_id,sub_name,substation_voltage,note'}
 ]);
 export const NETWORK_LAYER_KEYS={circuit:'powerCircuits',line:'powerLines',substation:'powerSubstations'};
+export const NETWORK_SCALES=Object.freeze({circuit:75000,line:250000,substation:250000});
 const text=v=>v===null||v===undefined?'':String(v).trim().slice(0,1000);
 export const networkIdentifier=v=>text(v).normalize('NFKC').replace(/\s+/g,' ').toUpperCase();
 const validPoint=p=>Array.isArray(p)&&p.length>=2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
@@ -69,12 +70,12 @@ export function matchPowerCircuit(row,snapshot,now=Date.now()){
   return {state:'matched',reason:`Verified ${ref.type==='number'?'circuit-number':'circuit-name'} match in utility publications. This does not establish a fault, live switching or the full de-energized extent.`,sourceField:ref.sourceField,value:ref.value,circuits:found,substations:stationIds.size===1&&!stationIds.has('')?stations:[],stationNote:stations.length&&stationIds.size!==1?'Substation name is ambiguous.':!stations.length?'Associated substation point is not verified in this county reference.':''};
 }
 /** Violet identifies electrical infrastructure; weight identifies line type, not capacity or operating state. */
-export function networkSymbol(f,{highlight=false,stale=false,dark=true}={}){
+export function networkSymbol(f,{highlight=false,selected=false,stale=false,dark=true}={}){
   const color=highlight?(dark?'#82e6c3':'#00795d'):stale?(dark?'#a5afb8':'#67737c'):(dark?'#d6a6ff':'#7931ad');
   if(f.kind==='substation'){
     // A hexagonal station badge is distinct from outage squares, asset diamonds and gauge circles.
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M8 3h12l6 11-6 11H8L2 14Z" fill="${dark?'#241b31':'#faf5ff'}" stroke="${color}" stroke-width="2.5"${stale?' stroke-dasharray="3 2"':''}/><path d="m16 6-7 10h5l-2 6 8-11h-5Z" fill="${color}"/></svg>`;
     return {type:'picture-marker',url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg),width:22,height:22};
   }
-  return {type:'simple-line',color,width:highlight?4:f.kind==='line'?2.7:1.5,style:stale?'dot':f.utility==='SCE'?'dash':'solid'};
+  return {type:'simple-line',color,width:highlight?4:selected?3.5:f.kind==='line'?2.7:1.5,style:stale?'dot':f.utility==='SCE'?'dash':'solid'};
 }

@@ -1,4 +1,4 @@
-F.R.O.G. POWER NETWORK — 0.49.1 — October 25, 2026
+F.R.O.G. POWER NETWORK — 0.50.0 — October 25, 2026
 
 SYMBOLS
 Violet lines identify electrical infrastructure, distinct from blue waterways and
@@ -12,13 +12,42 @@ https://developers.arcgis.com/javascript/latest/references/core/symbols/PictureM
 
 USER WORKFLOW
 Open Power / PSPS. Distribution feeder lines, transmission lines and substation
-points start enabled only here. Distribution lines draw below 1:350,000 to limit
-countywide clutter. Exact matched circuit highlights have no scale restriction.
+points start enabled only here. Distribution lines draw closer than 1:75,000; transmission lines and substations
+draw closer than 1:250,000. Outage/PSPS queries and counts are unchanged. Selected
+references and verified matches have no scale restriction. Other network layers
+fade to 16% opacity during selection, in 2D and 3D. Closing/replacing evidence or
+switching workspaces restores the grid at its normal scale ranges. A violet
+reference selection is distinct from a mint verified event identity match.
 Open Electric network for checkboxes, name/ID search and source-check timestamps.
 Search results and map selections open the existing supporting-evidence pane.
 Select a power record to see its circuit association. Show matched circuit fits
 the full published geometry. Checkboxes use the existing per-workspace memory;
 background collection cannot re-enable another workspace's network layers.
+
+NEARBY COUNTY PLACES
+The side pane uses the complete selected WGS84 geometry and the existing SDK
+geodetic-distance backend. An envelope prefilter only rejects distant candidates;
+final inclusion uses full geometry, not its centroid or a bounding-box overlap.
+Default: two horizontal miles, selectable 0.5/1/2/5 miles. These are vicinity
+choices, not action thresholds, service territories, driving/access distances,
+confirmed utility connections or outage exposure. Results are ordered by distance;
+the nearest 12 per category are shown and full counts remain visible.
+
+County facilities reuse authorized site sources and editor/source timestamps.
+Pumps use the existing EOC-viewer read-only AGOL copy and authorizeDrainage guard;
+no Enterprise fallback, source write, group membership or sharing change occurs.
+Only existing pump records are included; proposed/unknown classes are excluded.
+Readiness is resolved through the existing version/conflict/validity checks, and
+a fresh retrieval does not hide an old source verification. Source and retrieval
+times remain separate. Known connected copies are reread every five minutes while
+this pane is open and visible. This does not refresh the Enterprise-to-AGOL copy
+or enable the pending county Notebook schedule.
+
+Private features, readiness, contacts and queries live in memory only. Sign-out,
+account change or failed access clears private candidates and map markers; late
+private reads and superseded distance results cannot repopulate them. Model tests
+exercise those races. Only public sources and clearly fictional exercise records
+are in GitHub. No private record IDs or geometry are placed in form/share URLs.
 
 SOURCES / PROVENANCE
 All seven endpoints are public utility planning services; no partner portal,
@@ -96,5 +125,5 @@ or fabricated for acceptance; current-event identity matching remains dependent
 on the publisher supplying a supported unique value.
 
 ROLLBACK
-For the 0.49.1 style change, redeploy 06ceeeb66f10b70896758e13dc6834b5f2c4f203 (0.49.0). There is no AGOL data
+For the 0.50.0 focus change, redeploy 60f2d3dbc0a92c2b01aad01495c6a6e8ca4e8db7 (0.49.1). There is no AGOL data
 migration, private sharing change, membership change or readiness-record change.

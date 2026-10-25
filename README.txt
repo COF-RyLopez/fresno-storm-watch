@@ -1,5 +1,16 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.49.1 | October 25, 2026 | Distinct electrical network symbols
+Version 0.50.0 | October 25, 2026 | Circuit focus and nearby county places
+
+CIRCUIT FOCUS (v0.50.0)
+Selecting a utility reference fades the other network layers and retains the
+selected geometry at every scale. Wide views hide distribution detail;
+transmission and station references appear at area scales. The evidence pane
+shows authorized nearby county assets and existing FMFCD pumps at a selectable
+horizontal distance. Published electrical connections remain unverified.
+The existing private AGOL pump copy uses county AGOL sign-in only. Current
+owner readiness, fuel/runtime and contact evidence is shown with its dates;
+unknown or overdue records retain qualifications. No private records are
+published or persisted in browser storage. No new AGOL items or permissions.
 
 POWER NETWORK (v0.49.1)
 Violet distribution/transmission lines, hexagonal station badges and matching

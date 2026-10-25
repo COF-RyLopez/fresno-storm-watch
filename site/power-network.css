@@ -12,3 +12,11 @@
 .power-network-association {margin-top:20px;padding-top:12px;border-top:1px solid var(--app-border);}
 .power-network-association h3 {font-size:1rem;}
 .power-network-association p {line-height:1.55;}
+
+.power-nearby-controls {display:flex;align-items:end;flex-wrap:wrap;gap:12px;}
+.power-nearby-controls calcite-label {min-width:150px;margin:0;}
+.power-nearby-row {padding:12px 0;border-top:1px solid var(--app-border);}
+.power-nearby-row h5 {font-size:.95rem;margin:0 0 8px;}
+
+.power-nearby-row summary {cursor:pointer;font-weight:600;line-height:1.5;}
+.power-nearby-row summary span {display:block;font-weight:400;font-size:.875rem;color:var(--app-muted);margin-top:4px;}
