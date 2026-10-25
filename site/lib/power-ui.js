@@ -1,4 +1,4 @@
-import {createPowerNetwork} from './power-network-ui.js?v=0.50.0';
+import {createPowerNetwork} from './power-network-ui.js?v=0.50.0-r1';
 import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';

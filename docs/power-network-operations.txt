@@ -37,7 +37,9 @@ County facilities reuse authorized site sources and editor/source timestamps.
 Pumps use the existing EOC-viewer read-only AGOL copy and authorizeDrainage guard;
 no Enterprise fallback, source write, group membership or sharing change occurs.
 Only existing pump records are included; proposed/unknown classes are excluded.
-Readiness is resolved through the existing version/conflict/validity checks, and
+Readiness retains its PRIVATE EOC EXERCISE storage designation in this pane.
+Confirm reports with FMFCD before operational use. It is resolved through the
+existing version/conflict/validity checks, and
 a fresh retrieval does not hide an old source verification. Source and retrieval
 times remain separate. Known connected copies are reread every five minutes while
 this pane is open and visible. This does not refresh the Enterprise-to-AGOL copy

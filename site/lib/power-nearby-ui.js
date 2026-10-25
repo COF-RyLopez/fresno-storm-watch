@@ -43,6 +43,7 @@ export function createPowerNearby({timeZone,exercise=false,exerciseData,onMap=()
       for(const [category,title]of [['pump','FMFCD existing pumps'],['facility','County facilities / assets']]){
         const all=group.rows.filter(r=>r.category===category),shown=all.slice(0,12),connected=category==='facility'?facilities.connected:pumps.connected;
         results.append(el('h4',title+(connected?' · '+all.length+' nearby':' · not loaded')));
+        if(category==='pump')results.append(el('p',exercise?'FICTIONAL EXERCISE · invented pumps and readiness reports.':'Pump readiness uses the private EOC exercise workspace. Confirm reports with FMFCD before operational use; inventory locations do not establish current operation.'));
         if(category==='facility')results.append(el('p',connected?`${facilities.sites?.length||0} authorized records loaded${facilities.sourceGaps?' · inventory checks need verification':''}.`:'County facility inventory is not loaded. Sign in and load county places; missing coverage is not zero facilities.'));
         else results.append(el('p',pumpInventoryProblem(pumps)||`Private AGOL copy: ${pumps.rows.length} existing pumps · source checked ${stamp(pumps.sourceChecked)} · app retrieved ${stamp(pumps.checked)}. Inventory does not establish pump operation.`));
         if(all.length>shown.length)results.append(el('p',`Nearest ${shown.length} shown. Narrow the distance to inspect more closely.`));
