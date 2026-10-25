@@ -1,4 +1,4 @@
-import {createNetworkMap} from './power-network-map.js';
+import {createNetworkMap} from './power-network-map.js?v=0.49.0-r1';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
@@ -370,7 +370,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     return {target:[longitude,latitude],scale,...(type==='3d'?{tilt:55,heading:0}:{})};
   });
   const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
-  const utilityNetwork=createNetworkMap({GraphicsLayer,Graphic,registerLayer,setLayerEligibility,focusGeometry,onSelect:onNetworkSelect});
+  const utilityNetwork=createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect:onNetworkSelect});
   const searchFocus=createSelectionFocus({settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,preferredMode:()=>view.type,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
   let searchRevision=0;
   function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();searchContext.removeAll();document.querySelector('#map').dataset.searchSelected='false';}

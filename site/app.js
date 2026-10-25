@@ -12,7 +12,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.49.0';
+import { createMap } from './lib/map.js?v=0.49.0-r1';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';

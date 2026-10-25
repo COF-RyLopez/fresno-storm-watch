@@ -67,8 +67,9 @@ test('map highlighting clears without changing references or navigating during r
   try{
     class Layer {constructor(p){Object.assign(this,p);this.graphics=[];}removeAll(){this.graphics=[];}addMany(list){this.graphics.push(...list);}}
     class Graphic {constructor(p){Object.assign(this,p);}}
-    const registered=[],eligibility=new Map(),moves=[];const m=createNetworkMap({GraphicsLayer:Layer,Graphic,registerLayer:(key,layer)=>registered.push({key,layer}),setLayerEligibility:(layer,enabled)=>eligibility.set(layer,enabled),focusGeometry:g=>moves.push(g),onSelect(){}});
-    const d=snapshot();m.setSnapshot(d);m.setMatch(matchPowerCircuit(outage(),d,now));const selected=registered.at(-1).layer;assert.equal(selected.graphics.length,1);assert.equal(selected.graphics[0].symbol.width,4);assert.equal(eligibility.get(selected),true);assert.equal(moves.length,0);m.clearMatch();assert.equal(selected.graphics.length,0);assert.equal(eligibility.get(selected),false);assert.equal(m.layers.circuit.graphics.length,1);m.focus([circuit().key]);assert.equal(moves[0].type,'extent');assert(moves[0].xmin<line.paths[0][0][0]);
+    class Extent {constructor(p){Object.assign(this,p);this.type='extent';}}
+    const registered=[],eligibility=new Map(),moves=[];const m=createNetworkMap({GraphicsLayer:Layer,Graphic,Extent,registerLayer:(key,layer)=>registered.push({key,layer}),setLayerEligibility:(layer,enabled)=>eligibility.set(layer,enabled),focusGeometry:g=>moves.push(g),onSelect(){}});
+    const d=snapshot();m.setSnapshot(d);m.setMatch(matchPowerCircuit(outage(),d,now));const selected=registered.at(-1).layer;assert.equal(selected.graphics.length,1);assert.equal(selected.graphics[0].symbol.width,4);assert.equal(eligibility.get(selected),true);assert.equal(moves.length,0);m.clearMatch();assert.equal(selected.graphics.length,0);assert.equal(eligibility.get(selected),false);assert.equal(m.layers.circuit.graphics.length,1);m.focus([circuit().key]);assert(moves[0] instanceof Extent);assert.equal(moves[0].type,'extent');assert(moves[0].xmin<line.paths[0][0][0]);
   }finally{globalThis.document=previousDocument;globalThis.window=previousWindow;}
 });
 
