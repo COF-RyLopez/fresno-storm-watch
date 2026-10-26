@@ -1,4 +1,4 @@
-import {BUILDING_LIMITS} from './power-buildings-model.js?v=0.51.0';
+import {BUILDING_LIMITS} from './power-buildings-model.js?v=0.51.1';
 
 /** Small selected-footprint layers; only published positive metre heights receive extrusion. */
 export function createPowerBuildingsMap({FeatureLayer,Graphic,registerLayer,removeLayer,getView,focusGeometry}){

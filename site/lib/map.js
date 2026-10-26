@@ -1,5 +1,5 @@
 import {createNetworkMap} from './power-network-map.js?v=0.50.0';
-import {createPowerBuildingsMap} from './power-buildings-map.js?v=0.51.0';
+import {createPowerBuildingsMap} from './power-buildings-map.js?v=0.51.1';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
@@ -150,7 +150,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     attributionVisible: true, ui: { components: ['zoom'] } });
   let view=mapView, sceneView=null, modeBusy=false, terrain=null, terrainError=false;
   const mapContext=installMapContext({map,FeatureLayer,sdk,reactiveUtils,fresnoGeometry:fresnoView,getView:()=>view});
-  const viewListeners=new Set();
+  const viewListeners=new Set(),buildingViewListeners=new Set();
   await view.when();
   let femaError=false, selectedGauge=null, gaugeRows=[], cameraRows=[], selectedCamera=null;
   const femaViews=new WeakMap();
@@ -226,6 +226,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   for (const type of ['pointerdown', 'wheel', 'keydown']) document.querySelector('#map').addEventListener(type, () => { followRegion = false;mapPick++;waterwayPickStatus(''); }, { passive: true });
   const bindView=targetView=>{
     mapContext.bindView(targetView);
+    targetView.addHandles(reactiveUtils.watch(()=>[targetView.stationary,targetView.scale,targetView.center?.x,targetView.center?.y,targetView.width,targetView.height],()=>{if(view===targetView&&targetView.stationary)for(const listener of buildingViewListeners)listener();}));
     targetView.addHandles(reactiveUtils.watch(()=>[targetView.stationary,targetView.scale],()=>{if(view===targetView)document.querySelector('#map-scale').textContent='Scale 1:'+Math.round(targetView.scale).toLocaleString('en-US');},{initial:true}));
     targetView.on('layerview-create-error',event=>{
       if(imageryBasemap&&[...imageryBasemap.baseLayers,...imageryBasemap.referenceLayers].includes(viewEventData(event).layer)){imageryFailure=true;imageryStatus();}
@@ -508,7 +509,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         heading:view.type==='3d'?view.camera.heading:0,tilt:view.type==='3d'?view.camera.tilt:0};
     },
     addEnvironmentLayers:(overlays,reservoirs)=>{map.addMany(overlays,1);map.add(reservoirs);},
-    onViewChanged:listener=>{viewListeners.add(listener);},
+    onViewChanged:listener=>{viewListeners.add(listener);},onPowerBuildingsViewSettled:listener=>{buildingViewListeners.add(listener);return ()=>buildingViewListeners.delete(listener);},
     clearEnvironmentPopup:()=>{view.closePopup();onFeatureSelect(null);},
     focusEnvironment:(longitude,latitude)=>focusLocation(longitude,latitude,45000,'reservoirs'),
     focusWind:(longitude,latitude)=>focusLocation(longitude,latitude,90000,'wind'),

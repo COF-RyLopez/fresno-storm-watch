@@ -1,6 +1,7 @@
 import {powerGeometry,powerScope} from './power-geometry.js';
 
-export const BUILDING_LIMITS=Object.freeze({tiles:80,bytes:28_000_000,rows:15000,labelsScale:6000,drawScale:50000});
+export const BUILDING_LIMITS=Object.freeze({tiles:80,bytes:28_000_000,rows:15000,labelsScale:6000,drawScale:0});
+export class BuildingQueryLimitError extends Error{constructor(message){super(message);this.name='BuildingQueryLimitError';this.code='building-query-limit';}}
 export const overlaps=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
 export const buildingBounds=g=>g.rings.flat().reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
 export const buildingHeight=v=>typeof v==='number'&&Number.isFinite(v)&&v>0&&v<=850?v:null;
@@ -24,7 +25,7 @@ export function validateBuildingIndex(d){
 export function planBuildingTiles(index,polygons,viewport=null){
   const bounds=polygons.map(buildingBounds),view=viewport?buildingBounds(powerGeometry(viewport)):null;
   const tiles=index.tiles.filter(t=>bounds.some(b=>overlaps(b,t.bbox))&&(!view||overlaps(view,t.bbox)));
-  if(tiles.length>BUILDING_LIMITS.tiles||tiles.reduce((n,t)=>n+t.decodedBytes,0)>BUILDING_LIMITS.bytes)throw Error('This area is too large for a responsive building view. Zoom to a smaller part, then choose Load visible buildings.');
+  if(tiles.length>BUILDING_LIMITS.tiles||tiles.reduce((n,t)=>n+t.decodedBytes,0)>BUILDING_LIMITS.bytes)throw new BuildingQueryLimitError('This area is too large for a responsive building view. Zoom closer; buildings will update automatically in the visible portion.');
   return tiles;
 }
 
@@ -39,6 +40,6 @@ export function selectPowerBuildings(rows,polygons,viewport=null){
     const addresses=[...new Set(row.addresses)].sort();
     selected.push({...row,geometry,height:buildingHeight(row.height),addresses,label:addresses.length===1?addresses[0]:addresses.length>1?`${addresses.length} associated addresses`:'Address not matched'});
   }
-  if(selected.length>BUILDING_LIMITS.rows)throw Error('More than 15,000 footprints overlap this selection. Zoom closer and load visible buildings.');
+  if(selected.length>BUILDING_LIMITS.rows)throw new BuildingQueryLimitError('More than 15,000 footprints overlap this selection. Zoom closer; buildings will update automatically in the visible portion.');
   return selected.sort((a,b)=>Number(!a.addresses.length)-Number(!b.addresses.length)||a.label.localeCompare(b.label)||a.id.localeCompare(b.id));
 }

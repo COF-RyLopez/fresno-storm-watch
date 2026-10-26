@@ -1,4 +1,14 @@
-import {validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from './power-buildings-model.js?v=0.51.0';
+import {validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from './power-buildings-model.js?v=0.51.1';
+
+/** Only a capacity limit narrows the scope; failed or incomplete feeds never silently become viewport results. */
+export async function loadPowerBuildingsAutomatic(polygons,{viewport,current=()=>true,read=loadPowerBuildings,onVisible=()=>{}}={}){
+  try{return await read(polygons,{current});}
+  catch(error){
+    if(error.code!=='building-query-limit'||!current())throw error;
+    onVisible();const shape=viewport();if(!shape)throw Error('Map extent is not ready. Retry when the map is available.');
+    return read(polygons,{viewport:shape,current});
+  }
+}
 
 /** Public-only, bounded reference acquisition. No tokens, private assets, browser storage or partial-success fallback. */
 export async function loadPowerBuildings(polygons,{viewport=null,current=()=>true,fetcher=fetch}={}){

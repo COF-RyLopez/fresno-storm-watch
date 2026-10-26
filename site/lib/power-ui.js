@@ -1,5 +1,5 @@
 import {createPowerNetwork} from './power-network-ui.js?v=0.51.0';
-import {createPowerBuildings} from './power-buildings-ui.js?v=0.51.0';
+import {createPowerBuildings} from './power-buildings-ui.js?v=0.51.1';
 import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';
@@ -32,14 +32,14 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
   }
   function showDetail(row,locate=true){
     selectedKey=row.key;
-    const root=$('power-detail'),host=el('dl'),details=el('details'),buildingHost=el('div');details.append(el('summary','Utility status, timing and source details'),host);root.replaceChildren(el('p',`${POWER_STATES[row.status]} · ${row.location} · utility updated ${stamp(row.updated)}`),buildingHost,details);buildings.select(row,buildingHost);
+    const root=$('power-detail'),host=el('dl'),details=el('details'),buildingHost=el('div');details.append(el('summary','Utility status, timing and source details'),host);root.replaceChildren(el('p',`${POWER_STATES[row.status]} · ${row.location} · utility updated ${stamp(row.updated)}`),buildingHost,details);
     const feed=snapshot.feeds.find(f=>f.id===row.feedId);
     for(const [label,value] of [['Utility status',`${POWER_STATES[row.status]} · ${row.rawStatus||'No additional status'}`],['Location',row.location],['Utility details',row.details||'Not supplied'],['Customers in this utility record',row.customers===null?'Unknown':row.customers.toLocaleString('en-US')+' (not a county total)'],['Start / potential shutoff',stamp(row.start)],['Published window end',stamp(row.end)],['Estimated restoration',stamp(row.restoration)],['Utility record updated',stamp(row.updated)],['Source retrieved',time(Date.parse(feed.lastSuccess))],['Record identity',row.key]])host.append(el('dt',label),el('dd',value));
     const issues=powerRowIssues(row);if(powerHealth(feed))issues.unshift(powerHealth(feed));for(const issue of issues)host.append(el('p',issue,'power-gap'));
     host.append(el('p','Map locations and areas are approximate. A passed estimate, weather all-clear or disappearance from this feed does not establish restored power. Confirm critical sites with the utility and facility owner.'));
     host.append(link('Open official utility map',row.official),button('Show on map',()=>{onMap();map?.focusPower(row.key);}));
     const networkHost=el('div','','power-network-association');root.append(networkHost);network.select(row,networkHost);
-    $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate){onMap();map?.focusPower(row.key);}
+    $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate)onMap();const ready=locate?map?.focusPower(row.key):undefined;buildings.select(row,buildingHost,{ready});
   }
   function render(){
     const pending=changes?.pending||new Set(),missing=changes?.missing.size||0;

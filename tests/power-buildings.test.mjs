@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import {readFile,readdir} from 'node:fs/promises';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {buildingPowerTarget,buildingHeight,validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from '../site/lib/power-buildings-model.js';
-import {loadPowerBuildings} from '../site/lib/power-buildings-data.js';
+import {buildingPowerTarget,buildingHeight,validateBuildingIndex,planBuildingTiles,selectPowerBuildings,BuildingQueryLimitError} from '../site/lib/power-buildings-model.js';
+import {loadPowerBuildings,loadPowerBuildingsAutomatic} from '../site/lib/power-buildings-data.js';
 import {createPowerBuildingsMap} from '../site/lib/power-buildings-map.js';
+import {createPowerBuildings} from '../site/lib/power-buildings-ui.js';
 const box=(x=0,y=0,w=1)=>({rings:[[[x,y],[x,y+w],[x+w,y+w],[x+w,y],[x,y]]],spatialReference:{wkid:4326}});
 const building=(id,g=box(.2,.2,.1),height=8,addresses=['100 Example Rd'])=>({id,version:1,geometry:g,height,addresses,sources:['EXERCISE']});
 const index=()=>({schemaVersion:1,release:'2026-10-21.0',compression:'gzip',crs:'EPSG:4326',heightUnit:'metres',tiles:[{key:'-2_1',bbox:[0,0,1,1],count:1,bytes:10,decodedBytes:100,sha256:'a'.repeat(64)}]});
@@ -57,6 +58,43 @@ test('3D uses the same positive height field; unknown footprints stay flat and c
   const registered=[],removed=[],view={type:'2d'};
   const c=createPowerBuildingsMap({FeatureLayer:Layer,Graphic,registerLayer:(k,l)=>registered.push(l),removeLayer:l=>removed.push(l),getView:()=>view,focusGeometry:()=>{}});
   await c.set([building('a'),building('b',box(.3,.3,.1),null,[])]);view.type='3d';c.sync();
+  assert.equal(registered[0].minScale,0,'Selected footprints must draw at the fitted area extent, without another zoom action.');
   assert.equal(registered[0].renderer.visualVariables[0].field,'height_m');assert.equal(registered[0].renderer.visualVariables[0].valueUnit,'meters');assert.equal(registered[1].renderer.symbol.type,'simple-fill');assert.equal(registered[1].source[0].attributes.height_m,null);assert.equal(registered[1].source[0].attributes.address_label,'');
   c.clear();assert.equal(removed.length,2);assert(removed.every(l=>l.destroyed));
+});
+
+test('automatic loading keeps the complete area when within bounds; only capacity limits narrow to the current viewport',async()=>{
+  const expected={rows:[building('a')],scope:'Whole selected utility area'};let reads=0,visible=0;
+  assert.equal(await loadPowerBuildingsAutomatic([box()],{read:async()=>{reads++;return expected;},viewport:()=>{throw Error('Should not inspect viewport');}}),expected);assert.equal(reads,1);
+  reads=0;const view=box(.1,.1,.2),calls=[];
+  const result=await loadPowerBuildingsAutomatic([box()],{viewport:()=>view,onVisible:()=>visible++,read:async(_p,options)=>{reads++;calls.push(options);if(!options.viewport)throw new BuildingQueryLimitError('Too large');return {...expected,scope:'Visible map portion when loaded'};}});
+  assert.equal(reads,2);assert.equal(visible,1);assert.equal(calls[1].viewport,view);assert.equal(result.scope,'Visible map portion when loaded');
+});
+test('automatic source failures and cancelled selections never disguise themselves as smaller-scope successes',async()=>{
+  let reads=0,visible=0;
+  await assert.rejects(loadPowerBuildingsAutomatic([box()],{viewport:()=>box(),onVisible:()=>visible++,read:async()=>{reads++;throw Error('HTTP 503');}}),/503/);
+  assert.equal(reads,1);assert.equal(visible,0);
+  await assert.rejects(loadPowerBuildingsAutomatic([box()],{current:()=>false,viewport:()=>box(),onVisible:()=>visible++,read:async()=>{throw new BuildingQueryLimitError('Cancelled large query');}}),/Cancelled/);assert.equal(visible,0);
+  await assert.rejects(loadPowerBuildingsAutomatic([box()],{viewport:()=>null,read:async()=>{throw new BuildingQueryLimitError('Too large');}}),/extent is not ready/);
+});
+
+test('selecting a power area loads without a button, waits for navigation and does not refetch on unchanged refreshes',async()=>{
+  class Element{constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}setAttribute(){}addEventListener(){}}
+  const before={document:globalThis.document,window:globalThis.window,fetch:globalThis.fetch};
+  const d=index();
+  // Use one source record outside the utility polygon, so the UI has an empty but complete result.
+  const content=gzipSync(JSON.stringify({schemaVersion:1,release:d.release,rows:[building('outside',box(.8,.8,.1))]}));d.tiles[0].count=1;d.tiles[0].bytes=content.length;d.tiles[0].decodedBytes=gunzipSync(content).length;d.tiles[0].sha256=createHash('sha256').update(content).digest('hex');
+  let reads=0,applied=0,resolveNavigation;
+  try{
+    globalThis.document={createElement:tag=>new Element(tag)};globalThis.window={addEventListener(){}};
+    globalThis.fetch=async url=>{reads++;return String(url).endsWith('index.json')?new Response(JSON.stringify(d)):new Response(content);};
+    const ui=createPowerBuildings(),map={clearPowerBuildings(){},focusPower(){return Promise.resolve();},onPowerBuildingsViewSettled(){return ()=>{};},setPowerBuildingLabels(){},async setPowerBuildings(){applied++;},powerBuildingsViewport:()=>box()};
+    ui.setMap(map);const row={key:'event',revision:'r1',status:'warning',geometries:[box(0,0,.5)]},ready=new Promise(resolve=>{resolveNavigation=resolve;});
+    ui.select(row,new Element('div'),{ready});ui.select(row,new Element('div'));
+    await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,0,'An unchanged refresh must not bypass pending navigation.');
+    resolveNavigation();for(let i=0;i<30&&!applied;i++)await new Promise(resolve=>setTimeout(resolve,5));
+    assert.equal(applied,1);assert.equal(reads,2);
+    ui.select(row,new Element('div'));await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2);
+    let finish;ui.select({...row,revision:'r2'},new Element('div'),{ready:new Promise(resolve=>{finish=resolve;})});ui.clear();finish();await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2,'Closing a pending selection prevents its automatic request.');
+  }finally{for(const [k,v]of Object.entries(before)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });
