@@ -1,5 +1,5 @@
 import {createPowerNetwork} from './power-network-ui.js?v=0.51.0';
-import {createPowerBuildings} from './power-buildings-ui.js?v=0.52.0';
+import {createPowerBuildings} from './power-buildings-ui.js?v=0.52.1';
 import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';
@@ -46,7 +46,7 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     const fold=(label,content)=>{const details=el('details');details.className='power-detail-disclosure';details.open=disclosures.has(label);details.append(el('summary',label),content);details.addEventListener('toggle',()=>{if(details.isConnected){if(details.open)disclosures.add(label);else disclosures.delete(label);}});root.append(details);return details;};
     const networkHost=el('div');fold('Circuits and nearby county places',networkHost);network.select(row,networkHost);
     const checks=el('div');checks.append(el('p',`Source retrieved ${time(Date.parse(feed.lastSuccess))} · record ${row.key}`));for(const issue of issues)checks.append(el('p',issue));checks.append(el('p','Customer counts belong to this utility record and may span counties. Free-text times are preserved as published; no time zone is assumed. Utility areas and estimates are approximate. Confirm critical-site power with the utility and site owner.'));fold('Source checks',checks);
-    $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate)onMap();const ready=locate?map?.focusPower(row.key):undefined;buildings.select(row,buildingHost,{ready});
+    $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate)onMap();const ready=locate?map?.focusPower(row.key):undefined;buildings.select(row,buildingHost,{ready,locate});
   }
   function render(){
     const pending=changes?.pending||new Set(),missing=changes?.missing.size||0;
@@ -115,5 +115,5 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     $('power-panel').prepend(controls);accept(powerExercise("watch",exerciseNow));checked=exerciseNow;render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
-  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);buildings.setMap(m);render();if(selectedKey)map.focusPower(selectedKey);},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
+  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);buildings.setMap(m);render();},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
 }

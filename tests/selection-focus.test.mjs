@@ -59,3 +59,13 @@ test('cancelling during the layout-settle phase prevents a stale full-outline na
   h.focus.cancel();layout.resolve();await pending;
   assert(!h.events.some(event=>event[0]==='navigate'||event[0]==='save'));
 });
+
+test('deferred building fits yield to operator navigation, before starting or while waiting for layout',async()=>{
+  const stopped=harness();
+  assert.equal(await stopped.focus.focus(()=>({location:'old buildings'}),{canNavigate:()=>false}),false);
+  assert.deepEqual(stopped.events,[],'An obsolete callback must not cancel a newer navigation.');
+  const layout=deferred(),h=harness({settled:()=>layout.promise});let allowed=true;
+  const pending=h.focus.focus(()=>({location:'buildings'}),{canNavigate:()=>allowed});
+  await new Promise(resolve=>setImmediate(resolve));allowed=false;layout.resolve();
+  assert.equal(await pending,false);assert(!h.events.some(e=>e[0]==='navigate'||e[0]==='missing'));
+});

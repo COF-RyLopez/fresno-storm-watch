@@ -1,4 +1,4 @@
-F.R.O.G. 0.52.0 — public Overture footprints in selected utility areas
+F.R.O.G. 0.52.1 — public Overture footprints in selected utility areas
 
 Usage
 Power / PSPS > select a published outage/PSPS polygon; buildings draw automatically.
@@ -6,6 +6,13 @@ Large selections use the visible portion, labeled explicitly; pan/zoom updates i
 Power starts in 3D. Outage details show utility fields first; expand Buildings and
 addresses for the address list, legend and provenance. Expand an address > Locate
 building. Use Map tools for 2D; that choice is remembered within the page session.
+Selecting an outage fits its published polygon with proportional padding. Once a
+whole-area building result loads, the map fits every overlapping footprint, with
+only a small minimum context span. Compact groups reach address-label scale;
+large groups retain their full outline instead of cropping to one building.
+Panning, zooming, another selection or leaving Power cancels the deferred fit.
+Background revisions, retries and visible-portion queries never reposition the
+map. Reselect an outage to fit the loaded building group again.
 Selected footprints draw immediately; address labels appear at 1:6,000. Missing heights stay flat
 with dashed outlines. Click a footprint to inspect it in the side pane.
 Point-only outages, circuits and unknown/restored/cancelled records cannot define
@@ -44,4 +51,4 @@ height/address accounting and upstream attribution. Run JS regression/check and
 test_power_buildings.py. Obsolete reference versions may be removed in a later
 reviewed commit; never replace chunks beneath an existing version index.
 
-Rollback: redeploy the preceding app revision (0.50.0); no private data migration.
+Rollback: redeploy the preceding app revision (0.52.0); no private data migration.

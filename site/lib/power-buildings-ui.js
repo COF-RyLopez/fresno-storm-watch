@@ -15,21 +15,34 @@ export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
     if(!shape||JSON.stringify(shape)===viewSignature)return;
     viewTimer=setTimeout(()=>{if(!busy&&visibleMode&&host?.isConnected)void load(true);},200);
   }
-  async function start(ready){
+  async function start(ready,locate){
     if(starting||started||!map||!host?.isConnected||!buildingPowerTarget(row).polygons.length)return;
     starting=true;
     const version=epoch;
-    try{await ready;}catch{/* Navigation failure does not prevent a whole-area overlap check. */}
+    let navigated;
+    try{navigated=await ready;}catch{/* Navigation failure does not prevent a whole-area overlap check. */}
     if(version!==epoch)return;
     starting=false;
     if(started||!map||!host?.isConnected||!buildingPowerTarget(row).polygons.length)return;
-    started=true;void load();
+    const canFocus=locate&&navigated!==false?map.capturePowerBuildingFocus():null;
+    started=true;void load(false,canFocus);
   }
-  async function load(visible=false){
+  async function load(visible=false,canFocus=null){
     if(!map||!row||busy)return;const revision=++epoch,current=()=>epoch===revision&&host?.isConnected;
     busy=true;result=null;error=null;map.clearPowerBuildings();render();
     const viewport=()=>{const shape=map.powerBuildingsViewport();viewSignature=JSON.stringify(shape);return shape;};
-    try{const target=buildingPowerTarget(row);let next;if(visible){const shape=viewport();if(!shape)throw Error('Map extent is not ready. Retry when the map is available.');next=await loadPowerBuildings(target.polygons,{viewport:shape,current});}else next=await loadPowerBuildingsAutomatic(target.polygons,{viewport,current,onVisible:()=>{visibleMode=true;}});if(!current())return;if(next){await map.setPowerBuildings(next.rows);if(!current())return;result=next;map.setPowerBuildingLabels(labels);}}
+    try{
+      const target=buildingPowerTarget(row);let next;
+      if(visible){const shape=viewport();if(!shape)throw Error('Map extent is not ready. Retry when the map is available.');next=await loadPowerBuildings(target.polygons,{viewport:shape,current});}
+      else next=await loadPowerBuildingsAutomatic(target.polygons,{viewport,current,onVisible:()=>{visibleMode=true;}});
+      if(!current())return;
+      if(next){
+        await map.setPowerBuildings(next.rows);if(!current())return;
+        result=next;map.setPowerBuildingLabels(labels);
+        // Never chase a background revision, a partial viewport query, or an operator who has moved on.
+        if(!visibleMode&&next.rows.length&&canFocus?.())await map.focusPowerBuildings({canNavigate:()=>current()&&canFocus()});
+      }
+    }
     catch(e){if(current()){error=e.message;map.clearPowerBuildings();}}
     finally{if(current()){busy=false;render();updateVisible();}}
   }
@@ -65,5 +78,17 @@ export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
     if(!rows.length)content.append(el('p','No overlapping footprints returned in this scope. Building coverage may be incomplete.'));
   }
   window.addEventListener('frogPowerBuildingSelect',event=>{if(result?.rows.some(r=>r.id===event.detail.id)){selectedId=event.detail.id;detailsOpen=true;render();host.querySelector('.power-nearby-row[open]')?.scrollIntoView({block:'nearest'});}});
-  return {clear,setMap(value){unsubscribeView?.();map=value;unsubscribeView=map.onPowerBuildingsViewSettled(updateVisible);render();void start(Promise.resolve().then(()=>row&&map.focusPower(row.key)));},select(value,element,{ready=Promise.resolve()}={}){const same=row?.key===value.key&&row?.revision===value.revision;if(!same)clear();row=value;host=element;render();void start(ready);}};
+  async function refocus(ready){
+    const version=epoch;
+    if(await ready===false||version!==epoch||!host?.isConnected||!result?.rows.length||visibleMode)return;
+    const canFocus=map.capturePowerBuildingFocus();
+    await map.focusPowerBuildings({canNavigate:()=>version===epoch&&host?.isConnected&&canFocus()});
+  }
+  return {clear,setMap(value){
+    unsubscribeView?.();map=value;unsubscribeView=map.onPowerBuildingsViewSettled(updateVisible);render();
+    if(row){const key=row.key;void start(Promise.resolve().then(()=>row?.key===key&&map.focusPower(key)),true);}
+  },select(value,element,{ready=Promise.resolve(),locate=true}={}){
+    const same=row?.key===value.key&&row?.revision===value.revision;if(!same)clear();
+    row=value;host=element;render();if(same&&locate&&result)void refocus(ready);else void start(ready,locate);
+  }};
 }

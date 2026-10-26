@@ -88,7 +88,7 @@ test('selecting a power area loads without a button, waits for navigation and do
   try{
     globalThis.document={createElement:tag=>new Element(tag)};globalThis.window={addEventListener(){}};
     globalThis.fetch=async url=>{reads++;return String(url).endsWith('index.json')?new Response(JSON.stringify(d)):new Response(content);};
-    const ui=createPowerBuildings(),map={clearPowerBuildings(){},focusPower(){return Promise.resolve();},onPowerBuildingsViewSettled(){return ()=>{};},setPowerBuildingLabels(){},async setPowerBuildings(){applied++;},powerBuildingsViewport:()=>box()};
+    const ui=createPowerBuildings(),map={clearPowerBuildings(){},capturePowerBuildingFocus:()=>()=>true,focusPower(){return Promise.resolve();},onPowerBuildingsViewSettled(){return ()=>{};},setPowerBuildingLabels(){},async setPowerBuildings(){applied++;},powerBuildingsViewport:()=>box()};
     ui.setMap(map);const row={key:'event',revision:'r1',status:'warning',geometries:[box(0,0,.5)]},ready=new Promise(resolve=>{resolveNavigation=resolve;});
     ui.select(row,new Element('div'),{ready});ui.select(row,new Element('div'));
     await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,0,'An unchanged refresh must not bypass pending navigation.');
@@ -97,4 +97,44 @@ test('selecting a power area loads without a button, waits for navigation and do
     ui.select(row,new Element('div'));await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2);
     let finish;ui.select({...row,revision:'r2'},new Element('div'),{ready:new Promise(resolve=>{finish=resolve;})});ui.clear();finish();await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2,'Closing a pending selection prevents its automatic request.');
   }finally{for(const [k,v]of Object.entries(before)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
+
+test('building fits happen only for deliberate whole-area selections, never refreshes, visible queries or superseded navigation',async()=>{
+  class Element{constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;}append(...n){this.children.push(...n);}replaceChildren(...n){this.children=n;}setAttribute(){}addEventListener(){}}
+  const before={document:globalThis.document,window:globalThis.window,fetch:globalThis.fetch};
+  const wait=async fn=>{for(let i=0;i<100&&!fn();i++)await new Promise(r=>setTimeout(r,5));assert(fn(),'UI operation must finish');};
+  try{
+    globalThis.document={createElement:tag=>new Element(tag)};globalThis.window={addEventListener(){}};
+    for(const scenario of ['selection','manual navigation','closed pane','background revision','visible portion']){
+      const d=index(),content=gzipSync(JSON.stringify({schemaVersion:1,release:d.release,rows:[building('a')]}));
+      Object.assign(d.tiles[0],{bytes:content.length,decodedBytes:gunzipSync(content).length,sha256:createHash('sha256').update(content).digest('hex')});
+      if(scenario==='visible portion')d.tiles=Array.from({length:81},(_,i)=>({...d.tiles[0],key:`${i}_0`,bbox:[i,0,i+.5,.5]}));
+      let applied=0,fitted=0,reads=0,allowed=true;
+      globalThis.fetch=async url=>{reads++;return String(url).endsWith('index.json')?new Response(JSON.stringify(d)):new Response(content);};
+      const ui=createPowerBuildings(),map={clearPowerBuildings(){},capturePowerBuildingFocus:()=>()=>allowed,onPowerBuildingsViewSettled:()=>()=>{},powerBuildingsViewport:()=>box(0,0,.5),setPowerBuildingLabels(){},
+        async setPowerBuildings(){applied++;if(scenario==='manual navigation')allowed=false;if(scenario==='closed pane')ui.clear();},
+        async focusPowerBuildings(options){assert(options.canNavigate());fitted++;}};
+      ui.setMap(map);
+      const row={key:'outage',revision:'1',status:'outage',geometries:[scenario==='visible portion'?box(0,0,85):box()]};
+      ui.select(row,new Element('div'),{locate:scenario!=='background revision'});
+      await wait(()=>applied===1);await new Promise(r=>setTimeout(r,0));
+      assert.equal(fitted,scenario==='selection'?1:0,scenario);
+      if(scenario==='selection'){
+        const count=reads;ui.select(row,new Element('div'),{locate:false});await new Promise(r=>setTimeout(r,0));assert.equal(fitted,1);assert.equal(reads,count);
+        ui.select(row,new Element('div'),{locate:true});await wait(()=>fitted===2);assert.equal(reads,count,'Reselecting reuses the complete loaded footprint result.');
+        ui.select({...row,revision:'2'},new Element('div'),{locate:false});await wait(()=>applied===2);assert.equal(fitted,2,'New source revisions refresh buildings without moving the operator.');
+      }
+      ui.clear();
+    }
+  }finally{for(const[k,v]of Object.entries(before)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
+
+test('the building-group map target includes every footprint and retains the navigation guard',async()=>{
+  class Layer{constructor(p){Object.assign(this,p);}load(){return Promise.resolve();}destroy(){}}
+  class Geometry{constructor(p){Object.assign(this,p);}}
+  const targets=[],options={canNavigate:()=>true};
+  const map=createPowerBuildingsMap({FeatureLayer:Layer,Graphic:Geometry,Extent:Geometry,registerLayer(){},removeLayer(){},getView:()=>({type:'3d'}),focusGeometry:(...args)=>targets.push(args)});
+  assert.equal(await map.focusAll(options),false);
+  await map.set([building('near',box(-119.8,36.7,.001)),building('far',box(-119.7,36.8,.001))]);await map.focusAll(options);
+  const[extent,scale,guard]=targets[0];assert(extent.xmin<-119.8&&extent.xmax>-119.699&&extent.ymin<36.7&&extent.ymax>36.801);assert.equal(scale,null,'A large group must not be cropped to address scale.');assert.equal(guard,options);
 });

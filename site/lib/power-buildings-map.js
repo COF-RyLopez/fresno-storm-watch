@@ -1,7 +1,8 @@
 import {BUILDING_LIMITS} from './power-buildings-model.js?v=0.51.1';
+import {powerFocusExtent} from './power-focus.js?v=0.52.1';
 
 /** Small selected-footprint layers; only published positive metre heights receive extrusion. */
-export function createPowerBuildingsMap({FeatureLayer,Graphic,registerLayer,removeLayer,getView,focusGeometry}){
+export function createPowerBuildingsMap({FeatureLayer,Graphic,Extent,registerLayer,removeLayer,getView,focusGeometry}){
   let layers=[],records=[],labels=true;
   const fields=[{name:'ObjectID',type:'oid'},{name:'building_id',type:'string'},{name:'address_label',type:'string'},{name:'height_m',type:'double'}];
   function renderer(extrude,unknown){return {type:'simple',symbol:extrude?{type:'polygon-3d',symbolLayers:[{type:'extrude',material:{color:'#efc974'},edges:{type:'solid',color:'#573f21',size:.6}}]}:{type:'simple-fill',color:[239,201,116,unknown ? 0.15 : 0.45],outline:{color:'#efc974',width:1,style:unknown?'dash':'solid'}},...(extrude?{visualVariables:[{type:'size',field:'height_m',valueUnit:'meters'}]}:{})};}
@@ -20,5 +21,5 @@ export function createPowerBuildingsMap({FeatureLayer,Graphic,registerLayer,remo
     sync();
     await Promise.all(layers.map(l=>l.load()));
   }
-  return {set,clear,sync,setLabels(value){labels=value;sync();},async focus(id){const row=records.find(r=>r.id===id);if(!row)return;return focusGeometry(new Graphic({geometry:{...row.geometry,type:'polygon'}}).geometry,2500);}};
+  return {set,clear,sync,setLabels(value){labels=value;sync();},focusAll(options){const bounds=powerFocusExtent(records.map(r=>r.geometry));if(!bounds)return Promise.resolve(false);return focusGeometry(new Extent(bounds),null,options);},async focus(id){const row=records.find(r=>r.id===id);if(!row)return;return focusGeometry(new Graphic({geometry:{...row.geometry,type:'polygon'}}).geometry,2500);}};
 }
