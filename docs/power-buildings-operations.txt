@@ -1,9 +1,11 @@
-F.R.O.G. 0.51.1 — public Overture footprints in selected utility areas
+F.R.O.G. 0.52.0 — public Overture footprints in selected utility areas
 
 Usage
 Power / PSPS > select a published outage/PSPS polygon; buildings draw automatically.
 Large selections use the visible portion, labeled explicitly; pan/zoom updates it.
-View buildings in 3D; expand an address row > Locate building.
+Power starts in 3D. Outage details show utility fields first; expand Buildings and
+addresses for the address list, legend and provenance. Expand an address > Locate
+building. Use Map tools for 2D; that choice is remembered within the page session.
 Selected footprints draw immediately; address labels appear at 1:6,000. Missing heights stay flat
 with dashed outlines. Click a footprint to inspect it in the side pane.
 Point-only outages, circuits and unknown/restored/cancelled records cannot define

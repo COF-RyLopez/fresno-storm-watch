@@ -1,5 +1,5 @@
 import {createPowerNetwork} from './power-network-ui.js?v=0.51.0';
-import {createPowerBuildings} from './power-buildings-ui.js?v=0.51.1';
+import {createPowerBuildings} from './power-buildings-ui.js?v=0.52.0';
 import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';
@@ -19,6 +19,7 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
   $('power-key-close').onclick=()=>$('power-key-dialog').removeAttribute('open');
   let snapshot=null,county=null,map=null,busy=false,loadError=null,lastDirect=0,checked=null,selectedKey=null;
   let changes=null;
+  const disclosures=new Set();
   const buildings=createPowerBuildings({onMap,exercise});
   const network=createPowerNetwork({timeZone,exercise,exerciseNow,exerciseData,onLoadFacilities,onMap,onFeatureOpen:()=>{selectedKey=null;buildings.clear();}});
   $('power-dialog').addEventListener('stormEvidenceClose',()=>{selectedKey=null;buildings.clear();});
@@ -31,14 +32,20 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     changes=powerChanges(changes,rows());
   }
   function showDetail(row,locate=true){
+    if(selectedKey!==row.key)disclosures.clear();
     selectedKey=row.key;
-    const root=$('power-detail'),host=el('dl'),details=el('details'),buildingHost=el('div');details.append(el('summary','Utility status, timing and source details'),host);root.replaceChildren(el('p',`${POWER_STATES[row.status]} · ${row.location} · utility updated ${stamp(row.updated)}`),buildingHost,details);
+    const root=$('power-detail'),host=el('dl'),buildingHost=el('div');host.className='power-utility-fields';root.replaceChildren(host);
     const feed=snapshot.feeds.find(f=>f.id===row.feedId);
-    for(const [label,value] of [['Utility status',`${POWER_STATES[row.status]} · ${row.rawStatus||'No additional status'}`],['Location',row.location],['Utility details',row.details||'Not supplied'],['Customers in this utility record',row.customers===null?'Unknown':row.customers.toLocaleString('en-US')+' (not a county total)'],['Start / potential shutoff',stamp(row.start)],['Published window end',stamp(row.end)],['Estimated restoration',stamp(row.restoration)],['Utility record updated',stamp(row.updated)],['Source retrieved',time(Date.parse(feed.lastSuccess))],['Record identity',row.key]])host.append(el('dt',label),el('dd',value));
-    const issues=powerRowIssues(row);if(powerHealth(feed))issues.unshift(powerHealth(feed));for(const issue of issues)host.append(el('p',issue,'power-gap'));
-    host.append(el('p','Map locations and areas are approximate. A passed estimate, weather all-clear or disappearance from this feed does not establish restored power. Confirm critical sites with the utility and facility owner.'));
-    host.append(link('Open official utility map',row.official),button('Show on map',()=>{onMap();map?.focusPower(row.key);}));
-    const networkHost=el('div','','power-network-association');root.append(networkHost);network.select(row,networkHost);
+    const published=d=>d?.time?time(d.time):d?.text||'Not supplied';
+    const location=/^(Mapped location|Mapped point|PSPS area intersecting|Area intersecting)/i.test(row.location||'')?null:row.location;
+    const values=[['Utility status',row.rawStatus||POWER_STATES[row.status]],['Location',location],['Customers reported',row.customers===null?'Not supplied':row.customers.toLocaleString('en-US')],['Utility details',row.details],['Start / potential shutoff',published(row.start)],['Estimated restoration',published(row.restoration)],['Published window end',row.end.time||row.end.text?published(row.end):null],['Updated by utility',published(row.updated)]];
+    for(const [label,value] of values)if(value)host.append(el('dt',label),el('dd',value));
+    const issues=powerRowIssues(row),health=powerHealth(feed),urgent=issues.filter(s=>/passed|ended|24 hours|future|conflict|Unrecognized|differ/i.test(s));
+    for(const issue of [...new Set([health,...urgent].filter(Boolean))])root.append(el('p',issue,'power-gap'));
+    const actions=el('div','','power-nearby-controls');actions.append(link(`Open ${row.utility} outage map`,row.official),button('Locate outage',()=>{onMap();map?.focusPower(row.key);}));root.append(actions,buildingHost);
+    const fold=(label,content)=>{const details=el('details');details.className='power-detail-disclosure';details.open=disclosures.has(label);details.append(el('summary',label),content);details.addEventListener('toggle',()=>{if(details.isConnected){if(details.open)disclosures.add(label);else disclosures.delete(label);}});root.append(details);return details;};
+    const networkHost=el('div');fold('Circuits and nearby county places',networkHost);network.select(row,networkHost);
+    const checks=el('div');checks.append(el('p',`Source retrieved ${time(Date.parse(feed.lastSuccess))} · record ${row.key}`));for(const issue of issues)checks.append(el('p',issue));checks.append(el('p','Customer counts belong to this utility record and may span counties. Free-text times are preserved as published; no time zone is assumed. Utility areas and estimates are approximate. Confirm critical-site power with the utility and site owner.'));fold('Source checks',checks);
     $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate)onMap();const ready=locate?map?.focusPower(row.key):undefined;buildings.select(row,buildingHost,{ready});
   }
   function render(){

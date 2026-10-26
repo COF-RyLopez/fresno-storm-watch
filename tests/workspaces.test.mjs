@@ -7,7 +7,7 @@ test('focused defaults and private drainage never start with an unrelated operat
   assert.deepEqual(Object.keys(WORKSPACES),['watch','rivers','weather','reservoirs','alerts','power','drainage','roads']);
   assert.deepEqual(Object.entries(workspaceDefaults('roads').layers).filter(([,v])=>v).map(([k])=>k),['roads']);
   assert.equal(workspaceDefaults('weather').layers.wind,true);assert.equal(workspaceDefaults('weather').layers.weather,true);assert.equal(workspaceDefaults('weather').layers.power,false);
-  for(const id of Object.keys(WORKSPACES)){const s=workspaceDefaults(id);assert.equal(s.mode,'2d');assert.equal(s.imagery,false);assert.equal(s.cameras,false);assert.equal(s.layers.fema,false);assert.equal(s.layers.buildings,false);}
+  for(const id of Object.keys(WORKSPACES)){const s=workspaceDefaults(id);assert.equal(s.mode,id==='power'?'3d':'2d');assert.equal(s.imagery,false);assert.equal(s.cameras,false);assert.equal(s.layers.fema,false);assert.equal(s.layers.buildings,false);}
 });
 
 test('county waterways starts only in Rivers and Reservoirs; gallery preferences remain independent',()=>{
@@ -15,6 +15,12 @@ test('county waterways starts only in Rivers and Reservoirs; gallery preferences
   const memory=workspaceMemory();memory.get('rivers').basemap='imagery';
   assert.equal(memory.get('reservoirs').basemap,'waterways');
   assert.equal(memory.get('rivers').basemap,'imagery');assert.equal(workspaceMemory().get('rivers').basemap,'waterways');
+});
+
+test('Power starts in 3D but remembers an explicit 2D choice for the current session',()=>{
+  const memory=workspaceMemory();memory.activate('power');assert.equal(memory.get('power').mode,'3d');
+  memory.get('power').mode='2d';memory.activate('weather');memory.activate('power');assert.equal(memory.get('power').mode,'2d');
+  assert.equal(workspaceMemory().get('power').mode,'3d');assert.equal(memory.get('weather').mode,'2d');
 });
 test('saved tab preferences and viewpoints are isolated, remembered in memory, and reset for a new page',()=>{
   const m=workspaceMemory();m.activate('roads');const r=m.get('roads');r.basemap='imagery';r.imagery=true;r.mode='3d';r.viewpoint={scale:22000};r.layers.power=true;

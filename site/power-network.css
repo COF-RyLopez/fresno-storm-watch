@@ -23,3 +23,8 @@
 .power-buildings {overflow-wrap:anywhere;}
 .power-buildings .power-nearby-controls {margin:12px 0;}
 .power-buildings details p {font-size:.875rem;line-height:1.55;}
+.power-detail-disclosure {border-top:1px solid var(--app-border);margin-top:16px;padding-top:12px;}
+.power-detail-disclosure>summary {cursor:pointer;font-weight:600;line-height:1.5;}
+#power-detail .power-utility-fields {margin:0 0 16px;}
+#power-detail .power-utility-fields dt {font-size:.8rem;font-weight:500;color:var(--app-muted);margin-top:12px;}
+#power-detail .power-utility-fields dd {margin:2px 0 10px;}

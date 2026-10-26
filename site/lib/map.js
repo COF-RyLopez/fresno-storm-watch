@@ -13,7 +13,7 @@ import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.49.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.52.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
