@@ -38,6 +38,8 @@ jobs:
           python3 -m venv work/exposure-env
           work/exposure-env/bin/python -m pip install --disable-pip-version-check -r scripts/exposure-requirements.txt
           work/exposure-env/bin/python -m unittest discover -s tests -p 'test_building_conflation.py'
+          work/exposure-env/bin/python -m pip install --disable-pip-version-check -r scripts/building-requirements.txt
+          work/exposure-env/bin/python -m unittest discover -s tests -p 'test_power_buildings.py'
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published

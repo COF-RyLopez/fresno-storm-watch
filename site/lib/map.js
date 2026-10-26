@@ -1,4 +1,5 @@
 import {createNetworkMap} from './power-network-map.js?v=0.50.0';
+import {createPowerBuildingsMap} from './power-buildings-map.js?v=0.51.0';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear} from './nearby-search.js?v=0.32.0';
@@ -257,6 +258,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         if(gaugeId){onGaugeSelect(gaugeId);return;}
         const facilityKey=hit.results.find(r=>r.graphic?.attributes?.facilityKey)?.graphic.attributes.facilityKey;
         if(facilityKey){onFacilitySelect(facilityKey);return;}
+        const buildingId=hit.results.find(r=>r.graphic?.attributes?.building_id)?.graphic.attributes.building_id;
+        if(buildingId){window.dispatchEvent(new CustomEvent('frogPowerBuildingSelect',{detail:{id:buildingId}}));return;}
         const powerKey=hit.results.find(r=>r.graphic?.attributes?.powerKey)?.graphic.attributes.powerKey;
         if(powerKey){onPowerSelect(powerKey);return;}
         const networkKey=hit.results.find(r=>r.graphic?.attributes?.networkKey)?.graphic.attributes.networkKey;if(networkKey){onNetworkSelect(networkKey);return;}
@@ -372,6 +375,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   });
   const focusGeometry=(geometry,scale=null)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null);
   const utilityNetwork=createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect:onNetworkSelect});
+  const powerBuildings=createPowerBuildingsMap({FeatureLayer,Graphic,registerLayer,removeLayer:layer=>{registry.delete(layer);map.remove(layer);},getView:()=>view,focusGeometry});
+  viewListeners.add(()=>powerBuildings.sync());
   const searchFocus=createSelectionFocus({settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,preferredMode:()=>view.type,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
   let searchRevision=0;
   function clearSearchSelection(){searchRevision++;searchFocus.cancel(false);searchSelection.removeAll();searchContext.removeAll();document.querySelector('#map').dataset.searchSelected='false';}
@@ -487,6 +492,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusFacility:key=>selectionFocus.focus(type=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(!g)return null;setLayerPreference('facilities',true);return {target:g.geometry,scale:14000,...(type==='3d'?{tilt:45,heading:0}:{})};}),
     setDrainagePowerKeys(keys,pumpKeys=[]){const signature=JSON.stringify([keys.slice().sort(),pumpKeys.slice().sort()]);if(signature===drainagePowerSignature)return;drainagePowerSignature=signature;drainagePowerKeys=new Set(keys);drainagePowerPumps=new Set(pumpKeys);drawPower();drawDrainagePower();},
     setPowerNetwork:data=>utilityNetwork.setSnapshot(data),setPowerNetworkSelection:keys=>utilityNetwork.setReference(keys),focusPowerNearby:(shape,category)=>utilityNetwork.showNearby(shape,category),clearPowerNearby:()=>utilityNetwork.clearNearby(),setPowerNetworkMatch:match=>utilityNetwork.setMatch(match),clearPowerNetworkMatch:()=>utilityNetwork.clearMatch(),focusPowerNetwork:keys=>utilityNetwork.focus(keys),
+    setPowerBuildings:rows=>powerBuildings.set(rows),clearPowerBuildings:()=>powerBuildings.clear(),setPowerBuildingLabels:value=>powerBuildings.setLabels(value),focusPowerBuilding:id=>powerBuildings.focus(id),powerBuildingsViewport:()=>{const extent=view.extent;if(!extent)return null;const geo=extent.spatialReference.isGeographic?extent:webMercatorUtils.webMercatorToGeographic(extent);return {rings:[[[geo.xmin,geo.ymin],[geo.xmin,geo.ymax],[geo.xmax,geo.ymax],[geo.xmax,geo.ymin],[geo.xmin,geo.ymin]]],spatialReference:{wkid:4326}};},
     setPower:rows=>{powerRows=rows;drawPower();},
     setPowerVisible:visible=>setLayerPreference('power',visible),
     focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;const geometries=power.graphics.toArray().filter(item=>item.attributes.powerKey===key).map(item=>item.geometry);if(geometries.length===1&&g.geometry.type==='point')return focusGeometry(g.geometry,25000);return focusPoints(geometries.flatMap(shape=>shape.type==='point'?[[shape.x,shape.y]]:shape.rings.flat()).map(([longitude,latitude])=>({longitude,latitude})),.012);}return focusGeometry(null);},

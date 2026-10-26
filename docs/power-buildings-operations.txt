@@ -1,0 +1,45 @@
+F.R.O.G. 0.51.0 — public Overture footprints in selected utility areas
+
+Usage
+Power / PSPS > select a published outage/PSPS polygon > Load area buildings.
+For a large query, zoom closer > Load visible buildings (fixed visible scope).
+View buildings in 3D; expand an address row > Locate building.
+Address labels draw at 1:6,000; footprints at 1:50,000. Missing heights stay flat
+with dashed outlines. Click a footprint to inspect it in the side pane.
+Point-only outages, circuits and unknown/restored/cancelled records cannot define
+affected buildings. No nearest-circuit or nearest-address guess is made.
+
+Reference source
+Pinned public Overture GeoParquet release 2026-10-21.0, EPSG:4326.
+368,492 whole footprints intersect the exact county boundary; 290,349 have a
+positive published metre height; 213,232 have uniquely contained Fresno-source
+address points. Addresses are spatial associations, not verified occupancy,
+parcel ownership or electrical service. Building counts are not customer counts.
+The join preserves multiple addresses, unmatched records and ambiguous points.
+Only us/ca/fresno addresses from OpenAddresses via Overture label buildings.
+62 ambiguous points, 16 incomplete points and 105,813 unmatched points are not
+assigned. 11 points from other address providers inside the county are excluded.
+Heights may be estimated; not ground/first-floor elevations or flood depths.
+
+Delivery / refresh
+540 deterministic gzip JSON chunks (~35 MB total) indexed by whole-footprint
+bounds. Only overlapping chunks load, at most 4 concurrent requests, 28 MB
+decoded candidates and 15,000 final overlapping footprints. Oversized requests
+require a smaller visible scope. No silent clipping or partial-success counts.
+The gzip bytes have pinned SHA-256, count, release and decoded-size checks.
+No new runtime dependencies, API key, AGOL item, sharing change or credentials.
+The reference index/chunks are public; operational/private county data is absent.
+UI results are held in page memory. Closing/changing the selection cancels late
+results. Live utility refreshes neither redownload nor reposition unchanged
+building selections; a revised event invalidates the overlap result.
+
+Rebuild deliberately after reviewing a new Overture release:
+Create a Python venv; install scripts/building-requirements.txt (plus the existing
+exposure environment's dependencies). Run scripts/build-power-buildings.py with
+--release YYYY-MM-DD.N. Public intermediate GeoParquet stays under ignored work/.
+Publish the index and all its immutable version chunks together. Review geometry,
+height/address accounting and upstream attribution. Run JS regression/check and
+test_power_buildings.py. Obsolete reference versions may be removed in a later
+reviewed commit; never replace chunks beneath an existing version index.
+
+Rollback: redeploy the preceding app revision (0.50.0); no private data migration.

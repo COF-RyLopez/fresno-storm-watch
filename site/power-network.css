@@ -20,3 +20,6 @@
 
 .power-nearby-row summary {cursor:pointer;font-weight:600;line-height:1.5;}
 .power-nearby-row summary span {display:block;font-weight:400;font-size:.875rem;color:var(--app-muted);margin-top:4px;}
+.power-buildings {overflow-wrap:anywhere;}
+.power-buildings .power-nearby-controls {margin:12px 0;}
+.power-buildings details p {font-size:.875rem;line-height:1.55;}

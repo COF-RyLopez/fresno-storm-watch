@@ -1,4 +1,5 @@
-import {createPowerNetwork} from './power-network-ui.js?v=0.50.0-r2';
+import {createPowerNetwork} from './power-network-ui.js?v=0.51.0';
+import {createPowerBuildings} from './power-buildings-ui.js?v=0.51.0';
 import {reportHealth} from './source-health.js';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';
@@ -18,8 +19,10 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
   $('power-key-close').onclick=()=>$('power-key-dialog').removeAttribute('open');
   let snapshot=null,county=null,map=null,busy=false,loadError=null,lastDirect=0,checked=null,selectedKey=null;
   let changes=null;
-  const network=createPowerNetwork({timeZone,exercise,exerciseNow,exerciseData,onLoadFacilities,onMap,onFeatureOpen:()=>{selectedKey=null;}});
-  $('power-dialog').addEventListener('stormEvidenceClose',()=>{selectedKey=null;});
+  const buildings=createPowerBuildings({onMap,exercise});
+  const network=createPowerNetwork({timeZone,exercise,exerciseNow,exerciseData,onLoadFacilities,onMap,onFeatureOpen:()=>{selectedKey=null;buildings.clear();}});
+  $('power-dialog').addEventListener('stormEvidenceClose',()=>{selectedKey=null;buildings.clear();});
+  window.addEventListener('stormWorkspaceChange',()=>{if(new URL(location.href).searchParams.get('view')!=='power'){selectedKey=null;buildings.clear();}});
   const time=t=>t?formatTime(t,timeZone):'Not supplied';
   const stamp=d=>d?.time?time(d.time):d?.text?`${d.text} (publisher text; time zone unconfirmed)`:'Not supplied';
   function rows(){return (snapshot?.feeds||[]).flatMap(f=>f.rows.map(r=>({...r,health:powerHealth(f),issues:powerRowIssues(r)})));}
@@ -29,13 +32,13 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
   }
   function showDetail(row,locate=true){
     selectedKey=row.key;
-    const host=$('power-detail');host.replaceChildren();
+    const root=$('power-detail'),host=el('dl'),details=el('details'),buildingHost=el('div');details.append(el('summary','Utility status, timing and source details'),host);root.replaceChildren(el('p',`${POWER_STATES[row.status]} · ${row.location} · utility updated ${stamp(row.updated)}`),buildingHost,details);buildings.select(row,buildingHost);
     const feed=snapshot.feeds.find(f=>f.id===row.feedId);
     for(const [label,value] of [['Utility status',`${POWER_STATES[row.status]} · ${row.rawStatus||'No additional status'}`],['Location',row.location],['Utility details',row.details||'Not supplied'],['Customers in this utility record',row.customers===null?'Unknown':row.customers.toLocaleString('en-US')+' (not a county total)'],['Start / potential shutoff',stamp(row.start)],['Published window end',stamp(row.end)],['Estimated restoration',stamp(row.restoration)],['Utility record updated',stamp(row.updated)],['Source retrieved',time(Date.parse(feed.lastSuccess))],['Record identity',row.key]])host.append(el('dt',label),el('dd',value));
     const issues=powerRowIssues(row);if(powerHealth(feed))issues.unshift(powerHealth(feed));for(const issue of issues)host.append(el('p',issue,'power-gap'));
     host.append(el('p','Map locations and areas are approximate. A passed estimate, weather all-clear or disappearance from this feed does not establish restored power. Confirm critical sites with the utility and facility owner.'));
     host.append(link('Open official utility map',row.official),button('Show on map',()=>{onMap();map?.focusPower(row.key);}));
-    const networkHost=el('div','','power-network-association');host.append(networkHost);network.select(row,networkHost);
+    const networkHost=el('div','','power-network-association');root.append(networkHost);network.select(row,networkHost);
     $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate){onMap();map?.focusPower(row.key);}
   }
   function render(){
@@ -79,7 +82,7 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     if($('power-dialog').hasAttribute('open')&&selectedKey){
       const selected=all.find(r=>r.key===selectedKey);
       if(selected)showDetail(selected,false);
-      else {network.clearSelection();selectedKey=null;$('power-detail').replaceChildren(el('p','This record is no longer returned by the latest check. Removal does not confirm restored power. Verify the official utility map.','power-gap'),link('PG&E official map',POWER_LINKS.pge),link('SCE official map',POWER_LINKS.sce));}
+      else {network.clearSelection();buildings.clear();selectedKey=null;$('power-detail').replaceChildren(el('p','This record is no longer returned by the latest check. Removal does not confirm restored power. Verify the official utility map.','power-gap'),link('PG&E official map',POWER_LINKS.pge),link('SCE official map',POWER_LINKS.sce));}
     }
   }
   async function refresh(force=false){
@@ -105,5 +108,5 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     $('power-panel').prepend(controls);accept(powerExercise("watch",exerciseNow));checked=exerciseNow;render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
-  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);render();if(selectedKey)map.focusPower(selectedKey);},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
+  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);buildings.setMap(m);render();if(selectedKey)map.focusPower(selectedKey);},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
 }
