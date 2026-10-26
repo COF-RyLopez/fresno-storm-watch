@@ -1,5 +1,7 @@
 import {createNetworkMap} from './power-network-map.js?v=0.50.0';
 import {createPowerBuildingsMap} from './power-buildings-map.js?v=0.52.1';
+import {createDrainageDetailMap} from './drainage-nearby-map.js?v=0.53.0';
+import {drainageDetailExtent} from './drainage-nearby-model.js?v=0.53.0';
 import {powerFocusExtent} from './power-focus.js?v=0.52.1';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
@@ -14,7 +16,7 @@ import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.52.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.53.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -252,6 +254,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const drainageKey=hit.results.find(r=>r.graphic?.attributes?.drainageKey)?.graphic.attributes.drainageKey;
         if(drainageKey){onDrainageSelect(drainageKey);return;}
+        const drainageDetailKey=hit.results.find(r=>r.graphic?.attributes?.drainageDetailKey)?.graphic.attributes.drainageDetailKey;
+        if(drainageDetailKey){window.dispatchEvent(new CustomEvent('frogDrainageNearbySelect',{detail:{key:drainageDetailKey}}));return;}
         const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
         if(roadKey){onRoadSelect(roadKey);return;}
         const cameraId=hit.results.find(r=>r.graphic?.attributes?.cameraId)?.graphic.attributes.cameraId;
@@ -378,6 +382,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const focusGeometry=(geometry,scale=null,options)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null,options);
   const utilityNetwork=createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect:onNetworkSelect});
   const powerBuildings=createPowerBuildingsMap({FeatureLayer,Graphic,Extent,registerLayer,removeLayer:layer=>{registry.delete(layer);map.remove(layer);},getView:()=>view,focusGeometry});
+  const drainageDetail=createDrainageDetailMap({GraphicsLayer,Graphic,registerLayer,setLayerEligibility,focusGeometry});
   viewListeners.add(()=>powerBuildings.sync());
   const searchFocus=createSelectionFocus({settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,preferredMode:()=>view.type,navigate:focusNavigate,save:()=>{followRegion=false;currentState().viewpoint=view.viewpoint?.clone();currentState().mode=view.type;},missing:()=>{},failed:()=>{document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Search location could not be shown. Use Fit workspace or select another result.';}});
   let searchRevision=0;
@@ -485,6 +490,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusBriefingContext:(points,radiusKm=5)=>{setLayerPreference('briefingContext',true);if(!points.some(validLocation))return focusGeometry(null);points=points.filter(validLocation);const b=points.reduce((a,p)=>[Math.min(a[0],p.longitude),Math.min(a[1],p.latitude),Math.max(a[2],p.longitude),Math.max(a[3],p.latitude)],[Infinity,Infinity,-Infinity,-Infinity]),pad=(radiusKm+1)/111,lonPad=pad/Math.cos((b[1]+b[3])/2*Math.PI/180);return focusGeometry(new Extent({spatialReference:{wkid:4326},xmin:b[0]-lonPad,ymin:b[1]-pad,xmax:b[2]+lonPad,ymax:b[3]+pad}));},
     setPlanningData:(rows,filter)=>{planningRows=rows;planningFilter=filter;drawAreas();drawPower();},
     setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
+    setDrainageNearby:rows=>drainageDetail.set(rows),clearDrainageNearby:()=>drainageDetail.clear(),focusDrainageNearby:key=>drainageDetail.focus(key),
+    fitDrainageNearby:(record,radius)=>focusGeometry(new Extent(drainageDetailExtent(record,radius))),
     setDrainage(rows){if(!rows.length){selectionFocus.cancel();memory.get('drainage').viewpoint=null;}drainageRows=rows;for(const layer of Object.values(drainageLayers))layer.removeAll();for(const r of rows){const key=r.category==='existing'?'drainage':r.category==='proposed'?'drainageProposed':r.category==='catchment'?'drainageCatchments':'drainageOther',shade=DRAINAGE_COLORS[r.category],polygon=!!r.geometry.rings;drainageLayers[key].add(new Graphic({geometry:{...r.geometry,type:polygon?'polygon':'point'},attributes:{drainageKey:r.key},symbol:polygon?{type:'simple-fill',style:'none',outline:{color:shade,width:r.category==='catchment'?0.8:2,style:r.category==='existing'?'solid':'dash'}}:{type:'simple-marker',style:r.category==='existing'?'circle':r.category==='proposed'?'triangle':'x',size:12,color:r.category==='existing'?shade:[0,0,0,0],outline:{color:shade,width:2}}}));}drawDrainagePower();for(const [key,layer]of Object.entries(drainageLayers))setLayerEligibility(layer,layer.graphics.length>0);},
     clipDrainageRain,
     focusDrainageGroup(keys){const selected=drainageRows.filter(r=>r.category==='existing'&&keys.includes(r.key));if(!selected.length)return Promise.resolve(false);setLayerPreference('drainage',true);setLayerPreference('roads',true);setLayerPreference('facilities',true);return focusPoints(selected.flatMap(r=>r.geometry.rings?r.geometry.rings.flat().map(([longitude,latitude])=>({longitude,latitude})):[{longitude:r.geometry.x,latitude:r.geometry.y}]),.015);},

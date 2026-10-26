@@ -36,3 +36,5 @@ export function drainageRecord(spec,feature,oid){
 }
 /** @param {object[]} rows @returns {object} Counts are source records; polygon pieces and co-located pumps are not physical-site counts. */
 export function drainageCounts(rows){return {basins:rows.filter(r=>r.kind==='basin'&&r.category==='existing').length,pumps:rows.filter(r=>r.kind==='pump'&&r.category==='existing').length,proposed:rows.filter(r=>r.category==='proposed').length,other:rows.filter(r=>r.category==='other').length,catchments:rows.filter(r=>r.kind==='catchment').length};}
+/** Preserve a selected evidence snapshot only while every normalized source attribute and coordinate is unchanged. */
+export const unchangedDrainageSelection=(key,before,after)=>!!key&&!!before.find(r=>r.key===key)&&!!after.find(r=>r.key===key)&&JSON.stringify(before.find(r=>r.key===key))===JSON.stringify(after.find(r=>r.key===key));

@@ -2,6 +2,18 @@
 .drainage-content p { margin: 0; line-height: 1.5; color: var(--calcite-color-text-2); }
 .drainage-content calcite-block p { margin-block: 12px; }
 .drainage-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.drainage-nearby { display: grid; gap: 12px; min-width: 0; padding-block: 16px; border-block: 1px solid var(--calcite-color-border-2); }
+.drainage-nearby h3 { margin: 0; font-size: 1rem; }
+.drainage-nearby p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
+.drainage-nearby .drainage-actions { align-items: end; }
+.drainage-nearby calcite-label { margin: 0; }
+.drainage-nearby summary { padding-block: 9px; cursor: pointer; line-height: 1.5; overflow-wrap: anywhere; color: var(--calcite-color-text-1); }
+.drainage-nearby summary:focus-visible { outline: 2px solid var(--calcite-color-focus-color); outline-offset: 2px; }
+.drainage-nearby-row { border-block-start: 1px solid var(--calcite-color-border-3); padding-block-end: 8px; }
+.drainage-nearby-row dl { display: grid; grid-template-columns: minmax(0,1fr); gap: 5px; margin: 0 0 12px; }
+.drainage-nearby-row dt { margin-top: 8px; font-weight: 600; }
+.drainage-nearby-row dd { margin: 0; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
+.drainage-nearby-row a { display: block; margin-block-start: 8px; }
 .drainage-row { display: grid; gap: 4px; padding-block: 10px; border-bottom: 1px solid var(--calcite-color-border-3); }
 .drainage-row small { color: var(--calcite-color-text-2); }
 .drainage-row calcite-button { justify-self: start; max-width: 100%; }

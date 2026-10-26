@@ -1,0 +1,70 @@
+F.R.O.G. 0.53.0 — direct FMFCD nearby drainage context
+
+Use County Watch > load FMFCD > select a basin/pump inventory record, or use
+Topic tools > Drainage. The right evidence pane automatically queries pipes,
+inlets and outfalls within 500 m of the complete selected basin outline/pump.
+Distance options are 250, 500 and 1,000 m; Fit nearby area frames this display
+scope. Unchanged inventory refreshes preserve an open selection; changed or
+withdrawn source parents invalidate it. No centroid substitution, road access
+route or hydraulic trace is inferred. Group reviews identify the single record
+used for the nearby scope; select another inventory record to change it.
+
+Source: FMFCD's public query-only FeatureServer (item 61218254c899406abf4c65480dd52c17)
+https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFCD_Layers/FeatureServer
+Original map: 10e99caf452e482e9e471571f9969930
+Layer IDs 6 pipes, 3 inlets, 5 outfalls; optional 2/1 master-plan pipes/inlets and
+8/7 design pipes/inlets. This is a direct reference to publisher-hosted data.
+No new AGOL items, copies, export files, replicas, permissions or collector jobs.
+Existing county source inventory, AGOL pump copy and readiness IDs are unchanged.
+No new Enterprise sign-in is needed for these supplemental FMFCD detail queries;
+the existing basin/pump inventory connection retains its existing access rules.
+
+Private UI: existing county AGOL EOC viewer membership (or configured owner) is
+checked before and after reads; the county credential is checked for expiry.
+FMFCD itself publishes the detail service publicly. The private application gate
+does not change the publisher's service access classification. Public source
+queries use credentials:omit and fixed URLs; county tokens are NEVER forwarded.
+Only selected geometry and query fields are sent directly to the FMFCD service.
+Responses and private selection coordinates are memory-only. They do not enter
+GitHub, deployment artifacts, localStorage, IndexedDB, scenario/briefing exports
+or a service-worker cache. Sign-out, disconnect, changed source selection,
+closing the owning evidence pane, workspace changes and pagehide clear graphics
+and detail DOM. Superseded reads are aborted and late responses ignored.
+
+Meaning / symbology
+Mapped pipes: solid cyan. Inlets: squares. Outfalls: diamonds. Published as-built
+years 1900 through the current year permit the mapped classification for pipe /
+inlet records, not confirmation of operation. Null/invalid/far-future years and
+missing outfall subtype remain classification-unconfirmed (gray, dotted lines).
+Outfall numeric subtype 1 = mapped; 0 = future; 2 = design. Strings/other codes
+remain unknown. Master-plan/design source layers and explicit future/design
+contract values remain proposed/design (amber dashed lines / hollow points).
+Proposed/design features are hidden by default for each new selection. They
+never enter readiness counts, operational assignments or flood calculations.
+Unknown records are shown and labeled separately by default.
+
+The first 20 features per kind are listed; every bounded matching graphic draws.
+Select a map feature to reveal its record in the pane. Locate uses the whole
+line/point, and does not change the parent query. Source fields, metadata edit
+time and app retrieval time remain distinct. Numeric dimensions/elevations are
+unconverted source values: measurement units and vertical datum are unverified.
+No hydraulic connectivity, flow direction, pump capacity or live asset telemetry.
+
+Acquisition / failure behavior
+Read-only POST spatial-ID queries with distance in metres and WGS84 input,
+then complete 100-ID batches requested as WGS84. Source geometry preserved.
+At most two layers concurrently; at most 1,200 features per layer, no silent
+truncation. Schema/CRS/identity checks reject incomplete layers. An oversized
+query asks for a smaller distance. Failed categories clear and show explicit
+unassessed notices; successful categories remain visible with incomplete-source
+coverage indicated. Planned source layers are not requested until enabled.
+Manual refresh and five-minute checks while the selected pane is open.
+Checked date does not imply current field inspection; source dataset edit dates
+are prominently retained. Source terms still apply to any later redistribution;
+this release neither republishes the records nor changes their ownership.
+
+Verification: focused synthetic tests cover category unknowns, full geometry,
+bounded inventories, fail-closed schemas, partial failures, expiry/revocation,
+credential isolation, cancellation, map symbols and private DOM cleanup.
+Live screenshots and authenticated query evidence stay outside the public repo.
+Rollback: redeploy 0.52.1; no data migration.

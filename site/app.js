@@ -1,7 +1,8 @@
-import {createDrainageWatch} from './lib/drainage-ui.js?v=0.41.0';
+import {createDrainageWatch} from './lib/drainage-ui.js?v=0.53.0';
+import {createDrainageNearby} from './lib/drainage-nearby-ui.js?v=0.53.0';
 import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.46.0';
-import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.45.0';
+import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.53.0';
 import {createMission} from './lib/mission-ui.js?v=0.45.0';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.36.0';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.36.0';
@@ -12,7 +13,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.52.1';
+import { createMap } from './lib/map.js?v=0.53.0';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -20,7 +21,7 @@ import { createRiverWatch } from './lib/river-ui.js?v=0.27.0';
 import { createCameraWatch } from './lib/camera-ui.js?v=0.27.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.40.1';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.39.0';
-import { createWorkspace } from './lib/workspace-ui.js?v=0.52.0';
+import { createWorkspace } from './lib/workspace-ui.js?v=0.53.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.45.0';
 import { createPowerWatch } from './lib/power-ui.js?v=0.52.1';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.50.0';
@@ -74,11 +75,13 @@ const mission=createMission({workspace,exercise,onSelectArea:id=>{openPlanning()
 const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
 const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBriefing:(...args)=>briefings.open(...args),onArea:id=>planning?.selectArea(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onConnect:()=>{openPower();document.querySelector('.facility-section calcite-accordion-item').expanded=true;},onMap:workspace.showMap,onData:data=>mission.setContext(data)});
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id),onSlide:context=>briefingLayers?.followSlide(context)});
+const drainageNearby=createDrainageNearby({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap});
+for(const id of ['drainage-evidence','drainage-review-evidence'])$(id).addEventListener('stormEvidenceClose',()=>drainageNearby.clearIfWithin($(id)));
 mapSearch=createMapSearch({showMap:workspace.showMap,onInspect:row=>{if(row.kind==='gauge')rivers?.select(row.key.slice(6));else if(row.kind==='road-record')roads?.select(row.key);else if(row.kind==='asset')facilities.select(row.key);}});
-const drainageReviews=createDrainageReviews({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,exerciseData:drainageExercise,onSummary:(n,pumps,readiness,tasks)=>strip.drainage(n,pumps,readiness,tasks),onConnect:()=>drainage?.load(),onFacilities:()=>facilities.loadDefault(),onMap:workspace.showMap,onRecord:key=>drainage.select(key),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onPower:key=>power.select(key),onRainfall:()=>environment?.selectRainfall(9,{selectValidTime:true}),onCapture:item=>mission.addEvidence(item),onAssign:(...args)=>mission.assignEvidence(...args),onClear:()=>mission.clearDrainageEvidence(),onReadiness:(...args)=>pumpReadiness.open(...args),onPumpTask:(...args)=>pumpReadiness.openTask(...args),renderReadiness:(...args)=>pumpReadiness.renderSummary(...args)});
+const drainageReviews=createDrainageReviews({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,exerciseData:drainageExercise,onSummary:(n,pumps,readiness,tasks)=>strip.drainage(n,pumps,readiness,tasks),onConnect:()=>drainage?.load(),onFacilities:()=>facilities.loadDefault(),onMap:workspace.showMap,onRecord:key=>drainage.select(key),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onPower:key=>power.select(key),onRainfall:()=>environment?.selectRainfall(9,{selectValidTime:true}),onCapture:item=>mission.addEvidence(item),onAssign:(...args)=>mission.assignEvidence(...args),onClear:()=>mission.clearDrainageEvidence(),onReadiness:(...args)=>pumpReadiness.open(...args),onPumpTask:(...args)=>pumpReadiness.openTask(...args),renderReadiness:(...args)=>pumpReadiness.renderSummary(...args),renderNearby:(...args)=>drainageNearby.renderInto(...args)});
 pumpReadiness=createPumpReadiness({exercise,exerciseData:drainageExercise,timeZone:CONFIG.timeZone,onData:value=>{networkReadiness=value;power?.setReadiness(value);drainageReviews.setReadiness(value);},onSaved:()=>{drainageReviews.refreshSelected();$('drainage-review-feedback').textContent=exercise?'Fictional pump update saved in this tab; no AGOL write. Area Watch and the banner use the new version.':'Pump update saved in private exercise storage. Area Watch and the banner use the latest version; capture fresh evidence for your briefing.';}});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:data=>{networkFacilities=data;power?.setFacilities(data);context.setFacilities(data);mission.setFacilities(data);mapSearch.setFacilities(data);drainage?.setFacilities(data);drainageReviews.setFacilities(data);}});
-drainage=createDrainageWatch({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onRainfall:id=>environment?.selectRainfall(id,{selectValidTime:true}),onFacilities:async()=>{map?.setLayerPreference('facilities',true);return facilities.loadDefault();},onRoad:openRoads,onData:data=>drainageReviews.setSnapshot(data)});
+drainage=createDrainageWatch({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onRainfall:id=>environment?.selectRainfall(id,{selectValidTime:true}),onFacilities:async()=>{map?.setLayerPreference('facilities',true);return facilities.loadDefault();},onRoad:openRoads,onData:data=>{drainageReviews.setSnapshot(data);drainageNearby.setInventory(data);},renderNearby:(...args)=>drainageNearby.renderInto(...args)});
 power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,exerciseNow:exerciseClock,exerciseData:drainageExercise,onLoadFacilities:()=>facilities.loadDefault({refreshLoaded:true}),onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};planning?.setPowerData(latestPlanningPower);drainageReviews.setPower(latestPlanningPower);}});
 power.setFacilities(networkFacilities);power.setReadiness(networkReadiness);
 roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:workspace.showMap,onData:data=>{context.setRoads(data);mission.setRoads(data);mapSearch.setRoads({...data,exercise});drainage.setRoads(data);drainageReviews.setRoads(data);}});
@@ -281,7 +284,7 @@ if (exercise) {
     void refresh();
   }));
 }
-void setupAuth(CONFIG.arcgis, exercise,session=>{power.setSession(session);pumpReadiness.setSession(session);facilities.setSession(session);mission.setSession(session);drainage.setSession(session);});
+void setupAuth(CONFIG.arcgis, exercise,session=>{power.setSession(session);pumpReadiness.setSession(session);facilities.setSession(session);mission.setSession(session);drainageNearby.setSession(session);drainage.setSession(session);});
 setupSceneCompanion(CONFIG.arcgis, () => map?.sceneViewpoint(), exercise);
 renderBanner(); renderList(); renderDetail();
 try {
@@ -302,6 +305,7 @@ try {
     power.setMap(map);
     facilities.setMap(map);
     drainage.setMap(map);
+    drainageNearby.setMap(map);
     drainageReviews.setMap(map);
     context.setMap(map);
     void briefingLayers.setMap(map);

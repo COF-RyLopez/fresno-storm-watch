@@ -1,11 +1,11 @@
 import {EOC_CONFIG} from '../eoc-config.js';
 import {loadSdk} from './map.js?v=0.42.0';
 import {formatTime} from './model.js';
-import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts} from './drainage-model.js';
+import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts,unchangedDrainageSelection} from './drainage-model.js?v=0.53.0';
 import {openDrainage} from './drainage-data.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Private, read-only drainage context; memory cleared on sign-out, expiry, disconnect and failure. */
-export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRainfall=()=>{},onFacilities=()=>{},onRoad=()=>{},onData=()=>{}}){
+export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRainfall=()=>{},onFacilities=()=>{},onRoad=()=>{},onData=()=>{},renderNearby=()=>{}}){
   let session=null,adapter=null,map=null,rows=[],checked=null,error=null,busy=false,generation=0,selected=null,weather=null,roads=null,facilities=null,listSignature='';
   const time=v=>Number.isFinite(v)?formatTime(v,timeZone):'Unknown';
   const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
@@ -14,7 +14,9 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
     const row=rows.find(r=>r.key===key);if(!row)return;selected=key;
     const host=$('drainage-detail');host.replaceChildren();$('drainage-evidence').heading=row.name;
     const dl=el('dl');for(const [label,value]of [['Source classification',row.status],['Drainage / basin code',row.code||'Not supplied'],['Source modification time',time(row.updated)],['Source revision date',time(row.revision)],['Retrieved',time(checked)],['Operating condition','Unconfirmed — contact FMFCD'],['Capacity / available storage','Not supplied by this service'],['Selection ID',`${row.layerId}/${row.objectId} · session-only ObjectID`]])dl.append(el('dt',label),el('dd',value));
-    host.append(dl,el('p',row.kind==='pump'?'This inventory does not supply pump discharge, power availability, backup, controls or current status.':'The polygon is a mapped inventory / drainage boundary. It is not a current shoreline, storage-volume curve or predicted flood extent.'),el('h3','Planning context'),el('p',weather?.status||'Rainfall forecast is checking; source availability and dates remain visible on the map.'),el('p','Rainfall polygons are liquid-equivalent forecasts, not runoff or flood depth. Drainage and receiving-water connections require owner verification.'));
+    host.append(el('p',row.status));if(['basin','pump'].includes(row.kind))renderNearby(host,row);
+    const inventory=el('details');inventory.append(el('summary','Inventory dates and attributes'),dl);host.append(inventory);
+    host.append(el('p',row.kind==='pump'?'This inventory does not supply pump discharge, power availability, backup, controls or current status.':'The polygon is a mapped inventory / drainage boundary. It is not a current shoreline, storage-volume curve or predicted flood extent.'),el('h3','Planning context'),el('p',weather?.status||'Rainfall forecast is checking; source availability and dates remain visible on the map.'),el('p','Rainfall polygons are liquid-equivalent forecasts, not runoff or flood depth. Drainage and receiving-water connections require owner verification.'));
     const a=el('a','FMFCD source layer');a.href=DRAINAGE_URL+'/'+row.layerId;a.target='_blank';a.rel='noopener noreferrer';host.append(a,button('Zoom to full outline / location',()=>{onMap();void map?.focusDrainage(key);}));
     $('drainage-evidence').setAttribute('open','');if(focus){onMap();void map?.focusDrainage(key);}
   }
@@ -42,7 +44,10 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
   }
   async function load(){
     if(exercise)return;if(!session){$('sign-in').click();return;}if(busy)return;busy=true;error=null;const epoch=generation;render();
-    try{if(!adapter){const opened=await openDrainage(EOC_CONFIG,session,loadSdk);if(epoch!==generation){opened.close();return;}adapter=opened;}const first=!checked,loaded=await adapter.read({includeBoundaries:$('drainage-catchments').checked});if(epoch!==generation)return;rows=loaded;checked=Date.now();selected=null;$('drainage-evidence').removeAttribute('open');$('drainage-detail').replaceChildren();map?.clearEnvironmentPopup();map?.setDrainage(rows);if(first&&!$('drainage-panel').hidden){onMap();void map?.fitDrainage();}}
+    try{if(!adapter){const opened=await openDrainage(EOC_CONFIG,session,loadSdk);if(epoch!==generation){opened.close();return;}adapter=opened;}const first=!checked,loaded=await adapter.read({includeBoundaries:$('drainage-catchments').checked});if(epoch!==generation)return;
+      const unchanged=unchangedDrainageSelection(selected,rows,loaded);rows=loaded;checked=Date.now();
+      if(!unchanged){selected=null;$('drainage-evidence').removeAttribute('open');$('drainage-detail').replaceChildren();map?.clearEnvironmentPopup();}
+      map?.setDrainage(rows);if(first&&!$('drainage-panel').hidden){onMap();void map?.fitDrainage();}}
     catch(e){if(epoch===generation)clear({message:e.message});}
     finally{if(epoch===generation){busy=false;render();}}
   }
