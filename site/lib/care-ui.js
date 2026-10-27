@@ -1,13 +1,12 @@
-import {createCareReviews} from './care-review-ui.js?v=0.57.0';
+import {createCareReviews} from './care-review-ui.js?v=0.57.0-r2';
 import {careReviewExercise} from './care-review-exercise.js?v=0.57.0';
-import {careIdentity} from './care-review-model.js?v=0.57.0';
+import {careIdentity,careTime} from './care-review-model.js?v=0.57.0-r2';
 import {reportHealth} from './source-health.js';
 import {CARE_SOURCES,ZONE_STATUS,careBox,comparePlaces,compareBuildings,zonesAt,normalizeText} from './care-model.js?v=0.56.0-r1';
 import {readCareCollection,readCarePlaces} from './care-data.js?v=0.56.0-r1';
 import {loadPowerBuildings} from './power-buildings-data.js';
 import {createCareMap} from './care-map.js?v=0.57.0-r1';
 import {loadSdk} from './map.js?v=0.57.0';
-import {formatTime} from './model.js';
 
 const $=id=>document.getElementById(id),el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=()=>void fn();return b;};
@@ -17,7 +16,7 @@ const link=(label,href)=>{const a=el('a',label);a.href=href;a.target='_blank';a.
 export function createCareWatch({exercise=false,onMap=()=>{},onCapture=()=>{},onClearPrivate=()=>{},onSummary=()=>{},onPower=()=>{},onRoad=()=>{},exerciseNow=Date.now()}={}){
  let county=null,controller=null,graphics=null,session=null,facilities=null,zones=null,places=null,selected=null,buildingResult=null,comparison=[],epoch=0,busy=false,loaded=false,placesPending=null;
  const reviews=createCareReviews({exercise,exerciseNow,onSelect:key=>select(key),onSummary,onPower,onRoad,onChange:rows=>{graphics?.setSites(facilities?.rows||[],rows);if(selected){graphics?.setReview(reviews.get(selected.key));renderDetail();}}});
- const errors={},time=v=>v?formatTime(v,'America/Los_Angeles'):'Not supplied';
+ const errors={},time=careTime;
  function message(text){$('care-message').textContent=text;}
  function clearSelection(){epoch++;selected=null;buildingResult=null;comparison=[];delete errors.buildings;graphics?.clearSelection();$('care-details').replaceChildren();}
  function renderList(){const host=$('care-list');host.replaceChildren();const term=normalizeText($('care-search').value),rows=(facilities?.rows||[]).filter(r=>!term||normalizeText(`${r.name} ${r.address} ${r.city}`).includes(term));

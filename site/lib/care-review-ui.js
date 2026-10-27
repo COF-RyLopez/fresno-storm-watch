@@ -1,9 +1,8 @@
-import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES} from './care-review-model.js?v=0.57.0';
+import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,careTime} from './care-review-model.js?v=0.57.0-r2';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';
 import {reportHealth} from './source-health.js';
-import {formatTime} from './model.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
@@ -11,7 +10,7 @@ const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel=
 /** One countywide assessment, independent of map extent and display filters. */
 export function createCareReviews({exercise=false,exerciseNow=Date.now(),onSelect=()=>{},onChange=()=>{},onSummary=()=>{},onRoad=()=>{},onPower=()=>{}}={}){
  let facilities=null,zones=null,power=null,roads=null,sourceErrors={},map=null,vicinity=null,rows=[],previous=new Map(),generation=0,signature='',vicinityError=null,busy=false,listSignature='';
- const now=()=>exercise?exerciseNow:Date.now(),time=t=>Number.isFinite(t)?formatTime(t,'America/Los_Angeles'):'Not supplied';
+ const now=()=>exercise?exerciseNow:Date.now(),time=careTime;
  const stamp=t=>t?.time?time(t.time):t?.text?`${t.text} · publisher time zone unverified`:'Not supplied';
  function render(){
   const review=rows.filter(r=>r.review),gaps=rows.filter(r=>r.gaps.length),visible=$('care-review-filter').value==='all'?rows:review;

@@ -3,6 +3,8 @@ import {pointInRings} from './power-geometry.js';
 import {searchGeometry,METERS_PER_MILE} from './nearby-search.js';
 import {roadInCurrentView} from './roads.js';
 
+const dateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+export const careTime=value=>Number.isFinite(value)?dateFormat.format(value):'Not supplied';
 export const CARE_CHECK_MAX=420000;
 export const CARE_ROAD_MILES=1;
 export const careIdentity=f=>JSON.stringify([f.key,f.sourceId,f.name,f.address,f.city,f.geometry]);

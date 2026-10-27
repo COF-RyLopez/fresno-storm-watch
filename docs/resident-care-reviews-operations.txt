@@ -22,7 +22,9 @@ Order / Warning generate evacuation-planning review cues, not new orders.
 Unknown codes need verification. Lifted alone is not an active review, and does
 not establish safety. Prior active zone associations that change/disappear
 remain tab-only follow-ups. Neither source supplies individual issue times;
-application query dates and dataset edit dates remain separate.
+application query dates and dataset edit dates remain separate. All care
+evidence dates include the year and local time zone, including 2023/2024
+records with future end dates.
 
 Reuse the existing utility areaPowerEvidence rules: PG&E / SCE polygons only,
 one record per source key, and a 72-hour planning horizon. Point-only incidents

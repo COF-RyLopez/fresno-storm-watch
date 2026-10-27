@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assessCareReviews,careRoadVicinity,freezeCareReview,careIdentity} from '../site/lib/care-review-model.js';
+import {assessCareReviews,careRoadVicinity,freezeCareReview,careIdentity,careTime} from '../site/lib/care-review-model.js';
 import {careReviewExercise} from '../site/lib/care-review-exercise.js';
 import {careBox} from '../site/lib/care-model.js';
 import {createCareMap} from '../site/lib/care-map.js';
@@ -62,4 +62,9 @@ test('a previously nearby road is retained for verification when removed, or whe
  const pending=fixture();pending.previous=previous;pending.vicinity=null;const retained=new Map(assess(pending).map(r=>[r.key,r]));missing.previous=retained;row=first(missing);assert.equal(row.roadFollowups.length,1);
  const elapsed=fixture();elapsed.previous=previous;elapsed.vicinity.get(elapsed.facilities.rows[0].key).rows[0].record.end=now-1;row=first(elapsed);assert.equal(row.roadFollowups.length,1);
  elapsed.previous=new Map();row=first(elapsed);assert.equal(row.roadFollowups.length,0);
+});
+
+
+test('resident-care evidence timestamps retain the year and local time zone for historical and future source records',()=>{
+ assert.match(careTime(Date.parse('2024-02-14T08:00:00Z')),/2024/);assert.match(careTime(Date.parse('2027-03-31T07:00:00Z')),/2027/);assert.match(careTime(now),/PDT/);assert.equal(careTime(null),'Not supplied');
 });
