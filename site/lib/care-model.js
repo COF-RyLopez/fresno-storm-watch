@@ -4,8 +4,7 @@ export const CARE_SOURCES=Object.freeze({
   facilities:'https://services2.arcgis.com/wi1yEacfYjH5viqb/arcgis/rest/services/CDPH_R_D_Facilities/FeatureServer/0',
   zones:'https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/services/Fresno_County_Evacuations_2_view/FeatureServer/5',
   facilityItem:'https://www.arcgis.com/home/item.html?id=0efaf1dc942f430f887c11cae008918c',
-  zoneItem:'https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947',
-  footprints:'https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/services/County_Building_Footprints_Reader_View_V2/FeatureServer'
+  zoneItem:'https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947'
 });
 export const ZONE_STATUS=Object.freeze({Order:'Evacuation Order',Warn:'Evacuation Warning',Lifted:'Evacuation Order(s) Lifted'});
 export const ZONE_COLORS=Object.freeze({Order:'#b53535',Warn:'#ffff00',Lifted:'#65a843',unknown:'#b4bdc6'});

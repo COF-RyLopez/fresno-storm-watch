@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARE_SOURCES,normalizeCare,normalizeZone,comparePlaces,compareBuildings,zonesAt,distanceMetres,careBox} from '../site/lib/care-model.js';
-import {readCareCollection,readCareCountyFootprints,readCarePlaces} from '../site/lib/care-data.js';
+import {readCareCollection,readCarePlaces} from '../site/lib/care-data.js';
 import {createCareMap} from '../site/lib/care-map.js';
 import {readFile} from 'node:fs/promises';
 
@@ -54,24 +54,12 @@ test('published Places reference is pinned, complete, unique and contains no pri
  const fetcher=async url=>{const u=new URL(url),file=new URL('../site/data/care-places/'+u.pathname.split('/').at(-1),import.meta.url),b=await readFile(file);return {ok:true,json:async()=>JSON.parse(b),arrayBuffer:async()=>b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)};};
  const result=await readCarePlaces({fetcher});assert(result.rows.length>0);assert.equal(result.rows.length,result.index.count);assert(!result.rows.some(r=>r.facility||r.countyFootprints));
 });
-test('private footprint reader requires county session before requesting a source',async()=>{
- await assert.rejects(readCareCountyFootprints(careBox(point),null,()=>{throw Error('Must not import SDK');}),/county AGOL/);
-});
-test('care comparison layers clear private geometry and synchronize 3D independently',async()=>{
+test('care comparison layers clear selection outlines and synchronize 3D independently',async()=>{
  class Layer{constructor(p){Object.assign(this,p);this.graphics=[];}add(g){this.graphics.push(g);}removeAll(){this.graphics=[];}}
  class Graphic{constructor(p){Object.assign(this,p);}}
  const layers=[],callbacks=[],focus=[];let mode='2d',clears=0;
  const map=await createCareMap({registerLayer:(key,layer)=>layers.push({key,layer}),onViewChanged:f=>callbacks.push(f),getViewMode:()=>mode,clearSearchSelection:()=>clears++,focusSearchSelection:async g=>focus.push(['outline',g]),focusReferenceGeometry:async g=>focus.push(['point',g])},async()=>({import:async()=>[Layer,Graphic]}));
  await map.focus(point);await map.focus(careBox(point));assert.deepEqual(focus.map(f=>f[0]),['point','outline']);assert(!focus[0][1].rings);
  map.setSelection(normalizeCare(facility),[{geometry:careBox(point),height:12,associated:true}],[]);const context=layers[1].layer;assert.equal(context.graphics[0].symbol.type,'simple-fill');mode='3d';callbacks[0]();assert.equal(context.graphics[0].symbol.type,'polygon-3d');
- await map.focus(careBox(point),{privateGeometry:true});map.setCounty([{geometry:careBox(point)}]);assert.equal(layers[2].layer.graphics.length,1);map.clearCounty();assert.equal(clears,1);assert.equal(layers[2].layer.graphics.length,0);assert(context.graphics.length>0);map.clear();assert(layers.every(r=>r.layer.graphics.length===0));
-});
-
-
-test('private footprint batches reject invalid geometry and suppress superseded responses',async()=>{
- const session={portal:{id:'ibgDyuD2DLBge82s'}};
- const sdk=(bad=false)=>async()=>({import:async()=>[async(url,options)=>({data:url.endsWith('/query')?(options.query.returnIdsOnly?{objectIds:[1]}:{spatialReference:{wkid:4326},features:[{attributes:{OBJECTID:1,GlobalID:'county-id',locationName:'Fictional county building'},geometry:bad?{rings:[]}:careBox(point)}]}):url.endsWith('/0')?{geometryType:'esriGeometryPolygon',objectIdField:'OBJECTID'}:{layers:[{id:0}]}})]});
- const result=await readCareCountyFootprints(careBox(point),session,sdk());assert.equal(result.rows[0].id,'county-id');assert(result.rows[0].geometry.rings);
- await assert.rejects(readCareCountyFootprints(careBox(point),session,sdk(true)),/geometry missing or invalid/);
- let checks=0;assert.equal(await readCareCountyFootprints(careBox(point),session,sdk(),{current:()=>++checks<2}),null);
+ assert(context.graphics.length>0);map.clear();assert.equal(clears,1);assert(layers.every(r=>r.layer.graphics.length===0));
 });

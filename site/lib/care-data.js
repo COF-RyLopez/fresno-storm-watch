@@ -1,7 +1,6 @@
-import {CARE_SOURCES,normalizeCare,normalizeZone} from './care-model.js?v=0.56.0';
-import {powerScope,powerGeometry} from './power-geometry.js';
+import {CARE_SOURCES,normalizeCare,normalizeZone} from './care-model.js?v=0.56.0-r1';
+import {powerScope} from './power-geometry.js';
 import {countyGeometry} from './model.js';
-import {openFacilitySource} from './facility-data.js';
 
 /** Fixed public endpoints only; reconcile complete object-ID batches before returning. */
 export async function readCareCollection(kind,{county,fetcher=fetch,signal}={}){
@@ -31,16 +30,4 @@ export async function readCarePlaces({fetcher=fetch}={}){
  const data=JSON.parse(new TextDecoder().decode(decoded)),seen=new Set();if(data.schemaVersion!==1||data.release!==index.release||!Array.isArray(data.rows)||data.rows.length!==index.count)throw Error('Places reference is incomplete.');
  for(const p of data.rows){if(typeof p.id!=='string'||!p.id.trim()||seen.has(p.id)||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x< -121.1||p.x> -118.2||p.y<35.7||p.y>37.7||!Array.isArray(p.addresses)||typeof p.name!=='string')throw Error('Invalid Places record.');seen.add(p.id);}
  return {index,rows:data.rows};
-}
-/** Query just the selected neighborhood. County rows remain private and tab-only. */
-export async function readCareCountyFootprints(box,session,loadSdk,{current=()=>true}={}){
- const adapter=await openFacilitySource(CARE_SOURCES.footprints,session,loadSdk);
- try{if(!current())return null;if(adapter.metadata.geometryType!=='esriGeometryPolygon')throw Error('County footprint schema changed.');const q={geometry:JSON.stringify(box),geometryType:'esriGeometryPolygon',inSR:4326,spatialRel:'esriSpatialRelIntersects',where:'1=1'};
-  const inventory=await adapter.query({...q,returnIdsOnly:true}),ids=inventory.objectIds;
-  if(!Array.isArray(ids)||ids.length>200||ids.some(id=>!Number.isSafeInteger(id))||inventory.exceededTransferLimit||new Set(ids).size!==ids.length)throw Error('County footprint inventory is incomplete or exceeds the neighborhood limit.');
-  const rows=[],seen=new Set();for(let i=0;i<ids.length;i+=50){const batch=ids.slice(i,i+50),d=await adapter.query({objectIds:batch.join(','),outFields:`${adapter.metadata.objectIdField},GlobalID,locationName,buildingNumber,isInactive`,returnGeometry:true,outSR:4326});if(!current())return null;
-   if((d.spatialReference?.latestWkid||d.spatialReference?.wkid)!==4326||d.exceededTransferLimit||!Array.isArray(d.features)||d.features.length!==batch.length||new Set(d.features.map(f=>f.attributes?.[adapter.metadata.objectIdField])).size!==batch.length||d.features.some(f=>!batch.includes(f.attributes?.[adapter.metadata.objectIdField])))throw Error('County footprint batch is incomplete.');
-   for(const f of d.features){const a=f.attributes;if(!a.GlobalID||seen.has(a.GlobalID))throw Error('County footprint identity is missing or duplicated.');seen.add(a.GlobalID);const geometry=powerGeometry({...f.geometry,spatialReference:{wkid:4326}});if(!geometry.rings)throw Error('County footprint polygon missing.');rows.push({id:a.GlobalID,name:a.locationName||'County building',reference:a.buildingNumber,status:a.isInactive,geometry});}
-  }return {rows,checked:Date.now()};
- }finally{adapter.close();}
 }

@@ -48,25 +48,20 @@ No nearest geometry snapping, campus boundary, flood, power-state or
 occupancy inference. Known positive source heights are approximate display
 metres; unknown stays flat/dashed. Facilities and buildings counted separately.
 
-PRIVATE COUNTY COMPARISON
-Explicit query to County_Building_Footprints_Reader_View_V2; existing county
-AGOL session required and source server controls access. Bounded 200 features,
-complete unique IDs, GlobalIDs and polygon geometry required. No writes.
-Results stay in tab memory, with delayed-query cancellation guards. Sign-out,
-access failure and selection changes clear county geometry and attributes.
-No private records go into GitHub, public extract or persistent browser storage.
+BUILDING SCOPE
+Per county direction, this comparison uses Overture footprints only. It does
+not query the county-owned inventory or require Enterprise sign-in. Existing
+private facility workflows elsewhere in the app remain unchanged.
 
 BRIEFING
 Existing private draft captures exact facility/source attributes, source check
 times, zone evidence, Overture releases, candidate IDs and match methods.
-County capture includes identifiers/attributes, not footprint geometry. No
+No county-owned inventory is included. No
 automatic approval or state transmission. Sign-out clears captured care drafts.
 
 VALIDATION / RECOVERY
 Automated tests cover batch/CRS failures, null capacity, unknown statuses,
-multiple candidates, polygon holes, 2D/3D symbols, session gating and stale
-private responses. Live Evergreen test retained two same-address place names
-and one containing footprint; zero nearby county-owned footprints is a
-successful empty result, not an access failure. Phone and sign-out checked.
+multiple candidates, polygon holes, 2D/3D symbols, selection clearing. Live Evergreen test retained two same-address place names
+and one containing footprint; Phone and sign-out checked.
 Existing live feeds, Experience Builder pilot and private EOC storage retained.
 Rollback: redeploy 0.55.0 commit 46f7dff; no data migration.
