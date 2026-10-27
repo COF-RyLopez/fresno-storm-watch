@@ -1,4 +1,4 @@
-import {createCareWatch} from './lib/care-ui.js?v=0.57.0';
+import {createCareWatch} from './lib/care-ui.js?v=0.57.0-r1';
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.53.0';
 import {createDrainageNearby} from './lib/drainage-nearby-ui.js?v=0.55.0';
 import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';

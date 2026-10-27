@@ -5,7 +5,7 @@ import {reportHealth} from './source-health.js';
 import {CARE_SOURCES,ZONE_STATUS,careBox,comparePlaces,compareBuildings,zonesAt,normalizeText} from './care-model.js?v=0.56.0-r1';
 import {readCareCollection,readCarePlaces} from './care-data.js?v=0.56.0-r1';
 import {loadPowerBuildings} from './power-buildings-data.js';
-import {createCareMap} from './care-map.js?v=0.57.0';
+import {createCareMap} from './care-map.js?v=0.57.0-r1';
 import {loadSdk} from './map.js?v=0.57.0';
 import {formatTime} from './model.js';
 

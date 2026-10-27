@@ -62,8 +62,9 @@ failed distance lookup is unassessed, not a successful empty result. Global
 source issues are reported per underlying check, not once per facility.
 Care review markers have amber outlines. Selected utility boundaries retain
 Power legend colors; dashed means verification. Road-related selections fit a padded neighborhood without drawing a boundary.
-This display extent is not an analytical impact area. Nearby road lines are pink,
-or dashed amber for uncertain status. These are source references, not routes.
+This display extent is not an analytical impact area. Nearby road references are pink,
+or amber for uncertain status. Point road records use diamonds; line and
+polygon records retain their source shapes, with dashed uncertain outlines. These are source references, not routes.
 
 BRIEFING / PRIVACY
 Add comparison to briefing freezes the care review, reasons, gaps, county zone
