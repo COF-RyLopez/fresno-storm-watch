@@ -59,3 +59,11 @@ const comparisonSites=uniqueComparisonPoints(comparisonAreas(comparisonAreaConfi
 assert.equal(comparisonSites.length,7);
 validateComparisonSnapshot(JSON.parse(await readFile(new URL('site/data/comparison-latest.json',root),'utf8')),comparisonSites);
 console.log('Seven public forecast-comparison points and scheduled snapshot schema checked.');
+
+const carePlaces=JSON.parse(await readFile(new URL('site/data/care-places/index.json',root),'utf8'));
+const careBytes=await readFile(new URL('site/data/care-places/'+carePlaces.file,root));
+assert.equal(careBytes.length,carePlaces.bytes);assert.equal(createHash('sha256').update(careBytes).digest('hex'),carePlaces.sha256);
+assert.equal(carePlaces.accounting.read,carePlaces.accounting.retained+carePlaces.accounting.outside+carePlaces.accounting.invalid);
+assert(html.includes('care.css?v=0.56.0')&&html.includes('id="care-panel"'));
+
+for(const file of ['NOTICE.txt','CDLA-Permissive-2.0.txt','Apache-2.0.txt','Foursquare-NOTICE.txt'])assert((await readFile(new URL('site/data/care-places/'+file,root),'utf8')).length>500,'Places license/notice missing: '+file);

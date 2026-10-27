@@ -1,0 +1,11 @@
+#care-panel { --calcite-panel-space: 1rem; }
+#care-panel p, #care-panel small { overflow-wrap: anywhere; }
+#care-panel h3 { margin-block: 1.5rem .5rem; }
+#care-panel details { margin-block: 1rem; }
+.care-list { display: grid; gap: .35rem; max-height: 15rem; overflow-y: auto; padding: .5rem .2rem; }
+.care-list calcite-button { --calcite-button-text-color: var(--calcite-color-text-1); text-align: start; }
+.care-record { border-top: 1px solid var(--calcite-color-border-2); padding-block: .8rem; }
+.care-record p { margin-block: .4rem; }
+.care-note { color: var(--calcite-color-text-2); }
+.care-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
+#care-details > calcite-button { margin-block-end: .5rem; }

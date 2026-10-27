@@ -7,7 +7,7 @@ export const ROAD_ROUTE_ITEM='https://www.arcgis.com/home/item.html?id=d3081a918
 const REQUEST_TIMEOUT_MS=25000,RETRY_DELAY_MS=500,MAX_ATTEMPTS=2,BATCH_SIZE=200;
 export const ROAD_MAP='https://gisportal.co.fresno.ca.us/portal/apps/webappviewer/index.html?id=f972a2f1457f4115b964019f8c914fba';
 export const EVAC_SERVICE='https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/services/Fresno_County_Evacuations_2_view/FeatureServer/5';
-export const EVAC_MAP='https://www.arcgis.com/apps/webappviewer/index.html?id=e7d6006a016a444db8b210ac4d2eb5cf';
+export const EVAC_MAP='https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947';
 export const ROAD_TYPES=['Road block','Road closure','Detour'];
 export const roadInCurrentView=(r,now=Date.now())=>r.active!=='no'&&(!r.end||r.end>now);
 export const roadConflictBacklog=(rows,now=Date.now())=>rows.filter(r=>!roadInCurrentView(r,now)&&r.active==='yes'&&r.end&&r.end<=now);

@@ -1,4 +1,4 @@
-import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.53.0';
+import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.56.0';
 /** One active topic, independent map state, and no persisted operational data. */
 export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');

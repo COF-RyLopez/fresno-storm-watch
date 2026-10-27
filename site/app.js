@@ -1,9 +1,10 @@
+import {createCareWatch} from './lib/care-ui.js?v=0.56.0';
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.53.0';
 import {createDrainageNearby} from './lib/drainage-nearby-ui.js?v=0.55.0';
 import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.46.0';
 import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.53.0';
-import {createMission} from './lib/mission-ui.js?v=0.45.0';
+import {createMission} from './lib/mission-ui.js?v=0.56.0';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.36.0';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.36.0';
 import {createMapSearch} from './lib/map-search-ui.js?v=0.34.0';
@@ -13,7 +14,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.55.0';
+import { createMap } from './lib/map.js?v=0.56.0';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -21,7 +22,7 @@ import { createRiverWatch } from './lib/river-ui.js?v=0.27.0';
 import { createCameraWatch } from './lib/camera-ui.js?v=0.27.0';
 import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.40.1';
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.39.0';
-import { createWorkspace } from './lib/workspace-ui.js?v=0.53.0';
+import { createWorkspace } from './lib/workspace-ui.js?v=0.56.0';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.45.0';
 import { createPowerWatch } from './lib/power-ui.js?v=0.52.1';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.50.0';
@@ -73,6 +74,7 @@ function openPower(){workspace.showPanel('power');}
 for(const [id,topic]of [['view-watch','watch'],['view-rivers','rivers'],['view-environment','weather'],['view-alerts','alerts'],['view-power','power'],['view-roads','roads']])$(id).addEventListener('click',()=>workspace.showPanel(topic));
 const mission=createMission({workspace,exercise,onSelectArea:id=>{openPlanning();planning?.selectArea(id);},onGauge:id=>rivers?.select(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onBriefing:(...args)=>briefings.open(...args),onTopic:topic=>workspace.showPanel(topic)});
 const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
+const care=createCareWatch({exercise,onMap:workspace.showMap,onCapture:item=>mission.addEvidence(item),onClearPrivate:()=>mission.clearCareEvidence()});
 const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBriefing:(...args)=>briefings.open(...args),onArea:id=>planning?.selectArea(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onConnect:()=>{openPower();document.querySelector('.facility-section calcite-accordion-item').expanded=true;},onMap:workspace.showMap,onData:data=>mission.setContext(data)});
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id),onSlide:context=>briefingLayers?.followSlide(context)});
 const drainageNearby=createDrainageNearby({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap});
@@ -284,7 +286,7 @@ if (exercise) {
     void refresh();
   }));
 }
-void setupAuth(CONFIG.arcgis, exercise,session=>{power.setSession(session);pumpReadiness.setSession(session);facilities.setSession(session);mission.setSession(session);drainageNearby.setSession(session);drainage.setSession(session);});
+void setupAuth(CONFIG.arcgis, exercise,session=>{power.setSession(session);pumpReadiness.setSession(session);facilities.setSession(session);mission.setSession(session);drainageNearby.setSession(session);drainage.setSession(session);care.setSession(session);});
 setupSceneCompanion(CONFIG.arcgis, () => map?.sceneViewpoint(), exercise);
 renderBanner(); renderList(); renderDetail();
 try {
@@ -293,7 +295,8 @@ try {
   void refresh();
   power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key)).then(controller => {
+  care.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key)).then(controller => {
     map = controller;
     workspace.setMap(map);mission.setMap(map);
     mapSearch.setMap(map);
@@ -304,6 +307,7 @@ try {
     roads.setMap(map);
     power.setMap(map);
     facilities.setMap(map);
+    void care.setMap(map).then(()=>{if(new URLSearchParams(location.search).get('care')==='1')care.open();}).catch(()=>console.warn('Resident-care comparison map unavailable'));
     drainage.setMap(map);
     drainageNearby.setMap(map);
     drainageReviews.setMap(map);

@@ -1,0 +1,72 @@
+F.R.O.G. resident-care and county evacuation comparison — 0.56.0
+
+Entry: /?view=watch&care=1. Also available in Power. No AGOL items,
+memberships, editors or source datasets are changed by this release.
+
+PUBLIC SOURCE CONTRACTS
+County item 07e6ba11ae8c47fcb81208873ac43947:
+Fresno_County_Evacuations_2_view/FeatureServer/5 (FC_EvacuationZones).
+398 returned county-intersecting polygons at implementation check. OID is a
+retrieval identifier, not a permanent zone identity. Name and coded
+EvacuationStatus are used: Order, Warn, Lifted. Unknown codes stay unknown.
+No individual issue/update time. Dataset edit time is shown separately.
+Do not infer safety from an absent, lifted or failed record. Lifted off by default.
+
+CDPH item 0efaf1dc942f430f887c11cae008918c:
+https://services2.arcgis.com/wi1yEacfYjH5viqb/arcgis/rest/services/CDPH_R_D_Facilities/FeatureServer/0
+81 Fresno County records at implementation check. Reads ObjectId2 (OID),
+OBJECTID (source integer), County, Facility_Name, Facility_Address, City,
+Facility_Type, Licensed_Beds, CERTIFICATION_STATUS; excludes contact field.
+Neither ID is treated as a confirmed licensing identifier. No record-level
+time. Licensed capacity is not occupancy or required transport resources.
+This is the group's published CDPH inventory, not all DSS/CDPH licensed sites.
+
+Both source readers validate schema, complete unique ID batches, WGS84
+output and unchanged ID inventory, then exact county intersection. Invalid
+records are excluded with counts. A failed source becomes unassessed.
+Refresh every five minutes only while the pane and page are visible.
+No browser credential is included in public fetches.
+
+OVERTURE REFERENCE AND ASSOCIATION
+Pinned release 2026-10-21.0. 81,116 bbox places read; 39,367 outside county;
+0 invalid; 41,749 retained. 3,221,435 gzip bytes; manifest hash verifies content.
+Rebuild deliberately with the existing building-requirements.txt environment:
+  python scripts/build-care-places.py --release 2026-10-21.0
+Only Places points and public county boundaries are pipeline inputs. Cached
+GeoParquet remains under work; only public selected fields are distributed.
+Preserve the data/care-places license and modification notices on rebuild.
+
+Places within approximate spherical 500 m are compared on normalized name
+and street address + city. Shared-name tokens and exact agreement are
+explained separately. Closed and duplicate records stay visible. Overture
+confidence describes existence, not identity confidence. No verified match.
+
+Existing hashed Overture footprint chunks supply a 1 km-wide selected box;
+whole intersecting outlines remain intact. Point containment associates CDPH
+and candidate Places points to footprints; ambiguous outlines remain multiple.
+No nearest geometry snapping, campus boundary, flood, power-state or
+occupancy inference. Known positive source heights are approximate display
+metres; unknown stays flat/dashed. Facilities and buildings counted separately.
+
+PRIVATE COUNTY COMPARISON
+Explicit query to County_Building_Footprints_Reader_View_V2; existing county
+AGOL session required and source server controls access. Bounded 200 features,
+complete unique IDs, GlobalIDs and polygon geometry required. No writes.
+Results stay in tab memory, with delayed-query cancellation guards. Sign-out,
+access failure and selection changes clear county geometry and attributes.
+No private records go into GitHub, public extract or persistent browser storage.
+
+BRIEFING
+Existing private draft captures exact facility/source attributes, source check
+times, zone evidence, Overture releases, candidate IDs and match methods.
+County capture includes identifiers/attributes, not footprint geometry. No
+automatic approval or state transmission. Sign-out clears captured care drafts.
+
+VALIDATION / RECOVERY
+Automated tests cover batch/CRS failures, null capacity, unknown statuses,
+multiple candidates, polygon holes, 2D/3D symbols, session gating and stale
+private responses. Live Evergreen test retained two same-address place names
+and one containing footprint; zero nearby county-owned footprints is a
+successful empty result, not an access failure. Phone and sign-out checked.
+Existing live feeds, Experience Builder pilot and private EOC storage retained.
+Rollback: redeploy 0.55.0 commit 46f7dff; no data migration.

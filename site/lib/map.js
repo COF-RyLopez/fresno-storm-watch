@@ -17,7 +17,7 @@ import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.53.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.56.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -28,7 +28,7 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{},onDrainageSelect=()=>{},onNetworkSelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{},onDrainageSelect=()=>{},onNetworkSelect=()=>{},onCareSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   let mapPick=0;
@@ -269,6 +269,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         if(buildingId){window.dispatchEvent(new CustomEvent('frogPowerBuildingSelect',{detail:{id:buildingId}}));return;}
         const powerKey=hit.results.find(r=>r.graphic?.attributes?.powerKey)?.graphic.attributes.powerKey;
         if(powerKey){onPowerSelect(powerKey);return;}
+        const careKey=hit.results.find(r=>r.graphic?.attributes?.careKey)?.graphic.attributes.careKey;if(careKey){onCareSelect(careKey);return;}
         const networkKey=hit.results.find(r=>r.graphic?.attributes?.networkKey)?.graphic.attributes.networkKey;if(networkKey){onNetworkSelect(networkKey);return;}
         const key=hit.results.find(r=>r.graphic?.attributes?.alertKey)?.graphic.attributes.alertKey;
         if(key){onSelect(key);return;}
@@ -488,7 +489,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const scenarioDomain=new GraphicsLayer({title:'Reviewed model domain',listMode:'hide',elevationInfo:{mode:'on-the-ground'}});map.add(scenarioDomain);viewListeners.add(drawStructures);
   return {
     setScenarioDomain(geometry){scenarioDomain.removeAll();if(!geometry)return;const polygon=new Polygon(countyGeometry(geometry));scenarioDomain.add(new Graphic({geometry:polygon,symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#f6c85f',width:2,style:'dash'}}}));void focusNavigate(polygon.extent.clone().expand(1.1));},setScenarioBuildings(features){structureFeatures=features;structureFrame=0;drawStructures();},setScenarioBuildingFrame(index){if(index!==structureFrame){structureFrame=index;drawStructures();}},
-    registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setScenarioMode(active){scenarioMode=!!active;scenarioDomain.visible=scenarioMode;scenarioStructures.visible=scenarioMode;searchSelection.visible=!active;searchContext.visible=!active;syncVisibility();},setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints:points=>{setLayerPreference('areas',true);const valid=points.filter(validLocation);if(!valid.length)return Promise.resolve(false);const xs=valid.map(p=>p.longitude),ys=valid.map(p=>p.latitude),extent=new Extent({xmin:Math.min(...xs)-.025,ymin:Math.min(...ys)-.025,xmax:Math.max(...xs)+.025,ymax:Math.max(...ys)+.025,spatialReference:{wkid:4326}});return focusNavigate(view.type==='3d'?{target:extent,tilt:45}:extent);},focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
+    getViewMode:()=>view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setScenarioMode(active){scenarioMode=!!active;scenarioDomain.visible=scenarioMode;scenarioStructures.visible=scenarioMode;searchSelection.visible=!active;searchContext.visible=!active;syncVisibility();},setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints:points=>{setLayerPreference('areas',true);const valid=points.filter(validLocation);if(!valid.length)return Promise.resolve(false);const xs=valid.map(p=>p.longitude),ys=valid.map(p=>p.latitude),extent=new Extent({xmin:Math.min(...xs)-.025,ymin:Math.min(...ys)-.025,xmax:Math.max(...xs)+.025,ymax:Math.max(...ys)+.025,spatialReference:{wkid:4326}});return focusNavigate(view.type==='3d'?{target:extent,tilt:45}:extent);},focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));

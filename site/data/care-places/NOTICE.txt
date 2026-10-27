@@ -1,0 +1,23 @@
+F.R.O.G. Fresno County Overture Places reference
+
+Overture Maps Foundation, overturemaps.org. Release 2026-10-21.0.
+Original sources and per-source terms: https://docs.overturemaps.org/attribution/
+
+F.R.O.G. modifications, 2026-10-26: retained points covered by the public
+Fresno County boundary; selected and renamed fields; sorted IDs; converted
+Parquet records to gzipped JSON. No verified facility identities are asserted.
+
+Places sources are provided under CDLA Permissive 2.0, Apache 2.0 or CC0 1.0
+as identified by Overture. Full CDLA and Apache license texts accompany this
+file. AllThePlaces data is available under CC0 1.0:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Data from Foursquare: Copyright 2024 Foursquare Labs, Inc. All rights reserved.
+Foursquare data was transformed to the Overture schema (Overture change date
+2026-03-18). The current full Foursquare notice accompanies this file as
+Foursquare-NOTICE.txt, retrieved from:
+https://opensource.foursquare.com/places-notice-txt/
+
+Files: CDLA-Permissive-2.0.txt, Apache-2.0.txt, Foursquare-NOTICE.txt.
+No county private records, CDPH records or comparison results are distributed
+in this public Places reference.

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "release": "2026-10-21.0",
+  "crs": "EPSG:4326",
+  "compression": "gzip",
+  "file": "2026-10-21.0.json.gz",
+  "bytes": 3221435,
+  "decodedBytes": 15108175,
+  "sha256": "0272a0231800908ab32b05a13e5d9e3bb60f9542f4bcd4a64448e2e0e1b77cbd",
+  "count": 41749,
+  "accounting": {
+    "read": 81116,
+    "outside": 39367,
+    "invalid": 0,
+    "retained": 41749
+  },
+  "source": "https://stac.overturemaps.org/2026-10-21.0/catalog.json",
+  "license": "https://docs.overturemaps.org/attribution/",
+  "attribution": "Overture Maps Foundation and upstream Places contributors; see source attribution.",
+  "note": "Public reference points in Fresno County. Confidence describes place existence, not identity matching, care licensing or current operation.",
+  "notices": "NOTICE.txt"
+}
