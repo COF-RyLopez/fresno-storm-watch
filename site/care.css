@@ -9,3 +9,11 @@
 .care-note { color: var(--calcite-color-text-2); }
 .care-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
 #care-details > calcite-button { margin-block-end: .5rem; }
+
+.care-review-row { padding-block: .8rem; border-bottom: 1px solid var(--calcite-color-border-3); }
+.care-review-row p { margin-block: .4rem; }
+#care-area-watch { margin-block: 1.2rem; }
+#care-area-watch details { margin-block: .8rem; }
+#care-area-watch small { color: var(--calcite-color-text-2); }
+#care-details h4 { margin-block: 1.3rem .4rem; }
+#care-details a { display: inline-block; margin: .25rem .5rem .25rem 0; }

@@ -64,6 +64,8 @@ const carePlaces=JSON.parse(await readFile(new URL('site/data/care-places/index.
 const careBytes=await readFile(new URL('site/data/care-places/'+carePlaces.file,root));
 assert.equal(careBytes.length,carePlaces.bytes);assert.equal(createHash('sha256').update(careBytes).digest('hex'),carePlaces.sha256);
 assert.equal(carePlaces.accounting.read,carePlaces.accounting.retained+carePlaces.accounting.outside+carePlaces.accounting.invalid);
-assert(html.includes('care.css?v=0.56.0')&&html.includes('id="care-panel"'));
+assert(html.includes('care.css?v=0.57.0')&&html.includes('id="care-panel"'));
 
 for(const file of ['NOTICE.txt','CDLA-Permissive-2.0.txt','Apache-2.0.txt','Foursquare-NOTICE.txt'])assert((await readFile(new URL('site/data/care-places/'+file,root),'utf8')).length>500,'Places license/notice missing: '+file);
+
+assert(html.includes('id="care-area-watch"')&&html.includes('id="care-browse"'),'Care review and evidence controls missing');

@@ -1,0 +1,87 @@
+F.R.O.G. resident-care Area Watch reviews — 0.57.0
+Checked 2026-10-27. No source edits, AGOL items, permissions or private data migrations.
+
+ENTRY AND DISPLAY
+County Watch / Area Watch now assesses CDPH resident-care records automatically.
+The Resident-care reviews section defaults to records with spatial review cues;
+All CDPH records changes display only. The Area reviews banner includes a
+separate care count, independent of map extent and display filters. Counts are
+CDPH records, not unique campuses, occupants, beds or transport requirements.
+
+Select a record to open the existing right evidence pane. The facility finder,
+map key and source metadata collapse; Overture comparison stays available in
+its own disclosure. Buildings remain Overture-only. County-owned inventory is
+not read by this workflow. Existing private EOC / Experience Builder retained.
+
+MATCHING AND TIME
+The published CDPH WGS84 point drives all review joins. Name/address candidates
+and building footprints never establish hazard matches or occupied campuses.
+County zone containment uses the county's own view (item
+07e6ba11ae8c47fcb81208873ac43947), including polygon holes and boundaries.
+Order / Warning generate evacuation-planning review cues, not new orders.
+Unknown codes need verification. Lifted alone is not an active review, and does
+not establish safety. Prior active zone associations that change/disappear
+remain tab-only follow-ups. Neither source supplies individual issue times;
+application query dates and dataset edit dates remain separate.
+
+Reuse the existing utility areaPowerEvidence rules: PG&E / SCE polygons only,
+one record per source key, and a 72-hour planning horizon. Point-only incidents
+and inferred circuits are never buffered into service coverage. Stale, failed,
+ambiguous and changed source evidence remains qualified. Prior overlapping
+records that disappear or report restoration stay verification follow-ups in
+this tab. Estimated restoration never confirms site power. Later-starting
+utility windows remain separate future context. No cross-utility customer sum.
+
+Nearby county road records use the shared SDK geodetic-distance backend on
+complete source geometry, at one fixed mile (1609.344 m). Geographic envelopes
+are a conservative speed prefilter only. This is shortest horizontal distance,
+not route distance, facility frontage, approved access or transport suitability.
+Explicitly inactive rows are excluded. Elapsed-date active rows are a separate
+historical verification backlog and do not create current reviews on first
+retrieval. A previously current nearby road that disappears or elapses stays
+a follow-up. Detours and uncertain flags retain their publisher labels.
+Missing geometry / CRS / distance results are counted as incomplete coverage.
+
+Review reasons remain separate: evacuation direction, backup-power verification,
+nearby road planning and changed-source follow-up. No composite hazard score,
+automatic evacuation, generator assignment, dispatch or public messaging.
+No facility backup status, fuel/runtime, current contact or occupancy is supplied
+by these layers; confirm with a facility liaison. Licensed beds are capacity.
+
+REFRESH AND FAILURES
+Public CDPH / zone checks run every five minutes while the page is visible;
+power and road sources reuse the existing collectors. Overture Places and
+building chunks load only on facility selection, not countywide assessment.
+Road distance queries run once per changed road inventory / facility geometry;
+interrupted batches are discarded. Thirty-second reassessment detects overdue
+sources. Seven-minute retrieval checks qualify CDPH, zones and roads; utility
+source rules retain the existing 45-minute and record-age checks.
+
+Failed public queries retain prior evidence with visible qualifications. A
+failed distance lookup is unassessed, not a successful empty result. Global
+source issues are reported per underlying check, not once per facility.
+Care review markers have amber outlines. Selected utility boundaries retain
+Power legend colors; dashed means verification. Road-related selections fit a padded neighborhood without drawing a boundary.
+This display extent is not an analytical impact area. Nearby road lines are pink,
+or dashed amber for uncertain status. These are source references, not routes.
+
+BRIEFING / PRIVACY
+Add comparison to briefing freezes the care review, reasons, gaps, county zone
+statuses, utility keys/revisions/times, road distances/status/revisions, source
+check times and limitations, together with existing Overture comparison data.
+County AGOL sign-in is required outside the fictional exercise. The existing
+private draft/approval flow owns storage; no new public export is automatic.
+Sign-out clears private drafts. Live operational evidence is not stored in GitHub
+or persistent browser storage. No private county building layer is queried.
+
+TEST AND ROLLBACK
+/?view=watch&exercise=1&care=1 is an isolated fictional care rehearsal. Use
+Overlapping concerns, Source failures and Changed / removed records. No live
+care, Overture or county road queries are issued for the fictional care records.
+Live testing: four CDPH records near current county road records at the check;
+no matched Order/Warning or utility-area cue among those four at that time.
+Source gaps remain visible. These are test observations, not current conditions.
+Tests cover duplicate IDs, holes, point-only incidents, ambiguous timestamps,
+source failures, changes/disappearance, historical road backlog, full-geometry
+metric lookup, cancellation, snapshot freezing and selection highlight clearing.
+Rollback: redeploy 15f5a4e (0.56.0). No data migration or permission change.
