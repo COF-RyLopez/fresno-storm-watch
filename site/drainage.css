@@ -14,6 +14,15 @@
 .drainage-nearby-row dt { margin-top: 8px; font-weight: 600; }
 .drainage-nearby-row dd { margin: 0; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
 .drainage-nearby-row a { display: block; margin-block-start: 8px; }
+.fmfcd-key-row { display: flex; align-items: center; gap: 10px; margin-block: 9px; line-height: 1.5; }
+.fmfcd-key-swatch { position: relative; display: inline-block; flex: 0 0 42px; height: 12px; color: #004da8; }
+.fmfcd-key-swatch::before { content: ''; position: absolute; inset: 5px 0 auto; border-block-start: 3px solid currentColor; outline: 1px solid #dfebff; }
+.fmfcd-key-swatch::after { content: ''; position: absolute; top: 1px; left: 24px; border-block: 6px solid transparent; border-inline-start: 8px solid currentColor; }
+.fmfcd-key-swatch.master { color: #e60000; }
+.fmfcd-key-swatch.design { color: #73b2ff; }
+.fmfcd-key-swatch.unknown { color: #b3bac3; }
+.fmfcd-key-swatch.unknown::before { border-block-start-style: dashed; outline: none; }
+.fmfcd-key-swatch.unknown::after { display: none; }
 .drainage-row { display: grid; gap: 4px; padding-block: 10px; border-bottom: 1px solid var(--calcite-color-border-3); }
 .drainage-row small { color: var(--calcite-color-text-2); }
 .drainage-row calcite-button { justify-self: start; max-width: 100%; }

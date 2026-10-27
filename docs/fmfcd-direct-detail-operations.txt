@@ -1,4 +1,4 @@
-F.R.O.G. 0.53.0 — direct FMFCD nearby drainage context
+F.R.O.G. 0.54.0 — direct FMFCD nearby drainage context and source map symbols
 
 Use County Watch > load FMFCD > select a basin/pump inventory record, or use
 Topic tools > Drainage. The right evidence pane automatically queries pipes,
@@ -32,13 +32,24 @@ closing the owning evidence pane, workspace changes and pagehide clear graphics
 and detail DOM. Superseded reads are aborted and late responses ignored.
 
 Meaning / symbology
-Mapped pipes: solid cyan. Inlets: squares. Outfalls: diamonds. Published as-built
+Source web-map renderers override the corresponding service defaults. Pipes use
+FMFCD's dark blue with line-middle arrows; inlets retain square markers. Master-
+plan features are red; design features light blue. Basin fills use FMFCD's pale
+blue with operational-map transparency. Dark basemaps add light casing for
+readability; drainage boundaries use neutral contrasting outlines. Pumps retain
+the county's existing readiness/inventory symbols because this web map does not
+define a pump style. Source symbols checked October 26, 2026.
+
+Published as-built
 years 1900 through the current year permit the mapped classification for pipe /
 inlet records, not confirmation of operation. Null/invalid/far-future years and
-missing outfall subtype remain classification-unconfirmed (gray, dotted lines).
+missing outfall subtype remain classification-unconfirmed (dashed pipes, hollow
+inlets and gray diamond outfalls). Unknown pipes retain their source layer hue.
 Outfall numeric subtype 1 = mapped; 0 = future; 2 = design. Strings/other codes
 remain unknown. Master-plan/design source layers and explicit future/design
-contract values remain proposed/design (amber dashed lines / hollow points).
+contract values remain proposed/design, distinct from mapped features. Planned
+records carried by a current pipe/inlet layer retain that layer's source hue;
+the separate classification layer and controls still govern their visibility.
 Proposed/design features are hidden by default for each new selection. They
 never enter readiness counts, operational assignments or flood calculations.
 Unknown records are shown and labeled separately by default.
@@ -48,7 +59,15 @@ Select a map feature to reveal its record in the pane. Locate uses the whole
 line/point, and does not change the parent query. Source fields, metadata edit
 time and app retrieval time remain distinct. Numeric dimensions/elevations are
 unconverted source values: measurement units and vertical datum are unverified.
-No hydraulic connectivity, flow direction, pump capacity or live asset telemetry.
+No hydraulic connectivity, measured flow direction, pump capacity or live asset
+telemetry. Arrows follow source line vertex order, not measured or modeled flow.
+2D uses native CIM pipe symbols. SDK 5.1 does not support CIMLineSymbol in 3D;
+3D uses the same hue with a terrain-draped triangle per source path, preserving
+vertex order without connecting multipart gaps. Unknown classes remain separate.
+The pane includes a labeled symbol key and this orientation limitation.
+Only embedded PNG outfall symbols are accepted; no arbitrary symbol URLs load.
+If the web-map style read fails, source-service/reference symbols are used and
+the evidence pane states that fallback. Feature completeness rules are unchanged.
 
 Acquisition / failure behavior
 Read-only POST spatial-ID queries with distance in metres and WGS84 input,
@@ -67,4 +86,4 @@ Verification: focused synthetic tests cover category unknowns, full geometry,
 bounded inventories, fail-closed schemas, partial failures, expiry/revocation,
 credential isolation, cancellation, map symbols and private DOM cleanup.
 Live screenshots and authenticated query evidence stay outside the public repo.
-Rollback: redeploy 0.52.1; no data migration.
+Rollback: redeploy 0.53.0 (f435b6c942df6573bc3b858cc20daa1557f9cebb); no data migration.

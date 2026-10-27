@@ -5,6 +5,7 @@ import {readDrainageDetail,openDrainageDetail} from '../site/lib/drainage-nearby
 import {createDrainageDetailMap} from '../site/lib/drainage-nearby-map.js';
 import {createDrainageNearby} from '../site/lib/drainage-nearby-ui.js';
 import {unchangedDrainageSelection} from '../site/lib/drainage-model.js';
+import {FMFCD_WEBMAP_DATA} from '../site/lib/fmfcd-symbology.js';
 const spec=FMFCD_DETAIL_LAYERS[0],inlet=FMFCD_DETAIL_LAYERS[1],outfall=FMFCD_DETAIL_LAYERS[2];
 const point={x:-119.77,y:36.81,spatialReference:{wkid:4326}};
 const selected={key:'fictional-pump',kind:'pump',geometry:point};
@@ -46,11 +47,11 @@ test('source ID inventories and every batch reconcile, using only the fixed whit
   assert.throws(()=>drainageDetailRecord(spec,{...feature(),geometry:{paths:[[[NaN,0],[1,1]]]}},'OBJECTID'));
 });
 test('private authorization gates reads; county credentials never reach FMFCD; planned layers are opt-in',async()=>{
-  const calls=[],fetcher=async(url,options)=>{calls.push({url,options});const s=FMFCD_DETAIL_LAYERS.find(s=>s.id===Number(url.match(/FeatureServer\/(\d+)/)[1])),p=Object.fromEntries(options.body);
+  const calls=[],fetcher=async(url,options)=>{calls.push({url,options});if(url===FMFCD_WEBMAP_DATA)return new Response(JSON.stringify({operationalLayers:[]}));const s=FMFCD_DETAIL_LAYERS.find(s=>s.id===Number(url.match(/FeatureServer\/(\d+)/)[1])),p=Object.fromEntries(options.body);
     return new Response(JSON.stringify(!url.endsWith('/query')?meta(s):p.returnIdsOnly?{objectIds:[]}:{count:0}));};
   await assert.rejects(openDrainageDetail(config,null,{fetcher}));assert.equal(calls.length,0);
   const s=session(),adapter=await openDrainageDetail(config,s,{fetcher});const result=await adapter.read(selected);assert.equal(result.layers.length,3);
-  assert(calls.every(c=>c.url.startsWith(FMFCD_DETAIL_URL)&&c.options.method==='POST'&&c.options.credentials==='omit'&&c.options.cache==='no-store'&&!String(c.options.body).includes('synthetic')&&!String(c.options.body).includes('token')));
+  assert.equal(result.styleError,null);assert(calls.every(c=>(c.url.startsWith(FMFCD_DETAIL_URL)||c.url===FMFCD_WEBMAP_DATA)&&c.options.method==='POST'&&c.options.credentials==='omit'&&c.options.cache==='no-store'&&!String(c.options.body).includes('synthetic')&&!String(c.options.body).includes('token')));
   assert(calls.every(c=>!c.url.match(/FeatureServer\/(1|2|7|8)(?:\/|$)/)));
   assert.equal((await adapter.read(selected,{planned:true})).layers.length,7);
   s.portal.user.fetchGroups=async()=>[];await assert.rejects(adapter.read(selected));adapter.close();
@@ -70,7 +71,7 @@ test('map symbols distinguish pipes, inlets, outfalls and classification; cleari
   class Graphic{constructor(p){Object.assign(this,p);}}
   const layers=[],map=createDrainageDetailMap({GraphicsLayer:Layer,Graphic,registerLayer:(key,l)=>layers.push({key,l}),setLayerEligibility(){},focusGeometry(){}});
   map.set([drainageDetailRecord(spec,feature(),'OBJECTID'),drainageDetailRecord(outfall,feature(outfall,2,{SUBTYPE:null}),'OBJECTID'),drainageDetailRecord(inlet,feature(inlet,3,{AS_BUILT:'2027'}),'OBJECTID')]);
-  assert.equal(layers[0].l.graphics[0].symbol.style,'solid');assert.equal(layers[1].l.graphics[0].symbol.style,'diamond');assert.deepEqual(layers[2].l.graphics[0].symbol.color,[0,0,0,0]);
+  assert.equal(layers[0].l.graphics[0].symbol.type,'cim');assert.equal(layers[1].l.graphics[0].symbol.style,'diamond');assert.equal(layers[2].l.graphics[0].symbol.style,'square');
   map.clear();assert(layers.every(({l})=>l.graphics.length===0));
 });
 

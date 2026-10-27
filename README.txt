@@ -1,5 +1,15 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.50.0 | October 25, 2026 | Circuit focus and nearby county places
+Version 0.54.0 | October 26, 2026 | FMFCD source-map symbology
+
+FMFCD MAP SYMBOLS (v0.54.0)
+Nearby drainage pipes use the original FMFCD web-map renderers, including blue
+pipe arrows, red master-plan lines and light-blue design lines. Basins use the
+source pale-blue palette. Dark-map casing improves visibility. Unclassified
+records remain visibly distinct, and proposed/design layers stay opt-in.
+Arrows show source line orientation, not measured flow or a hydraulic trace.
+3D uses terrain-draped geometry because CIM lines are supported only in 2D.
+Existing private access, live queries and readiness workflows are unchanged.
+See docs/fmfcd-direct-detail-operations.txt for limitations and rollback.
 
 CIRCUIT FOCUS (v0.50.0)
 Selecting a utility reference fades the other network layers and retains the

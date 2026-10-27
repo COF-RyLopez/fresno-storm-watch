@@ -1,8 +1,8 @@
 import {EOC_CONFIG} from '../eoc-config.js';
 import {formatTime} from './model.js';
-import {openDrainageDetail} from './drainage-nearby-data.js?v=0.53.0';
+import {openDrainageDetail} from './drainage-nearby-data.js?v=0.54.0';
 import {FMFCD_DETAIL_URL,FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js?v=0.53.0';
-import {DETAIL_KEYS} from './drainage-nearby-map.js?v=0.53.0';
+import {DETAIL_KEYS} from './drainage-nearby-map.js?v=0.54.0';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 const link=(label,url)=>{const a=el('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
@@ -15,7 +15,7 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
   const allRows=()=>result?.layers.flatMap(l=>l.rows)||[];
   const shownRows=()=>allRows().filter(r=>(planned||r.category!=='planned')&&(unknown||r.category!=='unknown'));
   function clear(){generation++;source?.close();source=null;host?.replaceChildren();host=null;record=null;result=null;error=null;busy=false;selectedKey=null;map?.clearDrainageNearby();}
-  function draw(){map?.setDrainageNearby(shownRows());}
+  function draw(){map?.setDrainageNearby(shownRows(),Object.fromEntries((result?.layers||[]).map(l=>[l.spec.id,l.renderer])));}
   function enable(){for(const [category,key]of Object.entries(DETAIL_KEYS))map?.setLayerPreference(key,category==='mapped'||category==='planned'&&planned||category==='unknown'&&unknown);}
   function clearIfWithin(container){if(host&&container.contains(host))clear();}
   async function load(){
@@ -52,7 +52,11 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
       const edited=result.layers.map(l=>l.sourceEdited).filter(Number.isFinite);
       host.append(el('p',`Latest publisher dataset edit ${edited.length?time(Math.max(...edited)):'not supplied'} · inventory context, not live telemetry.`));
       host.append(el('p',`${counts.mapped} mapped · ${counts.unknown} classification unconfirmed · ${planned?counts.planned+' proposed / design':'proposed / design hidden'}${failures.length?' · incomplete source coverage':''}`));
-      host.append(el('p','Solid cyan: mapped pipes · cyan squares: inlets · diamonds: outfalls. Gray / dotted: classification unconfirmed. Amber dashed / hollow: proposed or design.'));
+      const legend=el('details');legend.className='fmfcd-map-key';legend.append(el('summary','FMFCD map symbols'));
+      for(const [kind,label]of [['pipe','Blue arrowed pipes / blue square inlets'],['master','Red: master-plan references'],['design','Light blue: design references'],['unknown','Dashed / hollow / gray: classification unconfirmed']]){const entry=el('div'),sample=el('span');entry.className='fmfcd-key-row';sample.className='fmfcd-key-swatch '+kind;sample.setAttribute('aria-hidden','true');entry.append(sample,el('span',label));legend.append(entry);}
+      legend.append(el('p','Outfalls use FMFCD’s subtype symbols when supplied. Unclassified outfalls stay hollow gray. Light outlines improve dark-map visibility.'));host.append(legend);
+      host.append(el('p','Pipe arrows follow the mapped line orientation. They do not show measured flow or a verified hydraulic trace.'));
+      if(result.styleError){const note=el('p',result.styleError);note.setAttribute('role','status');host.append(note);}
       for(const [kind,title]of [['pipe','Pipes'],['inlet','Inlets'],['outfall','Outfalls']]){
         const group=rows.filter(r=>r.kind===kind),block=el('details');block.open=group.some(r=>r.key===selectedKey);block.append(el('summary',`${title} · ${group.length} shown`));
         const ordered=selectedKey?[...group.filter(r=>r.key===selectedKey),...group.filter(r=>r.key!==selectedKey)]:group;

@@ -24,10 +24,12 @@ ObjectIDs identify selections only within the retrieved session, not durable
 assets. No source-record history or automatic capacity assessment is created.
 
 Map semantics
-Solid cyan outlines = existing basin polygons; filled cyan circles = existing
-pump records. Dashed amber outlines / hollow triangles = proposed basins / future
-pumps. Gray x symbols = other/unclassified records. Thin dashed violet outlines
-= master-plan drainage polygons, not flood extents. No elevation attributes are
+As of 0.54.0, pale-blue fills = existing basin polygons, using the FMFCD palette
+with transparency; filled cyan circles = existing pump records. Dashed amber
+outlines / hollow triangles = proposed basins / future pumps. Gray x symbols =
+other/unclassified records. Neutral contrasting outlines = drainage polygons,
+not flood extents. Source pipe/inlet/detail symbols and arrow limitations are
+documented in docs/fmfcd-direct-detail-operations.txt. No elevation attributes are
 used to assign water level, depth or pump capacity. Unknown remains unknown.
 
 Rainfall controls use the existing WPC 24/72/168-hour forecast collector and
