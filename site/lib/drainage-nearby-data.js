@@ -16,7 +16,7 @@ export async function readDrainageDetail(spec,scope,call,override=null){
     if((data.spatialReference?.latestWkid||data.spatialReference?.wkid)!==4326||data.exceededTransferLimit||!Array.isArray(data.features)||data.features.length!==batch.length||new Set(data.features.map(f=>f.attributes?.[oid])).size!==batch.length||data.features.some(f=>!batch.includes(f.attributes?.[oid])))throw Error('Nearby records changed, were truncated or returned an unexpected CRS. Refresh required.');
     rows.push(...data.features.map(f=>drainageDetailRecord(spec,f,oid)));
   }
-  return {spec,rows,renderer:override||meta.drawingInfo?.renderer||null,sourceEdited:meta.editingInfo?.dataLastEditDate??meta.editingInfo?.lastEditDate??null,checked:Date.now(),error:null};
+  return {spec,rows,renderer:override||meta.drawingInfo?.renderer||null,directionDocumented:spec.kind==='pipe'&&/drawn in the general direction of flow/i.test(meta.description||''),sourceEdited:meta.editingInfo?.dataLastEditDate??meta.editingInfo?.lastEditDate??null,checked:Date.now(),error:null};
 }
 
 /** Public FMFCD reads inside the private UI. County credentials are checked locally and NEVER sent to FMFCD. */

@@ -1,0 +1,85 @@
+F.R.O.G. 0.55.0 — FMFCD candidate connection review
+Checked October 26, 2026. This is a geometric reference trace, not a hydraulic
+model, verified utility-network trace or indication that an asset operates.
+
+Open private Drainage or an Area Watch basin/pump review. After the existing
+direct nearby queries, the map automatically highlights candidate connections
+and fades other nearby detail. Connection map view offers All candidates,
+Upstream, Downstream, Uncertain direction/loops, or the original Nearby symbols.
+Teal = upstream; orange = downstream; violet = both directions/loop; gray =
+direction unconfirmed; white = a point at the selected asset. Dashed highlights,
+text labels and per-record evidence identify every result as unverified.
+The candidate list locates source records; map picks retain their source IDs,
+raw attributes and classification. Counts deduplicate source records rather than
+counting vertices or rendered segments. A multipart source record may have
+more than one direction; only its traversed parts receive highlights.
+
+Source and direction
+The existing fixed FMFCD FeatureServer /6 description states that each pipeline
+is drawn in the general direction of flow. The current description is checked
+on each layer read. Without that documentation, connected geometry stays in the
+direction-unconfirmed group. No direction is derived from FL_UP/FL_DN, slope,
+point elevations, a basin code, pump status or a user role.
+https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFCD_Layers/FeatureServer/6
+Layer descriptions refer to an internal Facilities Topology, but the published
+service provides no relationship tables, from/to node IDs, verified pump-pipe
+links, network solver or control states. General mapped direction is not actual
+storm flow; interties, pumping, surcharge and valve operations can change it.
+
+Algorithm and scope
+Only the complete geometry already retrieved for the selected 250/500/1,000 m
+nearby scope is used, in declared WGS84. No extra source features are copied or
+background network expansion performed. Pipes can extend beyond the query
+radius, and the connected system may continue beyond loaded records. Always
+show this scope and missing-category limitations; unlinked does not mean absent.
+Every pipe path is a separate sequence. Consecutive vertices form directed edges
+only when direction documentation is present. A shared coordinate, rounded to
+nine decimal degrees to absorb serialization noise (<0.2 mm here), forms a
+candidate junction. This is not positional accuracy or an operational tolerance.
+No metre-scale snap, segment intersection, nearest pipe attachment, midpoint or
+multipart-gap joining is performed. Crossings without a shared vertex do not
+connect. Shared vertices still cannot prove a physical or hydraulic junction.
+
+For basins, terminal pipe vertices inside/on the complete selected polygon are
+candidate starting nodes; even-odd rings preserve holes and multipart outlines.
+This is a footprint-based association, not an identified inlet/outlet structure.
+For pumps, a coincident pipe vertex is required. If none exists, up to three
+terminal-node suggestions within 25 m are offered. A user must explicitly select
+an unverified start; the resulting gap is labeled and drawn dashed. Spherical
+horizontal separation is approximate and is a review aid, not a survey distance
+or connection criterion. No distant or hidden candidate can be used. A refresh,
+new parent, filter change or sign-out discards this assumed starting link.
+
+Directed reverse and forward traversals classify upstream and downstream.
+Edges/records reachable in both directions remain ambiguous, including loops
+and features spanning a selected starting node. Other edges in the undirected
+component remain direction-unconfirmed. Inlets/outfalls attach only at matching
+traced vertices. Names, BASIN and drainage codes do not substitute for a link.
+Proposed/design records never enter the graph even when visible as context.
+The existing unknown-classification checkbox controls inclusion of unclassified
+records; those included keep their unconfirmed inventory classification.
+
+Limits, failures and privacy
+Bounded graph: 40,000 input vertices, deterministic BFS with visited sets; no
+recursive traversal or unbounded requests. Invalid pipe CRS/geometry, duplicate
+identities, oversized geometry or an incomplete pipe category disables tracing
+and shows a reason. Failed point categories make the result explicitly partial.
+No missing source is converted into an empty verified network. SceneView uses
+the existing terrain-draped fallback rather than unsupported CIM line symbols.
+Read-only direct queries, prior source limits, county authorization/expiry
+checks and privacy controls are unchanged. Topology, assumptions and private
+geometries remain in page memory only. No browser persistence, public snapshots,
+new AGOL items, sharing changes, source edits, assignments or model outputs.
+Sign-out, pane close, source disconnect, page exit and superseded selections
+clear the candidate graphics and private DOM along with existing detail state.
+
+Verification
+Synthetic tests cover reverse directions, cycles, non-noded crossings, nearby
+gaps, multipart pipes, basin holes, manual starting consent, hidden unknowns,
+excluded proposed bridges, missing direction documentation, invalid/duplicate/
+oversized inputs, partial feeds, map mode switches and existing private cleanup.
+Live public-source Basin A check: 491 pipes, 181 inlets, 27 outfalls; candidate
+counts are a dated QA sample, not an operational claim or stored app snapshot.
+Authenticated proof and query accounting stay outside the public repository.
+Rollback: redeploy 0.54.0, commit b2c1a346e2c57aef988806064fae243f7a7a1fe1.
+No data migration.

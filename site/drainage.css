@@ -23,6 +23,14 @@
 .fmfcd-key-swatch.unknown { color: #b3bac3; }
 .fmfcd-key-swatch.unknown::before { border-block-start-style: dashed; outline: none; }
 .fmfcd-key-swatch.unknown::after { display: none; }
+.drainage-connections { margin-block: 20px; padding-block: 4px 16px; border-block: 1px solid var(--calcite-color-border-3); }
+.drainage-connections h3 { margin-block: 12px; }
+.drainage-connections > calcite-button { display: block; margin-block: 8px; }
+.connection-key > div { display: flex; align-items: center; gap: 10px; margin-block: 9px; }
+.connection-swatch { flex: 0 0 32px; border-block-start: 3px dashed currentColor; }
+.connection-row { display: grid; gap: 7px; padding-block: 12px; border-block-start: 1px solid var(--calcite-color-border-3); overflow-wrap: anywhere; }
+.connection-row small { color: var(--calcite-color-text-2); }
+.connection-row calcite-button { justify-self: start; max-width: 100%; }
 .drainage-row { display: grid; gap: 4px; padding-block: 10px; border-bottom: 1px solid var(--calcite-color-border-3); }
 .drainage-row small { color: var(--calcite-color-text-2); }
 .drainage-row calcite-button { justify-self: start; max-width: 100%; }

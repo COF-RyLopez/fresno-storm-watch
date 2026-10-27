@@ -1,5 +1,15 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.54.0 | October 26, 2026 | FMFCD source-map symbology
+Version 0.55.0 | October 26, 2026 | FMFCD candidate connections
+
+FMFCD CONNECTION REVIEW (v0.55.0)
+Selecting an existing basin/pump highlights shared-vertex candidate paths and
+separates upstream, downstream and uncertain directions in the evidence pane.
+All links remain unverified; the public service documents general drawn flow
+but exposes no verified network or pump connection IDs. Proposed assets are
+excluded. Pumps without a coincident pipe vertex offer explicit unverified
+starting-point review, never automatic snapping. The trace is bounded to loaded
+nearby data and does not establish live flow, capacity or safe access.
+See docs/fmfcd-connections-operations.txt for evidence, limitations and rollback.
 
 FMFCD MAP SYMBOLS (v0.54.0)
 Nearby drainage pipes use the original FMFCD web-map renderers, including blue

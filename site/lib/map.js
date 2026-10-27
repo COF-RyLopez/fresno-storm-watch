@@ -1,6 +1,6 @@
 import {createNetworkMap} from './power-network-map.js?v=0.50.0';
 import {createPowerBuildingsMap} from './power-buildings-map.js?v=0.52.1';
-import {createDrainageDetailMap} from './drainage-nearby-map.js?v=0.54.0';
+import {createDrainageDetailMap} from './drainage-nearby-map.js?v=0.55.0';
 import {fmfcdInventorySymbol} from './fmfcd-symbology.js?v=0.54.0';
 import {drainageDetailExtent} from './drainage-nearby-model.js?v=0.53.0';
 import {powerFocusExtent} from './power-focus.js?v=0.52.1';
@@ -498,7 +498,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusBriefingContext:(points,radiusKm=5)=>{setLayerPreference('briefingContext',true);if(!points.some(validLocation))return focusGeometry(null);points=points.filter(validLocation);const b=points.reduce((a,p)=>[Math.min(a[0],p.longitude),Math.min(a[1],p.latitude),Math.max(a[2],p.longitude),Math.max(a[3],p.latitude)],[Infinity,Infinity,-Infinity,-Infinity]),pad=(radiusKm+1)/111,lonPad=pad/Math.cos((b[1]+b[3])/2*Math.PI/180);return focusGeometry(new Extent({spatialReference:{wkid:4326},xmin:b[0]-lonPad,ymin:b[1]-pad,xmax:b[2]+lonPad,ymax:b[3]+pad}));},
     setPlanningData:(rows,filter)=>{planningRows=rows;planningFilter=filter;drawAreas();drawPower();},
     setFacilities:rows=>{facilities.removeAll();for(const r of rows){const polygon=!!r.site.geometry.rings;facilities.add(new Graphic({attributes:{facilityKey:r.site.key},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:r.tone==='unmatched'?FACILITY_COLORS.unmatched:'#ffffff',width:2}}}));}},
-    setDrainageNearby:(rows,styles)=>drainageDetail.set(rows,styles),clearDrainageNearby:()=>drainageDetail.clear(),focusDrainageNearby:key=>drainageDetail.focus(key),
+    setDrainageNearby:(rows,styles,options)=>drainageDetail.set(rows,styles,options),clearDrainageNearby:()=>drainageDetail.clear(),focusDrainageNearby:key=>drainageDetail.focus(key),
     fitDrainageNearby:(record,radius)=>focusGeometry(new Extent(drainageDetailExtent(record,radius))),
     setDrainage(rows){if(!rows.length){selectionFocus.cancel();memory.get('drainage').viewpoint=null;}drainageRows=rows;drawDrainage();},
     clipDrainageRain,

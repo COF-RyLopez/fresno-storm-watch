@@ -1,4 +1,7 @@
-F.R.O.G. 0.54.0 — direct FMFCD nearby drainage context and source map symbols
+F.R.O.G. 0.55.0 — direct FMFCD nearby drainage context and source map symbols
+
+0.55.0 adds a bounded, explicitly unverified shared-vertex connection review.
+See fmfcd-connections-operations.txt; mapped directions are not live hydraulics.
 
 Use County Watch > load FMFCD > select a basin/pump inventory record, or use
 Topic tools > Drainage. The right evidence pane automatically queries pipes,
@@ -86,4 +89,4 @@ Verification: focused synthetic tests cover category unknowns, full geometry,
 bounded inventories, fail-closed schemas, partial failures, expiry/revocation,
 credential isolation, cancellation, map symbols and private DOM cleanup.
 Live screenshots and authenticated query evidence stay outside the public repo.
-Rollback: redeploy 0.53.0 (f435b6c942df6573bc3b858cc20daa1557f9cebb); no data migration.
+Rollback: redeploy 0.54.0 (b2c1a346e2c57aef988806064fae243f7a7a1fe1); no data migration.

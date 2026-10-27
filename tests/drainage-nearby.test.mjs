@@ -8,7 +8,7 @@ import {unchangedDrainageSelection} from '../site/lib/drainage-model.js';
 import {FMFCD_WEBMAP_DATA} from '../site/lib/fmfcd-symbology.js';
 const spec=FMFCD_DETAIL_LAYERS[0],inlet=FMFCD_DETAIL_LAYERS[1],outfall=FMFCD_DETAIL_LAYERS[2];
 const point={x:-119.77,y:36.81,spatialReference:{wkid:4326}};
-const selected={key:'fictional-pump',kind:'pump',geometry:point};
+const selected={key:'fictional-pump',kind:'pump',category:'existing',geometry:point};
 const polygon={rings:[[[-119.77,36.81],[-119.76,36.81],[-119.76,36.82],[-119.77,36.81]]],spatialReference:{wkid:4326}};
 const meta=s=>({geometryType:s.geometry,objectIdField:'OBJECTID',fields:[{name:'OBJECTID',type:'esriFieldTypeOID'},...s.fields.map(name=>({name}))],advancedQueryCapabilities:{supportsQueryWithDistance:true},editingInfo:{dataLastEditDate:1000}});
 const feature=(s=spec,id=1,attributes={})=>({attributes:{OBJECTID:id,AS_BUILT:'2020',...attributes},geometry:s.kind==='pipe'?{paths:[[[-119.77,36.81],[-119.769,36.811]]]}:{x:-119.77,y:36.81}});
@@ -84,18 +84,18 @@ test('a credential expiring after public reads cannot return evidence to the pri
 
 test('private UI clears DOM and map on sign-out; rapid selection discards old responses and plans start hidden',async()=>{
   class Element{
-    constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;this.dataset={};this.events={};}
+    constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;this.dataset={};this.events={};this.style={};}
     append(...n){this.children.push(...n);}prepend(...n){this.children.unshift(...n);}replaceChildren(...n){this.children=n;}setAttribute(){}addEventListener(n,f){this.events[n]=f;}contains(n){return this===n||this.children.some(c=>c instanceof Element&&c.contains(n));}
   }
   const before={document:globalThis.document,window:globalThis.window,setInterval:globalThis.setInterval};
   const flush=()=>new Promise(r=>setTimeout(r,0));
   try{
     globalThis.document={createElement:tag=>new Element(tag),hidden:false};globalThis.window={addEventListener(){}};globalThis.setInterval=()=>0;
-    let finish,reads=0;const displayed=[],prefs=[];
+    let finish,reads=0;const displayed=[],prefs=[],traceOptions=[];
     const ui=createDrainageNearby({timeZone:'America/Los_Angeles',open:async()=>({close(){},read:async(_r,options)=>{reads++;assert.equal(options.planned,false);if(reads===1)return new Promise(r=>{finish=r;});return {layers:[{spec,rows:[drainageDetailRecord(spec,feature(),'OBJECTID')],sourceEdited:1000,checked:2000}],checked:2000};}})});
-    ui.setSession(session());ui.setMap({clearDrainageNearby(){displayed.push([]);},setDrainageNearby:r=>displayed.push(r),setLayerPreference:(key,value)=>prefs.push({key,value})});
+    ui.setSession(session());ui.setMap({clearDrainageNearby(){displayed.push([]);},setDrainageNearby:(r,_styles,options)=>{displayed.push(r);traceOptions.push(options);},setLayerPreference:(key,value)=>prefs.push({key,value})});
     const a=new Element('parent'),b=new Element('parent');ui.renderInto(a,selected);await flush();ui.renderInto(b,{...selected,key:'new'});await flush();
-    assert.equal(displayed.at(-1).length,1);finish({layers:[],checked:1});await flush();assert.equal(displayed.at(-1).length,1);
+    assert.equal(displayed.at(-1).length,1);assert.equal(traceOptions.at(-1).trace.items.length,1);finish({layers:[],checked:1});await flush();assert.equal(displayed.at(-1).length,1);
     assert(prefs.filter(p=>p.key==='drainageNetworkPlanned').every(p=>p.value===false));
     ui.clearIfWithin(a);assert(b.children[0].children.length>0,'Closing an old evidence pane cannot clear a new one.');
     ui.setSession(null);assert.equal(b.children[0].children.length,0);assert.equal(displayed.at(-1).length,0);
