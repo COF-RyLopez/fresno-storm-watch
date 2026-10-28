@@ -137,7 +137,7 @@ function render(next) {
   // ponytail: building symbols refresh every 15 model minutes (5 for small scenarios); per-frame renderer swaps cost more than they show
   const steps = props.length < 5000 ? 12 : 4;
   const q = Math.round(t * steps) / steps;
-  // ponytail: while playing, rebuild the building renderer at most ~3 times a second; faster dropped Muncie (538 points) to ~53 fps
+  // While playing, limit building renderer rebuilds to about three per second to preserve frame rate.
   if (q !== shownBlend && (!playing || performance.now() - rendererAt > 330)) { shownBlend = q; rendererAt = performance.now(); const b = blend(q, hours); buildings.renderer = buildingRenderer(q, { ...b, w: Number(b.w.toFixed(2)) }); }
   const s = summarize(props, t, hours);
   $('clock').textContent = clockLabel(t);

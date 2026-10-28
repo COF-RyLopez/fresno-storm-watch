@@ -7,7 +7,7 @@ import { openArray } from './zarr-lite.js?v=0.60.0';
 
 const NEVER = 65535;
 const FRONT = (230 << 24) | (0 << 16) | (176 << 8) | 255; // #ffb000 at 0.9, little-endian RGBA as the LUT
-const REDRAW_MS = 40; // ponytail: at most ~25 redraws a second (one costs ~10 ms for Muncie's 1.2M pixels); tile it for larger stores
+const REDRAW_MS = 40; // Limit canvas redraws to about 25 per second; tile larger stores.
 const STEPS_PER_HOUR = 12; // arrival times come from 5-minute RAS steps, so nothing finer is drawn
 
 /**

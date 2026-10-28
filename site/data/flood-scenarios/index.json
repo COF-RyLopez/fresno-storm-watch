@@ -61,11 +61,6 @@
    "id": "alluvial-drain",
    "label": "Alluvial Drain Detention Dam failure (hypothetical)",
    "evacuation": true
-  },
-  {
-   "id": "muncie",
-   "label": "Muncie, IN \u00b7 HEC-RAS example (demo)",
-   "main_map": false
   }
  ]
 }
