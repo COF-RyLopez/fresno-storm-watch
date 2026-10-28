@@ -1,0 +1,1736 @@
+{
+  "version": 1,
+  "publisher": "DWR-provided FEMS Flood Fight Dashboard",
+  "dashboard": "https://www.arcgis.com/apps/dashboards/e2ef0f8a2100424b8fb6ab0e9bd7faf6",
+  "webmap": "https://www.arcgis.com/home/item.html?id=30db73a68f8b4da984bde45b33c56a74",
+  "webmapOwner": "mmoua_GEI",
+  "verifiedAt": "2026-10-28T23:02:15.677Z",
+  "countyGeoid": "06019",
+  "scopeNote": "Live service queries intersect the complete Fresno County polygon. River segments and regional boundaries can extend across the county line. No statewide fallback.",
+  "inventoryNote": "Reported supply counts are inspection inventories, not confirmed availability, reservations or an approved resource request. Confirm stock and release arrangements with DWR. Missing values remain unknown.",
+  "layers": [
+    {
+      "key": "supplies",
+      "title": "Flood-fight supply locations",
+      "sourceTitle": "FFM Locations",
+      "url": "https://services1.arcgis.com/ZXPUOG4dA7682sDQ/arcgis/rest/services/FFM_Locations_13/FeatureServer/0",
+      "where": "County = 'Fresno'",
+      "defaultOn": true,
+      "minScale": 0,
+      "renderer": {
+        "type": "uniqueValue",
+        "visualVariables": [
+          {
+            "type": "sizeInfo",
+            "valueExpression": "$view.scale",
+            "stops": [
+              {
+                "size": 10.787687488159294,
+                "value": 1155581.1085775
+              },
+              {
+                "size": 8.630149990527434,
+                "value": 9244648.868618
+              },
+              {
+                "size": 4.315074995263717,
+                "value": 73957190.9489445
+              }
+            ]
+          }
+        ],
+        "field1": "Type",
+        "uniqueValueGroups": [
+          {
+            "classes": [
+              {
+                "label": "Container",
+                "symbol": {
+                  "type": "esriPMS",
+                  "angle": 0,
+                  "xoffset": 0,
+                  "yoffset": 0,
+                  "contentType": "image/png",
+                  "imageData": "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",
+                  "height": 7.16,
+                  "width": 6.863
+                },
+                "values": [
+                  [
+                    "C"
+                  ]
+                ]
+              },
+              {
+                "label": "Distribution Center",
+                "symbol": {
+                  "type": "esriPMS",
+                  "angle": 0,
+                  "xoffset": 0,
+                  "yoffset": 0,
+                  "contentType": "image/png",
+                  "imageData": "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",
+                  "height": 10.28669677983389,
+                  "width": 9.86
+                },
+                "values": [
+                  [
+                    "D"
+                  ]
+                ]
+              },
+              {
+                "label": "Material Warehouse",
+                "symbol": {
+                  "type": "esriPMS",
+                  "angle": 0,
+                  "xoffset": 0,
+                  "yoffset": 0,
+                  "contentType": "image/png",
+                  "imageData": "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",
+                  "height": 9.87,
+                  "width": 9.87
+                },
+                "values": [
+                  [
+                    "W"
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "uniqueValueInfos": [
+          {
+            "label": "Container",
+            "symbol": {
+              "type": "esriPMS",
+              "angle": 0,
+              "xoffset": 0,
+              "yoffset": 0,
+              "contentType": "image/png",
+              "imageData": "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",
+              "height": 7.16,
+              "width": 6.863
+            },
+            "value": "C"
+          },
+          {
+            "label": "Distribution Center",
+            "symbol": {
+              "type": "esriPMS",
+              "angle": 0,
+              "xoffset": 0,
+              "yoffset": 0,
+              "contentType": "image/png",
+              "imageData": "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",
+              "height": 10.28669677983389,
+              "width": 9.86
+            },
+            "value": "D"
+          },
+          {
+            "label": "Material Warehouse",
+            "symbol": {
+              "type": "esriPMS",
+              "angle": 0,
+              "xoffset": 0,
+              "yoffset": 0,
+              "contentType": "image/png",
+              "imageData": "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",
+              "height": 9.87,
+              "width": 9.87
+            },
+            "value": "W"
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "Location",
+          "label": "Location",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Location_ID",
+          "label": "Location ID",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Type",
+          "label": "Type",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Region",
+          "label": "Region",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "County",
+          "label": "County",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Address",
+          "label": "Address",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "City",
+          "label": "City",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Inspection_Date",
+          "label": "Inspection Date",
+          "type": "esriFieldTypeDate"
+        },
+        {
+          "name": "Warehouse",
+          "label": "Warehouse",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Containers",
+          "label": "Containers",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Burlap_Sandbags__ea_",
+          "label": "Burlap Sandbags (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Plastic_Sandbags__ea_",
+          "label": "Plastic Sandbags (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Plastic__rolls_",
+          "label": "Plastic (rolls)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Stakes__ea_",
+          "label": "Stakes (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Twine__cases_",
+          "label": "Twine (cases)",
+          "type": "esriFieldTypeDouble"
+        },
+        {
+          "name": "Buttons__ea_",
+          "label": "Buttons (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Super_Sack__ea_",
+          "label": "Super Sack (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "F2ft_Muscle_Wall__ea_",
+          "label": "2ft Muscle Wall (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "F4ft_Muscle_Wall__ea_",
+          "label": "4ft Muscle Wall (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "HESCO__units_",
+          "label": "HESCO (units)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "EvoGaurd__roll_",
+          "label": "EvoGaurd (roll)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "T_posts__ea_",
+          "label": "T-posts (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Staples__box_",
+          "label": "Staples (box)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "F24_______rock__ton_",
+          "label": "24\"\" (-) rock (ton)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Muscle_Wall_Plastic_Rolls__ea_",
+          "label": "Muscle Wall Plastic Rolls (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Sheet_Pile__ea_",
+          "label": "Sheet Pile (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Pipe_Pile_2Connector__ea_",
+          "label": "Pipe Pile 2Connector (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "Pipe_Pile_4Connector__ea_",
+          "label": "Pipe Pile 4Connector (ea)",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "F60___Plate_Covers__ea_",
+          "label": "60\"\" Plate Covers (ea)",
+          "type": "esriFieldTypeInteger"
+        }
+      ],
+      "sourceDataEditTime": 1738629787850,
+      "sourceIssue": null
+    },
+    {
+      "key": "offices",
+      "title": "DWR offices",
+      "sourceTitle": "DWR Office Locations",
+      "url": "https://services1.arcgis.com/ZXPUOG4dA7682sDQ/arcgis/rest/services/DWR_Office_Locations/FeatureServer/0",
+      "where": "1=1",
+      "defaultOn": true,
+      "minScale": 0,
+      "renderer": {
+        "type": "uniqueValue",
+        "field1": "DWR_Office",
+        "defaultLabel": "Other",
+        "defaultSymbol": {
+          "type": "esriSMS",
+          "color": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "angle": 0,
+          "xoffset": 0,
+          "yoffset": 0,
+          "size": 6,
+          "style": "esriSMSTriangle",
+          "outline": {
+            "type": "esriSLS",
+            "color": [
+              0,
+              122,
+              240,
+              255
+            ],
+            "width": 1.5,
+            "style": "esriSLSSolid"
+          }
+        },
+        "uniqueValueGroups": [
+          {
+            "classes": [
+              {
+                "label": "Eureka Flood Center",
+                "symbol": {
+                  "type": "esriSMS",
+                  "color": [
+                    183,
+                    129,
+                    74,
+                    0
+                  ],
+                  "angle": 0,
+                  "xoffset": 0,
+                  "yoffset": 0,
+                  "size": 12,
+                  "style": "esriSMSDiamond",
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      12,
+                      122,
+                      240,
+                      255
+                    ],
+                    "width": 1.5,
+                    "style": "esriSLSSolid"
+                  }
+                },
+                "values": [
+                  [
+                    "Eureka Flood Center"
+                  ]
+                ]
+              },
+              {
+                "label": "Joint Operations Center",
+                "symbol": {
+                  "type": "CIMSymbolReference",
+                  "symbol": {
+                    "type": "CIMPointSymbol",
+                    "symbolLayers": [
+                      {
+                        "type": "CIMVectorMarker",
+                        "enable": true,
+                        "anchorPoint": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "anchorPointUnits": "Relative",
+                        "dominantSizeAxis3D": "Y",
+                        "size": 18,
+                        "billboardMode3D": "FaceNearPlane",
+                        "frame": {
+                          "xmin": 0,
+                          "ymin": 0,
+                          "xmax": 17,
+                          "ymax": 17
+                        },
+                        "markerGraphics": [
+                          {
+                            "type": "CIMMarkerGraphic",
+                            "geometry": {
+                              "rings": [
+                                [
+                                  [
+                                    17,
+                                    10.89
+                                  ],
+                                  [
+                                    11.77,
+                                    6.79
+                                  ],
+                                  [
+                                    13.85,
+                                    0.34
+                                  ],
+                                  [
+                                    8.38,
+                                    4.35
+                                  ],
+                                  [
+                                    3.12,
+                                    0.4
+                                  ],
+                                  [
+                                    5.17,
+                                    6.79
+                                  ],
+                                  [
+                                    0,
+                                    10.89
+                                  ],
+                                  [
+                                    6.45,
+                                    10.89
+                                  ],
+                                  [
+                                    8.38,
+                                    16.66
+                                  ],
+                                  [
+                                    10.31,
+                                    10.89
+                                  ],
+                                  [
+                                    17,
+                                    10.89
+                                  ]
+                                ]
+                              ]
+                            },
+                            "symbol": {
+                              "type": "CIMPolygonSymbol",
+                              "symbolLayers": [
+                                {
+                                  "type": "CIMSolidStroke",
+                                  "enable": true,
+                                  "capStyle": "Round",
+                                  "joinStyle": "Round",
+                                  "lineStyle3D": "Strip",
+                                  "miterLimit": 10,
+                                  "width": 1.605,
+                                  "color": [
+                                    0,
+                                    122,
+                                    240,
+                                    255
+                                  ]
+                                },
+                                {
+                                  "type": "CIMSolidFill",
+                                  "enable": true,
+                                  "color": [
+                                    0,
+                                    0,
+                                    0,
+                                    0
+                                  ]
+                                }
+                              ],
+                              "angleAlignment": "Map"
+                            }
+                          }
+                        ],
+                        "respectFrame": true,
+                        "rotation": 360
+                      }
+                    ],
+                    "haloSize": 1,
+                    "scaleX": 1,
+                    "angleAlignment": "Display",
+                    "angle": 360
+                  }
+                },
+                "values": [
+                  [
+                    "Joint Operations Center"
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "uniqueValueInfos": [
+          {
+            "label": "Eureka Flood Center",
+            "symbol": {
+              "type": "esriSMS",
+              "color": [
+                183,
+                129,
+                74,
+                0
+              ],
+              "angle": 0,
+              "xoffset": 0,
+              "yoffset": 0,
+              "size": 12,
+              "style": "esriSMSDiamond",
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  12,
+                  122,
+                  240,
+                  255
+                ],
+                "width": 1.5,
+                "style": "esriSLSSolid"
+              }
+            },
+            "value": "Eureka Flood Center"
+          },
+          {
+            "label": "Joint Operations Center",
+            "symbol": {
+              "type": "CIMSymbolReference",
+              "symbol": {
+                "type": "CIMPointSymbol",
+                "symbolLayers": [
+                  {
+                    "type": "CIMVectorMarker",
+                    "enable": true,
+                    "anchorPoint": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "anchorPointUnits": "Relative",
+                    "dominantSizeAxis3D": "Y",
+                    "size": 18,
+                    "billboardMode3D": "FaceNearPlane",
+                    "frame": {
+                      "xmin": 0,
+                      "ymin": 0,
+                      "xmax": 17,
+                      "ymax": 17
+                    },
+                    "markerGraphics": [
+                      {
+                        "type": "CIMMarkerGraphic",
+                        "geometry": {
+                          "rings": [
+                            [
+                              [
+                                17,
+                                10.89
+                              ],
+                              [
+                                11.77,
+                                6.79
+                              ],
+                              [
+                                13.85,
+                                0.34
+                              ],
+                              [
+                                8.38,
+                                4.35
+                              ],
+                              [
+                                3.12,
+                                0.4
+                              ],
+                              [
+                                5.17,
+                                6.79
+                              ],
+                              [
+                                0,
+                                10.89
+                              ],
+                              [
+                                6.45,
+                                10.89
+                              ],
+                              [
+                                8.38,
+                                16.66
+                              ],
+                              [
+                                10.31,
+                                10.89
+                              ],
+                              [
+                                17,
+                                10.89
+                              ]
+                            ]
+                          ]
+                        },
+                        "symbol": {
+                          "type": "CIMPolygonSymbol",
+                          "symbolLayers": [
+                            {
+                              "type": "CIMSolidStroke",
+                              "enable": true,
+                              "capStyle": "Round",
+                              "joinStyle": "Round",
+                              "lineStyle3D": "Strip",
+                              "miterLimit": 10,
+                              "width": 1.605,
+                              "color": [
+                                0,
+                                122,
+                                240,
+                                255
+                              ]
+                            },
+                            {
+                              "type": "CIMSolidFill",
+                              "enable": true,
+                              "color": [
+                                0,
+                                0,
+                                0,
+                                0
+                              ]
+                            }
+                          ],
+                          "angleAlignment": "Map"
+                        }
+                      }
+                    ],
+                    "respectFrame": true,
+                    "rotation": 360
+                  }
+                ],
+                "haloSize": 1,
+                "scaleX": 1,
+                "angleAlignment": "Display",
+                "angle": 360
+              }
+            },
+            "value": "Joint Operations Center"
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "DWR_Office",
+          "label": "DWR_Office",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Date_Data_",
+          "label": "Date_Data_",
+          "type": "esriFieldTypeDate"
+        },
+        {
+          "name": "Date_Recor",
+          "label": "Date_Recor",
+          "type": "esriFieldTypeDate"
+        },
+        {
+          "name": "Source",
+          "label": "Source",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Comments",
+          "label": "Comments",
+          "type": "esriFieldTypeString"
+        }
+      ],
+      "sourceDataEditTime": 1723593863478,
+      "sourceIssue": null
+    },
+    {
+      "key": "levees",
+      "title": "Levees",
+      "sourceTitle": "Levee",
+      "url": "https://ferix.water.ca.gov/arcgis/rest/services/ferix/leveevulnerability/MapServer/4",
+      "where": "1=1",
+      "defaultOn": false,
+      "minScale": 0,
+      "renderer": {
+        "type": "uniqueValue",
+        "field1": "DWR_CATEGO",
+        "fieldDelimiter": ", ",
+        "uniqueValueGroups": [
+          {
+            "classes": [
+              {
+                "description": "",
+                "label": "State-Federal SPFC",
+                "symbol": {
+                  "type": "esriSLS",
+                  "color": [
+                    214,
+                    58,
+                    106,
+                    255
+                  ],
+                  "width": 1.5,
+                  "style": "esriSLSSolid"
+                },
+                "values": [
+                  [
+                    "State-Federal SPFC"
+                  ]
+                ]
+              },
+              {
+                "description": "",
+                "label": "Other",
+                "symbol": {
+                  "type": "esriSLS",
+                  "color": [
+                    217,
+                    13,
+                    13,
+                    255
+                  ],
+                  "width": 0.75,
+                  "style": "esriSLSDash"
+                },
+                "values": [
+                  [
+                    "Other"
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "uniqueValueInfos": [
+          {
+            "description": "",
+            "label": "State-Federal SPFC",
+            "symbol": {
+              "type": "esriSLS",
+              "color": [
+                214,
+                58,
+                106,
+                255
+              ],
+              "width": 1.5,
+              "style": "esriSLSSolid"
+            },
+            "value": "State-Federal SPFC"
+          },
+          {
+            "description": "",
+            "label": "Other",
+            "symbol": {
+              "type": "esriSLS",
+              "color": [
+                217,
+                13,
+                13,
+                255
+              ],
+              "width": 0.75,
+              "style": "esriSLSDash"
+            },
+            "value": "Other"
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "FEATURE_NA",
+          "label": "FEATURE_NA",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "DWR_CATEGO",
+          "label": "DWR_CATEGO",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "LEVEE_ID",
+          "label": "LEVEE_ID",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "MAINT_AGEN",
+          "label": "MAINT_AGEN",
+          "type": "esriFieldTypeString"
+        }
+      ],
+      "sourceDataEditTime": null,
+      "sourceIssue": "Service not found"
+    },
+    {
+      "key": "agencies",
+      "title": "Levee maintaining agencies",
+      "sourceTitle": "LMA Boundary",
+      "url": "https://ferix.water.ca.gov/arcgis/rest/services/flooder/MapServer/1",
+      "where": "1=1",
+      "defaultOn": false,
+      "minScale": 0,
+      "renderer": {
+        "type": "uniqueValue",
+        "visualVariables": [
+          {
+            "type": "sizeInfo",
+            "valueExpression": "$view.scale",
+            "stops": [
+              {
+                "size": 2,
+                "value": 131986
+              },
+              {
+                "size": 1,
+                "value": 412457
+              },
+              {
+                "size": 0.5,
+                "value": 1649827
+              },
+              {
+                "size": 0,
+                "value": 3299654
+              }
+            ],
+            "target": "outline"
+          }
+        ],
+        "field1": "AREA_TYPE",
+        "uniqueValueGroups": [
+          {
+            "classes": [
+              {
+                "label": "Reclamation District",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    246,
+                    230,
+                    255,
+                    255
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      76,
+                      0,
+                      115,
+                      255
+                    ],
+                    "width": 1.44,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "RD"
+                  ]
+                ]
+              },
+              {
+                "label": "Named Area",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    238,
+                    255,
+                    230,
+                    255
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      38,
+                      115,
+                      0,
+                      255
+                    ],
+                    "width": 1.44,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "NA"
+                  ]
+                ]
+              },
+              {
+                "label": "Maintenance Area",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    255,
+                    255,
+                    230,
+                    255
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      168,
+                      168,
+                      0,
+                      255
+                    ],
+                    "width": 1.44,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "MA"
+                  ]
+                ]
+              },
+              {
+                "label": "State Maintained Area",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    255,
+                    233,
+                    191,
+                    255
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      168,
+                      112,
+                      0,
+                      255
+                    ],
+                    "width": 1.44,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "ST"
+                  ]
+                ]
+              },
+              {
+                "label": "Levee District",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    230,
+                    246,
+                    255,
+                    255
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      0,
+                      76,
+                      115,
+                      255
+                    ],
+                    "width": 1.44,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "LD"
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "uniqueValueInfos": [
+          {
+            "label": "Reclamation District",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                246,
+                230,
+                255,
+                255
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  76,
+                  0,
+                  115,
+                  255
+                ],
+                "width": 1.44,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "RD"
+          },
+          {
+            "label": "Named Area",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                238,
+                255,
+                230,
+                255
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  38,
+                  115,
+                  0,
+                  255
+                ],
+                "width": 1.44,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "NA"
+          },
+          {
+            "label": "Maintenance Area",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                255,
+                255,
+                230,
+                255
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  168,
+                  168,
+                  0,
+                  255
+                ],
+                "width": 1.44,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "MA"
+          },
+          {
+            "label": "State Maintained Area",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                255,
+                233,
+                191,
+                255
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  168,
+                  112,
+                  0,
+                  255
+                ],
+                "width": 1.44,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "ST"
+          },
+          {
+            "label": "Levee District",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                230,
+                246,
+                255,
+                255
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  0,
+                  76,
+                  115,
+                  255
+                ],
+                "width": 1.44,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "LD"
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "LMA_NAME",
+          "label": "LMA_NAME",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "SHORT_NAME",
+          "label": "SHORT_NAME",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "LMA_ID",
+          "label": "LMA_ID",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "COUNTY",
+          "label": "COUNTY",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "AREA_TYPE",
+          "label": "AREA_TYPE",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "STATUS",
+          "label": "STATUS",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "SYSTEM",
+          "label": "SYSTEM",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "URL",
+          "label": "URL",
+          "type": "esriFieldTypeString"
+        }
+      ],
+      "sourceDataEditTime": null,
+      "sourceIssue": null
+    },
+    {
+      "key": "majorRivers",
+      "title": "Major rivers · DWR reference",
+      "sourceTitle": "Major Rivers",
+      "url": "https://ferix.water.ca.gov/arcgis/rest/services/ferix/leveemile/MapServer/2",
+      "where": "1=1",
+      "defaultOn": false,
+      "minScale": 0,
+      "renderer": {
+        "symbol": {
+          "color": [
+            0,
+            197,
+            255,
+            255
+          ],
+          "width": 2,
+          "style": "esriSLSSolid",
+          "type": "esriSLS"
+        },
+        "type": "simple"
+      },
+      "fields": [
+        {
+          "name": "Name",
+          "label": "Name",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "Label",
+          "label": "Label",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "R_Type",
+          "label": "R_Type",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "HydroID",
+          "label": "HydroID",
+          "type": "esriFieldTypeInteger"
+        },
+        {
+          "name": "NextDownID",
+          "label": "NextDownID",
+          "type": "esriFieldTypeInteger"
+        }
+      ],
+      "sourceDataEditTime": null,
+      "sourceIssue": null
+    },
+    {
+      "key": "minorRivers",
+      "title": "Minor rivers · close-scale reference",
+      "sourceTitle": "Minor Rivers",
+      "url": "https://ferix.water.ca.gov/arcgis/rest/services/flooder/MapServer/55",
+      "where": "1=1",
+      "defaultOn": false,
+      "minScale": 80000,
+      "renderer": {
+        "symbol": {
+          "color": [
+            10,
+            147,
+            252,
+            255
+          ],
+          "width": 1,
+          "style": "esriSLSSolid",
+          "type": "esriSLS"
+        },
+        "type": "simple"
+      },
+      "fields": [
+        {
+          "name": "Label",
+          "label": "Label",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "PNAME",
+          "label": "PNAME",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "FLOW",
+          "label": "FLOW",
+          "type": "esriFieldTypeSmallInteger"
+        }
+      ],
+      "sourceDataEditTime": null,
+      "sourceIssue": null
+    },
+    {
+      "key": "county",
+      "title": "Fresno County boundary",
+      "sourceTitle": "California County Boundaries",
+      "url": "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_County_Boundaries/FeatureServer/0",
+      "where": "COUNTY_FIPS = '019'",
+      "defaultOn": false,
+      "minScale": 0,
+      "renderer": {
+        "type": "simple",
+        "symbol": {
+          "type": "esriSFS",
+          "color": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "outline": {
+            "type": "esriSLS",
+            "color": [
+              77,
+              77,
+              77,
+              255
+            ],
+            "width": 0.563,
+            "style": "esriSLSDashDot"
+          },
+          "style": "esriSFSSolid"
+        }
+      },
+      "fields": [
+        {
+          "name": "COUNTY_NAME",
+          "label": "COUNTY_NAME",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "COUNTY_FIPS",
+          "label": "COUNTY_FIPS",
+          "type": "esriFieldTypeString"
+        }
+      ],
+      "sourceDataEditTime": 1778113598022,
+      "sourceIssue": null
+    },
+    {
+      "key": "regions",
+      "title": "Flood-fight management regions",
+      "sourceTitle": "FFM Regions",
+      "url": "https://services1.arcgis.com/ZXPUOG4dA7682sDQ/arcgis/rest/services/FFM_Regions_Update20240912/FeatureServer/0",
+      "where": "1=1",
+      "defaultOn": false,
+      "minScale": 0,
+      "renderer": {
+        "type": "uniqueValue",
+        "visualVariables": [
+          {
+            "type": "sizeInfo",
+            "valueExpression": "$view.scale",
+            "stops": [
+              {
+                "size": 2.002,
+                "value": 6248418
+              },
+              {
+                "size": 1.001,
+                "value": 19526307
+              },
+              {
+                "size": 0.5005,
+                "value": 78105229
+              },
+              {
+                "size": 0,
+                "value": 156210457
+              }
+            ],
+            "target": "outline"
+          }
+        ],
+        "field1": "county2Reg",
+        "drawInClassOrder": true,
+        "uniqueValueGroups": [
+          {
+            "classes": [
+              {
+                "label": "Northern Coast",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    242,
+                    140,
+                    56,
+                    179
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      153,
+                      153,
+                      153,
+                      64
+                    ],
+                    "width": 2.002,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "1"
+                  ]
+                ]
+              },
+              {
+                "label": "Northern California",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    93,
+                    188,
+                    212,
+                    179
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "width": 2.002,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "2"
+                  ]
+                ]
+              },
+              {
+                "label": "Delta",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    147,
+                    70,
+                    235,
+                    179
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      86,
+                      7,
+                      176,
+                      191
+                    ],
+                    "width": 2.002,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "3"
+                  ]
+                ]
+              },
+              {
+                "label": "Central Coast",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    175,
+                    230,
+                    48,
+                    179
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      153,
+                      153,
+                      153,
+                      64
+                    ],
+                    "width": 2.002,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "4"
+                  ]
+                ]
+              },
+              {
+                "label": "Central Valley",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    227,
+                    66,
+                    64,
+                    179
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      153,
+                      153,
+                      153,
+                      64
+                    ],
+                    "width": 2.002,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "5"
+                  ]
+                ]
+              },
+              {
+                "label": "Southern California",
+                "symbol": {
+                  "type": "esriSFS",
+                  "color": [
+                    11,
+                    107,
+                    224,
+                    179
+                  ],
+                  "outline": {
+                    "type": "esriSLS",
+                    "color": [
+                      153,
+                      153,
+                      153,
+                      64
+                    ],
+                    "width": 2.002,
+                    "style": "esriSLSSolid"
+                  },
+                  "style": "esriSFSSolid"
+                },
+                "values": [
+                  [
+                    "6"
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        "uniqueValueInfos": [
+          {
+            "label": "Northern Coast",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                242,
+                140,
+                56,
+                179
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  153,
+                  153,
+                  153,
+                  64
+                ],
+                "width": 2.002,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "1"
+          },
+          {
+            "label": "Northern California",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                93,
+                188,
+                212,
+                179
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "width": 2.002,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "2"
+          },
+          {
+            "label": "Delta",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                147,
+                70,
+                235,
+                179
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  86,
+                  7,
+                  176,
+                  191
+                ],
+                "width": 2.002,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "3"
+          },
+          {
+            "label": "Central Coast",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                175,
+                230,
+                48,
+                179
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  153,
+                  153,
+                  153,
+                  64
+                ],
+                "width": 2.002,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "4"
+          },
+          {
+            "label": "Central Valley",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                227,
+                66,
+                64,
+                179
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  153,
+                  153,
+                  153,
+                  64
+                ],
+                "width": 2.002,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "5"
+          },
+          {
+            "label": "Southern California",
+            "symbol": {
+              "type": "esriSFS",
+              "color": [
+                11,
+                107,
+                224,
+                179
+              ],
+              "outline": {
+                "type": "esriSLS",
+                "color": [
+                  153,
+                  153,
+                  153,
+                  64
+                ],
+                "width": 2.002,
+                "style": "esriSLSSolid"
+              },
+              "style": "esriSFSSolid"
+            },
+            "value": "6"
+          }
+        ]
+      },
+      "fields": [
+        {
+          "name": "Region",
+          "label": "Region",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "county2R_1",
+          "label": "county2R_1",
+          "type": "esriFieldTypeString"
+        },
+        {
+          "name": "county2Reg",
+          "label": "county2Reg",
+          "type": "esriFieldTypeInteger"
+        }
+      ],
+      "sourceDataEditTime": 1727453529512,
+      "sourceIssue": null
+    },
+    {
+      "key": "hydrology",
+      "title": "Hydrologic regions",
+      "sourceTitle": "Hydrologic Regions",
+      "url": "https://gis.water.ca.gov/arcgis/rest/services/Boundaries/i03_Hydrologic_Regions/MapServer/0",
+      "where": "1=1",
+      "defaultOn": false,
+      "minScale": 0,
+      "renderer": {
+        "type": "simple",
+        "symbol": {
+          "type": "esriSFS",
+          "color": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "outline": {
+            "type": "esriSLS",
+            "color": [
+              36,
+              84,
+              150,
+              255
+            ],
+            "width": 1.252,
+            "style": "esriSLSSolid"
+          },
+          "style": "esriSFSSolid"
+        }
+      },
+      "fields": [
+        {
+          "name": "HR_NAME",
+          "label": "HR_NAME",
+          "type": "esriFieldTypeString"
+        }
+      ],
+      "sourceDataEditTime": null,
+      "sourceIssue": null
+    }
+  ]
+}

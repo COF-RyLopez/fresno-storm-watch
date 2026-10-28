@@ -1,0 +1,31 @@
+F.R.O.G. DWR flood-fight context - release 0.61.0
+Source checked October 28, 2026.
+
+Entry: Context layers > DWR flood-fight layers & supplies.
+Direct link: /?view=rivers&dwr=1
+The existing topic navigation and private EOC records are unchanged.
+
+Lineage
+Dashboard: https://www.arcgis.com/apps/dashboards/e2ef0f8a2100424b8fb6ab0e9bd7faf6
+Web map: 30db73a68f8b4da984bde45b33c56a74 (FEMS Flood Fight Map, owner mmoua_GEI).
+The user received the dashboard from DWR. Source URLs, field aliases and original web-map renderers are recorded in site/data/dwr-flood-fight.json. No feature inventory or private data is bundled in that catalog.
+
+Scope and refresh
+Each selected layer queries intersecting IDs against the complete Fresno County polygon. Supply locations additionally require County = 'Fresno'; the county reference requires COUNTY_FIPS = '019'. An empty, failed or invalid ID response never becomes a statewide query. Inventory rows must reconcile exactly with verified county IDs before display. IDs are refreshed from the publisher rather than treated as permanent identifiers.
+River segments, maintaining-agency polygons and regional polygons retain their full source geometry and can cross the county boundary. They are Fresno-intersecting references, not geometrically clipped county copies. The panel explicitly states this limitation.
+Only supplies and offices start enabled in this optional group. Other layers are selected individually; minor-river geometry draws at 1:80,000 or closer. Source symbols are deserialized from the supplied web map using the existing pinned ArcGIS runtime; legends show the same symbols. The existing generic map-feature pane displays source attributes on selection.
+Selected sources are rechecked every five minutes while the page is visible and the DWR group is displayed. A manual recheck is available. Queries run in the browser; no AGOL item, group, permission or hosted copy is created or edited. No scheduled collector or persistent browser inventory is introduced.
+
+Source findings at onboarding
+- Two supply locations: Fresno County Public Works, Tranquillity (Location ID 5-5, inspected Oct 1, 2024) and Sanger Public Works (5-6, inspected Sep 25, 2024).
+- Two DWR office records intersect Fresno County.
+- Levee-maintaining agency: 1; major-river segments: 102; minor-river segments: 8,546; Fresno boundary: 1; flood-fight regions: 2; hydrologic regions: 4. Polygon counts can include boundary-touching source features.
+- The dashboard's original levee endpoint returns 'Service not found'. It remains explicitly unavailable; no replacement geometry, implied protection or current condition is invented.
+
+Interpretation
+Inspection inventory is not confirmed current stock, an allocation, a reservation, or an approved pickup. Date-only inspection fields are displayed as UTC calendar dates to avoid a local-time day shift. Null quantities remain Unknown; explicit zeros remain zero. Refresh/query time is distinct from an inspection date. Confirm availability and release arrangements with DWR.
+The layers do not establish present flow, levee reliability, forecast inundation, safe access or an operational resource commitment. Planning and notification rules are unchanged.
+
+Verification and rollback
+Focused tests cover fail-closed scope, ID deduplication, incomplete/out-of-scope inventory responses, null/zero quantities, UTC dates and original source references. Run the existing full JavaScript tests and project checks before deployment. Verify the two supply cards, map focus, source legends, optional-layer counts and the unavailable levee message in the browser.
+Rollback is a redeploy of preceding release 0.60.1 (2d02b17); no data migration is required.

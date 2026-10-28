@@ -1,3 +1,4 @@
+import {createDwrFloodFight} from './lib/dwr-flood-fight-ui.js?v=0.61.0';
 import {createCareWatch} from './lib/care-ui.js?v=0.59.0';
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.53.0';
 import {createDrainageNearby} from './lib/drainage-nearby-ui.js?v=0.55.0';
@@ -14,7 +15,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.57.0';
+import { createMap } from './lib/map.js?v=0.61.0';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -62,6 +63,8 @@ let planningExerciseEntries=null;
 let riverView=true;
 const evidence=createEvidencePane({timeZone:CONFIG.timeZone,onChange:open=>{if(open)workspace.showMap();else workspace.refreshLayout();cameras?.setSuspended(open);}});
 const workspace=createWorkspace({evidence,onActivate:id=>{mapSearch?.clear();if(id==='drainage')environment?.selectRainfall();},onCameraChange:open=>cameras?.setOpen(open)});
+
+const dwrFloodFight=createDwrFloodFight({exercise,onMap:()=>workspace.showMap()});
 
 /** Topic selection never alters source queries or countywide counts. */
 function renderScope(){/* The workspace controller owns map and scope headings. */}
@@ -299,6 +302,7 @@ try {
   createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key)).then(controller => {
     map = controller;
     workspace.setMap(map);mission.setMap(map);
+    dwrFloodFight.setMap(map,counties.find(f=>f.properties.GEOID==='06019'));
     mapSearch.setMap(map);
 
     rivers?.setMap(map);

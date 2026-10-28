@@ -1,0 +1,8 @@
+.dwr-layer-row,.dwr-supply-card{padding:12px 0;border-bottom:1px solid var(--calcite-color-border-3)}
+.dwr-layer-row p,.dwr-supply-card p{font-size:var(--calcite-font-size--1);line-height:1.5;margin:6px 0;color:var(--calcite-color-text-2)}
+.dwr-supply-card h3{font-size:var(--calcite-font-size-0);margin:0}
+.dwr-supply-card dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;font-size:var(--calcite-font-size--1)}
+.dwr-supply-card dd{margin:0;font-variant-numeric:tabular-nums}
+.dwr-legend-row{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:var(--calcite-font-size--1)}
+.dwr-layer-row details{margin-top:8px;font-size:var(--calcite-font-size--1)}
+#dwr-evidence{padding-inline:12px}
