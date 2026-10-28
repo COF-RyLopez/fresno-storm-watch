@@ -82,7 +82,7 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
     })();return s.pending;
   }
   async function setup(){
-    if(started)return;if(pendingCatalog)return pendingCatalog;
+    if(started){if(group?.visible)await Promise.all([...states.values()].filter(s=>s.box.checked&&!s.checked).map(refreshLayer));return;}if(pendingCatalog)return pendingCatalog;
     pendingCatalog=(async()=>{
       if(!controller||!county){$('dwr-status').textContent='Map is still initializing. Reopen this pane when it is ready.';return;}
       if(exercise){$('dwr-status').textContent='Live DWR resources are disabled in the fictional exercise view. Open the live map to inspect publisher records.';return;}
@@ -98,7 +98,7 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
         box.addEventListener('calciteCheckboxChange',()=>{if(box.checked){controller.setLayerPreference(KEY,true);void refreshLayer(s);}else if(s.layer)s.layer.visible=false;});
       }
       $('dwr-status').textContent=catalog.scopeNote+' Select a mapped feature for publisher attributes.';
-      started=true;await Promise.all([...states.values()].filter(s=>s.box.checked).map(refreshLayer));
+      started=true;await Promise.all([...states.values()].filter(s=>group.visible&&s.box.checked||inventoryWatching&&s.config.key==='supplies').map(refreshLayer));
     })().catch(error=>{$('dwr-status').textContent='DWR context unavailable · '+error.message;onSupplies({loaded:true,rows:[],checked:null,error:error.message});}).finally(()=>{pendingCatalog=null;});return pendingCatalog;
   }
   async function loadInventory({refresh=false}={}){

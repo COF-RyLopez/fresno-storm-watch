@@ -67,7 +67,7 @@ const workspace=createWorkspace({evidence,onActivate:id=>{mapSearch?.clear();if(
 
 const dwrSupplyPlanning=createDwrSupplyPlanning({exercise,timeZone:CONFIG.timeZone,onLoad:options=>dwrFloodFight.loadInventory(options),onArea:id=>{openPlanning();planning?.selectArea(id);},onRoad:key=>roads?.select(key,{keepWorkspace:true}),onSource:()=>dwrFloodFight.open(),onMap:()=>workspace.showMap()});
 const dwrFloodFight=createDwrFloodFight({exercise,onMap:()=>workspace.showMap(),onSupplies:data=>dwrSupplyPlanning.setSupplies(data)});
-if(new URLSearchParams(location.search).get('dwrSupplies')==='1')workspace.showPanel('watch',{history:false});
+if(new URLSearchParams(location.search).get('dwrSupplies')==='1'&&workspace.section==='watch'&&workspace.mission==='watch')workspace.showPanel('watch',{history:false});
 
 /** Topic selection never alters source queries or countywide counts. */
 function renderScope(){/* The workspace controller owns map and scope headings. */}
