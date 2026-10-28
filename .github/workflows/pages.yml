@@ -43,6 +43,9 @@ jobs:
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published
+      - name: Collect public county sandbag references
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npm run collect:sandbags -- --published
       - name: Collect public PG&E and SCE power records
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:power -- --published

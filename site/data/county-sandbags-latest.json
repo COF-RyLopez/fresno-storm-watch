@@ -1,0 +1,498 @@
+{
+  "schemaVersion": 1,
+  "countyGeoid": "06019",
+  "source": "https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Sandbag_Locations/FeatureServer/0",
+  "app": "https://gisportal.co.fresno.ca.us/portal/apps/webappviewer/index.html?id=ab6bf09e95cb4a23b4aa2e97ed61a843",
+  "generatedAt": "2026-10-28T23:49:06.261Z",
+  "lastAttempt": "2026-10-28T23:49:06.261Z",
+  "lastSuccess": "2026-10-28T23:49:06.261Z",
+  "error": null,
+  "appSubtitle": "Last Updated: 01/31/2024",
+  "rows": [
+    {
+      "key": "county-sandbag:1",
+      "id": 1,
+      "name": "AUBERRY YARD",
+      "yard": "11",
+      "address": "33148 AUBERRY RD",
+      "city": "AUBERRY CA 93602",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": 1568073600000,
+      "maintained": 1474934400000,
+      "geometry": {
+        "x": -119.48564973650453,
+        "y": 37.076524516647716,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:2",
+      "id": 2,
+      "name": "Fresno Yard - Road Yard 7",
+      "yard": "7",
+      "address": "9400 N MATUS AVE",
+      "city": "FRESNO CA 93720",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": "Yes",
+      "edited": 1568073600000,
+      "maintained": 1474934400000,
+      "geometry": {
+        "x": -119.73811153273512,
+        "y": 36.87272542841153,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:3",
+      "id": 3,
+      "name": "SANGER YARD",
+      "yard": "8",
+      "address": "9525 E OLIVE AVE",
+      "city": "SANGER CA 93657",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": 1568073600000,
+      "maintained": 1474934400000,
+      "geometry": {
+        "x": -119.6180111067574,
+        "y": 36.75583554580189,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:4",
+      "id": 4,
+      "name": "BIOLA YARD",
+      "yard": "4",
+      "address": "12855 G AVE",
+      "city": "BIOLA CA 93630",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": 1568073600000,
+      "maintained": 1474934400000,
+      "geometry": {
+        "x": -120.02225153768516,
+        "y": 36.80132429706651,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:5",
+      "id": 5,
+      "name": "CARUTHERS YARD",
+      "yard": "5",
+      "address": "2544 W MOUNTAIN VIEW AVE",
+      "city": "CARUTHERS CA 93609",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": 1568073600000,
+      "maintained": 1474934400000,
+      "geometry": {
+        "x": -119.83690523908176,
+        "y": 36.5476069127495,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:6",
+      "id": 6,
+      "name": "Fresno Fairgrounds at AG",
+      "yard": "0",
+      "address": "1720 S MAPLE ST",
+      "city": "FRESNO CA 93702",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": "Yes",
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.74593987360947,
+        "y": 36.72658739232273,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:7",
+      "id": 7,
+      "name": "CAL FIRE STATION #84",
+      "yard": "0",
+      "address": "210 S ACADEMY AVE",
+      "city": "SANGER CA 93657",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.55521502503922,
+        "y": 36.73258646671995,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:8",
+      "id": 8,
+      "name": "CAL FIRE SQUAW VALLEY",
+      "yard": "0",
+      "address": "32515 E KINGS CANYON RD",
+      "city": "SQUAW VALLEY CA 93657",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.2227549714982,
+        "y": 36.74924120116985,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:9",
+      "id": 9,
+      "name": "PIEDRA FIRE STATION",
+      "yard": "0",
+      "address": "6185 ELWOOD RD",
+      "city": "SANGER CA 93657",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.38197957242696,
+        "y": 36.812856751835476,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:10",
+      "id": 10,
+      "name": "FC FIRE STATION #89",
+      "yard": "0",
+      "address": "5810 S CHERRY AVE",
+      "city": "FRESNO CA 93706",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.78141084352922,
+        "y": 36.65057070956532,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:11",
+      "id": 11,
+      "name": "CARUTHERS FIRE STATION 90",
+      "yard": "0",
+      "address": "2701 W TAHOE AVE",
+      "city": "CARUTHERS CA 93706",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.8397777598556,
+        "y": 36.536712053895464,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:12",
+      "id": 12,
+      "name": "FC FIRE DIST. STATION 94",
+      "yard": "0",
+      "address": "24125 W DORRIS AVE",
+      "city": "COALINGA CA 93210",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -120.231100180634,
+        "y": 36.25406862914488,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:13",
+      "id": 13,
+      "name": "WONDER VALLEY FIRESTATION",
+      "yard": "0",
+      "address": "6817 ELWOOD RD",
+      "city": "SANGER CA 93657",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.31036019891746,
+        "y": 36.79206834854926,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:14",
+      "id": 14,
+      "name": "FC FIRE PROECTION STATION",
+      "yard": "0",
+      "address": "25101 W MORTON AVE",
+      "city": "TRANQUILLITY CA 93668",
+      "state": "unknown",
+      "rawActive": null,
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -120.24505475822183,
+        "y": 36.64254190151272,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:15",
+      "id": 15,
+      "name": "DUNLAP YARD",
+      "yard": "9",
+      "address": "40315 DUNLAP RD",
+      "city": "DUNLAP CA 93621",
+      "state": "inactive",
+      "rawActive": "No",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.11047234728431,
+        "y": 36.72621291009802,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:16",
+      "id": 16,
+      "name": "TRANQUILITY HS- JANETSKI",
+      "yard": "0",
+      "address": "",
+      "city": "",
+      "state": "inactive",
+      "rawActive": "No",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -120.25514909108851,
+        "y": 36.64508865278307,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:17",
+      "id": 17,
+      "name": "MENDOTA CITY- PW YARD",
+      "yard": "0",
+      "address": "9TH & MARIE",
+      "city": "",
+      "state": "inactive",
+      "rawActive": "No",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -120.37558956431806,
+        "y": 36.75442241290421,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:18",
+      "id": 18,
+      "name": "FRESNO CNTY FIRE- 75",
+      "yard": "0",
+      "address": "27595 TOLLHOUSE RD",
+      "city": "",
+      "state": "inactive",
+      "rawActive": "No",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.40769952376195,
+        "y": 37.00619486901639,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:19",
+      "id": 19,
+      "name": "City Of Clovis- Residents",
+      "yard": "Clovis",
+      "address": "155 SUNNYSIDE",
+      "city": "Clovis, CA 93612",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.68922315046137,
+        "y": 36.8326414389653,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:21",
+      "id": 21,
+      "name": "City of Coalinga- Residen",
+      "yard": "Coalinga",
+      "address": "135 E SACRAMENTO",
+      "city": "COALINGA, CA 93210",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -120.36130252206829,
+        "y": 36.133087001678824,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:22",
+      "id": 22,
+      "name": "Coalinga Fire Dept",
+      "yard": "Coalinga",
+      "address": "300 W ELM",
+      "city": "COALINGA, CA 93210",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -120.36289870693336,
+        "y": 36.137615386871815,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:23",
+      "id": 23,
+      "name": "City Of Selma- Residents",
+      "yard": "Selma",
+      "address": "1325 E NEBRASKA",
+      "city": "SELMA, CA 93662",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": {
+        "x": -119.60232773699053,
+        "y": 36.56155751398607,
+        "spatialReference": {
+          "wkid": 4326
+        }
+      },
+      "locationIssue": null
+    },
+    {
+      "key": "county-sandbag:24",
+      "id": 24,
+      "name": "City of San Joaquin- Resi",
+      "yard": "San Joaqui",
+      "address": "21956 RAILROAD",
+      "city": "SAN JOAQUIN, CA 93660",
+      "state": "active",
+      "rawActive": "Yes",
+      "jointLocation": null,
+      "edited": null,
+      "maintained": null,
+      "geometry": null,
+      "locationIssue": "Source has no coordinates · address only"
+    }
+  ],
+  "accounting": {
+    "read": 23,
+    "active": 11,
+    "unknown": 8,
+    "inactive": 4,
+    "mapped": 22,
+    "unmapped": 1
+  }
+}
