@@ -1,0 +1,72 @@
+{
+  "attributes": {
+    "crs": "EPSG:3857",
+    "extent": {
+      "wkid": 3857,
+      "xmax": -9502833.443604644,
+      "xmin": -9505729.267748844,
+      "ymax": 4895588.88434434,
+      "ymin": 4893977.433994125
+    },
+    "legend": [
+      {
+        "ft": 0.0,
+        "rgba": [
+          190,
+          235,
+          255,
+          90
+        ]
+      },
+      {
+        "ft": 1.0,
+        "rgba": [
+          120,
+          200,
+          245,
+          170
+        ]
+      },
+      {
+        "ft": 3.0,
+        "rgba": [
+          50,
+          140,
+          220,
+          200
+        ]
+      },
+      {
+        "ft": 6.0,
+        "rgba": [
+          25,
+          85,
+          190,
+          215
+        ]
+      },
+      {
+        "ft": 10.0,
+        "rgba": [
+          25,
+          45,
+          140,
+          225
+        ]
+      },
+      {
+        "ft": 16.0,
+        "rgba": [
+          40,
+          15,
+          90,
+          235
+        ]
+      }
+    ],
+    "source": "stormwatch-flood from a HEC-RAS 6.x/7.x plan result",
+    "title": "Modeled flood depth by frame"
+  },
+  "node_type": "group",
+  "zarr_format": 3
+}

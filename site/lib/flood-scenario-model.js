@@ -12,12 +12,14 @@ export function blend(t, hours) {
 
 /**
  * Depth at the building (ft above ground). Two models:
- * - samples: linear between per-frame samples d0..dN (N = frame index), from a model's time series;
+ * - samples: linear between per-frame samples d0..dN (N = frame index), from a model's time series, and dry before
+ *   arrive_hr when the building has one (the 0.1 ft arrival from every model step, finer than the hourly samples);
  * - ramp (published maps with arrival and peak times only): dry before arrival_hr, 1 ft (or the maximum if
  *   shallower) at arrival, linear to depth_max at peak_hr, then held. Recession is not published, so it is not shown.
  */
 export function depthAt(props, t, hours) {
   if (props.d0 === undefined) return rampDepth(props.arrive_hr, props.peak_hr, props.depth_max, t);
+  if (props.arrive_hr != null && t < props.arrive_hr) return 0;
   const { i0, i1, w } = blend(t, hours);
   const a=props[`d${i0}`],b=props[`d${i1}`];
   if(!Number.isFinite(a)||!Number.isFinite(b))return null;

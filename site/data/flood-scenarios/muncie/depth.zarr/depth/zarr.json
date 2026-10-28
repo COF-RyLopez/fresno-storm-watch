@@ -1,0 +1,74 @@
+{
+  "attributes": {
+    "_CRS": {
+      "url": "http://www.opengis.net/def/crs/EPSG/0/3857"
+    },
+    "_FillValue": 0,
+    "geotransform": [
+      -9505729.267748844,
+      1.9943692453158703,
+      0.0,
+      4895588.88434434,
+      0.0,
+      -1.9943692453158703
+    ],
+    "long_name": "water depth",
+    "note": "0 = dry or outside the model",
+    "scale_factor": 0.01,
+    "units": "ft"
+  },
+  "chunk_grid": {
+    "configuration": {
+      "chunk_shape": [
+        25,
+        256,
+        256
+      ]
+    },
+    "name": "regular"
+  },
+  "chunk_key_encoding": {
+    "configuration": {
+      "separator": "/"
+    },
+    "name": "default"
+  },
+  "codecs": [
+    {
+      "configuration": {
+        "order": [
+          1,
+          2,
+          0
+        ]
+      },
+      "name": "transpose"
+    },
+    {
+      "configuration": {
+        "endian": "little"
+      },
+      "name": "bytes"
+    },
+    {
+      "configuration": {
+        "level": 9
+      },
+      "name": "gzip"
+    }
+  ],
+  "data_type": "uint16",
+  "dimension_names": [
+    "time",
+    "y",
+    "x"
+  ],
+  "fill_value": 0,
+  "node_type": "array",
+  "shape": [
+    25,
+    808,
+    1452
+  ],
+  "zarr_format": 3
+}

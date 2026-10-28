@@ -1,0 +1,44 @@
+{
+  "attributes": {
+    "long_name": "time",
+    "units": "hours since simulation start"
+  },
+  "chunk_grid": {
+    "configuration": {
+      "chunk_shape": [
+        25
+      ]
+    },
+    "name": "regular"
+  },
+  "chunk_key_encoding": {
+    "configuration": {
+      "separator": "/"
+    },
+    "name": "default"
+  },
+  "codecs": [
+    {
+      "configuration": {
+        "endian": "little"
+      },
+      "name": "bytes"
+    },
+    {
+      "configuration": {
+        "level": 9
+      },
+      "name": "gzip"
+    }
+  ],
+  "data_type": "float64",
+  "dimension_names": [
+    "time"
+  ],
+  "fill_value": "NaN",
+  "node_type": "array",
+  "shape": [
+    25
+  ],
+  "zarr_format": 3
+}

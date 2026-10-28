@@ -1,0 +1,47 @@
+{
+  "attributes": {
+    "_CRS": {
+      "url": "http://www.opengis.net/def/crs/EPSG/0/3857"
+    },
+    "standard_name": "projection_x_coordinate",
+    "units": "m"
+  },
+  "chunk_grid": {
+    "configuration": {
+      "chunk_shape": [
+        1452
+      ]
+    },
+    "name": "regular"
+  },
+  "chunk_key_encoding": {
+    "configuration": {
+      "separator": "/"
+    },
+    "name": "default"
+  },
+  "codecs": [
+    {
+      "configuration": {
+        "endian": "little"
+      },
+      "name": "bytes"
+    },
+    {
+      "configuration": {
+        "level": 9
+      },
+      "name": "gzip"
+    }
+  ],
+  "data_type": "float64",
+  "dimension_names": [
+    "x"
+  ],
+  "fill_value": "NaN",
+  "node_type": "array",
+  "shape": [
+    1452
+  ],
+  "zarr_format": 3
+}

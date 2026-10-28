@@ -14,6 +14,8 @@ test('fractional hours blend between neighbouring frames and clamp at the ends',
 test('building depth interpolates hourly samples and counts water above the first floor', () => {
   const p = { d0: 0, d1: 2, d2: 4, found_ht: 1.5, pop_night: 3, peak_hr: 2, loss_usd: 1000 };
   assert.equal(depthAt(p, 0.5, [0, 1, 2]), 1);
+  assert.equal(depthAt({ ...p, arrive_hr: 0.75 }, 0.5, [0, 1, 2]), 0, 'dry until the water arrives');
+  assert.equal(depthAt({ ...p, arrive_hr: 0.25 }, 0.5, [0, 1, 2]), 1);
   assert.deepEqual(summarize([p], 0.5, [0, 1, 2]), { wet: 1, inside: 0, people: 3, loss: 0 });
   assert.deepEqual(summarize([p], 2, [0, 1, 2]), { wet: 1, inside: 1, people: 3, loss: 1000 });
   assert.equal(clockLabel(7.5), 'T+7 h 30 min');
@@ -47,7 +49,20 @@ test('published scenario data is consistent', async () => {
     const b = rowsToObjects(JSON.parse(await readFile(new URL('buildings.json', dir), 'utf8')));
     assert(s.frames.length >= 2);
     assert(s.frames.every((f, i) => i === 0 || f.hour > s.frames[i - 1].hour), `${id}: frame hours must ascend`);
-    for (const f of s.frames) await readFile(new URL(f.image, dir));
+    if (s.depth_zarr) {
+      // Zarr depth (stormwatch-flood): one time step per frame, every hour of a tile in one chunk, gzip only
+      const z = JSON.parse(await readFile(new URL(`${s.depth_zarr}/depth/zarr.json`, dir), 'utf8'));
+      assert.equal(z.shape[0], s.frames.length, `${id}: Zarr time steps`);
+      assert.equal(z.chunk_grid.configuration.chunk_shape[0], s.frames.length, `${id}: a chunk holds every hour`);
+      assert.deepEqual(z.dimension_names, ['time', 'y', 'x']);
+      assert(['uint16', 'uint8'].includes(z.data_type) && z.codecs.every(c => ['transpose', 'bytes', 'gzip'].includes(c.name)), `${id}: codecs the page reads`);
+      // arrival[y, x] in minutes (65535 never): the page grows the water and front from it between frames
+      const a = JSON.parse(await readFile(new URL(`${s.depth_zarr}/arrival/zarr.json`, dir), 'utf8'));
+      assert.deepEqual(a.shape, z.shape.slice(1), `${id}: arrival grid matches depth`);
+      assert.equal(a.data_type, 'uint16');
+      assert.equal(a.fill_value, 65535);
+    } else for (const f of s.frames) await readFile(new URL(f.image, dir));
+    if (s.buildings_parquet) assert.equal((await readFile(new URL(s.buildings_parquet, dir))).subarray(0, 4).toString(), 'PAR1', `${id}: Parquet file`);
     assert.equal(b.length, s.totals.buildings);
     assert(['samples', 'ramp'].includes(s.depth_model));
     for (const p of b) {

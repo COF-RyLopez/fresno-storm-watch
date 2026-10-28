@@ -1,7 +1,8 @@
 import { loadSdk } from './lib/map.js?v=0.42.0';
-import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js?v=0.39.0';
+import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js?v=0.60.0';
 import { createTrafficCanvas, loadTraffic } from './lib/evacuation-traffic.js?v=0.19.0';
 import { createFrameWindow } from './lib/frame-window.js?v=0.39.0';
+import { createZarrFrames } from './lib/zarr-frames.js?v=0.60.0';
 
 const ROOT = './data/flood-scenarios/';
 // Phones get the map first: the panel starts collapsed behind Details, and traffic loads only when switched on.
@@ -16,16 +17,15 @@ const id = index.scenarios.some(s => s.id === requested) ? requested : index.def
 const DATA = `${ROOT}${id}/`;
 $('scenario-pick').innerHTML = index.scenarios.map(s => `<calcite-option value="${s.id}"${s.id === id ? ' selected' : ''}>${s.label}</calcite-option>`).join('');
 $('scenario-pick').addEventListener('calciteSelectChange', e => { if (e.target.value !== id) location.search = `?scenario=${encodeURIComponent(e.target.value)}`; });
-const [scenario, buildingsJson, sdk] = await Promise.all([
-  fetch(DATA + 'scenario.json').then(r => r.json()),
-  fetch(DATA + 'buildings.json').then(r => r.json()),
-  loadSdk()
-]);
-const [Map, MapView, Basemap, TileLayer, MediaLayer, ImageElement, ExtentAndRotationGeoreference, Extent, FeatureLayer, GeoJSONLayer, Graphic, Point, reactiveUtils] = await sdk.import([
+// Data formats per scenario: depth from hourly PNG frames, or from a Zarr store (scenario.depth_zarr) with real
+// values; buildings from buildings.json, or from Parquet (scenario.buildings_parquet). Both written by stormwatch-flood.
+const [scenario, sdk] = await Promise.all([fetch(DATA + 'scenario.json').then(r => r.json()), loadSdk()]);
+const buildingsJson = scenario.buildings_parquet ? null : await fetch(DATA + 'buildings.json').then(r => r.json());
+const [Map, MapView, Basemap, TileLayer, MediaLayer, ImageElement, ExtentAndRotationGeoreference, Extent, FeatureLayer, GeoJSONLayer, Graphic, Point, reactiveUtils, ParquetLayer, ParquetFilesData] = await sdk.import([
   '@arcgis/core/Map.js', '@arcgis/core/views/MapView.js', '@arcgis/core/Basemap.js', '@arcgis/core/layers/TileLayer.js',
   '@arcgis/core/layers/MediaLayer.js', '@arcgis/core/layers/support/ImageElement.js', '@arcgis/core/layers/support/ExtentAndRotationGeoreference.js',
   '@arcgis/core/geometry/Extent.js', '@arcgis/core/layers/FeatureLayer.js', '@arcgis/core/layers/GeoJSONLayer.js', '@arcgis/core/Graphic.js',
-  '@arcgis/core/geometry/Point.js', '@arcgis/core/core/reactiveUtils.js'
+  '@arcgis/core/geometry/Point.js', '@arcgis/core/core/reactiveUtils.js', '@arcgis/core/layers/ParquetLayer.js', '@arcgis/core/layers/support/ParquetFilesData.js'
 ]);
 
 const frames = scenario.frames;
@@ -43,13 +43,19 @@ const stops = scenario.legend;
 $('ramp').style.background = `linear-gradient(to right, ${stops.map(s => `rgba(${s.rgba.slice(0, 3)},${s.rgba[3] / 255}) ${(100 * s.ft) / stops.at(-1).ft}%`).join(',')})`;
 $('ramp-labels').innerHTML = stops.map(s => `<span>${s.ft}${s === stops.at(-1) ? '+' : ''}</span>`).join('');
 
-// Depth: one image per model hour; playback cross-fades the two frames around the current fractional hour.
-// Only the frames on screen (plus the next) are in the layer: all of them at once exhausted phone memory (lib/frame-window.js).
+// Depth: PNG scenarios have one image per model hour, cross-faded around the current fractional hour, and only the frames
+// on screen (plus the next) in the layer: all of them at once exhausted phone memory (lib/frame-window.js). Zarr
+// scenarios redraw one canvas from arrival times and real depths, flood front included (lib/zarr-frames.js).
 const depth = new MediaLayer({ source: [], title: 'Modeled depth', blendMode: 'normal' });
-const showFrames = createFrameWindow(depth.source.elements,
-  i => new ImageElement({ image: DATA + frames[i].image, opacity: 0, georeference: new ExtentAndRotationGeoreference({ extent }) }), frames.length);
+const georeference = new ExtentAndRotationGeoreference({ extent });
+const zarr = scenario.depth_zarr
+  ? await createZarrFrames(new URL(`${DATA}${scenario.depth_zarr}/`, location.href), depth.source.elements,
+    image => new ImageElement({ image, opacity: 0, georeference }), stops)
+  : null;
+const showFrames = zarr ? zarr.show
+  : createFrameWindow(depth.source.elements, i => new ImageElement({ image: DATA + frames[i].image, opacity: 0, georeference }), frames.length);
 
-const front = new GeoJSONLayer({
+const front = zarr ? null : new GeoJSONLayer({
   url: DATA + 'front.geojson', title: 'Flood front', definitionExpression: 'hour = -1',
   renderer: { type: 'simple', symbol: { type: 'simple-fill', color: [0, 0, 0, 0], outline: { color: [255, 176, 0, 0.9], width: 1.5 } } }
 });
@@ -57,14 +63,10 @@ const front = new GeoJSONLayer({
 // Buildings: the renderer compares depth at the displayed time with the first-floor height.
 // Depth comes from per-frame samples d0..dN ('samples') or from arrival / peak / maximum ('ramp'); see lib/flood-scenario-model.js.
 const samples = scenario.depth_model === 'samples';
-const props = rowsToObjects(buildingsJson);
 const INTEGER = new Set(['fd_id', 'stories', 'val_struct', 'pop_night', 'pop_day', 'loss_usd']);
-const fields = [{ name: 'oid', type: 'oid' }, ...buildingsJson.fields.filter(f => f !== 'lon' && f !== 'lat')
+const fields = buildingsJson && [{ name: 'oid', type: 'oid' }, ...buildingsJson.fields.filter(f => f !== 'lon' && f !== 'lat')
   .map(name => ({ name, type: name === 'occtype' ? 'string' : INTEGER.has(name) ? 'integer' : 'double' }))];
-const buildings = new FeatureLayer({
-  title: 'Buildings (NSI)', minScale: 150_000, objectIdField: 'oid', fields, geometryType: 'point', spatialReference: { wkid: 4326 },
-  source: props.map(({ lon, lat, ...a }, i) => new Graphic({ geometry: { type: 'point', longitude: lon, latitude: lat }, attributes: { oid: i + 1, ...a } })),
-  popupTemplate: {
+const popupTemplate = fieldNames => ({
     title: '{occtype} · NSI {fd_id}',
     content: [
       { type: 'fields', fieldInfos: [
@@ -77,13 +79,28 @@ const buildings = new FeatureLayer({
         { fieldName: 'struct_pct', label: 'Hazus structure damage (%)', format: { places: 0 } },
         { fieldName: 'loss_usd', label: 'Hazus direct loss, structure + contents ($)', format: { digitSeparator: true, places: 0 } },
         { fieldName: 'pop_night', label: 'Residents, night (NSI)' }, { fieldName: 'pop_day', label: 'Occupants, day (NSI)' }]
-        .filter(f => fields.some(x => x.name === f.fieldName)) },
+        .filter(f => fieldNames.includes(f.fieldName)) },
       ...(samples ? [{ type: 'media', mediaInfos: [{ type: 'line-chart', title: 'Depth at building by model frame (ft)', value: { fields: frames.map((_, i) => `d${i}`) } }] }] : []),
       { type: 'text', text: scenario.popup_note }]
-  }
 });
+let props;
+let buildings;
+if (buildingsJson) {
+  props = rowsToObjects(buildingsJson);
+  buildings = new FeatureLayer({
+    title: 'Buildings (NSI)', minScale: 150_000, objectIdField: 'oid', fields, geometryType: 'point', spatialReference: { wkid: 4326 },
+    source: props.map(({ lon, lat, ...a }, i) => new Graphic({ geometry: { type: 'point', longitude: lon, latitude: lat }, attributes: { oid: i + 1, ...a } })),
+    popupTemplate: popupTemplate(fields.map(f => f.name))
+  });
+} else {
+  // Parquet with longitude/latitude columns (the SDK's ParquetLayer, beta, reads those but not WKB points)
+  buildings = new ParquetLayer({ title: 'Buildings (NSI)', minScale: 150_000, data: new ParquetFilesData({ urls: [new URL(DATA + scenario.buildings_parquet, location.href).href] }) });
+  await buildings.load();
+  buildings.popupTemplate = popupTemplate(buildings.fields.map(f => f.name));
+  props = (await buildings.queryFeatures({ where: '1=1', outFields: ['*'], returnGeometry: false })).features.map(f => f.attributes); // for the summary panel
+}
 const depthExpression = (q, { i0, i1, w }) => samples
-  ? `var d = $feature.d${i0} * ${1 - w} + $feature.d${i1} * ${w};`
+  ? `var a = $feature.arrive_hr; var d = IIf(!IsEmpty(a) && ${q} < a, 0, $feature.d${i0} * ${1 - w} + $feature.d${i1} * ${w});`
   : `var a = $feature.arrive_hr; var pk = $feature.peak_hr; var m = $feature.depth_max; var t = ${q}; var f = Min(1, m);
      var d = IIf(IsEmpty(a) || t < a, 0, IIf(t >= pk || pk <= a, m, f + (m - f) * (t - a) / (pk - a)));`;
 const buildingRenderer = (q, b) => ({
@@ -103,7 +120,7 @@ const themedBasemap = () => {
     referenceLayers: [new TileLayer({ url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${mode}_Gray_Reference/MapServer` })]
   });
 };
-const map = new Map({ basemap: themedBasemap(), layers: [depth, front, buildings] });
+const map = new Map({ basemap: themedBasemap(), layers: [depth, front, buildings].filter(Boolean) });
 const view = new MapView({ container: 'view', map, extent: extent.clone().expand(1.15), constraints: { snapToZoom: false } });
 window.addEventListener('storm-theme-change', () => { map.basemap = themedBasemap(); });
 
@@ -114,11 +131,13 @@ let rendererAt = 0;
 function render(next) {
   t = Math.min(Math.max(next, hours[0]), hours.at(-1));
   const { i0, i1, w } = blend(t, hours);
-  showFrames(i0, i1, w);
+  showFrames(i0, i1, w, t);
   const hour = w < 0.5 ? frames[i0].hour : frames[i1].hour;
-  if (hour !== shownHour) { shownHour = hour; front.definitionExpression = `hour = ${hour}`; }
-  const q = Math.round(t * 4) / 4; // ponytail: building symbols refresh every 15 model minutes; per-frame renderer swaps cost more than they show
-  // ponytail: while playing, rebuild the building renderer at most ~3 times a second (44k points in the Fresno scenario)
+  if (front && hour !== shownHour) { shownHour = hour; front.definitionExpression = `hour = ${hour}`; }
+  // ponytail: building symbols refresh every 15 model minutes (5 for small scenarios); per-frame renderer swaps cost more than they show
+  const steps = props.length < 5000 ? 12 : 4;
+  const q = Math.round(t * steps) / steps;
+  // ponytail: while playing, rebuild the building renderer at most ~3 times a second; faster dropped Muncie (538 points) to ~53 fps
   if (q !== shownBlend && (!playing || performance.now() - rendererAt > 330)) { shownBlend = q; rendererAt = performance.now(); const b = blend(q, hours); buildings.renderer = buildingRenderer(q, { ...b, w: Number(b.w.toFixed(2)) }); }
   const s = summarize(props, t, hours);
   $('clock').textContent = clockLabel(t);
@@ -172,6 +191,16 @@ if (carCanvas) {
   $('traffic-show').addEventListener('calciteSwitchChange', () => { if ($('traffic-show').checked && !traffic) showTraffic($('traffic-mode').value); else drawTraffic(); });
   reactiveUtils.watch(() => [view.extent, view.size], () => carCanvas.draw(), { initial: false });
   if (PHONE) $('traffic-show').checked = false; else showTraffic('base');
+}
+// Click for depth (Zarr scenarios carry real values, not pictures): the modeled depth at that point, at the time shown.
+if (zarr) {
+  $('probe').hidden = false;
+  view.on('click', e => {
+    const { i0, i1, w } = blend(t, hours);
+    const d = zarr.depthAt(e.mapPoint.x, e.mapPoint.y, i0, i1, w, t);
+    $('probe').textContent = d == null ? 'Clicked point: outside the model area.'
+      : d > 0 ? `Clicked point: ${d.toFixed(2)} ft of water at ${clockLabel(t)}.` : `Clicked point: dry at ${clockLabel(t)}.`;
+  });
 }
 
 let playing = false;
