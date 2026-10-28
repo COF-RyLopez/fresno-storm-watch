@@ -13,9 +13,9 @@ const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appea
 const link=(label,href)=>{const a=el('a',label);a.href=href;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** Public CDPH, county-zone, Places and Overture-footprint reference comparison. */
-export function createCareWatch({exercise=false,onMap=()=>{},onCapture=()=>{},onClearPrivate=()=>{},onSummary=()=>{},onPower=()=>{},onRoad=()=>{},exerciseNow=Date.now()}={}){
+export function createCareWatch({exercise=false,onMap=()=>{},onCapture=()=>{},onClearPrivate=()=>{},onSummary=()=>{},onReviews=()=>{},onPower=()=>{},onRoad=()=>{},exerciseNow=Date.now()}={}){
  let county=null,controller=null,graphics=null,session=null,facilities=null,zones=null,places=null,selected=null,buildingResult=null,comparison=[],epoch=0,busy=false,loaded=false,placesPending=null;
- const reviews=createCareReviews({exercise,exerciseNow,onSelect:key=>select(key),onSummary,onPower,onRoad,onChange:rows=>{graphics?.setSites(facilities?.rows||[],rows);if(selected){graphics?.setReview(reviews.get(selected.key));renderDetail();}}});
+ const reviews=createCareReviews({exercise,exerciseNow,onSelect:key=>select(key),onSummary,onPower,onRoad,onChange:rows=>{onReviews(rows);graphics?.setSites(facilities?.rows||[],rows);if(selected){graphics?.setReview(reviews.get(selected.key));renderDetail();}}});
  const errors={},time=careTime;
  function message(text){$('care-message').textContent=text;}
  function clearSelection(){epoch++;selected=null;buildingResult=null;comparison=[];delete errors.buildings;graphics?.clearSelection();$('care-details').replaceChildren();}

@@ -1,0 +1,68 @@
+/* Mission layout. Calcite owns component appearance; these rules size regions and native evidence rows. */
+.shell-header{max-height:42dvh}
+.app-logo-image{width:42px;height:42px}
+.app-brand{padding-inline-start:10px;gap:4px}
+.mission-nav{padding:4px 8px;border:0;background:transparent;gap:4px;flex-wrap:nowrap}
+.mission-nav calcite-button{min-width:0;flex:none}
+#header-actions-host:empty,#mobile-mission-nav:empty{display:none}
+#header-tools-open{display:block;margin-inline:8px}
+#header-tools-host{max-width:310px}
+#header-tools-host .navigation-actions{display:flex;flex-direction:column;align-items:stretch;padding:8px;gap:4px}
+#header-tools-host #identity-status{padding:8px 12px;font-size:12px;color:var(--calcite-color-text-2)}
+.scope-bar{padding:2px 12px;min-height:30px;gap:12px;flex-wrap:wrap}
+.scope-bar .mission-clock{padding:0;border:0;font-size:11px;margin-inline-start:auto}
+.scope-bar #eyebrow{font-size:10px}
+.county-strip{gap:0 6px;padding:1px 8px;flex-wrap:wrap;align-items:center}
+.county-strip calcite-button{flex:0 1 auto;--calcite-button-font-size:11px}
+.county-pump-counts{display:none!important}
+.topic-tools-list{display:grid;padding:8px}
+.command-watch{padding:0}
+#mission-counts{padding:10px 14px 0;color:var(--calcite-color-text-2);font-size:12px;line-height:1.5}
+.command-list-controls{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--calcite-color-border-3)}
+.command-list-controls label{margin:0;font-size:12px;flex-shrink:0;white-space:nowrap}
+.command-list-controls select{margin:0;padding:6px 8px;font-size:13px;min-width:0}
+.command-row{display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:start;width:100%;padding:12px 14px;background:transparent;color:var(--calcite-color-text-1);border:0;border-bottom:1px solid var(--calcite-color-border-3);font:inherit;cursor:pointer;line-height:1.4;border-inline-start:3px solid transparent}
+.command-row>span:first-child{font-size:11px;color:var(--calcite-color-text-2)}
+.command-row strong{font-size:14px;font-weight:600}
+.command-row>span:not(:first-child){font-size:13px}
+.command-row small{font-size:11px;color:var(--calcite-color-text-2)}
+.command-row:hover{background:var(--calcite-color-foreground-2)}
+.command-row[aria-pressed=true]{background:var(--calcite-color-foreground-2);border-inline-start-color:var(--calcite-color-brand)}
+.command-row:focus-visible{outline:2px solid var(--calcite-color-focus-color);outline-offset:-3px}
+#mission-concerns>p{padding:16px;font-size:13px;line-height:1.5}
+.command-pager{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;font-size:12px;color:var(--calcite-color-text-2)}
+#mission-specialist{margin:8px 14px;border-bottom:1px solid var(--calcite-color-border-3)}
+#mission-specialist>summary,#mission-advanced-watch>summary{font-size:13px;font-weight:400;line-height:1.5}
+#mission-specialist>summary{padding:6px 0}
+#mission-feedback:not(:empty){padding:10px 14px;font-size:13px}
+#scenario-library>p,.command-note{font-size:13px;line-height:1.5;color:var(--calcite-color-text-2);margin-block:8px}
+#scenario-library>details,#scenario-advanced{font-size:13px;line-height:1.5;margin-top:12px}
+#scenario-advanced{border-top:1px solid var(--calcite-color-border-3);padding-top:12px}
+#scenario-library-open{width:100%}
+#mission-evidence-content>details{margin:12px 0;font-size:13px;line-height:1.5}
+#mission-evidence-content .mission-actions{margin-block:12px}
+/* Search stays visible; secondary map actions share a row on wide workspaces. */
+@container(min-width:900px){
+ #map-panel .map-toolbar-stack{display:grid;grid-template-columns:minmax(260px,1fr) auto;align-items:center;gap:4px 10px}
+ .map-search-launch{min-width:0}
+ #map-panel .map-action-row{border:0;padding:0;gap:4px}
+ #map-panel .source-notes{grid-column:1/-1}
+}
+#map-panel .map-toolbar-stack{padding-block:4px;gap:4px}
+#map-panel .map-search-launch{gap:4px}
+#map-search-submit{--calcite-button-font-size:12px}
+#map-panel .map-action-row{gap:4px}
+@media(max-width:900px){
+ .mission-nav{justify-content:space-between;gap:2px;padding:2px 6px}
+ .mission-nav calcite-button{flex:1;--calcite-button-font-size:12px}
+ .scope-bar{padding:0 8px;gap:2px 8px}
+ .scope-bar .scope-label,.scope-bar #eyebrow{display:none}
+ .scope-bar .mission-clock{margin-inline-start:0;font-size:10px}
+ .scope-bar #mission-tools-toggle{margin-inline-start:auto}
+ .county-strip{justify-content:flex-start;padding:0 4px;gap:0 2px}
+ .county-strip calcite-button{flex:0 1 auto;--calcite-button-font-size:10px}
+ #header-tools-open{--calcite-button-font-size:12px}
+ #tools-shell{--calcite-shell-panel-width:100vw;--calcite-shell-panel-max-width:100vw}
+ #mission-specialist{margin-inline:12px}
+}
+@media(prefers-reduced-motion:reduce){.command-row{scroll-behavior:auto}}

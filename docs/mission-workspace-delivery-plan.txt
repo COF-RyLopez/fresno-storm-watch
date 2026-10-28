@@ -1,0 +1,99 @@
+F.R.O.G. MISSION WORKSPACE DELIVERY PLAN
+Prepared 2026-10-28 • Baseline: 9767ca6 / 0.57.0-r2
+
+OUTCOME
+An EOC operator can identify a concern, inspect its evidence, assign verification
+and prepare a handoff without managing a layer list. Preserve source semantics,
+private permissions, monitoring, direct links and F.R.O.G. / Calcite dark mode.
+
+1. BASELINE AND RECOVERY [complete]
+   Inspect the current workstation and phone layouts and the flood-animation
+   branch. The original branch feature is merged; 12 Fresno library entries are
+   already available. Preserve 9767ca6 as the rollback point. No data migration.
+
+2. COMPACT APPLICATION FRAME [implemented in 0.58.0; release verification below]
+   Keep County Watch, Planning and Briefing & Handoff as the three destinations.
+   Collapse account/help and topic tools. Combine redundant status rows; retain
+   conspicuous source failures and live / hypothetical distinctions. Keep search
+   discoverable. Give the map substantially more usable height. On phones, offer
+   List / Map without requiring a long scroll through controls.
+   Accept: 1440x900, 1280x720 and phone layouts work with labeled keyboard controls.
+
+3. UNIFIED COUNTY WATCH [implemented in 0.58.0; release verification below]
+   Present river, resident-care, drainage/pump, utility and road review evidence
+   in one selectable list. Reuse existing domain assessments; no combined risk
+   score, new hazard thresholds or invented assignments. Show place, reason,
+   timing and evidence qualification; full explanation lives in the evidence pane.
+   Existing detailed lists and private connect/update controls remain available
+   under expandable specialist tools. Keep private rows in memory and clear them
+   on sign-out / source disconnect. Counts remain independent of map panning.
+   Accept: selecting each type reaches the correct evidence and map location;
+   failed feeds remain qualified, historical contradictions do not become closures.
+
+4. LIBRARY-FIRST PLANNING [implemented in 0.58.0; release verification below]
+   Open Planning with available Fresno published scenarios, a compact selector
+   and one inspect action. Retain the map's independent scenario clock and depth
+   legend. Keep the custom-run wizard and queue under advanced modeling/setup;
+   do not present a runnable template until its baseline and hosting gates pass.
+   State interpolation, arrival threshold and missing recession limitations.
+   Keep the out-of-county demonstration outside the Fresno operator list.
+   Accept: library playback works immediately, and switching back to County Watch
+   stops hypothetical playback without stopping live collectors.
+
+5. CONTEXTUAL EVIDENCE AND RELEASE [implemented in 0.58.0; release verification below]
+   Make Assign follow-up the leading river-review action; briefing capture remains
+   easy to reach. Move technical source lists and extra tools into disclosures.
+   Run focused tests, regression tests, deployment checks and browser checks for
+   direct links, Back/Forward, rapid switching, private clearing and phone layout.
+   Publish only after these checks; verify the published page. Rollback: redeploy
+   9767ca6. No existing AGOL item, group or editing permission is changed.
+
+6. INCIDENT WORK FOCUS [next increment]
+   Add Prepare / Respond / Recover / Closeout as a view of work for the selected
+   private incident, not an activation control. Prepare shows timing/readiness;
+   Respond shows verified changes, overdue follow-ups and decisions; Recover
+   shows inspections and restoration verification; Closeout shows unresolved
+   assignments, approvals, exports and lessons. County OES confirms terminology,
+   closure authority and required forms before any new official-state workflow.
+   Reuse private coordination, incident, period and briefing records; preserve
+   append-only corrections and server permissions. Do not clear source hazards
+   when a task or incident is closed.
+
+7. SCENARIO EVIDENCE QUALITY [parallel research / next increment]
+   Reconcile each library source/version, original numeric grids, units/datums,
+   arrival threshold and permitted use. Distinguish published maximum/arrival
+   products from interpolated frames. Before the one-foot arrival threshold,
+   conditions are not established as dry. Keep illustrative evacuation traffic,
+   population and economic-loss calculations outside the default command center.
+   Compare facilities/roads with source geometry and retained uncertainties; NSI
+   occupancy records must not be counted as unique physical building footprints.
+   Seek technical review from model owners. Existing software tests alone do not
+   establish engineering validity. Custom hydraulic runs remain separately gated.
+
+8. TABLETOP AND ITERATION [county participation needed]
+   With two EOC testers, exercise: identify concern → inspect timing/gaps → assign
+   verification → capture briefing → shift handoff → verify restoration → closeout.
+   Record completion time, missed information and navigation errors. Verify a
+   viewer cannot write and an authorized account can complete its permitted work.
+   Address observed friction before adding feeds or more navigation.
+
+COUNTY INPUTS NEEDED LATER
+* County OES: one operational reviewer, work-stage terminology, restoration and
+  closeout approval rules, required reporting / after-action templates.
+* County GIS: two eligible test accounts with existing least-privilege access.
+* FMFCD/model owners: participation and hydraulic/source validation as available.
+* County IT: approved host/region/administrator/budget only when custom simulation
+  service deployment is ready. No new cloud resources are provisioned in 0.58.0.
+
+RELEASE 0.58.0 VERIFICATION — 2026-10-28
+551 JavaScript regression tests passed; syntax, static links, source contracts,
+public-configuration and pinned-asset checks passed. New queue checks cover
+stable keys, missing times, private eligibility, restored/inactive history,
+overdue pump assignments and paging independent of countywide assessments.
+Browser checks: workstation 1440x900, laptop 1280x720 and phone 390x844; map/list,
+topic navigation and Back; river, resident-care, power and road selection while
+remaining in County Watch; library map playback, source legend and independent
+scenario time; existing fictional private exercise pump selection and task data.
+Private live data access was not expanded; no live records were written. Two named
+EOC tester acceptance, OES policy review, model-owner numerical validation and
+recovery/closeout work remain pending as specified in steps 6–8.

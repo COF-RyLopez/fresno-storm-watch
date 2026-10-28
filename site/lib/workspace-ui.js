@@ -2,15 +2,17 @@ import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.57.0';
 /** One active topic, independent map state, and no persisted operational data. */
 export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
-  let section=workspaceRoute(location.href),mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch',panelOpen=true,camerasOpen=false,map=null,syncing=false;
+  let section=workspaceRoute(location.href),mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch',panelOpen=!compact.matches,camerasOpen=false,map=null;
   const cameraStates=new Map(),cameraPanel=$('camera-panel');
   function mapLabels(){
     const narrow=compact.matches||$('map-panel').getBoundingClientRect().width<520;
     $('fit-region').setAttribute('text',narrow?'Fit':'Fit workspace');
+    for(const [id,short,long]of [['map-search-open','Results','Search results'],['context-open','Layers','Context layers'],['map-tools-open','Map tools','Map tools']])$(id).setAttribute('text',narrow?short:long);
     if(!$('map-panel').classList.contains('map-expanded'))$('expand-map').setAttribute('text',narrow?'Expand':'Expand map');
   }
   function render(){
-    const actionHost=compact.matches?$('header-tools-host'):$('header-actions-host');if($('header-actions').parentElement!==actionHost)actionHost.append($('header-actions'));if(!compact.matches)$('header-tools-menu').removeAttribute('open');
+    const nav=document.querySelector('.mission-nav'),navHost=compact.matches?$('mobile-mission-nav'):$('command-navigation');if(nav.parentElement!==navHost)navHost.append(nav);
+    const actionHost=$('header-tools-host');if($('header-actions').parentElement!==actionHost)actionHost.append($('header-actions'));
     for(const [id,p] of Object.entries(WORKSPACES))$(p.panel).hidden=mission!=='watch'||id!==section;
     $('scenarios-panel').hidden=mission!=='scenarios';$('mission-briefing-panel').hidden=mission!=='briefing';
     for(const id of ['river-metrics','weather-metrics','weather-footer'])$(id).hidden=false;
@@ -22,13 +24,11 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     else if(dock.matches){$('camera-sheet').removeAttribute('open');if(cameraPanel.parentElement!==$('camera-shell'))$('camera-shell').append(cameraPanel);$('camera-shell').hidden=!camerasOpen;}
     else{$('camera-shell').hidden=true;if(cameraPanel.parentElement!==$('camera-sheet-host'))$('camera-sheet-host').append(cameraPanel);$('camera-sheet').toggleAttribute('open',camerasOpen);}
     evidence?.layout();
-    syncing=true;
     for(const title of document.querySelectorAll('[data-workspace]')){title.selected=title.dataset.workspace===section;title.toggleAttribute('selected',title.selected);}
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
-    syncing=false;
-    $('storm-shell').dataset.workspace=section;
+    $('storm-shell').dataset.workspace=section;$('storm-shell').dataset.destination=mission;$('workspace-tabs').hidden=true;
     $('map-panel').setAttribute('heading',mission==='scenarios'?'Hypothetical scenario map':mission==='briefing'?'Briefing map':WORKSPACES[section].title+' map');$('scope-note').textContent=mission==='scenarios'?'Hypothetical model/library domain · independent scenario clock':mission==='briefing'?'Captured evidence · verify source timing and access':WORKSPACES[section].description;
-    $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Scenarios':'Briefing'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
+    $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Planning':'Briefing & Handoff'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     mapLabels();
   }
   function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
@@ -41,9 +41,9 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     window.dispatchEvent(new Event('stormWorkspaceChange'));
   }
   function showMap(){panelOpen=!compact.matches;render();}
-  $('workspace-tabs').addEventListener('calciteTabsActivate',e=>{const id=e.target.dataset.workspace;if(!syncing&&id&&id!==section)showPanel(id);});
-  for(const title of document.querySelectorAll('[data-workspace]'))title.addEventListener('click',()=>{if(title.dataset.workspace!==section)showPanel(title.dataset.workspace);});
-  window.addEventListener('popstate',()=>{section=workspaceRoute(location.href);mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';render();if(map)void map.setWorkspace(section);});
+  // Legacy tab elements remain hidden for compatibility. Their asynchronous activation
+  // events must not re-navigate after a topic-menu choice or a browser history change.
+  window.addEventListener('popstate',()=>{cameraStates.set(section,camerasOpen);section=workspaceRoute(location.href);camerasOpen=cameraStates.get(section)||false;mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';evidence?.close({restoreFocus:false});render();if(map)void map.setWorkspace(section);onCameraChange(camerasOpen);onActivate(section);});
   $('workspace-list').addEventListener('click',()=>{panelOpen=true;render();});
   $('view-map').addEventListener('click',showMap);
   $('view-cameras').addEventListener('click',()=>onCameraChange(!camerasOpen));

@@ -12,7 +12,7 @@ const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.crea
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 
 /** Private inventory and correlation results live in this tab only, including during asynchronous joins. */
-export function createDrainageReviews({config,timeZone,exercise=false,exerciseData=null,onSummary=()=>{},onConnect=()=>{},onFacilities=()=>{},onMap=()=>{},onRecord=()=>{},onRoad=()=>{},onFacility=()=>{},onPower=()=>{},onRainfall=()=>{},onCapture=()=>{},onAssign=()=>{},onClear=()=>{},onReadiness=()=>{},onPumpTask=()=>{},renderReadiness=()=>{},renderNearby=()=>{}}){
+export function createDrainageReviews({config,timeZone,exercise=false,exerciseData=null,onSummary=()=>{},onReviews=()=>{},onConnect=()=>{},onFacilities=()=>{},onMap=()=>{},onRecord=()=>{},onRoad=()=>{},onFacility=()=>{},onPower=()=>{},onRainfall=()=>{},onCapture=()=>{},onAssign=()=>{},onClear=()=>{},onReadiness=()=>{},onPumpTask=()=>{},renderReadiness=()=>{},renderNearby=()=>{}}){
   let snapshot=null,roads=null,facilities=null,rain=null,map=null,model=[],generation=0,queued=false,busy=false,error=null,selected=null,facilitySignature='',rainPromise=null,rainAbort=null,listSignature='';
   let power=null,previousPower=new Map(),powerSignature='',powerEpoch=0;
   let readinessState=null,readinessEpoch=0,unmatchedReadiness=0,selectedPump=null;
@@ -44,7 +44,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
     finally{if(current()){busy=false;render();}}
   }
   function render(){
-    const connected=!!snapshot?.connected,review=model.filter(r=>r.review);
+    const connected=!!snapshot?.connected,review=model.filter(r=>r.review);onReviews({rows:model,ready:connected&&!busy&&!!map&&!error});
     pumpSummary.setData({groups:model,connected,busy:busy||!map,error,unmatched:unmatchedReadiness,readinessState});
     $('drainage-review-status').textContent=exercise?'EXERCISE · fictional basin, pump, utility, road, facility and rainfall records':!connected?(snapshot?.error||'Private review is not assessed. Sign in and load the FMFCD inventory; proposed assets are excluded.'):error||!map?'Drainage map / review is initializing.':busy?'Matching rainfall and nearby records. Private review count is checking.':`${review.length} drainage groups to review / ${model.length} existing inventory groups · ${[...previousPower.values()].filter(p=>p.review).length} pump records need power verification · ${[...previousPower.values()].filter(p=>p.readiness.needsReview||!p.inventoryCurrent).length} readiness follow-ups${unmatchedReadiness?` + ${unmatchedReadiness} saved associations need source rematching`:''} · evaluated ${time(Date.now())}. Group counts are not physical basin / pump counts.`;
     if(error)$('drainage-review-status').textContent=error;

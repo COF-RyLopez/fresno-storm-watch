@@ -115,5 +115,5 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     $('power-panel').prepend(controls);accept(powerExercise("watch",exerciseNow));checked=exerciseNow;render();
   }
   else{void refresh();setInterval(()=>{if(!document.hidden)void refresh();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});setInterval(render,30000);}
-  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);buildings.setMap(m);render();},selectNetwork(key){network.showFeature(key);},select(key){const row=rows().find(r=>r.key===key);if(row){onOpen();showDetail(row);}}};
+  return {setFacilities:network.setFacilities,setReadiness:network.setReadiness,setSession:network.setSession,setCounty(c){county=c;if(!exercise)void refresh(true);},setMap(m){map=m;network.setMap(m);buildings.setMap(m);render();},selectNetwork(key){network.showFeature(key);},select(key,{keepWorkspace=false}={}){const row=rows().find(r=>r.key===key);if(row){if(!keepWorkspace)onOpen();map?.setLayerPreference('power',true);showDetail(row);}}};
 }

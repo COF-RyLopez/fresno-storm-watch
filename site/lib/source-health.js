@@ -12,6 +12,9 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
     $('notify-areas').setAttribute('aria-label',$('notify-areas').textContent);
     if(compact.matches)$('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage`}${careCount===null?' · care checking':` · ${careCount} care`}`;
     pumpCounts.hidden=!compact.matches||!(pumpPowerCount||readinessCount||taskCounts?.active||taskCounts?.review);pumpCounts.textContent=`Pump power · ${pumpPowerCount??'unassessed'} / Pump readiness follow-ups · ${readinessCount??'unassessed'}${taskCounts?` / Assigned · ${taskCounts.active} / Overdue · ${taskCounts.overdue} / Task reviews · ${taskCounts.review}`:''}`;
+    const areaDetail=$('notify-areas').getAttribute('aria-label');$('notify-areas').title=areaDetail;
+    $('notify-areas').textContent=`Area reviews · ${areaCount===null||careCount===null?'checking':areaCount+careCount+(drainageCount??0)}`;
+    $('notify-alerts').title=`Weather alerts · ${alertCount??'checking'} across five counties${briefingUpdated?' · Hanford briefing updated':''}`;$('notify-alerts').setAttribute('aria-label',$('notify-alerts').title);$('notify-alerts').textContent=`NWS · ${alertCount??'checking'}${briefingUpdated?' · new briefing':''}`;
     $('notify-health').setAttribute('icon-start',issues.length?'exclamation-mark-triangle':'information');
     if(!$('source-health-dialog').hasAttribute('open'))return;const signature=JSON.stringify([exercise,[...list]]);if(signature===dialogSignature)return;dialogSignature=signature;
     const host=$('source-health-list');host.replaceChildren();
