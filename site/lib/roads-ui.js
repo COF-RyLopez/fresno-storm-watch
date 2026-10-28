@@ -1,4 +1,4 @@
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {
@@ -21,7 +21,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=
       const card=el('article');card.className='road-card';
       const title=el('h3'),locate=el('calcite-button',`${row.kind} · ${row.name}`);locate.setAttribute('appearance','outline');locate.setAttribute('scale','s');locate.onclick=()=>detail(row);title.append(locate);card.append(title,el('p',`${row.status} · ${row.location}`));
       card.append(el('p',`Source updated ${time(row.sourceTime)} · edited ${time(row.edited)}`));
-      const b=el('calcite-button','Review record');b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.onclick=()=>detail(row);card.append(b);host.append(card);
+      locate.setAttribute('aria-label',`Review ${row.kind} · ${row.name}`);host.append(card);
     }
     map?.setRoads(rows);
   }

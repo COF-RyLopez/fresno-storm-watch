@@ -1,11 +1,11 @@
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import { loadSdk } from './map.js?v=0.42.0';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js?v=0.40.1';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.37.0';
+import {createWeatherTimeline} from './weather-ui.js?v=0.59.0';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -56,7 +56,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   }
 
   function renderWeather(){
-    if(!exercise){reportHealth('radar','NOAA radar',{checked:radarChecked,error:radarError||(!radar[0]?'No recent CONUS image':Date.now()-radar[0].time>config.radarMaxAgeMs?'Newest observation is old':null)});reportHealth('wpc-cycle','WPC rainfall forecast cycle',{checked:qpfChecked,error:qpfError||(!qpf?'No forecast cycle':Date.now()-qpf.issue>config.qpfMaxAgeMs||qpf.end<Date.now()?'Forecast is old or ended':null)});}
+    if(!exercise){reportHealth('radar','NOAA radar',{checked:radarChecked,error:radarError,state:!radarChecked?'checking':!radar[0]?'coverage':Date.now()-radar[0].time>config.radarMaxAgeMs?'stale':null,detail:radar[0]?'Catalog check; the selected observation time remains on the map.':'No recent CONUS image returned.'});reportHealth('wpc-cycle','WPC rainfall forecast cycle',{checked:qpfChecked,error:qpfError,state:!qpfChecked?'checking':!qpf?'coverage':Date.now()-qpf.issue>config.qpfMaxAgeMs||qpf.end<Date.now()?'stale':null,detail:qpf?'Forecast issue and valid window remain on the map.':'No forecast cycle returned.'});}
     weather.setOverlay(overlay);weather.setContext({radar,radarError:radarError||(checkOverdue(radarChecked)?'Catalog check overdue':null),qpf,qpfError:qpfError||(checkOverdue(qpfChecked)?'Cycle check overdue':null)});
     for(const kind of ['off','radar','qpf','satellite']){$(`env-${kind}`).setAttribute('aria-pressed',String(overlay===kind));$(`env-${kind}`).setAttribute('appearance',overlay===kind?'solid':'outline');}
     $('radar-controls').hidden=overlay!=='radar';$('qpf-controls').hidden=overlay!=='qpf';
@@ -109,7 +109,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
     status.dataset.tone=snapshotError||overdue||snapshot?.stations.some(s=>s.error||s.scheduled?.error)?'gap':'normal';
     $('reservoir-read-time').textContent=snapshotRead?`App checked ${time(snapshotRead)} · collector target 15 min`:'Collector target 15 min · app checks each minute';
     if(!selection)return;
-    if(!exercise)for(const station of selection.stations){const row=snapshot?.stations.find(s=>s.id===station.id),bad=station.metrics.filter(m=>reservoirMetricState(row?.metrics?.[m.key],m,now).tone!=='normal');reportHealth('cdec:'+station.id,'CDEC · '+station.name,{checked:Date.parse(row?.lastSuccess),error:snapshotError||row?.error||row?.scheduled?.error||(!snapshotRead||now-snapshotRead>config.weatherCheckMaxAgeMs?'App snapshot check overdue':bad.length?bad.length+' metric(s) need verification':null),maxAgeMs:config.collectorMaxAgeMs});}
+    if(!exercise)for(const station of selection.stations){const row=snapshot?.stations.find(s=>s.id===station.id),bad=station.metrics.map(m=>({metric:m.label,...reservoirMetricState(row?.metrics?.[m.key],m,now)})).filter(m=>m.tone!=='normal');reportHealth('cdec:'+station.id,'CDEC · '+station.name,{checked:Date.parse(row?.lastSuccess),error:snapshotError||row?.error||row?.scheduled?.error,state:!snapshot?'checking':!snapshotRead||now-snapshotRead>config.weatherCheckMaxAgeMs||overdue||bad.some(m=>m.label==='Old reading')?'stale':bad.length?'coverage':null,detail:bad.length?bad.map(m=>m.metric+': '+m.label).join('; '):'Observation times, units and release schedules remain separate.',maxAgeMs:config.collectorMaxAgeMs});}
     const schedules=selection.stations.map(s=>scheduleEvidence({selection,snapshot,error:snapshotError,checked:snapshotRead,config},s.id,now));
     const key=JSON.stringify([snapshot,snapshotError,overdue,schedules,selection.stations.map(s=>s.metrics.map(m=>reservoirMetricState(snapshot?.stations.find(r=>r.id===s.id)?.metrics?.[m.key],m,now).label))]);
     if(key===reservoirRenderKey)return;reservoirRenderKey=key;

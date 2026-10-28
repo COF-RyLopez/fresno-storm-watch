@@ -4,7 +4,7 @@ import {setupAuth} from './lib/auth.js?v=0.40.0';
 import {loadSdk} from './lib/map.js?v=0.42.0';
 import {openPumpCopy} from './lib/pump-copy-data.js?v=0.48.0';
 import {PUMP_INVENTORY_CONFIG} from './pump-inventory-config.js?v=0.47.0';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.46.0';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.59.0';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
 import {pumpFormChoices,pumpFormCurrent,pumpFormRetainsSelection,pumpFormLink} from './lib/pump-form-model.js?v=0.48.0';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';

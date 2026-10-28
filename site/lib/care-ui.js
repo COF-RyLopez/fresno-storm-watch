@@ -1,7 +1,7 @@
-import {createCareReviews} from './care-review-ui.js?v=0.57.0-r2';
+import {createCareReviews} from './care-review-ui.js?v=0.59.0';
 import {careReviewExercise} from './care-review-exercise.js?v=0.57.0';
 import {careIdentity,careTime} from './care-review-model.js?v=0.57.0-r2';
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import {CARE_SOURCES,ZONE_STATUS,careBox,comparePlaces,compareBuildings,zonesAt,normalizeText} from './care-model.js?v=0.56.0-r1';
 import {readCareCollection,readCarePlaces} from './care-data.js?v=0.56.0-r1';
 import {loadPowerBuildings} from './power-buildings-data.js';
@@ -58,7 +58,7 @@ export function createCareWatch({exercise=false,onMap=()=>{},onCapture=()=>{},on
   try{const results=await Promise.allSettled([readCareCollection('facilities',{county}),readCareCollection('zones',{county})]);for(const [i,key]of ['facilities','zones'].entries()){const r=results[i];if(r.status==='rejected')errors[key]=r.reason.message;else{delete errors[key];if(key==='facilities')facilities=r.value;else zones=r.value;}}
    if(selected){const current=facilities?.rows.find(r=>r.key===selected.key);if(!current||careIdentity(current)!==careIdentity(selected)){clearSelection();message('Selected CDPH location changed or disappeared; verify the source and select its current record.');}else selected=current;}
    drawZones();renderList();renderSources();reviews.setSources(facilities,zones,errors);
-   for(const [key,label,result]of [['facilities','CDPH resident-care query',facilities],['zones','County evacuation-zone query',zones]])reportHealth('care:'+key,label,{checked:result?.checked,error:errors[key]||(result?.accounting.rejected?'Invalid publisher records excluded':null),maxAgeMs:420000,detail:'Query check only; individual condition times and facility operation are unverified.'});
+   for(const [key,label,result]of [['facilities','CDPH resident-care query',facilities],['zones','County evacuation-zone query',zones]])reportHealth('care:'+key,label,{checked:result?.checked,error:errors[key],state:result?.accounting.rejected?'coverage':null,maxAgeMs:420000,detail:`${result?.accounting.rejected?'Invalid publisher records excluded. ':''}Query check only; individual condition times and facility operation are unverified.`});
    if(!selected)message(Object.keys(errors).some(k=>['facilities','zones'].includes(k))?'Retained source evidence needs verification; inspect source status.':'Choose a CDPH record to inspect planning concerns and optional Overture comparisons.');
   }finally{busy=false;$('care-refresh').loading=false;}
  }

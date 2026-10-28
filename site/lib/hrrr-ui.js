@@ -1,5 +1,5 @@
 import {loadSdk} from './map.js?v=0.42.0';
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import {validateHrrrManifest,validateHrrrFrame,hrrrAt,hrrrPoint,hrrrPixels,GUST_STOPS} from './hrrr-model.js';
 
 const $=id=>document.getElementById(id);
@@ -27,7 +27,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
     $('hrrr-play').textContent=animate?'Pause wind animation':'Animate winds';$('hrrr-play').setAttribute('icon-start',animate?'pause':'play');$('hrrr-play').setAttribute('aria-pressed',String(animate));
     $('hrrr-play').toggleAttribute('disabled',exercise||!available||!windLayer);
     $('hrrr-next').toggleAttribute('disabled',exercise||!manifest?.frames.some(f=>Date.parse(f.valid)>target()));
-    if(!exercise)reportHealth('hrrr-grid','HRRR regional winds / gusts',{checked,error:error||mapError||(!manifest?'No grid collection':manifest.error||Date.now()-Date.parse(manifest.generatedAt)>45*60000?'Collection failed or overdue':Date.now()-Date.parse(manifest.run)>18*3600000?'Model run is old':null)});
+    if(!exercise)reportHealth('hrrr-grid','HRRR regional winds / gusts',{checked,error:error||mapError||manifest?.error,state:!manifest?'checking':Date.now()-Date.parse(manifest.generatedAt)>45*60000||Date.now()-Date.parse(manifest.run)>18*3600000?'stale':null,detail:'Latest regional model collection; timeline availability is shown separately.'});
   };
   function clear(){key='';frame=null;if(group){const old=group.layers.toArray();group.removeAll();for(const layer of old)layer.destroy();}windLayer=null;}
   async function json(url){const r=await fetch(url,{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error(`HRRR HTTP ${r.status}`);const text=await r.text();if(text.length>900000)throw Error('HRRR file exceeds regional size limit');return JSON.parse(text);}

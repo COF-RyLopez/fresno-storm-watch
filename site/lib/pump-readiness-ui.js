@@ -4,7 +4,7 @@ import {emptyRecords,makeEvent,heads,digest,canonical} from './eoc-model.js?v=0.
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION_OPTIONS,FUEL_OPTIONS,pumpBinding,bindingKey,validatePumpReadiness} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
 import {openPumpTask,renderPumpTasks} from './pump-task-ui.js?v=0.45.0';
-import {reportHealth} from './source-health.js?v=0.45.0';
+import {reportHealth} from './source-health.js?v=0.59.0';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 
@@ -13,7 +13,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
   if(![PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE].includes(scope))throw Error('Unknown readiness workspace.');
   let session=null,store=exercise?createExerciseStore(exerciseData?.readinessRecords):null,state={connected:exercise,records:[],tasks:[],checked:exercise?Date.now():null,error:null},epoch=0,loading=null,activeForm=null;
   const stamp=v=>new Date(v).toLocaleString('en-US',{timeZone,timeZoneName:'short'});
-  const publish=()=>{const status=document.getElementById('pump-readiness-status');if(status)status.textContent=exercise?'Pump readiness · fictional rehearsal in this tab only':!session?'Pump readiness · county AGOL sign-in required':state.error||!state.connected?'Pump readiness · '+(state.error||'checking private exercise storage…'):`Private exercise pump readiness connected · ${store?.allowed.has('checklists')?'submission access':'read-only access'} · checked ${stamp(state.checked)}. Open a pump to confirm readiness or assign follow-up.`;onData({...state});if(session&&!exercise)reportHealth('pump-readiness','Private pump readiness / assignments',{checked:state.checked,error:state.error,maxAgeMs:120000});};
+  const publish=()=>{const status=document.getElementById('pump-readiness-status');if(status)status.textContent=exercise?'Pump readiness · fictional rehearsal in this tab only':!session?'Pump readiness · county AGOL sign-in required':state.error||!state.connected?'Pump readiness · '+(state.error||'checking private exercise storage…'):`Private exercise pump readiness connected · ${store?.allowed.has('checklists')?'submission access':'read-only access'} · checked ${stamp(state.checked)}. Open a pump to confirm readiness or assign follow-up.`;onData({...state});if(!exercise)reportHealth('pump-readiness','Private pump readiness / assignments',{checked:session?state.checked:null,error:session?state.error:null,state:session?null:'unassessed',detail:session?'Private exercise records; query access does not confirm pump operation.':'County AGOL sign-in required; readiness not assessed.',maxAgeMs:120000});};
   const clearForm=()=>{activeForm?.replaceChildren();activeForm=null;};
   async function refresh(){
     if(loading)return loading;if(!exercise&&!session)return;

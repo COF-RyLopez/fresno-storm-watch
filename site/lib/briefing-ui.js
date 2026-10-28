@@ -1,6 +1,6 @@
 import {validateBriefingSnapshot,briefingState,BRIEFING_CHECK_MAX_AGE,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF} from './briefing-model.js';
 import {formatTime} from './model.js';
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import {PARTNER_BRIEFING} from './briefing-impact-model.js?v=0.21.0';
 import {createBriefingImpactView} from './briefing-impact-ui.js?v=0.22.0';
 const $=id=>document.getElementById(id);
@@ -35,7 +35,7 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
       v.reason.textContent=exercise?'Use the live app for NWS products.':health.reason;v.open.disabled=!doc||exercise;v.check.textContent=busy?'Checking briefing…':'Check briefing';v.check.disabled=busy||exercise;
     }
     $('hanford-briefing-open').disabled=exercise||!doc;
-    if(!exercise)reportHealth('hnx-briefing','NWS Hanford public briefing',{checked:doc?Date.parse(snapshot.lastSuccessAt||doc.collectedAt):null,error:health.tone==='gap'?health.reason:null,maxAgeMs:BRIEFING_CHECK_MAX_AGE});
+    if(!exercise)reportHealth('hnx-briefing','NWS Hanford public briefing',{checked:doc?Date.parse(snapshot.lastSuccessAt||doc.collectedAt):null,error:error||snapshot?.error,state:!snapshot?'checking':!doc?'coverage':health.tone==='gap'?'stale':null,detail:health.reason,maxAgeMs:BRIEFING_CHECK_MAX_AGE});
     onUpdate(updated);
     impacts.update(error?{...snapshot,error}:snapshot);
   }

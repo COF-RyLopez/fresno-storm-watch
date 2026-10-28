@@ -1,5 +1,5 @@
-import {reportHealth} from './source-health.js';
-import {createHrrrWeather} from './hrrr-ui.js?v=0.37.0';
+import {reportHealth} from './source-health.js?v=0.59.0';
+import {createHrrrWeather} from './hrrr-ui.js?v=0.59.0';
 import {loadSdk} from './map.js?v=0.42.0';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.19.0';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
@@ -61,7 +61,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
 
   function render(){
     const now=Date.now(),stamp=target(now),future=stamp>now;
-    if(!exercise){reportHealth('goes','NOAA GOES catalog',{checked:satelliteChecked,error:satelliteError||(!catalog?'No frame catalog':now-Math.max(...(catalog[product]||[]))>30*60000?'Newest observation is old':null)});for(const site of wind?.sites||[])reportHealth('wind:'+site.id,'NWS wind · '+site.name,{checked:windChecked,error:windError||windAt(site,now,now,overdue()).reason});}
+    if(!exercise){reportHealth('goes','NOAA GOES catalog',{checked:satelliteChecked,error:satelliteError,state:!catalog?'checking':!catalog[product]?.length?'coverage':now-Math.max(...catalog[product])>30*60000?'stale':null,detail:'Catalog check; observed imagery is not a future forecast.'});for(const site of wind?.sites||[]){const state=windAt(site,now,now,overdue());reportHealth('wind:'+site.id,'NWS wind · '+site.name,{checked:windChecked,error:windError||site.error,state:overdue()?'stale':!site.forecast?'coverage':state.reason?'stale':state.speed===null||state.gust===null?'coverage':null,detail:state.reason||'NWS point forecast; missing wind or gust values remain unknown.'});}}
     $('weather-selected-time').textContent=`${fixed===null?'Now · follows clock':future?'Forecast planning time':'Past planning time'} · ${time(stamp)}`;
     $('weather-live').setAttribute('appearance',fixed===null?'solid':'outline');
     $('weather-time').value=String(fixed===null?12:stops.reduce((best,t,i)=>Math.abs(t-stamp)<Math.abs(stops[best]-stamp)?i:best,0));

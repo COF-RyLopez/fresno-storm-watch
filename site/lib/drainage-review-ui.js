@@ -4,7 +4,7 @@ import {pumpTaskCounts} from './pump-task-model.js?v=0.45.0';
 import {createPumpSummary} from './pump-summary-ui.js?v=0.45.0';
 import {fetchDrainageRain} from './drainage-review-data.js';
 import {drainageReviewExercise} from './drainage-review-exercise.js?v=0.42.0';
-import {reportHealth} from './source-health.js?v=0.42.0';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {ROAD_MAP} from './roads.js';
 import {POWER_STATES,POWER_LINKS} from './power-model.js';

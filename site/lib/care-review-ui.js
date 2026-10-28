@@ -2,7 +2,7 @@ import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,care
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
@@ -31,7 +31,7 @@ export function createCareReviews({exercise=false,exerciseNow=Date.now(),onSelec
   if(!busy)return;
   try{const result=await careRoadVicinity(facilities.rows,roads,(...args)=>map.findNearbySearch(...args),{current});if(!current()||!result)return;vicinity=result;}
   catch{if(!current())return;vicinityError='Resident-care nearby-road comparison failed; distances and access context are unassessed.';}
-  finally{if(current()){busy=false;if(!exercise)reportHealth('care:road-distance','Resident-care nearby-road comparison',{checked:vicinity?Date.now():null,error:vicinityError||([...vicinity?.values()||[]].some(r=>r.unknown)?'Some road geometries could not be assessed':null),maxAgeMs:420000,detail:'One-mile shortest horizontal distance; not routing or safe access.'});assess();}}
+  finally{if(current()){busy=false;if(!exercise)reportHealth('care:road-distance','Resident-care nearby-road comparison',{checked:vicinity?Date.now():null,error:vicinityError,state:[...vicinity?.values()||[]].some(r=>r.unknown)?'coverage':null,maxAgeMs:420000,detail:'One-mile shortest horizontal distance; not routing or safe access. Some road geometries may be unassessable; inspect the selected facility.'});assess();}}
  }
  function renderInto(host,key){const row=rows.find(r=>r.key===key);host.append(el('h3','Planning review'));
   if(!row){host.append(el('p','Resident-care review not ready. Check the source status.'));return;}

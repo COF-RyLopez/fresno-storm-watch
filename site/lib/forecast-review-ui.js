@@ -2,7 +2,7 @@ import {comparisonAreas} from './forecast-comparison-model.js';
 import {currentComparisonSnapshot} from './forecast-review-data.js';
 import {areaDifferences,rankDifferences,REVIEW_MAX_AGE} from './forecast-review-model.js';
 import {formatTime} from './model.js';
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const short={nws:'NWS','noaa-hrrr-forecast-48-hour':'HRRR','noaa-gfs-forecast':'GFS'};
 export const differenceText=a=>!a?'Forecast comparisons are being checked.':`Precipitation spread ${a.rain?`${a.rain.rainSpread.toFixed(2)} in at ${a.rain.point.name}`:'unknown'} · wettest-period separation ${a.rainTiming?`${a.rainTiming.rainTiming.hours} h at ${a.rainTiming.point.name}`:'unknown / no positive peak'} · wind peak-period separation ${a.wind?`${a.wind.windTiming.hours} h at ${a.wind.point.name}`:'unknown / no positive peak'}${a.complete?'':' · comparison coverage incomplete'}.`;
@@ -26,7 +26,7 @@ export function createForecastReview({timeZone,exercise,onData=()=>{},onCompare=
     $('forecast-review-status').textContent=exercise?'Exercise · no live comparison collection':busy?'Checking all configured public forecast samples…':error?`Comparison check failed · ${error}`:snapshot?`App checked ${time(checked)} · earliest sample check ${time(Math.min(...snapshot.points.map(p=>p.checked)))} · ${reviews.length}/6 areas with available differences · ${incomplete.length}/6 incomplete`:'Waiting for forecast comparison collection.';
     $('forecast-review-refresh').toggleAttribute('loading',busy);$('forecast-review-refresh').toggleAttribute('disabled',busy||exercise||!areas.length);
     onData(differences);
-    if(!exercise)reportHealth('forecast-comparisons','River-area forecast comparisons',{checked:snapshot?Math.min(...snapshot.points.map(p=>p.checked)):null,error:error|| (incomplete.length?`${incomplete.length}/6 areas have incomplete precipitation/wind comparison coverage`:null),maxAgeMs:REVIEW_MAX_AGE,detail:'One check for the shared public sample collection; missing comparisons are not an all-clear.'});
+    if(!exercise)reportHealth('forecast-comparisons','River-area forecast comparisons',{checked:snapshot?Math.min(...snapshot.points.map(p=>p.checked)):null,error,state:snapshot&&incomplete.length?'coverage':null,maxAgeMs:REVIEW_MAX_AGE,detail:`${incomplete.length}/6 areas have incomplete precipitation/wind comparison coverage. One check for the shared collection; inspect comparison evidence for individual source failures and gaps.`});
     if(!pane.hasAttribute('open'))return;
     const key=JSON.stringify([metric,ranked.map(a=>[a.id,a.review,a.complete,a.samples.map(p=>[p.point.id,p.checked,p.rainSpread,p.rainTiming,p.windTiming,p.rows.map(r=>[r.id,r.error,r.issued,r.summary?.rain.value,r.summary?.wind.value])])])]);
     if(key===drawKey)return;drawKey=key;

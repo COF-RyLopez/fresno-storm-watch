@@ -1,6 +1,6 @@
 import {CONFIG} from './config.js';
 import {setupAuth} from './lib/auth.js?v=0.40.0';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.45.0';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.59.0';
 import {PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
 import {pumpTasks} from './lib/pump-task-model.js?v=0.45.0';
 import {pumpReadiness} from './lib/pump-readiness-model.js';

@@ -1,0 +1,91 @@
+F.R.O.G. — STABILITY AND USABILITY INCREMENT 0.59.0
+2026-10-28
+
+WHAT CHANGED
+Source health separates failed requests, stale/overdue data, coverage gaps,
+unverified times, first checks, unassessed references and current checks.
+Review totals count the first four categories by underlying source key. A recent
+app check does not renew an old observation/forecast. Optional network references
+and signed-out private records remain explicitly unassessed. Categories are
+expandable and retain their open/closed state across updates.
+
+Weather puts the shared timeline and atmospheric overlay ahead of specialist
+products. NWS wind, HRRR, comparisons and the briefing tour remain available in
+collapsed sections. Existing legends, source/valid times, data collectors,
+observation-versus-forecast rules and hazard thresholds remain in effect.
+
+Road cards have one named review action. Verification history and contradictory
+dates remain available. Unknown or elapsed dates do not establish reopening.
+
+Briefing captures ignore identical repeated evidence, while retaining changed
+versions. Empty actions and signed-out private saving have explicit prerequisites.
+Unsaved revisions install a native page-exit warning; native warning availability
+varies by browser/device. No draft is stored persistently in the browser.
+Private-save callbacks retain their selected incident, period, title and evidence
+revision across asynchronous requests. Period choices expose dates and elapsed
+windows, omit conflicting/superseded revisions, and prefer a current recorded
+window when available. Approval remains separate from saving/exporting.
+
+County Watch has an expandable private incident-follow-up section. Choose an
+exercise incident to load its saved general assignments; checks repeat each minute
+while the page is visible. Owner, due time and status are shown; completed/canceled
+records are optional history. Overdue tasks add a separate labeled cue to the
+Area reviews shortcut. They do not increase the area count or clear hazards.
+Only exact stored evidence identities link tasks to concerns; unlinked legacy
+entries and conflicting corrections remain explicit. Captures freeze task event
+versions in briefing evidence. Pump readiness/assignment scopes remain separate.
+
+Private query failures and sign-out clear follow-up records and counts. Epoch
+checks reject late results. Named-account permissions are still enforced by AGOL;
+no groups, sharing or hosted schemas were changed. EOC follow-up cards emphasize
+status, owner, due time and requested review; stored evidence is expandable.
+New form defaults include only relevant fields, and empty history is explained.
+
+EXECUTED VERIFICATION
+* Automated: 562 JavaScript tests pass, including source-health classification,
+  evidence deduplication, unsaved-exit handler, period revisions, exact task links,
+  conflicting corrections, and failure/sign-out/late-response clearing. Static
+  syntax/data/page-link/config checks pass. Deployment reruns the required checks.
+* Browser: all seven topic screens opened their intended maps/panels at desktop
+  width without root horizontal overflow (smoke coverage, not every feature).
+* Weather: exclusive GOES/radar/rainfall controls; future time hides observations;
+  Earlier uses an earlier radar frame; rainfall retains its full valid window.
+* Roads: one action for each of 37 default records during the sample; review
+  details retained unknown fields. History displayed 479 records including 271
+  date contradictions. These changing source counts are test observations.
+* Browser Back/Forward restored Roads and Rivers. Millerton Lake search selected
+  its outline and opened nearby context. Native search-field Escape clears search;
+  Escape from the category select closed evidence and returned focus to Search.
+* Briefing: two identical captures produced one item; removal returned to empty.
+  Signed-out private saving was disabled in the rendered Calcite button.
+* Private owner-account test in an existing AGOL exercise incident: a clearly
+  labeled software-test follow-up was saved and reloaded; overdue status reached
+  County Watch and the banner; capture included the exact saved task version.
+  A correction marked it Complete. A subsequent source refresh showed zero
+  active/overdue general tasks while area-review counts stayed unchanged.
+  The first post-correction query briefly retained the previous version: refresh
+  intervals and query success are not guaranteed change-delivery times.
+* One clearly labeled software-test period and an unapproved briefing snapshot
+  were saved in that exercise incident. The EOC viewer verified the snapshot
+  digest and retained the earlier task version captured in the draft, even after
+  the live task changed. No activation decision or approval was recorded.
+* The revised EOC card was checked against the completed exercise record.
+* Responsive samples include 1440x900, 1280x720 and 390x844. Phone Weather List/Map
+  switching was inspected visually; root width matched the 390-pixel viewport.
+
+STILL REQUIRED — DO NOT CLAIM COMPLETE OPERATIONAL ACCEPTANCE
+Two real accounts with distinct roles, direct anonymous query/write denial,
+expired/revoked access, complete private report/approval/shift-handoff cases,
+actual county browser/device checks, screen reader, contrast and 200% zoom,
+native exit-warning behavior across browsers, controlled network interruptions,
+sustained shift-length sessions, and non-specialist staff task-based testing.
+This increment does not validate hydraulic models or fix missing publisher data.
+See ui-acceptance-checklist.txt for the complete case inventory.
+
+ROLLBACK
+Redeploy 0.58.1 / commit 980aad6. No data migration is needed. Exercise test records
+remain in the existing append-only history and are not deleted by UI rollback.
+
+DESIGN REFERENCES
+https://developers.arcgis.com/javascript/latest/creating-app-layouts/
+https://www.w3.org/WAI/test-evaluate/preliminary/

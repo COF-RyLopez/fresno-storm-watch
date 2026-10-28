@@ -70,3 +70,12 @@
 #scenario-library-map-status[data-problem=true]{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;color:var(--calcite-color-text-1)}
 
 .scenario-map-caption{grid-column:1/-1;font-size:12px;line-height:1.4;color:var(--calcite-color-text-1);margin:0}
+.source-health-group{margin:12px;padding-block:8px;border-bottom:1px solid var(--calcite-color-border-3);font-size:13px;line-height:1.5}
+.source-health-group article{padding:8px 0;border-bottom:1px solid var(--calcite-color-border-3)}
+.source-health-group h3{font-size:14px;margin:0}
+.source-health-group p{margin:4px 0;color:var(--calcite-color-text-2)}
+.mission-followup-section{margin:8px 14px;padding:8px 0;border-bottom:1px solid var(--calcite-color-border-3);font-size:13px;line-height:1.5}
+.mission-followup-section>summary{font-weight:400}
+.mission-followup-section .mission-card{padding:8px}
+.mission-followup-section label{display:block}
+.weather-source-details>summary{font-size:13px;line-height:1.5}

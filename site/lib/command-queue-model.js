@@ -1,4 +1,4 @@
-import {concernSummary} from './mission-model.js';
+import {concernSummary} from './mission-model.js?v=0.59.0';
 import {pumpReadinessSummary} from './pump-summary-model.js';
 import {roadInCurrentView} from './roads.js';
 import {POWER_STATES} from './power-model.js';

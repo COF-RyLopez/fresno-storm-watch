@@ -1,7 +1,7 @@
 import {BRIEFING_LAYERS,BRIEFING_LAYER_CHECK_MS,briefingLayerCycle,briefingLayerLegend} from './briefing-layer-model.js?v=0.25.0';
 import {loadSdk} from './map.js?v=0.42.0';
 import {formatTime} from './model.js';
-import {reportHealth} from './source-health.js';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import {probabilityRecord,PROBABILITY_MAX_CHECK_AGE} from './precip-probability-model.js';
 import {slideMapping,chooseSlideLayer} from './briefing-follow-model.js';
 const $=id=>document.getElementById(id);
@@ -33,7 +33,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
     $('hanford-live-note').textContent=slideNote;
     $('hanford-live-times').textContent=active?`${s.label} · ${cycle?`Valid ${compactTime(cycle.start)} → ${compactTime(cycle.end)}. Source cycle ${compactTime(cycle.issue)}.`:'Checking source dates.'}${bad||busy?` ${status}`:''}`:'No live briefing forecast selected.';
     $('hanford-live-symbols').replaceChildren(...(!active||bad||busy||!l?[]:[...$('briefing-layer-symbols').children].map(n=>n.cloneNode(true))));
-    if(active&&!exercise)reportHealth('briefing-map','NWS briefing map layer',{checked,error:error||(expired?'Source forecast ended or issue overdue':failed.has(`${s.id}:${map?.view?.type}`)?'Map rendering failed':null),maxAgeMs:BRIEFING_LAYER_CHECK_MS,detail:s.label});
+    if(active&&!exercise)reportHealth('briefing-map','NWS briefing map layer',{checked,error:error||(failed.has(`${s.id}:${map?.view?.type}`)?'Map rendering failed':null),state:expired||stale?'stale':null,maxAgeMs:BRIEFING_LAYER_CHECK_MS,detail:s.label+(expired?' · forecast ended or issue overdue':'')});
   }
   async function json(url,signal){const r=await fetch(url,{cache:'no-store',credentials:'omit',signal});if(!r.ok)throw new Error(`NOAA HTTP ${r.status}`);const d=await r.json();if(d.error)throw new Error(typeof d.error==='string'?d.error:d.error.message||'NOAA service error');return d;}
   function verifyFollowWindow(s,candidate){if(!slideContext?.follow)return;const {mapping}=slideMapping(slideContext);if(mapping)chooseSlideLayer(mapping,[{id:s.id,start:candidate.start,end:candidate.end}]);}
@@ -92,7 +92,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
   function open(id=step().id,{history:push=true,fit=true,origin='manual'}={}){
     const i=BRIEFING_LAYERS.findIndex(s=>s.id===id);if(i<0||exercise)return;if(origin==='manual')onManual();index=i;active=true;cycle=null;checked=null;error=null;onOpen();if(origin==='slide')onMap();onStart();map?.setLayerPreference('briefingLayers',true);map?.clearEnvironmentPopup();$('briefing-layer-block').expanded=true;if(push)route();void refresh();if(fit){onMap();map?.fitEnvironment();}render();
   }
-  function stop(resume=true,push=true){active=false;generation++;abort?.abort();busy=false;disableLayers();map?.setLayerPreference('briefingLayers',false);map?.clearEnvironmentPopup();if(resume)onStop();if(push)route();render();reportHealth('briefing-map','NWS briefing map layer',{checked:Date.now(),detail:'Tour off; live layer not requested.'});}
+  function stop(resume=true,push=true){active=false;generation++;abort?.abort();busy=false;disableLayers();map?.setLayerPreference('briefingLayers',false);map?.clearEnvironmentPopup();if(resume)onStop();if(push)route();render();reportHealth('briefing-map','NWS briefing map layer',{state:'unassessed',detail:'Tour off; live layer not requested.'});}
   picker.addEventListener('calciteSelectChange',e=>open(e.target.value));
   $('briefing-layer-start').onclick=()=>open();$('briefing-layer-before').onclick=()=>open(BRIEFING_LAYERS[Math.max(0,index-1)].id);$('briefing-layer-after').onclick=()=>open(BRIEFING_LAYERS[Math.min(BRIEFING_LAYERS.length-1,index+1)].id);
   $('briefing-layer-stop').onclick=()=>{onManual();stop();};$('briefing-layer-refresh').onclick=()=>void refresh();$('briefing-layer-slide').onclick=()=>onBriefing('archive',step().page);

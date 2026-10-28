@@ -1,6 +1,6 @@
 import {mergeForecastReviews} from './forecast-review-model.js';
-import {differenceText} from './forecast-review-ui.js?v=0.36.0';
-import {reportHealth} from './source-health.js';
+import {differenceText} from './forecast-review-ui.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.59.0';
 import { environmentalJson } from './environment-data.js';
 import { planningPoints,evaluateAreas } from './planning-model.js';
 import { fetchPlanningRain } from './planning-data.js';
@@ -89,7 +89,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
   }
   function render(){
     if(!areaConfig)return;
-    if(!exercise)for(const p of points)reportHealth('wpc-point:'+p.id,'WPC rainfall sample · '+p.name,{checked:rain?.checked,error:rain?.error||rain?.points?.[p.id]?.error||(!Number.isFinite(rain?.points?.[p.id]?.value)?'Forecast amount unknown':rain?.cycle?.end<=Date.now()?'Forecast window ended':Date.now()-rain?.cycle?.issue>config.environment.qpfMaxAgeMs?'Forecast issue is old':null),maxAgeMs:config.environment.weatherCheckMaxAgeMs});
+    if(!exercise)for(const p of points)reportHealth('wpc-point:'+p.id,'WPC rainfall sample · '+p.name,{checked:rain?.checked,error:rain?.error||rain?.points?.[p.id]?.error,state:!rain?'checking':rain.cycle?.end<=Date.now()||Date.now()-rain.cycle?.issue>config.environment.qpfMaxAgeMs?'stale':!Number.isFinite(rain.points?.[p.id]?.value)?'coverage':null,detail:!Number.isFinite(rain?.points?.[p.id]?.value)?'Forecast amount unknown; inspect the published product.':rain?.cycle?.end<=Date.now()?'Forecast window ended.':'Published point lookup; not basin-average rainfall.',maxAgeMs:config.environment.weatherCheckMaxAgeMs});
     const riverRows=evaluateAreas({areas:areaConfig.areas,points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs,rain,environmentConfig:config.environment});
     const combined=combineAreaConcerns({rows:riverRows,associations,windSites,points,wind,power,previous:previousRows});
     const rows=exercise?combined:mergeForecastReviews(combined,forecastDifferences);previousRows=rows;
