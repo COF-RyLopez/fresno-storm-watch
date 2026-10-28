@@ -1,0 +1,58 @@
+F.R.O.G. 0.62.0 — DWR supply context in County / Area Watch
+
+Open County Watch > DWR supply planning, or ?view=watch&dwrSupplies=1.
+The section is collapsed by default; it adds no risk score or incident count.
+Live public DWR inventory queries are scoped to Fresno County using the existing
+county/object-ID reconciliation. No AGOL items, permissions or source records
+are changed. Public resource records remain in tab memory only.
+
+Association rules
+- Default 25 km straight-line point proximity; 10 and 50 km alternatives.
+- Associate only existing gauge/dam watchpoints from the six river review groups.
+- These are NOT supply service areas, routed river travel times, allocations,
+  verified access or staging approvals. No inferred reach boundaries or routes.
+- Road geometry is compared to the supply point and the associated watchpoints
+  separately, within 5 km; the evidence says which location each distance uses.
+- Source-inactive records stay in Roads history. Elapsed end dates on active or
+  uncertain records remain for verification, never automatically reopened.
+- Deduplicate stable road keys; exclude conflicting revisions and bad geometry
+  with coverage notices. Source errors / >7 minute query age require verification.
+- WPC amounts and forecast validity come from existing usable point checks;
+  unknown/stale values remain unknown. Values are not basin means or runoff.
+
+Inspection / availability
+Display source inspection UTC calendar date and calendar age, separately from
+the live query check time. Historical, unknown and future dates are qualified.
+No arbitrary DWR readiness age threshold is introduced. Stock availability,
+allocation and pickup authorization remain unverified for every record.
+At onboarding the two Fresno records were inspected Oct 1 and Sep 25, 2024.
+Reported zeros stay zero; missing quantities remain unknown.
+
+Map / refresh
+Inspect supply context opens the existing right evidence surface and fits the
+selected supply plus its associated watchpoints. Hollow white circle = selected
+supply; hollow cyan = nearby watchpoints. DWR original container symbols and
+county road status meanings remain intact. No line suggesting a route is drawn.
+The selected context also draws nearby elapsed/uncertain road records, retaining
+their full source geometry and click-through identity, without changing the
+global Roads history filter. These reference records still require verification.
+Supply queries refresh every five minutes while the page is visible, independent
+of map layer visibility once monitoring is requested. Refresh cannot re-enable a
+hidden layer. Failures clear current inventory and appear in source health.
+Inventory browsing is disabled in the fictional exercise view.
+
+Wind graphic clarification
+Weather > HRRR animated winds & gusts > Fit HRRR coverage. Animated 10 m wind
+forecast trails and gust shading use NOAA HRRR prepared through Dynamical.
+The shared timeline chooses forecast valid time. Prepared snapshot files refresh
+through the existing Pages collector; they are not live wind observations.
+Trails are illustrative animation, not measured storm travel speed. Existing
+run/valid/collection times, freshness gates, NWS forecasts and pause controls
+are retained. No weather collector or rendering logic changed in this release.
+
+Validation
+Nine new model tests cover source identity/CRS, calendar ages, bounded watchpoint
+links, full road geometry, stale/error handling, elapsed status, duplicate and
+conflicting records, filters and known Fresno associations. Full regression and
+deployment checks plus browser verification are recorded in the release output.
+Rollback: redeploy 0.61.0. No data migration or ArcGIS permission changes.

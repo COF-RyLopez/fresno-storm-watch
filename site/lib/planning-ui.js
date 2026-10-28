@@ -20,7 +20,7 @@ function el(tag,text='',css=''){const n=document.createElement(tag);n.textConten
 function link(text,href){const n=el('a',text);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Fixed-area review banner; separate from official NWS alerts and team acknowledgements. */
-export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onCompare=()=>{},onTrends=()=>{},onExercise=()=>{},onData=()=>{}}){
+export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onCompare=()=>{},onTrends=()=>{},onExercise=()=>{},onData=()=>{},onAreaSelected=()=>{}}){
   let areaConfig=null,points=[],gaugeSettings=[],reservoirSettings=null,entries=new Map(),reservoirs={},rain=null,busy=false,next=0,map=null,signature='',scenario='combined';
   let associations=null,windSites=[],wind=null,power=null,previousRows=[],filterMode='review',forecastDifferences=[];
   const expanded=new Set(),clock=Date.now();
@@ -158,5 +158,5 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     points=planningPoints(areas,gauges.stations,res.stations);associations=validateAreaConcerns(concerns,areas.areas,winds.sites);windSites=winds.sites;areaConfig=areas;gaugeSettings=gauges.stations;reservoirSettings=res;
     if(exercise)applyExercise();else{render();void refreshRain();}
   }).catch(error=>{$('river-title').textContent='River-area review unavailable';$('river-summary').textContent=error.message;$('watch-rule-summary').textContent=error.message;});
-  return {setForecastDifferences:data=>{if(!exercise){forecastDifferences=data;render();}},selectArea:id=>{filterMode='all';for(const o of $('area-filter').children)o.selected=o.getAttribute('value')==='all';expanded.add(id);signature='';render();$('evidence-'+id)?.scrollIntoView({block:'nearest'});const row=previousRows.find(r=>r.area.id===id);if(row){onMap();map?.focusPlanningPoints(row.samplePoints);}},setMap:controller=>{map=controller;signature='';render();},setRiverData:data=>{if(!exercise){entries=new Map(data.entries);render();}},setReservoirData:data=>{if(!exercise){reservoirs=data;render();}},setWindData:data=>{if(!exercise){wind=data;render();}},setPowerData:data=>{if(!exercise){power=data;render();}}};
+  return {setForecastDifferences:data=>{if(!exercise){forecastDifferences=data;render();}},selectArea:id=>{onAreaSelected(id);filterMode='all';for(const o of $('area-filter').children)o.selected=o.getAttribute('value')==='all';expanded.add(id);signature='';render();$('evidence-'+id)?.scrollIntoView({block:'nearest'});const row=previousRows.find(r=>r.area.id===id);if(row){onMap();map?.focusPlanningPoints(row.samplePoints);}},setMap:controller=>{map=controller;signature='';render();},setRiverData:data=>{if(!exercise){entries=new Map(data.entries);render();}},setReservoirData:data=>{if(!exercise){reservoirs=data;render();}},setWindData:data=>{if(!exercise){wind=data;render();}},setPowerData:data=>{if(!exercise){power=data;render();}}};
 }

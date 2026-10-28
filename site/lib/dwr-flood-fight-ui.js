@@ -1,16 +1,17 @@
-import {loadSdk} from './map.js?v=0.61.0';
+import {loadSdk} from './map.js?v=0.62.0';
 import {countyGeometry} from './model.js';
 import {reportHealth} from './source-health.js?v=0.59.0';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js?v=0.61.0';
+import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js?v=0.62.0';
 
 const KEY='dwrFloodFight', REFRESH_MS=300000;
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** Live, public DWR reference layers. Only service queries and tab-memory scope are used; no AGOL copies or editing. */
-export function createDwrFloodFight({exercise=false,onMap=()=>{}}={}) {
+export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>{}}={}) {
   const $=id=>document.getElementById(id),states=new Map();
-  let controller,county,catalog,group,classes,pendingCatalog,started=false;
+  let controller,county,catalog,group,classes,pendingCatalog,started=false,inventoryWatching=false;
   const checkedText=ms=>new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeStyle:'short',timeZone:'America/Los_Angeles'}).format(ms)+' Pacific';
   function status(s,text){s.status.textContent=text;}
   async function legend(s){
@@ -64,14 +65,18 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{}}={}) {
           // Read after setting the verified definition; the initial layer is deliberately closed.
           const result=ids.length?await s.layer.queryFeatures({...q,where:expression,objectIds:ids,returnGeometry:true,outSpatialReference:{wkid:4326},outFields:['*']}):{features:[]};
           if(result.exceededTransferLimit)throw new Error('Supply inventory is incomplete');
-          supplyCards(assertScopedInventory(result.features,ids,s.layer.objectIdField));
+          const features=assertScopedInventory(result.features,ids,s.layer.objectIdField),rows=normalizeSupplyFeatures(features);
+          supplyCards(features);onSupplies({loaded:true,rows,checked:s.checked,error:null,source:c.url});
         }
         await legend(s);
         reportHealth('dwr:'+c.key,'DWR '+c.title,{checked:s.checked,maxAgeMs:REFRESH_MS+120000,detail:'Publisher reference query works; inspection dates and current resource availability are separate.'});
       }catch(error){
         s.error=error.message||'Publisher query failed';if(s.layer){s.layer.visible=false;s.layer.definitionExpression='1=0';}
         status(s,'Unavailable · '+s.error+'. No statewide fallback is shown.');
-        if(s.config.key==='supplies')$('dwr-supply-list').replaceChildren(node('p','Supply inventory unavailable. Use the DWR dashboard and confirm with DWR; previous quantities are not shown as current.'));
+        if(s.config.key==='supplies'){
+          $('dwr-supply-list').replaceChildren(node('p','Supply inventory unavailable. Use the DWR dashboard and confirm with DWR; previous quantities are not shown as current.'));
+          onSupplies({loaded:true,rows:[],checked:s.checked,error:s.error,source:s.config.url});
+        }
         reportHealth('dwr:'+s.config.key,'DWR '+s.config.title,{checked:Date.now(),error:s.error,detail:s.config.url});
       }finally{s.pending=null;}
     })();return s.pending;
@@ -94,12 +99,17 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{}}={}) {
       }
       $('dwr-status').textContent=catalog.scopeNote+' Select a mapped feature for publisher attributes.';
       started=true;await Promise.all([...states.values()].filter(s=>s.box.checked).map(refreshLayer));
-    })().catch(error=>{$('dwr-status').textContent='DWR context unavailable · '+error.message;}).finally(()=>{pendingCatalog=null;});return pendingCatalog;
+    })().catch(error=>{$('dwr-status').textContent='DWR context unavailable · '+error.message;onSupplies({loaded:true,rows:[],checked:null,error:error.message});}).finally(()=>{pendingCatalog=null;});return pendingCatalog;
+  }
+  async function loadInventory({refresh=false}={}){
+    inventoryWatching=true;
+    const wasStarted=started;await setup();
+    const s=states.get('supplies');if(s&&(refresh&&wasStarted||!s.checked))await refreshLayer(s);
   }
   function open(){onMap();$('dwr-evidence').setAttribute('open','');controller?.setLayerPreference(KEY,true);void setup();}
   $('dwr-open').addEventListener('click',open);
   $('dwr-refresh').addEventListener('click',()=>{if(!started)void setup();else void Promise.all([...states.values()].filter(s=>s.box.checked).map(refreshLayer));});
   document.addEventListener('frogLayerPreference',e=>{if(e.detail.key===KEY&&e.detail.wanted)void setup();});
-  setInterval(()=>{if(!document.hidden&&group?.visible)void Promise.all([...states.values()].filter(s=>s.box.checked).map(refreshLayer));},REFRESH_MS);
-  return {open,setMap(map,feature){controller=map;county={type:'polygon',...countyGeometry(feature.geometry)};if(new URLSearchParams(location.search).get('dwr')==='1')open();}};
+  setInterval(()=>{if(!document.hidden)void Promise.all([...states.values()].filter(s=>group?.visible&&s.box.checked||inventoryWatching&&s.config.key==='supplies').map(refreshLayer));},REFRESH_MS);
+  return {open,loadInventory,setMap(map,feature){controller=map;county={type:'polygon',...countyGeometry(feature.geometry)};if(new URLSearchParams(location.search).get('dwr')==='1')open();if(inventoryWatching)void loadInventory();}};
 }
