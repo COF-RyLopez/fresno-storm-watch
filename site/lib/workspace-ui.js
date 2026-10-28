@@ -34,8 +34,8 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
   function showPanel(name,{history:push=true}={}){
     name=name==='environment'?'weather':name;if(!WORKSPACES[name])return;
-    mission='watch';const changed=name!==section;cameraStates.set(section,camerasOpen);section=name;panelOpen=true;
-    if(changed){for(const id of ['map-search-evidence','river-dialog','power-dialog','facility-dialog','drainage-evidence','road-dialog','release-trend-dialog','alert-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
+    const changed=name!==section||mission!=='watch';mission='watch';cameraStates.set(section,camerasOpen);section=name;panelOpen=true;
+    if(changed){evidence?.close({restoreFocus:false});for(const id of ['map-search-evidence','river-dialog','power-dialog','facility-dialog','drainage-evidence','road-dialog','release-trend-dialog','alert-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
     render();if(map)void map.setWorkspace(section);if(changed)onCameraChange(camerasOpen);onActivate(section);
     if(push){const u=new URL(location.href);u.searchParams.set('view',section);u.searchParams.delete('mission');u.searchParams.delete('trends');if(u.href!==location.href)window.history.pushState({},'',u);}
     window.dispatchEvent(new Event('stormWorkspaceChange'));

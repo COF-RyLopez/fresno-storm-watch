@@ -1,0 +1,125 @@
+F.R.O.G. UI / UX ACCEPTANCE CHECKLIST
+Created 2026-10-28 • Initial audit baseline 0.58.0 • Corrections 0.58.1
+
+PURPOSE AND SCOPE
+Check both whether each control works and whether an EOC operator can complete
+a useful task without coaching. Automated tests, a browser smoke test, staff
+usability testing, server authorization testing and hydraulic validation are
+different activities. Passing one does not establish the others.
+
+For every case record: release/commit, browser/device/viewport, account role,
+exercise/live source mode, starting state, exact actions, expected result,
+actual result, PASS / FAIL / BLOCKED / NOT RUN, evidence and retest release.
+An opened screen is a smoke-test pass, not a pass for every control on it.
+
+TEST ORDER
+1. Inventory screens and controls, including runtime-generated record actions.
+2. Test the core public navigation and map/evidence interactions.
+3. Test valid, empty, failed, stale, loading and interrupted states.
+4. Test private workflows with viewer and authorized editing accounts, using
+   clearly separate private exercise records. Do not edit live incident data.
+5. Check keyboard, focus, forms, contrast, text enlargement and real phone use.
+6. Observe non-specialist EOC staff completing mission tasks without guidance.
+7. Fix failures, add meaningful regression checks and retest affected workflows.
+
+SCREEN AND CONTROL COVERAGE
+G01 Header: County Watch / Planning / Briefing, Topic tools, Account & help,
+    theme, help and EOC links. Check Back/Forward, reload and deep links.
+G02 Monitoring strip: each shortcut reaches its intended evidence. Distinguish
+    count units and scope: areas, care records, utility records, regional alerts,
+    model comparisons and source checks are not interchangeable incident totals.
+G03 Evidence: selection zoom/highlight; close / Escape / focus return; replace
+    obsolete evidence on topic changes. Preserve a working map during transitions.
+G04 Map: Fit, Expand/Restore, search, layers, basemap gallery, 2D/3D and cameras.
+    Check resize, rapid switching, camera state, failed 3D and restoration.
+G05 Search: a lake outline, stream, road and authorized asset; no matches and
+    unavailable sources. Verify full-outline zoom, highlight, clear, nearby
+    records, distance units and the limits of proximity versus network access.
+
+W01 County Watch: each concern type, filter, pagination, selection and empty
+    results. Countywide counts do not change with map panning or display filters.
+W02 Follow-up: choose incident, owner/team, due time, required verification and
+    status. Confirm saved updates are visible again, without duplicate tasks.
+W03 Care: county zones, utility areas, nearby roads and source gaps; distinguish
+    a care record, occupancy, building footprint and verified facility conditions.
+W04 Pumps: inventory identity, readiness, fuel/runtime, owner contact, assignment,
+    overdue/change/rematch states and rainfall accumulation windows versus onset.
+
+T01 Rivers: watchpoint/group/window filters, observations versus forecasts, units,
+    unknown thresholds, peak times, source links and unavailable point forecasts.
+T02 Weather: radar/GOES/rainfall exclusivity; Now/Earlier/Later; shared time;
+    HRRR and NWS comparison; issue/valid windows and legends. Future times must
+    not display observations as forecasts. Briefing-tour windows remain explicit.
+T03 Briefing tour: previous/next slide and layer, sync on/off, unavailable source,
+    legend colors, product dates, source links and ending the tour.
+T04 Reservoirs: Millerton/Pine Flat selection, release trends, downstream versus
+    upstream gauges, schedules, observation dates and unavailable metrics.
+T05 Alerts: regional scope, category, selected polygon, official source, revision,
+    expiration and repeated polygons. Acknowledgement does not clear a hazard.
+T06 Power: current/PSPS/unknown/history filters, utility details, circuit matches,
+    unverified connections, nearby assets, automatic building display, unknown
+    heights and associated addresses. Never infer a fault or site service.
+T07 Roads: block/closure/detour selection, inactive/history toggle, elapsed dates,
+    active flag contradictions, missing records, unknown geometry and official
+    links. A past end date or disappeared record does not establish reopening.
+T08 Drainage: sign-in, existing/proposed separation, basin/pump selection, network
+    direction and unverified links; rainfall/road/facility/power context. Test
+    direct readiness form and inventory freshness without changing live sources.
+
+P01 Planning: selected scenario versus the map actually loaded, loading/failure,
+    repeat selection, clear, independent clock, play/pause, keyboard slider and
+    3D. Keep hypothetical and published source assumptions conspicuous.
+P02 Advanced runs: no enabled template / no approved host / coverage gaps must
+    not suggest a submitted or computed scenario. Library playback is not a run.
+B01 Briefing: capture, repeated capture, remove, title, empty state, copy/download,
+    private incident/period, save, approval handoff and exact version references.
+B02 Unsaved draft: navigate, refresh, close, sign-out and interrupted save. Do not
+    persist private drafts in browser storage. Warn before accidental loss.
+
+E01 Private EOC: Overview, Review queue, Field conditions, Follow-ups & decisions,
+    Readiness & staging, Briefing & handoff, and Record history; all display roles.
+E02 Reports: required fields, invalid dates/coordinates/URLs, save, correction and
+    revision-specific verification. Reports start unverified; official layers stay
+    separate. Show useful retry feedback without duplicating saved records.
+E03 Incident/period: authorized activation record, authority, effective time,
+    period and next briefing. Display-role choice must never grant permission.
+E04 Private access: anonymous/viewer/reporter/reviewer/activation-recorder tests
+    against server queries and writes, not merely hidden buttons. Include expired
+    sign-in, revoked membership, logout and late responses clearing private data.
+E05 Briefing/state handoff: approve/withdraw exact snapshots; copy/print draft and
+    approved versions; external references. Export never means submitted to state.
+
+A01 Keyboard-only: complete a core task; visible focus; meaningful tab order;
+    dialog/pane focus entry, Escape and return; accessible names and form errors.
+A02 Readability: 1440x900, 1280x720, phone portrait and 200% text/zoom in county
+    Chrome/Edge. Check legends, units, clipping, nested scrolling and touch use.
+A03 Check contrast and non-color status meaning; screen-reader labels; reduced
+    motion, pause controls and focus stability during background refresh.
+F01 Feed failures: fail one feed while others remain available; stale retained
+    records, missing coverage and unassessed sources must not become zero/safe.
+F02 Longer session: keep the app open through refreshes, source revisions,
+    network interruption, sleep/wake and a shift handoff; observe responsiveness.
+
+STAFF USABILITY SESSION (proposed, not county policy)
+Use at least two non-specialist EOC testers, plus an experienced reviewer. Give
+tasks rather than click instructions. Record time, wrong turns, assistance and
+what the user believes the evidence means. Test with workstation and phone.
+1. Find a place needing review and explain the reason, timing and uncertainty.
+2. Inspect roads, power and facilities without confusing overlap with confirmed
+   impact or proximity with a usable route.
+3. Assign a verification follow-up and find its owner/due/status again.
+4. Load a published hypothetical scenario and correctly identify its assumptions.
+5. Prepare a handoff with sources, outstanding gaps and unresolved work.
+6. In the later recovery/closeout increment, verify restoration and close work
+   without clearing an agency hazard or implying an official reopening.
+
+RELEASE ACCEPTANCE
+Resolve defects that misidentify displayed evidence, lose private work silently,
+permit unauthorized access/writes, or confuse hypothetical/forecast/live status.
+No blanket PASS until private account and staff tests are complete. An initial
+accessibility check is not a WCAG conformance certification. Numerical model
+validation remains with the appropriate technical reviewers/model owners.
+
+REFERENCES
+https://developers.arcgis.com/javascript/latest/creating-app-layouts/
+https://www.w3.org/WAI/test-evaluate/preliminary/

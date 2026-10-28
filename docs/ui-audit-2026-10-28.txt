@@ -1,0 +1,93 @@
+F.R.O.G. UI / UX AUDIT — FIRST PASS
+2026-10-28 • Public baseline 0.58.0 • Correction candidate 0.58.1
+
+This is an initial functional/usability audit, not a complete button-by-button
+sign-off, private-server permission audit, accessibility certification, or flood
+model validation. Live source counts and conditions changed during the session.
+No live operational record was written. One clearly fictional report was saved
+only in the existing eoc.html?exercise=1 in-memory tabletop; reload discards it.
+
+CONFIRMED DEFECTS / CORRECTIONS
+UI-001 — FIXED IN CANDIDATE, LOCAL BROWSER RETEST PASSED
+Selecting a care facility then using the NWS notification shortcut left the
+Resident-care facilities pane beside a Weather Alerts map. Topic/mission changes
+now close the active evidence pane through its normal cleanup/focus controller.
+Same-topic selections are preserved. A controller regression test covers this.
+
+UI-002 — FIXED IN CANDIDATE, LOCAL BROWSER RETEST PASSED
+After Big Dry Creek was mapped, choosing Fancher Creek changed the selector but
+left the Big Dry Creek map. This load-on-command behavior now explicitly says
+which map remains displayed and that Inspect must be pressed for the new choice.
+The active published scenario is also captioned above the map. Loading/error/no
+map states have a visible status outside collapsed advanced-model setup.
+
+NEXT CLEANUP BACKLOG (not fixed in this increment)
+UI-003 — HIGH — Source health needs separate categories for actual failed checks,
+missing publisher coverage, stale retained data, not-yet-loaded references and
+private access not assessed. The observed single issue total mixed reference
+layers with missing forecasts and check failures. Confirm expected coverage with
+publishers; do not hide limitations or treat unsupported data as healthy.
+UI-004 — MEDIUM — Explain count units/scope. Area reviews and the larger concern
+list count different entities; neither is a count of independent incidents.
+UI-005 — MEDIUM — Simplify Weather. Put the selected time/product/window near the
+top; collapse tours and specialist controls. Check overlay/legend relationships
+as radar, GOES, rainfall, NWS wind and HRRR change.
+UI-006 — MEDIUM — Remove duplicate road-card actions (the record-name button and
+Review record open the same detail). Preserve contradictory-date/history access;
+old records cannot be silently interpreted as reopened roads.
+UI-007 — MEDIUM — Improve briefing empty and unsaved states. A draft is tab-only;
+add loss warnings, deliberate repeated-capture/version handling and clearer
+sign-in/prerequisite actions. The signed-out private-save action correctly
+reported that county sign-in was required, but this should be apparent sooner.
+UI-008 — MEDIUM — General follow-up ownership/status needs an incident-linked
+round trip into County Watch. Pump task ownership is already surfaced. Validate
+other saved assignments with actual private exercise accounts before promising
+assignment-state integration. No new activation controls are implied.
+UI-009 — MEDIUM — Align private EOC / direct pump forms with the main app's task
+language, navigation and empty/error states. An empty exercise Record history
+screen had no explanatory empty-state text.
+UI-010 — LOW — Grammar/plurals, small metadata text, focus return, touch targets,
+legend density and nested scrolling need a systematic accessibility pass.
+
+EXECUTED CASES
+PASS SMOKE — All seven topic destinations opened their expected map/panel:
+Rivers, Weather, Reservoirs, Weather Alerts, Power/PSPS, Drainage and Roads.
+No root-page horizontal overflow observed in those 1440x900 samples. This does
+not certify every feature, source or button in these screens.
+PASS — County Watch river concern -> evidence -> unapproved briefing draft.
+PASS GUARD — Signed-out private-save attempt produced the expected sign-in
+requirement; no server authorization claim follows from this client guard.
+PASS — Existing fictional EOC Overview and all six other section headings/nav.
+PASS — Fictional field-report required-field validation; complete test report
+saved as UNVERIFIED with correction/verification/follow-up actions available.
+PASS LOCAL RETEST — UI-001 active care pane is hidden after the alerts shortcut.
+PASS LOCAL RETEST — UI-002 selected-but-unloaded scenario is explicitly identified;
+new scenario load updates the visible map caption; caption remains visible at
+390x844 with no root-page horizontal overflow.
+AUTOMATED — 554 JavaScript tests passed in the correction candidate, including
+new navigation cleanup and library-status regressions. Static checks passed.
+
+NOT RUN / REQUIRED BEFORE OPERATIONAL ACCEPTANCE
+* Every individual control and generated feature action; inventory is a worklist.
+* Two real named accounts with distinct server permissions; anonymous direct
+  queries/writes; expired/revoked sign-in; late response clearing; failed saves.
+* Live private AGOL writes, approvals, operational periods and shift handoff.
+* Actual county Chrome/Edge and phone-browser checks, screen reader and 200% zoom.
+* Full map/search/3D/camera/timeline regression across healthy and failed feeds.
+* Field-report correction/verification and complete assignment-to-briefing chain
+  with county participants. The in-memory exercise does not verify AGOL access.
+* Controlled source/network failures, retry/recovery, interrupted draft export,
+  slow connections and a sustained shift-length session.
+* Non-specialist staff usability sessions and numerical hydraulic validation.
+
+NEXT TEST SESSIONS
+1. Complete public screen/control cases G/W/T/P/B in the acceptance checklist.
+2. Complete private EOC and pump cases with viewer and authorized editor accounts.
+3. Observe two EOC staff completing mission tasks, recording assistance, wrong
+   turns, timing and misunderstood evidence. Fix operational misinterpretation
+   and access/data-loss defects first; retest before adding more controls.
+
+FILES
+The repository docs/ui-acceptance-checklist.txt is the reusable test procedure.
+control-inventory.json is a source inventory, including hidden/setup controls;
+its NOT RUN flags are intentional and are not a completed coverage claim.

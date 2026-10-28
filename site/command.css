@@ -66,3 +66,7 @@
  #mission-specialist{margin-inline:12px}
 }
 @media(prefers-reduced-motion:reduce){.command-row{scroll-behavior:auto}}
+
+#scenario-library-map-status[data-problem=true]{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;color:var(--calcite-color-text-1)}
+
+.scenario-map-caption{grid-column:1/-1;font-size:12px;line-height:1.4;color:var(--calcite-color-text-1);margin:0}
