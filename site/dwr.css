@@ -20,3 +20,12 @@
 #dwr-supply-evidence dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;font-size:var(--calcite-font-size--1)}
 #dwr-supply-evidence dd{margin:0}
 .dwr-road-context{padding:12px 0;border-block-end:1px solid var(--calcite-color-border-3)}
+#county-sandbag-evidence{padding-inline:12px}
+#county-sandbag-evidence p{font-size:var(--calcite-font-size--1);line-height:1.5;color:var(--calcite-color-text-2)}
+#county-sandbag-evidence h3{font-size:var(--calcite-font-size-0);margin:20px 0 8px}
+#county-sandbag-evidence h4{font-size:var(--calcite-font-size--1);margin:0}
+#county-sandbag-evidence .dwr-inspection,#county-sandbag-age{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;color:var(--calcite-color-text-1)}
+.sandbag-query{grid-column:1/-1}
+#county-sandbag-query{padding:8px;min-width:0;color:var(--calcite-color-text-1);background:var(--calcite-color-background);border:1px solid var(--calcite-color-border-1);border-radius:3px}
+#county-sandbag-query:focus-visible{outline:2px solid var(--calcite-color-focus-color);outline-offset:2px}
+#county-sandbag-list{margin:12px 0;max-height:420px;overflow:auto;border:1px solid var(--calcite-color-border-3)}

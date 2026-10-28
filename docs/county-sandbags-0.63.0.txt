@@ -1,0 +1,77 @@
+F.R.O.G. 0.63.0 — County sandbag locations
+
+Entry points
+- County Watch > County sandbag locations, beside DWR supply planning.
+- ?view=watch&sandbags=1 opens the section directly, including narrow layouts.
+- Shared map search includes a County sandbag sites category; names, yard IDs,
+  addresses and cities are searched locally. Address-only results open evidence.
+- Context layers includes County sandbag sites. It starts on in County Watch;
+  other topic maps retain it as optional context. Map markers open site evidence.
+
+Primary provenance, retrieved Oct 28, 2026
+County application: ab6bf09e95cb4a23b4aa2e97ed61a843, public, owned by
+PWP_SERVICES_PROD in https://gisportal.co.fresno.ca.us/portal .
+Underlying web map: adf7875afc77455b9fca073e95224318, public.
+Service item: 38dd163b4513447da0fa3501289a5d02.
+Layer: https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Sandbag_Locations/FeatureServer/0
+Map definition: active = 'Yes'. Source CRS Web Mercator; query outSR=4326.
+The source's original shovel-and-bag PNG is reused unchanged for active points.
+Other fire stations, parks, boundaries and yards in the source map are context;
+they are not automatically treated as additional sandbag distribution sites.
+
+Onboarding accounting
+23 source records = 11 active + 8 unknown + 4 inactive.
+22 mapped points + 1 address-only record. The active City of San Joaquin record
+has an address but no coordinates; no geocoding or substitute point is invented.
+Default: 11 active records in the list, 10 mapped. Unknown and inactive records
+require explicit filter selection. Source status is never interpreted as current
+stock, staffing, hours, capacity, pickup authorization or safe road access.
+
+Dates and pickup guidance
+The county application's subtitle states Last Updated: 01/31/2024, distinct from
+its recent item-modification date and this collector's retrieval time.
+Legacy modifiedda and dt_maint fields are stored record dates, not validated
+editor tracking, stock inspections or event-readiness updates. Most are unknown;
+the five road-yard records contain 2019 edit and 2016 maintenance dates.
+Source dates remain visible and are not renewed by collecting the layer again.
+County guidance:
+https://www.fresnocountyca.gov/Departments/Public-Works-and-Planning/divisions-of-public-works-and-planning/road-maintenance-and-operations-division/sandbags-for-flood-prevention
+Reviewed Oct 28, 2026. Exact name/address associations attach the separately
+published exceptions: Auberry and Caruthers 7 AM–3 PM; Biola, Fresno/Matus and
+Sanger 24 hours. The page controls current instructions. Do not generalize those
+yard hours, free-bag eligibility or self-fill guidance to city/fire/fairground sites.
+The layer itself has no current stock or operating-hours fields. Confirm before use.
+
+Collection and failures
+The existing Pages schedule attempts a public source refresh every 15 minutes;
+the browser checks the prepared snapshot every five minutes while visible.
+No browser call into the county network, credential, additional sign-in, AGOL
+item, permission change or source edit is required. The existing app is unchanged.
+Only allowlisted public location/status/date fields are retained; editor names,
+arbitrary configuration, credentials and private inventory are excluded.
+Read ID inventory, query bounded chunks, reconcile every ID, then recheck IDs.
+Missing, duplicate, truncated, changed or malformed queries fail the collection.
+Retain previous public references on failure with error and original lastSuccess;
+never relabel a failed attempt as fresh data. Collection age >45 minutes is overdue.
+Accounting is validated before display; no missing coordinate becomes 0/0.
+FID is a source-local key, not a GlobalID or a guarantee across service replacement.
+
+River / road context and map semantics
+Reuse existing configured river watchpoints, within 25 km of each mapped site.
+Reuse road geometry within 5 km of the site or the matched watchpoints, separately
+labeled. Proximity is not a service area, flood boundary, network route or resource
+assignment. Address-only records cannot be assigned a spatial match.
+Retain active/unknown elapsed-date road records with verification warnings; an
+elapsed end date never means reopened. Explicitly inactive records stay in Roads
+history. No hazard thresholds, dispatch logic or incident-count changes are added.
+Shovel/bag = source active; gray hollow diamond = unknown; gray x = inactive.
+White selection ring = selected site; cyan rings = associated watchpoints.
+Full road reference geometry retains the existing orange / dashed teal palette.
+Background refresh updates graphics without re-enabling hidden map layers.
+Live county records are disabled in the fictional exercise view.
+
+Validation / rollback
+11 new tests cover identity, CRS, missing geometry, complete accounting, source
+states, timestamps, stale/error handling, hour exceptions, search and exact-ID
+collection failures. Regression, deployment and browser checks are recorded in
+the release verification output. Roll back by redeploying 0.62.0; no data migration.

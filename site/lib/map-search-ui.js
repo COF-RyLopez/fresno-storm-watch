@@ -1,7 +1,8 @@
+import {sandbagSearchEntries} from './county-sandbag-model.js?v=0.63.0';
 import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js?v=0.34.0';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
 const BASE=new URL('../data/search/v0.31.0/',import.meta.url),WATERBODY_BASE=new URL('../data/search/waterbodies-v0.34.0/',import.meta.url);
-const KIND={waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point'};
+const KIND={sandbag:'County sandbag site',waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point'};
 
 /** Shared nonmodal search. No query is sent to a geocoder, source service or storage. */
 export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}}={}){
@@ -16,7 +17,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
   }
   function coverage(){
     const assets=groups.get('assets')?.length??0,roads=groups.get('roads')?.length??0;
-    $('map-search-coverage').textContent=`${publicIndex?`${publicIndex.entries.length.toLocaleString()} stream / street references`:indexError?'Public reference index unavailable':'Public reference index loading'} · ${waterbodyIndex?waterbodyIndex.entries.length+' named lake / reservoir outlines':waterbodyError?'Lake outline index unavailable':'Lake outlines loading'} · ${roads} returned road status records · ${assets} loaded assets. Search is independent of map extent and list filters. Private assets require sign-in and layer loading. Unnamed waterways / water bodies, imagery and arbitrary basemap labels are not indexed.`;
+    $('map-search-coverage').textContent=`${publicIndex?`${publicIndex.entries.length.toLocaleString()} stream / street references`:indexError?'Public reference index unavailable':'Public reference index loading'} · ${waterbodyIndex?waterbodyIndex.entries.length+' named lake / reservoir outlines':waterbodyError?'Lake outline index unavailable':'Lake outlines loading'} · ${roads} returned road status records · ${assets} loaded assets · ${groups.get('sandbags')?.length??0} county sandbag records. Search is independent of map extent and list filters. Private assets require sign-in and layer loading. Unnamed waterways / water bodies, imagery and arbitrary basemap labels are not indexed.`;
     if(waterbodyError)$('map-search-coverage').textContent+=` ${waterbodyError}. Reopen search to retry lake outlines.`;
     if(indexError)$('map-search-coverage').textContent+=` ${indexError}. Reopen search to retry.`;
   }
@@ -54,6 +55,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
   }
   async function select(key){
     let row=all().find(entry=>entry.key===key);if(!row)return;
+    if(row.kind==='sandbag'){clearSelection('Opening county sandbag evidence…');onInspect(row);return;}
     if(row.kind==='reservoir'&&!waterbodyIndex){clearSelection('Loading lake outlines for the selected reservoir…');selectionBusy=true;const request=generation;await loadIndex();if(request!==generation)return;}
     const outline=row.kind==='reservoir'?waterbodyIndex?.entries.find(entry=>entry.stationId===row.key.slice('reservoir:'.length)):null;
     if(outline){row=outline;key=row.key;}
@@ -130,5 +132,5 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
   $('map-search-scope').addEventListener('calciteSelectChange',()=>{clearSelection('');render();});
   $('map-search-clear').addEventListener('click',()=>clearSelection());$('search-clear-highlight').addEventListener('click',()=>clearSelection());
   panel.addEventListener('stormEvidenceClose',()=>{clearTimeout(typingTimer);if(selectionBusy)clearSelection('Pending map search cancelled.');});
-  return {setMap(controller){map=controller;},setFacilities(data){sourceNotes.assets=data?.sites?.length?'Authorized inventory loaded; readiness requires verification':'No authorized assets loaded; sign in and load county layers in Power / PSPS';setEntries('assets',facilitySearchEntries(data));},setRoads(data){sourceNotes.roads=data?.exercise?'Exercise mode; live road records disabled':data?.error?'Road feed failed; retained records require verification':data?.snapshot?`County road feed checked ${date(data.snapshot.checked)}; dates and active flags require review`:'Road source unavailable';setEntries('roads',roadSearchEntries(data));},setGauges(data){sourceNotes.gauges='Configured NWS watchpoints only; open gauge evidence to verify freshness and forecast';setEntries('gauges',gaugeSearchEntries(data));},setReservoirs:data=>setEntries('reservoirs',reservoirSearchEntries(data)),clear:clearSelection};
+  return {setSandbags:data=>setEntries('sandbags',sandbagSearchEntries(data)),setMap(controller){map=controller;},setFacilities(data){sourceNotes.assets=data?.sites?.length?'Authorized inventory loaded; readiness requires verification':'No authorized assets loaded; sign in and load county layers in Power / PSPS';setEntries('assets',facilitySearchEntries(data));},setRoads(data){sourceNotes.roads=data?.exercise?'Exercise mode; live road records disabled':data?.error?'Road feed failed; retained records require verification':data?.snapshot?`County road feed checked ${date(data.snapshot.checked)}; dates and active flags require review`:'Road source unavailable';setEntries('roads',roadSearchEntries(data));},setGauges(data){sourceNotes.gauges='Configured NWS watchpoints only; open gauge evidence to verify freshness and forecast';setEntries('gauges',gaugeSearchEntries(data));},setReservoirs:data=>setEntries('reservoirs',reservoirSearchEntries(data)),clear:clearSelection};
 }

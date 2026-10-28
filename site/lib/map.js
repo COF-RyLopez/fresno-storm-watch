@@ -17,7 +17,7 @@ import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.62.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.63.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -28,7 +28,7 @@ export function loadSdk() {
 }
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
-export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{},onDrainageSelect=()=>{},onNetworkSelect=()=>{},onCareSelect=()=>{}) {
+export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, initialScope = 'fresno', onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{},onDrainageSelect=()=>{},onNetworkSelect=()=>{},onCareSelect=()=>{},onSandbagSelect=()=>{}) {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const darkMode = () => document.documentElement.dataset.theme === 'dark';
   let mapPick=0;
@@ -252,6 +252,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         const data=viewEventData(event),point=data.mapPoint?.clone()??data.mapPoint??targetView.toMap({x:data.x,y:data.y});
         const hit=await targetView.hitTest(data);
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
+        const sandbagKey=hit.results.find(r=>r.graphic?.attributes?.countySandbagKey)?.graphic.attributes.countySandbagKey;if(sandbagKey){onSandbagSelect(sandbagKey);return;}
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const drainageKey=hit.results.find(r=>r.graphic?.attributes?.drainageKey)?.graphic.attributes.drainageKey;
         if(drainageKey){onDrainageSelect(drainageKey);return;}
