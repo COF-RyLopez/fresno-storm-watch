@@ -14,7 +14,7 @@ const fmt = new Intl.NumberFormat('en-US');
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
 const params = new URLSearchParams(location.search);
 
-const index = await fetch(ROOT + 'index.json').then(r => r.json());
+const index = await fetch(ROOT + 'index.json', { cache: 'no-cache' }).then(r => r.json());
 const id = index.scenarios.some(s => s.id === params.get('scenario')) ? params.get('scenario') : index.default;
 const DATA = `${ROOT}${id}/`;
 $('link-2d').href = `./flood-scenario.html?scenario=${encodeURIComponent(id)}`;

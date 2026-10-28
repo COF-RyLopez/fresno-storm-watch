@@ -11,7 +11,7 @@ const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('en-US');
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
 
-const index = await fetch(ROOT + 'index.json').then(r => r.json());
+const index = await fetch(ROOT + 'index.json', { cache: 'no-cache' }).then(r => r.json());
 const requested = new URLSearchParams(location.search).get('scenario');
 const id = index.scenarios.some(s => s.id === requested) ? requested : index.default;
 const DATA = `${ROOT}${id}/`;
