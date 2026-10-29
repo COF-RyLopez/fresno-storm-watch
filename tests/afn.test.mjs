@@ -12,13 +12,13 @@ const features={
   sb535:[{attributes:{Tract:6019000100,DAC_category:'CalEnviroScreen 4.0 Top 25%'}}],
   ccl:[{attributes:{ObjectId:1,FAC_NBR:1,NAME:'A',FAC_TYPE_DESC:'RESIDENTIAL-ELDERLY ',STATUS:3,CAPACITY:6,RES_CITY:'FRESNO'}},{attributes:{ObjectId:2,FAC_NBR:2,NAME:'B',FAC_TYPE_DESC:'RESIDENTIAL-ELDERLY',STATUS:3,CAPACITY:4}},{attributes:{ObjectId:3,FAC_NBR:3,NAME:'C',FAC_TYPE_DESC:'RESIDENTIAL-ELDERLY',STATUS:6,CAPACITY:99}}]
 };
-function source({fail=null,missingField=null,exceeded=null,countDelta={}}={}){
+function source({fail=null,missingField=null,exceeded=null,countDelta={},edited={}}={}){
   const requests=[];return {requests,fetcher:async(url,options={})=>{
     url=String(url);requests.push({url,options});
     if(url.startsWith('file:')||url.endsWith('acs-b16001-fresno.json'))return {ok:true,json:async()=>structuredClone(reference)};
     const key=Object.keys(features).find(k=>url.startsWith(AFN_SOURCES[k].url));if(key===fail)return {ok:false,status:503};
     let data;
-    if(!options.body)data={fields:AFN_SOURCES[key].fields.filter(n=>n!==missingField).map(name=>({name}))};
+    if(!options.body)data={fields:AFN_SOURCES[key].fields.filter(n=>n!==missingField).map(name=>({name})),editingInfo:{dataLastEditDate:edited[key]??0}};
     else if(options.body.get('returnCountOnly'))data={count:features[key].length+(countDelta[key]||0)};
     else data={features:structuredClone(features[key]),...(exceeded===key?{exceededTransferLimit:true}:{})};
     return {ok:true,json:async()=>data};
@@ -80,4 +80,10 @@ test('cancelling a zone propagates to all public topic reads',async()=>{
   }});
   controller.abort();await assert.rejects(pending,{name:'AbortError'});
   assert.equal(signals.length,6);assert(signals.every(signal=>signal.aborted));
+});
+test('source dates survive topic joins and empty but successful licensing queries',async()=>{
+  const stamp=Date.now()-100000,s=source({edited:{puma:stamp,svi:stamp-1,ces:stamp-2,sb535:stamp-3,ccl:stamp-4}});
+  const [languages,svi,ces,ccl]=await readAfnContext(geometry,{fetcher:s.fetcher});
+  assert.equal(languages.collected,reference.collected);assert(languages.referenceChecked>stamp);assert.equal(languages.edited,stamp);assert.equal(svi.edited,stamp-1);assert.equal(ces.edited,stamp-2);assert.equal(ces.designationEdited,stamp-3);assert(ces.designationChecked>stamp);assert.equal(ccl.edited,stamp-4);
+  const empty=await readIntersecting('ccl',geometry,{fetcher:source({countDelta:{ccl:-3},edited:{ccl:stamp}}).fetcher});assert.deepEqual(empty.rows,[]);assert.equal(empty.edited,stamp);
 });

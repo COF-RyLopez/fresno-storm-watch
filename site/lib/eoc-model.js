@@ -1,4 +1,4 @@
-import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.68.0';
+import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.70.0';
 import {validatePumpReadiness} from './pump-readiness-contract.js';
 import {validatePumpTask} from './pump-task-contract.js';
 /** Append-only EOC records. No source cue changes activation or official status. */

@@ -2,6 +2,8 @@ F.R.O.G. 0.69.0 — AFN & language context for a selected county evacuation zone
 
 Where: Population & evacuation zones > choose a zone > "AFN & language context · whole areas".
 Loads on first open. Anonymous, read-only public queries; nothing is stored or written.
+The private EOC outreach workflow can separately save a versioned snapshot of this
+context (0.70). See pio-outreach.txt; public viewing does not write private records.
 Read-only example: /?view=watch&population=1&zone=L39&v=0.69.0
 
 What each number comes from

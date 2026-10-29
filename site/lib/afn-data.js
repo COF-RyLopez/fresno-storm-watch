@@ -13,7 +13,7 @@ export async function readIntersecting(key,geometry,options={}){
   const filter={where:s.where,geometry:JSON.stringify(geometry),geometryType:'esriGeometryPolygon',inSR:4326,spatialRel:'esriSpatialRelIntersects'},url=s.url+'/query';
   const count=await read(url,{...filter,returnCountOnly:true},options);
   if(!Number.isInteger(count.count)||count.count<0||count.count>s.limit)throw Error('Record count exceeds the bounded zone query.');
-  if(!count.count)return {key,rows:[],checked:Date.now()};
+  if(!count.count)return {key,rows:[],checked:Date.now(),edited:meta.editingInfo?.dataLastEditDate??meta.editingInfo?.lastEditDate??null};
   const data=await read(url,{...filter,outFields:s.fields.join(','),returnGeometry:false,orderByFields:s.fields[0],resultRecordCount:s.limit},options);
   if(!Array.isArray(data.features)||data.exceededTransferLimit||data.features.length!==count.count)throw Error('Query is incomplete or changed during retrieval.');
   const rows=data.features.map(normalizers[key]),ids=rows.map(r=>r.key||r.id);
@@ -31,12 +31,12 @@ export async function readAfnContext(geometry,options={}){
   return Promise.all([
     topic('languages',async()=>{
       const [areas,reference]=await Promise.all([readIntersecting('puma',geometry,options),readLanguageAreas(options)]),byId=new Map(reference.rows.map(r=>[r.puma,r]));
-      return {rows:areas.rows.map(p=>{const values=byId.get(p.id);if(!values)throw Error('No language reference for PUMA '+p.id+'.');return {...values,id:p.id,name:p.name};}),period:reference.period,source:reference.source,checked:areas.checked};
+      return {rows:areas.rows.map(p=>{const values=byId.get(p.id);if(!values)throw Error('No language reference for PUMA '+p.id+'.');return {...values,id:p.id,name:p.name};}),period:reference.period,source:reference.source,collected:reference.collected,referenceChecked:Date.now(),checked:areas.checked,edited:areas.edited};
     }),
     topic('svi',()=>readIntersecting('svi',geometry,options)),
     topic('ces',async()=>{
       const [ces,dac]=await Promise.all([readIntersecting('ces',geometry,options),readIntersecting('sb535',geometry,options)]),category=new Map(dac.rows.map(r=>[r.id,r.category]));
-      return {rows:ces.rows.map(r=>({...r,dac:category.get(r.id)||null})),checked:ces.checked};
+      return {rows:ces.rows.map(r=>({...r,dac:category.get(r.id)||null})),checked:ces.checked,edited:ces.edited,designationChecked:dac.checked,designationEdited:dac.edited};
     }),
     topic('ccl',()=>readIntersecting('ccl',geometry,options))
   ]);

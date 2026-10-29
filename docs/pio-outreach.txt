@@ -1,3 +1,55 @@
+F.R.O.G. 0.70.0 — Saved AFN and language evidence in private outreach and briefings
+Checked October 28, 2026. Existing private EXERCISE AGOL tables and permissions.
+
+Open eoc.html?v=0.70.0#outreach, sign in, select an exercise incident and create or
+update outreach. AFN context captures for a new selected zone and older outreach
+without AFN evidence. Previously saved AFN evidence is retained until Refresh AFN
+evidence is used. Save the draft version to persist it. Refreshing does not change
+earlier messages, approvals, distribution receipts or briefing snapshots.
+
+Optional pioOutreach.afnEvidence schema 1, method frog-zone-afn/1 retains:
+- Exact county zone source/key/OID/name/status/query time and representation revision.
+- Whole PUMA B16001 Hmong/Punjabi estimates, English proficiency, age-5+ universe,
+  90% MOEs, ACS 2020–2024 period and public reference collection date (UTC date).
+- Whole 2020-tract SVI 2022 national percentiles and limited-English estimates/MOEs
+  from ACS 2018–2022. These do not use the same English-proficiency definition as B16001.
+- Whole 2010-tract CalEnviroScreen 4.0 percentiles and SB 535 designation; no join
+  to 2020 tract IDs and no percentile averaging or zone allocation.
+- Intersecting CDSS adult/senior facility licensing records, grouped for handoff
+  by type and raw publisher status code. Capacity is not current residents; codes
+  are not added together. Phone/street address are not requested or retained.
+- Source URLs, item references, geography/vintage, separate successful query and
+  publisher layer-edit times, capture time, original limitations and failures.
+Publisher issue/publication times are not supplied. Zero edit-date sentinels are
+unknown. Capture/query times are not new population observations or order times.
+Only whitelisted public attributes are captured; no geometry or private contact,
+message, partner or user values are sent to the public source readers.
+
+Source failures preserve unknown outcomes and available topics. Missing MOEs stay
+unknown. A changed county revision is flagged for review; an old snapshot is never
+silently applied to a changed boundary. Whole-area statistics do not establish zone
+language counts, preferred languages, disability needs or transport demand. Named
+language and applicability confirmations remain separate approval prerequisites.
+
+Create zone PIO handoff includes that zone's exact saved AFN and population evidence
+along with message/approval/receipt histories. Generic PIO/all briefings also retain
+it. Opening, copying or printing a briefing uses frozen values and the saved limits;
+no latest-source fetch or reaggregation occurs. A new outreach version requires
+fresh exact-version message approval. Briefing approval is a separate action.
+
+No new AGOL items, hosted fields, groups, OAuth scopes or memberships. Private
+records remain in existing append-only exercise storage and out of GitHub, site
+artifacts and persistent browser storage. Canceled/superseded captures cannot save.
+AFN evidence is bounded at 24,000 characters; the existing complete-event/briefing
+limit remains 60,000. Over-budget captures/saves fail visibly, never by truncation.
+Retain the compatible 0.70 PIO/AFN readers and writers on private-interface rollback;
+older records without AFN evidence remain readable and explicitly say not captured.
+Reload open EOC tabs after deployment. The fictional tabletop records unavailable
+illustrative AFN outcomes and does not read live geographies.
+
+Historical 0.68 population notes:
+==============================
+
 F.R.O.G. 0.68.0 — Saved zone population evidence in private outreach and briefings
 Checked October 28, 2026. Existing private EXERCISE AGOL tables and permissions.
 

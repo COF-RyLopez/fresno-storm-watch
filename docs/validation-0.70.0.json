@@ -1,0 +1,28 @@
+{
+  "release": "0.70.0",
+  "verifiedOn": "2026-10-28",
+  "timeZone": "America/Los_Angeles",
+  "checks": {
+    "nodeTests": {"passed": 679, "failed": 0},
+    "deploymentContractCheck": "passed",
+    "diffWhitespaceCheck": "passed",
+    "privateExerciseAcceptance": "Existing owner account appended real public AFN evidence for L62 to the closed, clearly labeled exercise outreach history; existing population evidence and message/approval/receipt history remained intact.",
+    "readBack": "Refresh records successfully reloaded the saved AFN context from private AGOL.",
+    "zoneBriefing": "Saved an 11,747-character draft zone handoff. Verified AFN version, MOEs, source dates and links, whole-area limitations and manual-not-submitted label in its rendered text.",
+    "responsive": "Desktop evidence inspected. At phone width, document client/scroll widths matched and the evidence record fit the viewport.",
+    "anonymousAccess": "Coordination and briefing read/write views each denied credential-free queries with ArcGIS error 499."
+  },
+  "privacy": {
+    "newHostedItemsOrFields": false,
+    "permissionOrMembershipChanges": false,
+    "publicMessagingSent": false,
+    "privateRecordsInPublicArtifacts": false,
+    "persistentBrowserStorageAdded": false
+  },
+  "limits": {
+    "afnSnapshotCharacters": 24000,
+    "completeEventAndBriefingCharacters": 60000,
+    "overBudgetBehavior": "Fail visibly; never truncate evidence."
+  },
+  "rollback": "Retain compatible 0.70 PIO/AFN readers and writers to display saved AFN evidence. Older records remain readable; no hosted migration or data deletion."
+}
