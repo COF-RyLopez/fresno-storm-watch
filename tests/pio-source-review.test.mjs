@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {pioSourceReviews,pioReviewCount,PIO_SOURCE_CHECK_MS} from '../site/lib/pio-source-review.js';
+import {pioSourceReviews,pioReviewCount,pendingPioSourceReviews,PIO_SOURCE_CHECK_MS} from '../site/lib/pio-source-review.js';
 import {createPioSourceMonitor,pioZoneSnapshot} from '../site/lib/pio-source-data.js';
 import {freezeAfnEvidence} from '../site/lib/afn-snapshot-model.js';
 import {emptyRecords,heads,makeEvent,briefingSnapshot,digest,reviewState} from '../site/lib/eoc-model.js';
@@ -48,8 +48,9 @@ test('publisher revision is explicitly source-wide, not a claim that zone values
 test('acknowledgement is tied to the substantive source revision, not successive query times',async()=>{
   const s=state(),live=snapshot();live.sources.svi.edited+=1000;
   const [first]=await pioSourceReviews([s],{current:current(s,live),checked:now}),reviews=[{id:'review',entity:'review',created:now,supersedes:[],payload:{sourceKey:first.key,sourceRevision:first.revision,team:'PIO',action:'Acknowledged'}}];
-  const [repeat]=await pioSourceReviews([s],{current:current(s,live),checked:now+1000});assert.equal(reviewState(repeat,reviews,'PIO'),'Acknowledged');
-  live.topics[1].rows[0].limitedEnglish.moe=20;const [changed]=await pioSourceReviews([s],{current:current(s,live),checked:now+2000});assert.equal(reviewState(changed,reviews,'PIO'),'Awaiting review');assert.equal(s.approved,true);
+  const [repeat]=await pioSourceReviews([s],{current:current(s,live),checked:now+1000});assert.equal(reviewState(repeat,reviews,'PIO'),'Acknowledged');assert.equal(pendingPioSourceReviews([repeat],reviews,'PIO').length,0);assert.equal(pendingPioSourceReviews([repeat],reviews,'Other team').length,1);
+  live.topics[1].rows[0].limitedEnglish.moe=20;const [changed]=await pioSourceReviews([s],{current:current(s,live),checked:now+2000});assert.equal(reviewState(changed,reviews,'PIO'),'Awaiting review');assert.equal(pendingPioSourceReviews([changed],reviews,'PIO').length,1);assert.equal(s.approved,true);
+  const failed={...first,category:'Data failures'};assert.equal(pendingPioSourceReviews([failed],reviews,'PIO').length,1,'Acknowledgement cannot hide a failed feed');
 });
 
 test('source failures deduplicate across outreach; missing context and closed records do not become zero or safe',async()=>{

@@ -1,11 +1,12 @@
-F.R.O.G. 0.71.0 — PIO source-review verification
+F.R.O.G. 0.71.1 — PIO source-review verification
 October 28, 2026 (America/Los_Angeles)
 
 Automated checks
 - 694 Node tests passed. Includes immutable approvals and saved evidence,
   boundary/status/removal checks, AFN membership/value/MOE/source-version changes,
   ignored query-only timestamps, one-record counts, source-failure deduplication,
-  exact-revision acknowledgement, scoped/frozen PIO briefings, retry, bounded
+  exact-revision/team acknowledgement (failed feeds remain visible), scoped/frozen
+  PIO briefings, retry, bounded
   concurrency/cache, sign-out and late asynchronous response privacy.
 - npm run check passed (syntax, page links, source contracts and public config).
 - Python contracts run in GitHub CI; local Python remains blocked by application

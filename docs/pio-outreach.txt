@@ -1,4 +1,4 @@
-F.R.O.G. 0.71.0 — PIO source applicability reviews
+F.R.O.G. 0.71.1 — PIO source applicability reviews
 Checked October 28, 2026. Existing private EXERCISE storage; no schema migration.
 
 Where to review
@@ -28,7 +28,11 @@ Older outreach without AFN evidence requests capture; no old values are inferred
 Safety and operation
 Approved messages, manually confirmed languages, approvals, receipts and saved
 source evidence remain unchanged. Flags are derived read-only; they do not
-invalidate or approve a message. To refresh saved evidence, update outreach,
+invalidate or approve a message. Record an acknowledgement in the EOC review queue
+for the configured team to clear that exact revision from Area Watch; a subsequent
+source revision reopens it. Source failures remain visible until recovery. No new
+message approval is required merely to record a source review.
+To refresh saved evidence, update outreach,
 review applicability, explicitly refresh evidence and save a new version. That
 new version needs its own documented message approval. Closing/canceling outreach
 stops monitoring without deleting history; it does not clear an evacuation/hazard.

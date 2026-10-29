@@ -1,4 +1,4 @@
-import {canonical,digest} from './eoc-model.js?v=0.70.0';
+import {canonical,digest,reviewState} from './eoc-model.js?v=0.70.0';
 import {pioZoneNotices} from './pio-model.js?v=0.70.0';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
 
@@ -49,3 +49,6 @@ export async function pioSourceReviews(states,{current={},checked=null,error=nul
 
 /** One affected outreach is one review, even when zone and AFN both changed. */
 export function pioReviewCount(notices){return new Set(notices.filter(n=>n.evidence?.outreachEvent).map(n=>n.evidence.outreachEvent)).size;}
+
+/** Team acknowledgement clears that revision's review need, never a failed feed. */
+export function pendingPioSourceReviews(notices,reviews,team){return notices.filter(n=>n.category==='Data failures'||reviewState(n,reviews,team)!=='Acknowledged');}

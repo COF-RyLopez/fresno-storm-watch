@@ -1,5 +1,5 @@
-import {createPioWorkspace} from './lib/pio-ui.js?v=0.71.0';
-import {pioReviewCount} from './lib/pio-source-review.js?v=0.71.0';
+import {createPioWorkspace} from './lib/pio-ui.js?v=0.71.1';
+import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.71.1';
 import {isPio} from './lib/pio-model.js?v=0.70.0';
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
@@ -7,20 +7,20 @@ import {setupAuth} from './lib/auth.js?v=0.40.0';
 import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.70.0';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';
-import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.71.0';
+import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.71.1';
 import {formatTime} from './lib/model.js';
 
 const $=id=>document.getElementById(id),el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};
 const exercise=new URLSearchParams(location.search).get('exercise')==='1';
 const team=EOC_CONFIG.teamLabel||'F.R.O.G. EOC exercise team';
 const time=v=>Number.isFinite(v)?new Intl.DateTimeFormat('en-US',{timeZone:CONFIG.timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(v):'Unknown';
-let store=null,auth=null,records=emptyRecords(),incidents=[],incident=exercise?'exercise-fresno-2026':null,periodId=null,role='Management',section=location.hash==='#outreach'?'outreach':'overview',generation=0,busy=false,checked=null,recordError=null;
+let store=null,auth=null,records=emptyRecords(),incidents=[],incident=exercise?'exercise-fresno-2026':null,periodId=null,role='Management',section=['outreach','notifications'].includes(location.hash.slice(1))?location.hash.slice(1):'overview',generation=0,busy=false,checked=null,recordError=null;
 let publicState=exercise?exerciseSources():{notifications:[],health:[]},sourceController=null,noticeFilter='All',shownBriefing=null,pendingForm=null,omitted=new Set();
 const liveHeads=key=>heads(records[key]),can=key=>!!store?.allowed.has(key)&&!recordError&&(!checked||Date.now()-checked<=120000),selectedPeriod=()=>records.periods.find(r=>r.id===periodId)||null;
 const notices=()=>[...buildNotifications(records,publicState.notifications),...pio.sourceNotifications()];
 const action=(text,fn,enabled=true)=>{const b=el('calcite-button',text);b.setAttribute('scale',matchMedia('(max-width:600px)').matches?'m':'s');b.setAttribute('appearance','outline');b.toggleAttribute('disabled',!enabled);b.onclick=fn;return b;};
 const card=(title,body,kind)=>{const n=el('article','','eoc-card');if(kind)n.dataset.kind=kind;n.append(el('h3',title));if(body)n.append(el('p',body));return n;};
-const pio=createPioWorkspace({host:$('pio-workspace'),getState:()=>({records,incident,can,periodReady:!!selectedPeriod()}),commit,message,time,onSourceChange:()=>renderSection(),onBriefing:({zoneKey=null}={})=>void createBriefing({scope:'pio',zoneKey}),exercise});
+const pio=createPioWorkspace({host:$('pio-workspace'),getState:()=>({records,incident,can,periodReady:!!selectedPeriod()}),commit,message,time,onSourceChange:()=>renderSection(),onBriefing:({zoneKey=null}={})=>void createBriefing({scope:'pio',zoneKey}),exercise,team});
 function message(text){$('workspace-message').textContent=text;}
 function getHeads(key,entity){return liveHeads(key).filter(h=>h.record.entity===entity).flatMap(h=>h.heads.map(r=>r.id));}
 function resetPrivate(){generation++;pio.clear();store?.close();store=null;records=emptyRecords();incidents=[];incident=null;periodId=null;checked=null;recordError=null;pendingForm=null;shownBriefing=null;omitted.clear();for(const id of ['record-dialog','briefing-dialog','evidence-dialog'])$(id).removeAttribute('open');for(const id of ['record-form','briefing-text','print-output','evidence-text'])$(id).replaceChildren();$('record-form').reset();$('form-error').textContent='';$('workspace-message').textContent='';render();}
@@ -60,7 +60,7 @@ function render(){renderHeader();renderSection();}
 function renderSection(){
   const all=notices(),pending=all.filter(n=>reviewState(n,records.reviews,team)!=='Acknowledged');$('notice-count').textContent=pending.length;
   let banner=$('eoc-banner');if(!banner){banner=el('calcite-notice');banner.id='eoc-banner';banner.setAttribute('open','');banner.setAttribute('width','full');banner.setAttribute('icon','bell');const title=el('div');title.id='eoc-banner-title';title.slot='title';title.setAttribute('role','status');const detail=el('div');detail.id='eoc-banner-detail';detail.slot='message';banner.append(title,detail);$('eoc-main').prepend(banner);}
-  banner.setAttribute('kind',all.some(n=>['Data failures','Overdue follow-ups'].includes(n.category))?'warning':'info');$('eoc-banner-title').textContent=`${pending.length} items awaiting team review · ${all.length} current items`;$('eoc-banner-detail').textContent=['Official agency alerts','Planning review cues','Verified field issues','Overdue follow-ups','Data failures'].map(category=>`${category}: ${all.filter(n=>n.category===category).length}`).join(' · ')+` · PIO outreach reviews: ${pioReviewCount(all.filter(n=>n.key.startsWith('pio')))}${all.some(n=>n.key.startsWith('pio')&&n.category==='Data failures')?' · PIO source issues: '+all.filter(n=>n.key.startsWith('pio')&&n.category==='Data failures').length:''}`;
+  banner.setAttribute('kind',all.some(n=>['Data failures','Overdue follow-ups'].includes(n.category))?'warning':'info');$('eoc-banner-title').textContent=`${pending.length} items awaiting team review · ${all.length} current items`;$('eoc-banner-detail').textContent=['Official agency alerts','Planning review cues','Verified field issues','Overdue follow-ups','Data failures'].map(category=>`${category}: ${all.filter(n=>n.category===category).length}`).join(' · ')+` · PIO outreach reviews: ${pioReviewCount(pendingPioSourceReviews(all.filter(n=>n.key.startsWith('pio')),records.reviews,team))}${all.some(n=>n.key.startsWith('pio')&&n.category==='Data failures')?' · PIO source issues: '+all.filter(n=>n.key.startsWith('pio')&&n.category==='Data failures').length:''}`;
   $('role-caption').textContent=role.toUpperCase();const titles={overview:'Operational overview',notifications:'Review queue',reports:'Field conditions & verification',coordination:'Follow-ups & decisions',readiness:'Readiness & staging',briefings:'Briefing & manual handoff',history:'Append-only record history',outreach:'PIO outreach & distribution'};$('section-title').textContent=titles[section];
   for(const b of document.querySelectorAll('[data-section]')){if(b.dataset.section===section)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');}
   const host=$('section-content');host.replaceChildren();host.hidden=section==='outreach';$('pio-workspace').hidden=section!=='outreach';if(section==='outreach')pio.render();

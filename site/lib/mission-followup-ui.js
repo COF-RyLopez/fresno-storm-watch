@@ -1,10 +1,10 @@
 import {EOC_CONFIG} from '../eoc-config.js';
 import {createPrivateStore} from './eoc-store.js';
-import {missionFollowups,followupsForEvidence} from './mission-followup-model.js?v=0.71.0';
+import {missionFollowups,followupsForEvidence} from './mission-followup-model.js?v=0.71.1';
 import {emptyRecords,heads} from './eoc-model.js?v=0.70.0';
 import {pioStates} from './pio-model.js?v=0.70.0';
-import {createPioSourceMonitor} from './pio-source-data.js?v=0.71.0';
-import {pioReviewCount} from './pio-source-review.js?v=0.71.0';
+import {createPioSourceMonitor} from './pio-source-data.js?v=0.71.1';
+import {pioReviewCount,pendingPioSourceReviews} from './pio-source-review.js?v=0.71.1';
 import {reportHealth} from './source-health.js?v=0.59.0';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** Named-account, read-only incident follow-ups. No persistence and no automatic dispatch. */
@@ -25,11 +25,11 @@ export function createMissionFollowups({openStore=createPrivateStore,sourceMonit
     pioHost.replaceChildren();pioHost.hidden=!session||!requested;
     if(session&&requested){
       pioHost.append(el('h3','PIO source reviews'),el('p',pioError?'PIO source check interrupted. Refresh follow-ups to retry; applicability is unknown.':pioBusy?'Checking evacuation zones and AFN evidence…':!pioChecked?'PIO source checks not assessed.':`${pioCount} outreach ${pioCount===1?'record needs':'records need'} source review${pioFailures?' · '+pioFailures+' source checks unavailable':''} · checked ${time(pioChecked)}.`));
-      if(pioChecked&&!pioNotices.length)pioHost.append(el('p',heads(records).some(h=>h.record.payload.pioOutreach&&!['Complete','Canceled'].includes(h.record.payload.status))?'No source differences detected for active outreach in this incident.':'No active outreach to monitor. Closed outreach and its saved history remain unchanged.'));
+      if(pioChecked&&!pioNotices.length)pioHost.append(el('p',heads(records).some(h=>h.record.payload.pioOutreach&&!['Complete','Canceled'].includes(h.record.payload.status))?'No unacknowledged source differences for active outreach in this incident. Team reviews apply only to the exact source revision.':'No active outreach to monitor. Closed outreach and its saved history remain unchanged.'));
       const groups=new Map();for(const n of pioNotices){const key=n.evidence?.outreachEvent||n.key;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(n);}
       for(const group of groups.values()){const n=group[0],article=el('article');article.className='mission-card';article.append(el('h4',n.location),...group.map(n=>el('p',n.change)),el('p',`Owner: ${n.owner} · ${group.some(n=>n.category==='Data failures')?'Comparison unavailable':'Source applicability needs review'}`));const detail=el('details');detail.append(el('summary','Source review & next step'),...[...new Set(group.map(n=>n.nextReview))].map(text=>el('p',text)),el('p',`Compared ${time(n.sourceTime)}. Whole-area AFN context is not a zone population or confirmed support need. Source query/edit dates are not evacuation-order issue times.`));article.append(detail);pioHost.append(article);}
       pioHost.append(el('p','Approved messages, confirmed languages and saved evidence remain unchanged. Review sources every five minutes while this page is visible.'));
-      const a=el('a','Review outreach in private EOC workspace');a.href='./eoc.html#outreach';a.target='_blank';a.rel='noopener noreferrer';pioHost.append(a);
+      const a=el('a','Record source review in private EOC review queue');a.href='./eoc.html#notifications';a.target='_blank';a.rel='noopener noreferrer';pioHost.append(a);
     }
     reportHealth('mission-followups','Private incident follow-ups',{checked,error:error?'Private follow-up query failed; sign in and retry.':null,state:!session||!requested?'unassessed':null,detail:'Only the selected incident is assessed. Pump assignments remain separate.',maxAgeMs:120000});
     reportHealth('mission-pio-sources','Private PIO source comparisons',{checked:pioChecked,error:pioError||pioFailures?'Some PIO sources could not be compared; current applicability is unknown.':null,state:!session||!requested?'unassessed':null,detail:'Selected incident only. Approved messages remain unchanged.',maxAgeMs:420000});
@@ -42,10 +42,10 @@ export function createMissionFollowups({openStore=createPrivateStore,sourceMonit
       const list=await store.incidents();if(version!==epoch)return;
       const available=new Map(list.map(r=>[r.incident,r.payload.name]));const target=available.has(next)?next:available.keys().next().value||'';
       if(target!==incident)sourceMonitor.clear();
-      const [loaded,approvals]=target?await Promise.all([store.loadCollection('coordination',target),store.loadCollection('approvals',target)]):[[],[]];if(version!==epoch)return;
+      const [loaded,approvals,reviews]=target?await Promise.all([store.loadCollection('coordination',target),store.loadCollection('approvals',target),store.loadCollection('reviews',target)]):[[],[],[]];if(version!==epoch)return;
       choices=available;incident=target;records=loaded;checked=Date.now();
       busy=false;pioBusy=!!target;render();
-      if(target){const state={...emptyRecords(),coordination:loaded,approvals};try{const result=await sourceMonitor.check(pioStates(state,{heads}),{force});if(version!==epoch)return;pioNotices=result.notices;pioChecked=result.checked;}catch(e){if(version===epoch&&e.name!=='AbortError')pioError=true;}finally{if(version===epoch)pioBusy=false;}}
+      if(target){const state={...emptyRecords(),coordination:loaded,approvals};try{const result=await sourceMonitor.check(pioStates(state,{heads}),{force});if(version!==epoch)return;pioNotices=pendingPioSourceReviews(result.notices,reviews,EOC_CONFIG.teamLabel||'F.R.O.G. EOC exercise team');pioChecked=result.checked;}catch(e){if(version===epoch&&e.name!=='AbortError')pioError=true;}finally{if(version===epoch)pioBusy=false;}}
     }catch{if(version===epoch){sourceMonitor.clear();store?.close();store=null;choices.clear();records=[];pioNotices=[];pioChecked=null;pioBusy=false;checked=null;error=true;}}
     finally{if(version===epoch){busy=false;render();}}
   }
