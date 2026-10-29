@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "method": "frog-zone-acs-batch/1",
+  "built": 1793294580703,
+  "acquired": 1793293276964,
+  "zonesChecked": 1793293237432,
+  "acsChecked": 1793293244862,
+  "acsMetadata": {
+    "key": "population",
+    "period": "2020–2024",
+    "checked": 1793293237296,
+    "modified": 1779803715000,
+    "edited": 1770074344736
+  },
+  "blockChecked": 1793293275166,
+  "blockEdited": 1787626299218,
+  "scope": "Fresno County portions of county-published Sheriff evacuation zones",
+  "period": "2020–2024",
+  "baselineYear": 2020,
+  "source": {
+    "zones": "https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947",
+    "acs": "https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83",
+    "blocks": "https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3"
+  },
+  "boundarySource": {
+    "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2024/MapServer/8",
+    "vintage": "January 1, 2024",
+    "checked": 1793293244856,
+    "tracts": 225
+  },
+  "inventory": {
+    "sourceZones": 398,
+    "excluded": [
+      {
+        "key": "county-zone:682",
+        "name": "San Benito County",
+        "reason": "Neighboring-county context polygon; not a Fresno County evacuation zone."
+      }
+    ]
+  },
+  "counts": {
+    "zones": 397,
+    "estimated": 357,
+    "unknown": 40,
+    "tracts": 225,
+    "blocks": 16854
+  },
+  "limits": {
+    "method": "For each intersecting ACS tract, allocate its published total using the share of its 2020 Census block population inside the selected county zone. Blocks cut by the tract or zone boundary are apportioned by geodetic area. This assumes the within-tract population pattern has remained like 2020; it cannot locate subsequent development or population movement. Only Fresno County tracts are included, including for zones that cross the county line.",
+    "interpretation": "A five-year planning estimate, not a 2026 headcount, current occupancy, confirmed evacuees or shelter demand. Newer source totals do not guarantee a more accurate zone estimate. Do not add overlapping zones together.",
+    "uncertainty": "Sampling-only component = square root of the sum of squared (tract allocation weight × published 90% MOE). This approximation treats the weights as fixed and ignores covariance between tracts. It excludes allocation, boundary, 2020 Census and population-change errors; it is not a complete 90% confidence interval for this zone.",
+    "geometry": "Intersections in EPSG:4326; WGS84 ellipsoidal areas using GeographicLib. Straight geographic segments densified to at most 0.0005 degrees. No Web Mercator area measurement.",
+    "boundary": "Dated boundary snapshot, not current evacuation orders. Only Fresno County population is included. Do not sum overlapping zones."
+  },
+  "geometryFingerprint": "46921cb86eab22e501578967cc1fdb99a0151caa3013317c4f6c10325f3bef45",
+  "inputFingerprints": {
+    "zones": "84293ec5a4dc46b19aa4b0a3cd54fbb35867699fa70aed7c3febcd2f46682207",
+    "tracts": "2dba4b99a0962e2eeb4100aa5e63b529ef45527e5bd7336661695e490435f929",
+    "blocks": "6a0aa938d150536a9154de87d4038be328b7a2d6e5d138be5be22c1d612c290a"
+  },
+  "geojson": {
+    "file": "zones.geojson",
+    "sha256": "bfe92248e3cef0f1c41c5c2f3f582395c692711cfc40168977fc727b824823d9",
+    "bytes": 578982
+  },
+  "csv": {
+    "file": "zone-population.csv",
+    "sha256": "1dd56e0e8ef635fa7135b3790b6943580491fb5ecbc3a636cfd9df95ef32aced",
+    "bytes": 364513
+  },
+  "engine": {
+    "node": "v22.22.3",
+    "polygonClipping": "0.15.7",
+    "geographiclib": "2.2.0"
+  },
+  "issues": []
+}

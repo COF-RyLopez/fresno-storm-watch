@@ -1,0 +1,11 @@
+{
+  "release": "0.72.0",
+  "checked": "2026-10-29",
+  "reference": "Existing calculateAcsZonePopulation using ArcGIS SDK 5.1 Polygon, intersectionOperator and geodeticAreaOperator against the same frozen public inputs",
+  "comparison": [
+    {"zone":"L39","arcgis":3179.981696765806,"batch":3179.980506217086,"sameNearest10":true,"samplingArcgis":321.49229770502154,"samplingBatch":321.492211211526},
+    {"zone":"L62","arcgis":1580.1638881505478,"batch":1580.1649034339143,"sameNearest10":true,"samplingArcgis":175.10731673408353,"samplingBatch":175.10740987755955},
+    {"zone":"L17","arcgis":225.1823941641501,"batch":225.1820962461563,"sameNearest10":true,"samplingArcgis":79.29507509019425,"samplingBatch":79.29496413632477}
+  ],
+  "limits": "Numerical cross-check of three zones, not independent validation of the demographic allocation assumptions. Census does not publish these zone totals. Sampling components exclude spatial-allocation and population-change uncertainty."
+}

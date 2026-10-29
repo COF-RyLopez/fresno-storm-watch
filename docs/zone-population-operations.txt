@@ -1,0 +1,96 @@
+F.R.O.G. 0.72.0 — Standalone evacuation-zone population map
+Prepared October 29, 2026.
+
+Share this read-only product with Terri and Cal OES Law Branch:
+https://cof-rylopez.github.io/fresno-storm-watch/zone-population.html
+No sign-in, new AGOL items, or permission changes. Storm Watch, the private EOC
+workspace and Experience Builder pilot remain unchanged.
+
+Map behavior
+Search a zone, select its outline or list entry, and inspect its estimated
+residents, sampling-only MOE component and source dates. Selection fits the full
+outline. Zone/population labels deconflict; zoom for additional labels. URL zone
+links and browser Back/Forward retain selection. Phones offer Map / Zones &
+details. Download all zones as CSV or print the current map with source notes.
+Uniform outlines show raw counts without an inappropriate raw-count choropleth.
+Gray dashed outlines are unknown estimates, not unpopulated or safe areas.
+
+Scope and accounting
+397 coded Fresno evacuation zones: 357 complete estimates, 40 needing review.
+The county feed returned 398 records. Its named San Benito County context
+polygon is excluded explicitly, with its source identity and reason retained in
+manifest.inventory. Unclassified future names stop the build for scope review.
+Only Fresno County population is estimated, even for cross-border zone outlines.
+Each zone is calculated independently. Never sum overlapping zones.
+
+Public authoritative inputs
+County-published Sheriff's evacuation zones, item 07e6ba11ae8c47fcb81208873ac43947:
+https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/services/Fresno_County_Evacuations_2_view/FeatureServer/5
+Living Atlas ACS Population view, owner esri_demographics, 2020–2024:
+https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83
+Total B01001_001E; published 90% sampling MOE B01001_001M.
+Analysis uses all 225 full Fresno tract boundaries, January 1, 2024 vintage:
+https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2024/MapServer/8
+Living Atlas water-erased display polygons are not analysis boundaries.
+All 16,854 Fresno 2020 redistricting blocks, population P0010001:
+https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3
+The Census does not publish ACS totals for Sheriff's evacuation zones.
+F.R.O.G. performs this allocation; it is not an official Census zone product.
+
+Method: frog-zone-acs-batch/1
+Within each full tract T, allocate its ACS residents by the share of its 2020
+block population in zone Z. Split blocks by their ellipsoidal area:
+  denominator = sum(P2020 * area(block intersect T) / area(block))
+  numerator = sum(P2020 * area(block intersect T intersect Z) / area(block))
+  zone contribution = ACS tract residents * numerator / denominator
+Wholly contained tracts use their whole published total. Unknown or unpopulated
+2020 patterns in a partial tract overlap prevent a complete estimate. No missing
+value is replaced by zero. No building/address/individual demographic assignment.
+Assumes the within-tract population distribution remains similar to 2020.
+Intersections preserve holes/multipart geometry in EPSG:4326; areas use WGS84
+ellipsoid GeographicLib, densified to 0.0005 degrees. Reject material topology
+changes, overlapping tracts, incomplete inventories, and unsupported ACS vintage.
+Web Mercator is for map display only. Drawn population rounds to nearest 10;
+positive estimates below 5 are shown as <10, distinct from an actual zero.
+
+Uncertainty
+Sampling-only component: sqrt(sum((weight * published tract 90% MOE)^2)).
+This approximation assumes fixed allocation weights and ignores tract covariance.
+It excludes spatial allocation, Census privacy protection, boundary and subsequent
+population-change error. It is NOT a complete zone 90% confidence interval.
+40 zones have unsupported partial overlaps and show Needs review, never zero.
+These five-year planning estimates are not a 2026 headcount, live occupancy,
+confirmed evacuees, shelter demand, current evacuation orders or safe access.
+Age/language/AFN remain separate whole-area context in Storm Watch.
+
+Snapshot and maintenance
+Manifest retains source vintages, query/build times, engine versions, source
+hashes, exclusions, and GeoJSON/CSV delivery hashes. evidence.json contains each
+zone's tract contributions, weights and failure reasons. All outputs are public
+aggregate geography/population, never private operations or credentials.
+The app checks delivered geometry bytes/hash before showing figures. Check
+current boundaries compares IDs, names and full source geometry; status-only
+changes do not affect population applicability. A change/failure retains the
+dated map with an explicit warning. This check does not update estimates.
+No scheduled refresh is enabled. Maintainer rebuild:
+  npm ci --ignore-scripts
+  npm run collect:zone-population
+  npm run build:zone-population
+  npm test
+  npm run check
+Inspect accounting, unknown reasons and source vintages before committing and
+publishing the resulting site/data/zone-population files. Raw ~39 MB inputs stay
+in ignored work/, never deployed. Refresh source geometry and totals together;
+an ACS period change requires matching boundary configuration and revalidation.
+
+Verification
+708 Node tests cover allocation/conservation, missingness, geometry, delivery,
+scope, source dates and existing app regressions. npm run check checks syntax
+and public page links. GitHub CI additionally runs the existing Python contracts.
+Independent browser check ran the existing ArcGIS SDK calculation against the
+same frozen public source inputs for L39, L62 and L17. Batch differences were
+under 0.0012 person; all rounded display counts matched. See companion JSON.
+Browser checks: all-zone rendering, selected outline focus, URL/Back/Forward,
+unknown estimates, current-boundary check, phone layout and print layout.
+
+Rollback: redeploy the preceding release. No data migration or AGOL changes.

@@ -1,6 +1,6 @@
 {
   "name": "fresno-storm-watch-prototype",
-  "version": "0.71.1",
+  "version": "0.72.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -24,14 +24,18 @@
     "build:waterbody-basemap": "node scripts/build-waterbody-basemap.mjs",
     "collect:map-pilot": "node --use-system-ca scripts/collect-map-pilot.mjs",
     "collect:sandbags": "node --use-system-ca scripts/collect-sandbags.mjs",
-    "collect:pio-languages": "node --use-system-ca scripts/collect-pio-languages.mjs"
+    "collect:pio-languages": "node --use-system-ca scripts/collect-pio-languages.mjs",
+    "collect:zone-population": "node --use-system-ca scripts/acquire-zone-population.mjs",
+    "build:zone-population": "node --use-system-ca scripts/build-zone-population.mjs"
   },
   "devDependencies": {
     "@mapbox/vector-tile": "2.0.4",
     "@terraformer/arcgis": "2.2.2",
+    "geographiclib-geodesic": "2.2.0",
     "geojson-vt": "4.0.2",
     "maplibre-gl": "6.15.0",
     "pbf": "4.0.1",
+    "polygon-clipping": "0.15.7",
     "vt-pbf": "3.1.3"
   }
 }

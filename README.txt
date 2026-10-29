@@ -1,5 +1,12 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.55.0 | October 26, 2026 | FMFCD candidate connections
+Version 0.72.0 | October 29, 2026 | Standalone evacuation-zone population
+
+EVACUATION-ZONE POPULATION (v0.72.0)
+Share /zone-population.html for the read-only Sheriff zone / ACS map.
+397 Fresno zones; 357 complete estimates and 40 marked Needs review.
+ACS 2020-2024 totals allocated using 2020 block population patterns; not live
+occupancy or current orders. Search, labels, selected-zone evidence, CSV and print.
+See docs/zone-population-operations.txt for sources, uncertainty and maintenance.
 
 FMFCD CONNECTION REVIEW (v0.55.0)
 Selecting an existing basin/pump highlights shared-vertex candidate paths and

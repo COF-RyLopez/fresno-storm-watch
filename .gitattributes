@@ -3,3 +3,5 @@
 site/vendor/*.js -text
 # MVT protobuf bytes must not undergo line-ending conversion.
 *.pbf binary
+# Preserve the CSV bytes referenced by the public population manifest.
+site/data/zone-population/*.csv -text whitespace=cr-at-eol
