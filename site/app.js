@@ -1,13 +1,14 @@
+import {createPopulationWatch} from './lib/population-ui.js?v=0.64.0';
 import {createCountySandbags} from './lib/county-sandbag-ui.js?v=0.63.0';
 import {createDwrFloodFight} from './lib/dwr-flood-fight-ui.js?v=0.62.0';
 import {createDwrSupplyPlanning} from './lib/dwr-supply-planning-ui.js?v=0.62.0';
-import {createCareWatch} from './lib/care-ui.js?v=0.59.0';
+import {createCareWatch} from './lib/care-ui.js?v=0.64.0';
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.53.0';
 import {createDrainageNearby} from './lib/drainage-nearby-ui.js?v=0.55.0';
 import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.59.0';
 import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.59.0';
-import {createMission} from './lib/mission-ui.js?v=0.59.0';
+import {createMission} from './lib/mission-ui.js?v=0.64.0';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.59.0';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.36.0';
 import {createMapSearch} from './lib/map-search-ui.js?v=0.63.0';
@@ -17,7 +18,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.63.0';
+import { createMap } from './lib/map.js?v=0.64.0';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';
@@ -79,9 +80,10 @@ function openPlanning(){workspace.showPanel('watch');}
 function openRoads(){workspace.showPanel('roads');}
 function openPower(){workspace.showPanel('power');}
 for(const [id,topic]of [['view-watch','watch'],['view-rivers','rivers'],['view-environment','weather'],['view-alerts','alerts'],['view-power','power'],['view-roads','roads']])$(id).addEventListener('click',()=>workspace.showPanel(topic));
-const mission=createMission({workspace,exercise,onSelectArea:id=>{openPlanning();planning?.selectArea(id);},onGauge:id=>rivers?.select(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key,{keepWorkspace:true}),onBriefing:(...args)=>briefings.open(...args),onTopic:topic=>workspace.showPanel(topic),onCare:key=>care.select(key),onDrainage:(id,pump)=>drainageReviews.inspect(id,pump),onPower:key=>power?.select(key,{keepWorkspace:true}),onQueueRoad:key=>roads?.select(key,{keepWorkspace:true})});
+const mission=createMission({workspace,exercise,onSelectArea:id=>{openPlanning();planning?.selectArea(id);},onGauge:id=>rivers?.select(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key,{keepWorkspace:true}),onBriefing:(...args)=>briefings.open(...args),onTopic:topic=>workspace.showPanel(topic),onCare:key=>care.select(key),onDrainage:(id,pump)=>drainageReviews.inspect(id,pump),onPower:key=>power?.select(key,{keepWorkspace:true}),onPopulation:()=>population.open(),onQueueRoad:key=>roads?.select(key,{keepWorkspace:true})});
 const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
-const care=createCareWatch({exercise,onMap:workspace.showMap,onCapture:item=>mission.addEvidence(item),onClearPrivate:()=>mission.clearCareEvidence(),exerciseNow:exerciseClock,onReviews:value=>mission.setCare(value),onSummary:n=>strip.care(n),onPower:key=>power?.select(key),onRoad:key=>roads?.select(key)});
+const population=createPopulationWatch({exercise,onMap:workspace.showMap,onOpenWatch:()=>workspace.showPanel('watch',{history:false})});
+const care=createCareWatch({exercise,onZone:key=>population.selectZone(key),onMap:workspace.showMap,onCapture:item=>mission.addEvidence(item),onClearPrivate:()=>mission.clearCareEvidence(),exerciseNow:exerciseClock,onReviews:value=>mission.setCare(value),onSummary:n=>strip.care(n),onPower:key=>power?.select(key),onRoad:key=>roads?.select(key)});
 const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBriefing:(...args)=>briefings.open(...args),onArea:id=>planning?.selectArea(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onConnect:()=>{openPower();document.querySelector('.facility-section calcite-accordion-item').expanded=true;},onMap:workspace.showMap,onData:data=>mission.setContext(data)});
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id),onSlide:context=>briefingLayers?.followSlide(context)});
 const drainageNearby=createDrainageNearby({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap});
@@ -305,12 +307,14 @@ try {
   power.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   facilities.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   care.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
+  population.setCounty(counties.find(f=>f.properties.GEOID==='06019'));
   createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),riverView?'fresno':'regional',id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key),key=>void countySandbags.select(key)).then(controller => {
     map = controller;
     workspace.setMap(map);mission.setMap(map);
     dwrFloodFight.setMap(map,counties.find(f=>f.properties.GEOID==='06019'));
     dwrSupplyPlanning.setMap(map);
     void countySandbags.setMap(map);
+    void population.setMap(map);
     mapSearch.setMap(map);
 
     rivers?.setMap(map);

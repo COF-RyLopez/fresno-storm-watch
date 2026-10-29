@@ -13,7 +13,7 @@ const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appea
 const link=(label,href)=>{const a=el('a',label);a.href=href;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** Public CDPH, county-zone, Places and Overture-footprint reference comparison. */
-export function createCareWatch({exercise=false,onMap=()=>{},onCapture=()=>{},onClearPrivate=()=>{},onSummary=()=>{},onReviews=()=>{},onPower=()=>{},onRoad=()=>{},exerciseNow=Date.now()}={}){
+export function createCareWatch({exercise=false,onMap=()=>{},onZone=()=>{},onCapture=()=>{},onClearPrivate=()=>{},onSummary=()=>{},onReviews=()=>{},onPower=()=>{},onRoad=()=>{},exerciseNow=Date.now()}={}){
  let county=null,controller=null,graphics=null,session=null,facilities=null,zones=null,places=null,selected=null,buildingResult=null,comparison=[],epoch=0,busy=false,loaded=false,placesPending=null;
  const reviews=createCareReviews({exercise,exerciseNow,onSelect:key=>select(key),onSummary,onPower,onRoad,onChange:rows=>{onReviews(rows);graphics?.setSites(facilities?.rows||[],rows);if(selected){graphics?.setReview(reviews.get(selected.key));renderDetail();}}});
  const errors={},time=careTime;
@@ -28,7 +28,7 @@ export function createCareWatch({exercise=false,onMap=()=>{},onCapture=()=>{},on
  }
  function drawZones(){graphics?.setZones(zones?.rows||[],$('care-lifted').checked);}
  function renderDetail(){const host=$('care-details'),openSections=new Set([...host.querySelectorAll('details[open] > summary')].map(s=>s.textContent));host.replaceChildren();if(!selected)return;const f=selected;host.append(el('h3',f.name),el('p',`${f.address}, ${f.city}`),el('p',`${f.kind} · CDPH certification status: ${f.status}`),el('p',`Licensed beds: ${f.beds??'not supplied'} · capacity in the inventory, not current occupancy or evacuation demand.`));
-  const zz=zones?zonesAt(f.geometry,zones.rows):[];reviews.renderInto(host,f.key);
+  const zz=zones?zonesAt(f.geometry,zones.rows):[];reviews.renderInto(host,f.key);if(zz.length){const zoneContext=el('details');zoneContext.append(el('summary','Population in containing county zones'));for(const z of zz)zoneContext.append(button('Population in '+z.name,()=>onZone(z.key)));host.append(zoneContext);}
   const comparisonHost=el('details');comparisonHost.append(el('summary','Compare Overture places and buildings'));host.append(comparisonHost);
   comparisonHost.append(el('h3','Overture Places · identity review'));
   if(!places)comparisonHost.append(el('p',`Places comparison unassessed. ${errors.places||''}`));else if(!comparison.length)comparisonHost.append(el('p','No Places points returned within approximately 500 m. This does not establish that the facility is absent.'));

@@ -1,0 +1,71 @@
+F.R.O.G. 0.64.0 — Public population and county evacuation-zone planning
+Checked October 28, 2026. All endpoints below are public, query-only references.
+
+Entry: County Watch / Area Watch -> Population & evacuation zones. A direct
+read-only link is /?view=watch&population=1; append &zone=L62 for a named zone.
+No ArcGIS sign-in, new hosted items, memberships or editing permissions are needed.
+The private EOC and Experience Builder pilots are unchanged.
+
+Newer demographic context:
+Fresno COG item 7723dfd62f1a407fad2a60b0e95e19f0, title ACS2024_5yrs,
+snippet explicitly identifies ACS 2020–2024 five-year census-tract estimates.
+The underlying legacy service URL still says ACS2021_5yrs. Its name must not be
+used as the data vintage; the publisher's item and current web map identify 2024.
+https://services.arcgis.com/v2YXtBuIb8gr4ywi/arcgis/rest/services/ACS2021_5yrs/FeatureServer/0
+GEOID is the tract ID; tot_pop is estimated tract residents; popdens is residents
+per square mile, as specified by the publisher's population web map popup.
+225 Fresno tracts in the checked source. The service does not expose margins of
+error. Do not imply confidence or use the complete tract population as zone population.
+Density uses fixed classes 0–100, >100–500, >500–2,000, >2,000–5,000, >5,000,
+with a sequential blue palette, text/unit legend and a gray missing-data symbol.
+https://www.arcgis.com/home/item.html?id=000a454a70bf44b9afbb35a81cb40fd2
+
+Fine-grained zone baseline:
+County public population app 22c8df4e3d854b39bbbf36b8042ba08d references Esri's
+2020 Census California redistricting blocks. P0010001 is total population and
+GEOID is the census block ID. These are decennial census data, not adjusted
+districting allocations, live occupancy, an ACS estimate or 2026 population.
+https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/California_Census_2020_Redistricting_Blocks/FeatureServer/0
+COUNTY='019' and a spatial intersection constrain the public block query.
+
+County zone source:
+https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/services/Fresno_County_Evacuations_2_view/FeatureServer/5
+398 source records were returned during discovery. Preserve status values Order,
+Warn, Lifted and unknown. Collection time is not an individual order issue time.
+The source lacks individual issue/update times: verify current orders with the county.
+The displayed population never activates an order or establishes current impacts.
+
+Calculation:
+Fetch every intersecting block using reconciled ID batches, WGS84 polygon output,
+and no geometry simplification. Validate county GEOIDs, population and geometry.
+Use SDK intersectionOperator and geodeticAreaOperator in geodetic square metres.
+Estimate = sum(block population * overlap polygon area / whole block polygon area).
+This assumes uniform population across each complete boundary block, including
+water. It is particularly uncertain in large rural blocks. No land mask, building
+allocation, households or individual location inference is performed.
+Show fully contained block population and the full population of boundary-cut
+blocks separately; the latter is not added to the estimate. The resulting context
+is not a statistical confidence interval. Census privacy protections also affect
+small-area counts. All labels retain the 2020 reference date.
+Missing/suppressed population prevents a complete estimate; no overlap is unknown,
+not zero. Touch-only intersections have zero weight. GEOIDs are counted once.
+Never add zone totals together: zones may overlap. Current version assesses one
+zone at a time and does not claim a countywide affected population.
+
+Runtime and safeguards:
+No new dependencies, collectors, credentials or backend. Census queries use public
+POST form queries with credentials omitted; POST is retrieval only. Each request
+has a 30-second deadline and reconciles returned IDs. A 25,000-block ceiling fails
+explicitly. Calculation yields after each 25 records. Selection epochs and abort
+signals suppress superseded work; closing evidence cancels incomplete calculation.
+At most five geometry-keyed results are cached for ten minutes in memory only.
+Zone source checks repeat every five minutes while the population section is open.
+Failures retain an explicit unknown/failure state; a changed boundary requires a
+new calculation. No population records or private records enter browser persistence.
+Private feature layers, authoring tools, activation and state submissions remain separate.
+
+Verification: tests/population.test.mjs plus full npm test and npm run check.
+Browser: validate three zone estimates against source GEOIDs and overlap evidence;
+compare three ACS tract popup values with publisher attributes; test empty filter,
+rapid switching, narrow layout, read-only share link and contextual layer restoration.
+Rollback: redeploy 0.63.0. No data migration or access changes.

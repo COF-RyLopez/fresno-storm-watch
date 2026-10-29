@@ -1,0 +1,43 @@
+{
+  "version": "0.64.0",
+  "checked": "2026-10-28",
+  "unitTests": 598,
+  "independentGeometryCheck": {
+    "method": "Shapely 2.1.2 intersection; pyproj 3.7.2 WGS84 geodetic areas; parity of all polygon rings retains holes/multipart",
+    "results": [
+      {
+        "zone": "K1",
+        "estimate": 0,
+        "wholePopulation": 0,
+        "boundaryPopulation": 0,
+        "wholeBlocks": 1,
+        "boundaryBlocks": 2
+      },
+      {
+        "zone": "L4",
+        "estimate": 281.7006596579371,
+        "wholePopulation": 50,
+        "boundaryPopulation": 1631,
+        "wholeBlocks": 1,
+        "boundaryBlocks": 14
+      },
+      {
+        "zone": "L62",
+        "estimate": 1629.1144800222805,
+        "wholePopulation": 802,
+        "boundaryPopulation": 1398,
+        "wholeBlocks": 26,
+        "boundaryBlocks": 44
+      }
+    ]
+  },
+  "sourceCount": {
+    "countyZones": 398,
+    "cogTracts": 225
+  },
+  "notes": [
+    "Zone estimates use 2020 census blocks, not whole intersecting ACS tract totals.",
+    "ACS 2020–2024 context comes from Fresno COG publisher metadata despite a legacy 2021 URL.",
+    "No new hosted items, permission changes, private data or dependencies."
+  ]
+}
