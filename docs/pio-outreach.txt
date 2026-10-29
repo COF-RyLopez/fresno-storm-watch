@@ -1,0 +1,114 @@
+F.R.O.G. 0.66.0 — Private PIO outreach and population-source guidance
+Checked October 28, 2026. Existing private AGOL EXERCISE storage only.
+
+Entry: eoc.html?v=0.66.0#outreach -> county sign-in -> select an exercise incident
+-> PIO outreach. Public Information display also opens this section. OAuth may
+return to Overview; select PIO outreach after sign-in. Reload open EOC tabs after
+deployment so all clients understand the new typed approval payloads.
+
+Workflow
+1. Select a county evacuation-zone record; enter purpose, responsible PIO/team,
+   confirmed languages and their confirming person/time/evidence. Unconfirmed
+   languages can remain blank in a draft. One message language/text per version.
+2. Record channels, community partners, next update/review and county confirmation
+   of message applicability. Saving creates an append-only coordination event.
+3. An account with existing approval access records documented county PIO/JIC
+   approval for that exact event. Record the actual decision maker, decision time
+   and evidence. Group membership is not public-message authority. Before approval
+   the app rechecks source representation; a changed or missing zone requires
+   review. A zone query older than 15 minutes requires a refreshed draft version.
+4. Record actual external distribution, channels/partners used, receipt status,
+   supporting evidence and next update. Sent/posted is explicitly receipt
+   unconfirmed. Partner acknowledgment requires the operator's evidence. The app
+   does not send, post, translate or approve public release by itself.
+5. Correct a plan, approval or receipt with another append. Plan revisions require
+   fresh exact-version approval; a receipt never edits the approved message.
+   Historical receipt corrections keep their original message and approval links.
+6. Create PIO handoff snapshot freezes PIO coordination/history, exact approvals,
+   manual receipts, operational period and current PIO review evidence. Unrelated
+   county feed records are excluded, avoiding the generic full-briefing size limit.
+   The existing 60,000-character record bound still applies to large histories.
+   A PIO handoff remains a draft until separately approved as a briefing. Briefing
+   approval does not independently approve its public messages. Exports are manual
+   handoffs, not submissions to Cal OES.
+7. Close or cancel with evidence. Prior versions remain available in Record
+   history and saved briefing snapshots. Closing does not clear the hazard.
+
+Storage and access
+No new hosted items, physical fields, group memberships or permissions.
+- coordination payload.pioOutreach: coordinator write view; owner, title,
+  follow-up status, due time, source-bound zone snapshot, language confirmation,
+  message language/text, channels, partners, applicability confirmation and notes.
+- approvals payload.kind=pio-outreach: existing approver write view; exact
+  outreachEvent, Approved/Withdrawn, decisionBy, decidedAt and evidence.
+- coordination payload.pioDistribution: coordinator write view; exact outreach
+  event/entity and approval event, actual time, channels/partners used, receipt
+  status, evidence and next update. Earlier receipt events are superseded, not
+  overwritten. Author and entry time come from server editor tracking.
+Existing viewer read views remain query-only. Anonymous access was denied for
+incident, coordination and approval read/write views. New domain validation checks
+the freshly loaded incident, current heads and exact approval links. Direct API
+domain rules remain client-validated; AGOL enforces access and append-only views.
+Derivations do not treat a receipt without a matching approval as verified.
+
+Private content stays in authenticated AGOL and tab memory, including unfinished
+forms. No private data, drafts, contacts or message text is written to GitHub,
+deploy artifacts, URL parameters or persistent browser storage. Sign-out, private
+query failure, incident changes and page exit clear the editor and private state.
+Keep any owner exports in county-approved storage outside this repository.
+
+Review and source behavior
+Next-update times derive from current-version receipts or the outreach due time.
+Overdue work, missing approval, delivery issues and uncertain receipts enter the
+EOC review queue. Recorded distributions retain exact-version references.
+While the PIO view is open, county applicability checks occur initially and every
+five minutes while visible. One failed feed is one failure notice; changed or
+missing recorded zones create per-outreach applicability cues. No source change
+automatically alters approved text or a county evacuation status.
+Source IDs are OID + name + a SHA-256 representation of name/status/geometry;
+the county layer has no GlobalID or individual issue/update fields. Query time is
+not an order issue time. Geometry reordering may warrant a conservative review
+without representing a real boundary change. OID/name reuse cannot move an
+outreach history to a different zone; create a new record when identity changes.
+
+Verified source trail — public item ownership checked October 28, 2026
+County Population Map: 22c8df4e3d854b39bbbf36b8042ba08d, owner COF_EOC_PROD.
+Its web map Population Density Map: b60b27d16eac4a078c406030abd267ad,
+also owner COF_EOC_PROD. Operational layers use Esri's California Census 2020
+Redistricting Blocks (903453c84ade4f11aa3bce393af172d3, esri_demographics).
+Counts originate in U.S. Census Bureau 2020 P.L. 94-171 data. These publishing
+accounts do not establish the name of an individual analyst.
+County evacuation zone item: 07e6ba11ae8c47fcb81208873ac43947.
+https://www.arcgis.com/home/item.html?id=22c8df4e3d854b39bbbf36b8042ba08d
+https://www.arcgis.com/home/item.html?id=b60b27d16eac4a078c406030abd267ad
+https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3
+
+The approximate population within a selected zone is a F.R.O.G. calculation, not
+a zone total copied from the original county viewer: block population times its
+geodetic polygon-area share inside the zone. Boundary blocks assume uniform
+population, including water. Estimates may be poor for large rural blocks. These
+are 2020 baseline residents, not current occupancy, evacuees or shelter demand.
+Newer Living Atlas ACS tract values and 90% MOEs are separate. They are never
+allocated to individual zones, buildings or persons. Census language categories
+do not confirm individual preference; age/disability do not establish support
+needs. Community partners and the county must confirm operational applicability.
+
+PIO references
+https://www.caloes.ca.gov/office-of-the-director/policy-administration/access-functional-needs/communication/
+https://www.caloes.ca.gov/office-of-the-director/policy-administration/access-functional-needs/afn-library/
+https://calalerts.org/resources.html
+Use accessible formats, qualified translation/interpreters, plain language and
+multiple coordinated channels. The source guide in both private PIO and public
+population evidence explains the provenance and limitations above.
+
+Verification and recovery
+630 Node tests and npm run check; focused PIO state, approval, conflict, receipt,
+due time, source change/failure, idempotence and briefing snapshot tests.
+Authenticated owner exercise: draft, documented approval, manual receipt,
+operational period, focused briefing and closeout persisted in private AGOL.
+No real public message was sent. Anonymous private queries were denied.
+Second-account and phone acceptance remain county pilot tasks.
+For rollback, retain the 0.66 eoc-model/pio-model and store reader contracts even
+if reverting the interface. Earlier readers do not recognize PIO approval kinds;
+do not delete or overwrite history to accommodate an older app. Public-map UI
+rollback can be performed independently of the compatible private EOC reader.

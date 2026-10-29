@@ -1,0 +1,32 @@
+{
+  "version": "0.66.0",
+  "checked": "2026-10-28",
+  "nodeTests": 630,
+  "privateExerciseVerification": {
+    "authenticatedOwner": true,
+    "draftPersisted": true,
+    "exactVersionApprovalPersisted": true,
+    "manualReceiptPersisted": true,
+    "focusedBriefingPersisted": true,
+    "closeoutPreservesHistory": true,
+    "publicMessagesSent": false,
+    "newAgolItemsOrPermissions": false,
+    "anonymousIncidentQueriesDenied": true,
+    "anonymousCoordinationQueriesDenied": true,
+    "anonymousApprovalQueriesDenied": true
+  },
+  "publicProvenance": {
+    "countyPopulationApp": "22c8df4e3d854b39bbbf36b8042ba08d",
+    "countyPopulationWebMap": "b60b27d16eac4a078c406030abd267ad",
+    "countyPublishingAccount": "COF_EOC_PROD",
+    "censusBlockItem": "903453c84ade4f11aa3bce393af172d3",
+    "censusLayerPublishingAccount": "esri_demographics",
+    "zoneAllocationMethodOwner": "F.R.O.G. application calculation"
+  },
+  "limitations": [
+    "Current deployment remains an exercise pilot.",
+    "No second-account or phone runtime acceptance claimed.",
+    "County procedures determine public-message authority.",
+    "New approval payload kinds require the compatible 0.66 private reader."
+  ]
+}

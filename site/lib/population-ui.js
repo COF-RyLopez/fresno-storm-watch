@@ -1,8 +1,9 @@
+import {populationSourceGuide} from './population-guide.js?v=0.66.0';
 import {loadSdk} from './map.js?v=0.65.0-r1';
 import {createAcsContext} from './acs-ui.js?v=0.65.0-r1';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
-import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.65.0';
+import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.66.0';
 import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.64.0';
 import {reportHealth} from './source-health.js?v=0.59.0';
 const $=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
@@ -17,7 +18,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   const cache=new Map();let zonePending=null;
   const acs=createAcsContext({exercise,onMap,onOpenWatch});
   const isWatch=()=>$('storm-shell').dataset.workspace==='watch'&&$('storm-shell').dataset.destination==='watch';
-  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.65.0-r1');$('population-share').href=u.href;}
+  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.66.0');$('population-share').href=u.href;}
   function list(){
     const rows=populationZoneRows(zones?.rows||[],{query:$('population-query').value,status:$('population-filter').value}),picker=$('population-zone'),value=selected?.key||'';picker.replaceChildren();
     const empty=node('option',rows.length?'Choose a county zone…':'No matching county zones');empty.value='';picker.append(empty);
@@ -48,7 +49,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
       if(!result.blocks)host.append(node('p','No positive-area census overlap returned; population is unavailable, not confirmed zero.'));
       if(result.missing)host.append(node('p','Some population values are missing or suppressed; no complete zone estimate is displayed.'));
       host.append(node('p',`Census polygons queried ${result.accounting.queried} / retained ${result.accounting.retained} · checked ${time(result.checked)}.`));
-      const methods=node('details');methods.append(node('summary','Estimate method, uncertainty & sources'),node('p',POPULATION_METHOD),node('p','Only Fresno County blocks are counted, including for shared-border zone records. The boundary-crossing row counts all residents of those entire census blocks. It is context for allocation uncertainty, not additional residents to add to the estimate. Block counts are distinct from ACS tract estimates.'),node('p',POPULATION_LIMIT),link('County 2020 Census population viewer',POPULATION_SOURCES.countyMap),node('br'),link('2020 block source',POPULATION_SOURCES.blocks),node('br'),link('Living Atlas ACS population source',POPULATION_SOURCES.acsItem));host.append(methods);
+      const methods=node('details');methods.append(node('summary','Estimate method, uncertainty & sources'),node('p',POPULATION_METHOD),node('p','Only Fresno County blocks are counted, including for shared-border zone records. The boundary-crossing row counts all residents of those entire census blocks. It is context for allocation uncertainty, not additional residents to add to the estimate. Block counts are distinct from ACS tract estimates.'),node('p',POPULATION_LIMIT),link('County 2020 Census population viewer',POPULATION_SOURCES.countyMap),node('br'),link('2020 block source',POPULATION_SOURCES.blocks),node('br'),link('Living Atlas ACS population source',POPULATION_SOURCES.acsItem));host.append(methods,populationSourceGuide());
     }
     const context=node('details');context.append(node('summary','Newer ACS & PIO context · whole tracts'),node('p','Age counts, 90% margins of error and outreach context describe whole census tracts, not this zone. They are not combined with the 2020 estimate.'));const explore=node('calcite-button','Explore intersecting ACS tracts');explore.scale='s';explore.appearance='outline';explore.addEventListener('click',()=>void acs.open({geometry:selected.geometry,zone:selected.name}));context.append(explore);host.append(context);
     host.append(node('p',POPULATION_LIMIT),node('p','Cyan: selected county zone outline. Optional dashed outlines: whole queried census blocks, including portions outside the zone.'),link('County evacuation source',CARE_SOURCES.zoneItem));

@@ -1,6 +1,8 @@
 import {powerGeometry} from './power-geometry.js';
 
 export const POPULATION_SOURCES=Object.freeze({
+  blocksItem:'https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3',
+  countyWebMap:'https://www.arcgis.com/home/item.html?id=b60b27d16eac4a078c406030abd267ad',
   blocks:'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/California_Census_2020_Redistricting_Blocks/FeatureServer/0',
   acs:'https://P3ePLMYs2RVChkJx.svcs.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/ACS_Population_View_Boundaries/FeatureServer/2',
   acsItem:'https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83',
