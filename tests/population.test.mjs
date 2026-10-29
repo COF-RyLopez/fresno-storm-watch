@@ -67,7 +67,7 @@ test('geometry calculation measures fractional areas, discards touches and cance
 });
 test('population addition keeps an anonymous read-only surface and source distinctions',async()=>{
   const html=await readFile(new URL('../site/index.html',import.meta.url),'utf8'),ui=await readFile(new URL('../site/lib/population-ui.js',import.meta.url),'utf8');
-  for(const id of ['population-watch','population-evidence','population-density-key','population-share'])assert(html.includes(`id="${id}"`));
+  for(const id of ['population-watch','population-evidence','population-density-key','population-share','population-inspect'])assert(html.includes(`id="${id}"`));
   assert(!/localStorage|sessionStorage|applyEdits|addFeatures|updateFeatures|clientSecret|accessToken/.test(ui));
   assert(html.includes('2020 block-based zone estimates and newer ACS tract estimates are separate datasets'));
   assert(ui.includes('generation!==epoch'));assert(POPULATION_LIMIT.includes('not people currently present'));

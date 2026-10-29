@@ -23,7 +23,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
     const all=zones?.rows||[],orders=all.filter(z=>z.status==='Order').length,warnings=all.filter(z=>z.status==='Warn').length;
     $('population-status').textContent=exercise?'Live population is disabled in the fictional exercise.':zoneError?`County zone check failed: ${zoneError}. ${zones?'Retained boundaries require verification.':'Use the official county map.'}`:zones?`${all.length} county-published zone records · ${orders} published orders / ${warnings} warnings · ${rows.length} match this filter. Checked ${time(zones.checked)}. Individual issue times are unavailable; confirm current orders with the county.`:'Open to check public county zones. No sign-in required.';
     $('population-summary').textContent=selected?`${selected.name}: ${result?approximatePopulation(result.estimate)+' baseline residents (2020)':problem?'population unavailable':'checking population…'}${rows.some(r=>r.key===selected.key)?'':' · selected zone is outside this display filter'}`:'Choose a zone to estimate baseline residents. Counts are assessed one zone at a time; overlapping zones are not added together.';
-    $('population-retry').disabled=!selected;
+    $('population-retry').disabled=!selected;$('population-inspect').disabled=!selected;
     share();
   }
   function legend(){
@@ -92,6 +92,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   function open(){onOpenWatch();root.open=true;root.scrollIntoView({block:'nearest'});if(!zones||zoneError)void refresh();else list();void showContext();}
   $('population-query').addEventListener('input',list);$('population-filter').addEventListener('change',list);$('population-zone').addEventListener('change',()=>{if($('population-zone').value)void select($('population-zone').value);else{epoch++;abort?.abort();selected=null;result=null;collection=null;problem=null;draw();detail();list();}});
   $('population-refresh').addEventListener('click',()=>void refresh());$('population-retry').addEventListener('click',()=>{if(selected){cache.delete(selected.key);void select(selected.key);}});
+  $('population-inspect').addEventListener('click',()=>{if(selected)void select(selected.key);});
   $('population-density').addEventListener('change',async()=>{legend();if(!isWatch())return;try{await ensureTools();if(isWatch())map?.setLayerPreference('populationDensity',$('population-density').checked);}catch(e){legendError=e.message;legend();}});
   $('population-blocks').addEventListener('change',draw);
   document.addEventListener('frogLayerPreference',e=>{if(e.detail?.key==='populationDensity'){$('population-density').checked=e.detail.wanted;legend();}});
