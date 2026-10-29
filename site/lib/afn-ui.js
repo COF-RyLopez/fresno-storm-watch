@@ -1,6 +1,6 @@
-import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.68.0';
+import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.69.0';
 import {formatAcsMeasure} from './acs-model.js?v=0.65.0-r1';
-import {readAfnContext} from './afn-data.js?v=0.68.0';
+import {readAfnContext} from './afn-data.js?v=0.69.0';
 import {reportHealth} from './source-health.js?v=0.59.0';
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
@@ -41,21 +41,37 @@ const render={
 };
 
 /** Read-only, loaded on first open; nothing is stored or written. */
-export function afnContext(zone){
-  const details=node('details'),host=node('div');let loaded=false;
-  details.append(node('summary','AFN & language context · whole areas'),host);
-  details.addEventListener('toggle',async()=>{
-    if(!details.open||loaded)return;loaded=true;host.replaceChildren(node('p','Checking public CDC, OEHHA, CDSS and Census sources…'));
-    try{
-      const topics=await readAfnContext(zone.geometry);host.replaceChildren();
-      for(const t of topics){
-        const s=node('section');s.append(node('h4',TITLES[t.key]));
-        if(t.error){s.append(node('p','Unavailable: '+t.error));reportHealth('population:afn:'+t.key,TITLES[t.key],{error:t.error});}
-        else{render[t.key](t,s);reportHealth('population:afn:'+t.key,TITLES[t.key],{checked:t.checked,maxAgeMs:Infinity,detail:'Whole-area context for the selected zone; not allocated.'});}
-        host.append(s);
-      }
-      host.append(node('p',AFN_LIMIT));
-    }catch(e){if(e.name!=='AbortError'){loaded=false;host.replaceChildren(node('p','AFN context unavailable: '+e.message));}}
-  });
-  return details;
+export function afnContext(zone,{isCurrent=()=>true,readContext=readAfnContext,onHealth=reportHealth}={}){
+  const details=node('details'),host=node('div'),retry=node('calcite-button','Retry AFN sources');
+  let loaded=false,pending=null,controller=null,disposed=false,generation=0;
+  retry.scale='s';retry.appearance='outline';retry.hidden=true;
+  host.setAttribute('aria-live','polite');
+  details.append(node('summary','AFN & language context · whole areas'),host,retry);
+  const current=value=>!disposed&&value===generation&&isCurrent();
+  function refresh(){
+    if(disposed||!isCurrent())return Promise.resolve();
+    if(pending)return pending;
+    const value=++generation;controller=new AbortController();
+    retry.hidden=true;retry.disabled=true;host.setAttribute('aria-busy','true');
+    host.replaceChildren(node('p','Checking public CDC, OEHHA, CDSS and Census sources…'));
+    pending=(async()=>{
+      try{
+        const topics=await readContext(zone.geometry,{signal:controller.signal});
+        if(!current(value))return;
+        host.replaceChildren();loaded=!topics.some(t=>t.error);
+        for(const t of topics){
+          const s=node('section');s.append(node('h4',TITLES[t.key]));
+          if(t.error){s.append(node('p','Unavailable: '+t.error));onHealth('population:afn:'+t.key,TITLES[t.key],{error:t.error});}
+          else{render[t.key](t,s);onHealth('population:afn:'+t.key,TITLES[t.key],{checked:t.checked,maxAgeMs:Infinity,detail:'Whole-area context for the selected zone; not allocated.'});}
+          host.append(s);
+        }
+        host.append(node('p',AFN_LIMIT));
+      }catch(e){if(current(value)&&e.name!=='AbortError'){loaded=false;host.replaceChildren(node('p','AFN context unavailable: '+e.message+'. Retry AFN sources to check again.'));}}
+      finally{if(value===generation){pending=null;host.setAttribute('aria-busy','false');retry.disabled=false;retry.hidden=loaded||disposed;}}
+    })();
+    return pending;
+  }
+  details.addEventListener('toggle',()=>{if(details.open&&!loaded)return refresh();});
+  retry.addEventListener('click',()=>refresh());
+  return {element:details,refresh,dispose(){disposed=true;generation++;controller?.abort();retry.disabled=true;}};
 }

@@ -1,4 +1,4 @@
-import {AFN_SOURCES,validateLanguageAreas,normalizePuma,normalizeSvi,normalizeCes,normalizeDac,normalizeCcl} from './afn-model.js?v=0.68.0';
+import {AFN_SOURCES,validateLanguageAreas,normalizePuma,normalizeSvi,normalizeCes,normalizeDac,normalizeCcl} from './afn-model.js?v=0.69.0';
 
 async function read(url,query,{fetcher=fetch,signal}={}){
   const timeout=AbortSignal.timeout(25000),r=await fetcher(query?url:url+'?f=json',{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,timeout]):timeout,...(query?{method:'POST',body:new URLSearchParams({f:'json',...query})}:{})});

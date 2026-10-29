@@ -3,7 +3,7 @@ import {calculateAcsZonePopulation} from './zone-acs-data.js?v=0.67.0';
 import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_MOE_SOURCE,ZONE_ACS_BOUNDARIES,formatAllocationWeight} from './zone-acs-model.js?v=0.67.0';
 import {loadSdk} from './map.js?v=0.65.0-r1';
 import {createAcsContext} from './acs-ui.js?v=0.65.0-r1';
-import {afnContext} from './afn-ui.js?v=0.68.0';
+import {afnContext} from './afn-ui.js?v=0.69.0';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.66.0';
@@ -21,7 +21,8 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   const cache=new Map(),acsCache=new Map(),tractBlocks=new Map();let afn=null,zonePending=null,newer=null,newerProblem=null,newerPending=false,newerProgress='';
   const acs=createAcsContext({exercise,onMap,onOpenWatch});
   const isWatch=()=>$('storm-shell').dataset.workspace==='watch'&&$('storm-shell').dataset.destination==='watch';
-  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.68.0');$('population-share').href=u.href;}
+  function disposeAfn(){afn?.dispose();afn=null;}
+  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.69.0');$('population-share').href=u.href;}
   function list(){
     const rows=populationZoneRows(zones?.rows||[],{query:$('population-query').value,status:$('population-filter').value}),picker=$('population-zone'),value=selected?.key||'';picker.replaceChildren();
     const empty=node('option',rows.length?'Choose a county zone…':'No matching county zones');empty.value='';picker.append(empty);
@@ -39,7 +40,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
     map?.setLayerEligibility(blocksLayer,!!collection&&$('population-blocks').checked);
   }
   function detail(){
-    const host=$('population-details');host.replaceChildren();if(!selected){pane.heading='Population & evacuation-zone evidence';host.append(node('p',problem||'Choose a county evacuation zone from Area Watch.'));return;}
+    const host=$('population-details');host.replaceChildren();if(!selected){disposeAfn();pane.heading='Population & evacuation-zone evidence';host.append(node('p',problem||'Choose a county evacuation zone from Area Watch.'));return;}
     pane.heading=`${selected.name} · population planning`;
     host.append(node('p',`County published status: ${ZONE_STATUS[selected.status]||'Unknown'} · zone query ${time(zones?.checked)}. Individual issue/update time is not supplied.`));
     if(zoneError){const notice=node('calcite-notice');notice.open=true;notice.kind='warning';const text=node('div','Zone check failed; the retained boundary/status requires verification.');text.slot='message';notice.append(text);host.append(notice);}
@@ -68,7 +69,12 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
     }
     const context=node('details');context.append(node('summary','Newer ACS & PIO context · whole tracts'),node('p','Age counts, 90% margins of error and outreach context describe whole census tracts, not this zone. They are not combined with the 2020 estimate.'));const explore=node('calcite-button','Explore intersecting ACS tracts');explore.scale='s';explore.appearance='outline';explore.addEventListener('click',()=>void acs.open({geometry:selected.geometry,zone:selected.name}));context.append(explore);host.append(context);
     // One element per zone so re-renders during the calculation keep it open and loaded.
-    if(afn?.key!==selected.key||afn.geometry!==selected.geometry)afn={key:selected.key,geometry:selected.geometry,element:afnContext(selected)};host.append(afn.element);
+    const signature=JSON.stringify(selected.geometry);
+    if(afn?.key!==selected.key||afn.signature!==signature){
+      disposeAfn();const row=selected;
+      afn={key:row.key,signature,...afnContext(row,{isCurrent:()=>selected?.key===row.key&&JSON.stringify(selected.geometry)===signature&&pane.hasAttribute('open')&&isWatch()})};
+    }
+    host.append(afn.element);
     host.append(node('p',POPULATION_LIMIT),node('p','Cyan: selected county zone outline. Optional dashed outlines: whole queried census blocks, including portions outside the zone.'),link('County evacuation source',CARE_SOURCES.zoneItem));
   }
   async function ensureTools(){
@@ -86,7 +92,9 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   }
   async function select(key){
     const row=zones?.rows.find(r=>r.key===key);if(!row||exercise)return;
+    const afnOpen=afn?.element.open||false;disposeAfn();
     abort?.abort();abort=new AbortController();const generation=++epoch;selected=row;result=null;collection=null;problem=null;newer=null;newerProblem=null;newerPending=true;newerProgress='Checking ACS source and population pattern…';list();detail();onMap();pane.setAttribute('open','');
+    if(afnOpen&&afn){afn.element.open=true;void afn.refresh();}
     try{
       await ensureTools();if(generation!==epoch||!isWatch())return;
       map?.setLayerPreference('populationZones',true);map?.setLayerPreference('populationDensity',$('population-density').checked);draw();void focusZone(row,generation);
@@ -122,9 +130,10 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   $('population-inspect').addEventListener('click',()=>{if(selected)void select(selected.key);});
   $('population-blocks').addEventListener('change',draw);
   root.addEventListener('toggle',()=>{if(root.open){if(!zones)void refresh();void showContext();}});
-  pane.addEventListener('stormEvidenceClose',()=>{epoch++;abort?.abort();if(selected&&!result){problem='Selection closed before the calculation completed';list();}});
+  pane.addEventListener('stormEvidenceClose',()=>{epoch++;abort?.abort();disposeAfn();if(selected&&!result){problem='Selection closed before the calculation completed';list();}});
   window.addEventListener('frogPopulationZoneSelect',e=>{if(zones?.rows.some(r=>r.key===e.detail?.key))void select(e.detail.key);});
-  window.addEventListener('pagehide',()=>{epoch++;abort?.abort();cache.clear();collection=null;});
+  window.addEventListener('pagehide',()=>{epoch++;abort?.abort();disposeAfn();cache.clear();collection=null;});
+  window.addEventListener('stormWorkspaceChange',()=>{if(!isWatch())disposeAfn();});
   setInterval(()=>{if(root.open&&isWatch()&&!document.hidden)void refresh();},300000);
   if(exercise){$('population-refresh').disabled=true;$('population-density').disabled=true;$('population-zone').disabled=true;}
   list();

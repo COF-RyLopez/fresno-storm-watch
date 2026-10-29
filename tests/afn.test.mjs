@@ -72,3 +72,12 @@ test('zones with no records return empty rows, not an error',async()=>{
   const s=source({countDelta:{ccl:-3}}),r=await readIntersecting('ccl',geometry,{fetcher:s.fetcher});
   assert.deepEqual(r.rows,[]);assert(!s.requests.some(q=>q.options.body?.get('outFields')));
 });
+test('cancelling a zone propagates to all public topic reads',async()=>{
+  const controller=new AbortController(),signals=[];
+  const pending=readAfnContext(geometry,{signal:controller.signal,fetcher:(url,{signal})=>{
+    signals.push(signal);
+    return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
+  }});
+  controller.abort();await assert.rejects(pending,{name:'AbortError'});
+  assert.equal(signals.length,6);assert(signals.every(signal=>signal.aborted));
+});

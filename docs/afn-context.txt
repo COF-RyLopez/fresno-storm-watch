@@ -1,8 +1,8 @@
-F.R.O.G. 0.68.0 — AFN & language context for a selected county evacuation zone
+F.R.O.G. 0.69.0 — AFN & language context for a selected county evacuation zone
 
 Where: Population & evacuation zones > choose a zone > "AFN & language context · whole areas".
 Loads on first open. Anonymous, read-only public queries; nothing is stored or written.
-Read-only example: /?view=watch&population=1&zone=L39&v=0.68.0
+Read-only example: /?view=watch&population=1&zone=L39&v=0.69.0
 
 What each number comes from
 - Hmong and Punjabi speakers, and those speaking English less than "very well": ACS 2020–2024
@@ -28,6 +28,19 @@ Every value describes a whole PUMA or tract that intersects the zone, including 
 touch it. Nothing is allocated to the zone, buildings or people. Sources differ in period and
 geography; do not add, average or compare across them. A source failure shows "Unavailable" for that
 topic only. No message is sent, translated or approved here; the PIO/JIC workflow is unchanged.
+
+Recovery and selection lifecycle (0.69.0)
+- If any topic fails, successful topics stay visible and "Retry AFN sources" checks again. Closing
+  and reopening the section retries failed topics too. Repeated clicks share the pending request.
+- "Retry selected zone" refreshes the AFN context along with the population calculation.
+- Changing/clearing a zone, closing its evidence, leaving County Watch or leaving the page cancels
+  the old AFN request. Selection/disposal guards also reject late responses when a transport ignores
+  cancellation. Old responses cannot replace the selected zone's source-health check.
+- Ordinary calculation/source re-renders retain the open context for an unchanged zone boundary.
+- All context remains read-only and in memory; no additional accounts, storage or permissions.
+- Six regression tests cover partial/total failure recovery, duplicate requests, disposal, selection
+  guards and cancellation propagation. Existing population/PIO snapshot tests are retained.
+- Released as 0.69.0 because the private PIO population-evidence release already uses 0.68.0.
 
 Checked live 2026-10-28: L62 (PUMA 01904; 3/3 SVI tracts ≥75th; 3 SB 535 tracts), L1 (PUMAs 01906
 and 01907; none ≥75th), L39 (4 elderly residential, capacity 22, status code 3), L36.

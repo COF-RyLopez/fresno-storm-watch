@@ -1,0 +1,23 @@
+{
+  "release": "0.69.0",
+  "verifiedOn": "2026-10-28",
+  "timeZone": "America/Los_Angeles",
+  "pullRequest": 4,
+  "checks": {
+    "nodeTests": {"passed": 671, "failed": 0},
+    "deploymentContractCheck": "passed",
+    "diffWhitespaceCheck": "passed",
+    "livePublicSources": ["L1", "L39", "L62"],
+    "browserRecovery": "Blocked the SVI source in the local preview; other topics remained visible, Retry AFN sources appeared, and clearing the block then retrying restored SVI.",
+    "selectionLifecycle": "Open AFN context follows zone changes; regression tests verify cancellation and reject obsolete successes and failures.",
+    "responsive": "Desktop preview inspected; 390px viewport had matching client/scroll widths and retained the context and source links."
+  },
+  "privacy": {
+    "newPrivateWrites": false,
+    "permissionChanges": false,
+    "persistentBrowserStorageAdded": false,
+    "privatePioSnapshotRegressionTestsRetained": true
+  },
+  "deployment": "Merge PR #4 after its verification workflow passes; main Pages workflow runs the server-side checks and publishes site/ only.",
+  "rollback": "Redeploy the preceding main release (792bc15e70b450de1a15e3beba5ae31a378868b1); no data migration."
+}
