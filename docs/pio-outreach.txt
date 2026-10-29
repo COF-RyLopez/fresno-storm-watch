@@ -1,3 +1,60 @@
+F.R.O.G. 0.68.0 — Saved zone population evidence in private outreach and briefings
+Checked October 28, 2026. Existing private EXERCISE AGOL tables and permissions.
+
+Open eoc.html?v=0.68.0#outreach, sign in, select an incident, then create/update
+outreach. A new zone selection, or an older record without evidence, calculates
+public population evidence. Previously saved evidence is retained until Refresh
+population evidence is used. Review the result and save the outreach version.
+No private message, language, contact or partner values are sent to publishers.
+
+Optional pioOutreach.populationEvidence schema 1, method frog-zone-population/1:
+- County zone source/key/OID/name/status/query time and exact representation revision.
+- Newer ACS total allocation, raw estimates, sampling-only MOE, missing counts,
+  per-tract population/MOE/weight, baseline pattern and block query/edit dates.
+- Separate 2020 block-overlap baseline, block accounting and source query/edit dates.
+- ACS five-year period, publisher item modification/layer edit times, query time;
+  full Census tract analysis-boundary vintage/query time and authoritative URLs.
+- Capture/calculation times, original method/uncertainty/limitation wording and failures.
+No polygons, whole source collections, buildings or household assignments are stored.
+The 0.67 method is unchanged. Source references remain those documented in
+population-operations.txt. Full numeric values are retained; rounding is display only.
+
+Missing/failed source results stay unknown with saved failure evidence. A partial
+source failure preserves the available counterpart. Unpopulated 2020 patterns do
+not become zero current population. A changed county revision is flagged rather
+than silently applying a historical estimate to a new boundary/status. Counts are
+planning residents, not confirmed occupants, evacuees, language needs or demand.
+The sampling component is not a full zone 90% confidence interval. Age/language
+figures remain whole-tract context. Query/capture times are not new observations.
+
+Refresh/save appends a draft version. It requires fresh exact-version message
+approval; previous messages, approvals, receipts and evidence remain in history.
+No population calculation approves or sends public messaging. Closed test history
+can retain its new evidence without being reopened or generating a new task.
+
+Create zone PIO handoff freezes only the selected zone's PIO histories, approvals,
+manual receipts, relevant review cues and population evidence. Unrelated zones and
+live source-health rows are excluded; population source failures are already in the
+saved evidence. Generic PIO/all briefings also carry population evidence. Briefing
+text uses only the frozen data and original method text; opening or printing it
+never fetches the latest counts. The existing briefing SHA-256 pins that snapshot.
+A later source update or refreshed outreach does not alter an earlier briefing.
+
+No new items, hosted fields, groups, OAuth scope, credentials or memberships.
+Named coordinators edit existing coordination rows; existing approvers record
+message/briefing decisions; private read-only views retain server-enforced access.
+No private inputs/results are written to GitHub, deployment files, URLs or browser
+persistence. Abort/incident/session guards clear incomplete captures and private forms.
+Bounds: snapshot 45,000 characters; entire private event and briefing 60,000. Very
+large histories fail visibly; evidence is never truncated to force a successful save.
+Rollback needs compatible 0.68 population readers and writers to retain/display new
+optional evidence. Old records without population evidence remain readable.
+Reload open EOC tabs after deployment. Exercise-only synthetic counts are explicitly
+labeled illustrative; actual AGOL acceptance uses public-source counts for L62.
+
+Historical 0.66 workflow notes:
+==============================
+
 F.R.O.G. 0.66.0 — Private PIO outreach and population-source guidance
 Checked October 28, 2026. Existing private AGOL EXERCISE storage only.
 

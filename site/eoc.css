@@ -10,3 +10,4 @@
 #pio-workspace{max-width:80ch;overflow-wrap:anywhere}#pio-form h3{margin-block:1.75rem .75rem}#pio-source-guide{padding-block:.75rem;border-block:1px solid var(--calcite-color-border-3)}
 #pio-source-guide p{margin-block:.75rem;line-height:1.55}#pio-source-guide summary{font-weight:600}#pio-workspace a{text-underline-offset:.2em}
 #pio-error{color:var(--calcite-color-status-danger);margin-block:1rem}#pio-workspace :focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:3px}
+.pio-record p,#pio-population p{overflow-wrap:anywhere}.pio-record details,#pio-population details{margin-block:.75rem}#pio-population{padding-block:1rem;border-block:1px solid var(--calcite-color-border-3);margin-block:1rem}
