@@ -70,7 +70,7 @@ export async function calculateAcsZonePopulation(zone,{
       const blocks=saved?.signature===signature&&Date.now()-saved.collection.checked<CACHE_LIFETIME?saved.collection:await readBlocks(tract.geometry,{signal,fetcher});
       check();blockCache.set(tract.id,{signature,collection:blocks});if(blockCache.size>8)blockCache.delete(blockCache.keys().next().value);
       blockWork+=blocks.rows.length;if(blockWork>MAX_BLOCK_WORK)throw Error('ACS allocation exceeds the 75,000-block work limit; use whole-tract context and request a prepared analysis.');
-      sourceBlocks+=blocks.rows.length;
+      sourceBlocks+=blocks.rows.length;row.blockChecked=blocks.checked;row.blockEdited=blocks.edited??null;
       let denominator=0,numerator=0,missing=0;
       for(let i=0;i<blocks.rows.length;i++){
         check();const block=blocks.rows[i],shape=new Polygon(block.geometry),blockArea=squareMetres(shape);

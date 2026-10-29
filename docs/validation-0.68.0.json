@@ -1,0 +1,29 @@
+{
+  "version": "0.68.0",
+  "checked": "2026-10-28",
+  "nodeTests": 658,
+  "privateExerciseChecks": {
+    "existingOwnerAccount": true,
+    "existingClosedPioHistoryUpdated": true,
+    "populationEvidenceSavedAndReadBackFromAgol": true,
+    "newerDisplayedResidents": 1580,
+    "separate2020DisplayedResidents": 1630,
+    "zone": "L62",
+    "zoneHandoffSaved": true,
+    "handoffCharacters": 6658,
+    "handoffRetainsSourcePeriodQueryEditTimesAndUncertainty": true,
+    "handoffDraftNotSubmitted": true,
+    "anonymousCoordinationReadWriteDenied": true,
+    "anonymousBriefingReadWriteDenied": true,
+    "publicMessagesSent": false,
+    "permissionsMembershipsOrItemsChanged": false
+  },
+  "limitations": [
+    "Exercise pilot; only the existing owner account was tested live.",
+    "Population remains a five-year planning allocation, not current occupants or confirmed evacuees.",
+    "No complete confidence interval for the zone allocation is claimed.",
+    "Phone and second-account runtime acceptance remain pending.",
+    "Large histories remain subject to the existing 60,000-character event limit; no truncation is performed.",
+    "Reload private EOC tabs to use the 0.68 population reader and writer."
+  ]
+}
