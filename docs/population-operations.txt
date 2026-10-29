@@ -1,3 +1,70 @@
+F.R.O.G. 0.65.0 — Living Atlas ACS and PIO planning context
+Checked October 28, 2026. Supersedes the COG overlay described in the historical
+0.64 implementation notes below; the 2020 block-based zone method is unchanged.
+
+Law Branch test entry: /?view=watch&population=1&v=0.65.0
+Open ACS & PIO details, or click a displayed census tract. From a selected zone,
+expand Newer ACS & PIO context and explore intersecting tracts. That list includes
+boundary touches; it is context only and does not allocate or sum tract population.
+
+Current public replacement hosted views (owner esri_demographics), tract layer 2:
+Population: 60c98f20a162416ea1725b94d7297f83
+Language / English ability: 010edcaea4e446df901c6b556e3838c9
+Internet: c32bd037d0e0405294d9e606c03ddb0e
+Disability: 1997766755c4465c85dbbed1974438ee
+Vehicles: 458ceeeff7e847af8257ad5ce58e0161
+https://www.esri.com/arcgis-blog/products/arcgis-living-atlas/announcements/acs-feb-2026
+These views currently report 2020-2024, not a 2026 population estimate. Runtime
+reads the publisher's Current Vintage, validates fields/owner, and displays that
+period. Cached metadata expires after 15 minutes. PIO topics with a different
+period fail explicitly rather than silently combining periods. Failed individual
+topics do not erase available topics. No geometry or data is persisted in browser
+storage and no new hosted items, permissions or credentials are introduced.
+
+Population fields B01001_001E/M, B01001_calc_numLT18E/M and
+B01001_calc_numGE65E/M supply total, under-18 and age-65+ estimates and 90% MOEs.
+A missing/negative/suppressed value remains unavailable; an explicit zero stays
+zero. MOEs may exceed estimates. They describe sampling uncertainty, not all error.
+No MOE is calculated for the separate approximate 2020 block/zone allocation.
+Density = total tract residents / (ALAND square metres / 2589988.110336).
+The map uses fixed sequential classes, a gray missing-data symbol and land-area
+units. The publisher's water-trimmed outlines are cartographic context, never the
+basis of a zone population calculation. Pink outline means selected whole tract;
+cyan remains the selected county zone. Neither is a hazard boundary.
+
+PIO context is on demand, not another default overlay or tab:
+- C16001: people age 5+ speaking English less than very well, including publisher
+  language groups. Keep broad categories intact; do not infer Hmong or Punjabi
+  counts, individual preference or ethnicity. Values are publisher-provided; no
+  local sum of language groups or new derived MOE is made.
+- B28002_013E/M: households without internet; B28002_006E/M: cellular-only
+  subscription. These are households, not people, coverage or delivery metrics.
+- B18101_calc_numDE/DM: civilian noninstitutionalized residents with disability;
+  institutional care residents are excluded. This is not a registry of individuals
+  needing assistance and does not replace resident-care facility information.
+- B08201_002E/M: households with no vehicle available; not requested bus seats or
+  a routing/accessibility analysis. Use owner-confirmed transport arrangements.
+Do not add these overlapping groups or mix people with households.
+
+Distribution guidance follows Cal OES: coordinate with community partners, use
+qualified translation/interpreters and accessible formats, and plan multiple
+channels including offline outreach. Counts do not gate accessible messaging.
+https://www.caloes.ca.gov/office-of-the-director/policy-administration/access-functional-needs/communication/
+https://www.calalerts.org/resources.html
+Confirm hazard, location, protective action, timing and issuing authority before
+public release. The app neither sends alerts nor approves public information.
+County PIO/JIC should validate preferred languages, trusted local partners,
+translation review, channel ownership and transport-assistance instructions in
+its operational workflow; private contacts should stay in the authorized system.
+
+Verification: 608 Node tests plus npm run check. Public live comparisons for
+tracts 06019000200, 06019004214 and 06019004409 matched all three population/age
+estimate-MOE pairs and four PIO topics. L62 block estimate stays about 1,630.
+Rollback: redeploy 0.64.1. No data migration. Private EOC and Experience Builder
+items remain unchanged.
+
+Historical implementation notes (0.64.0/0.64.1):
+------------------------------------------------
 F.R.O.G. 0.64.0 — Public population and county evacuation-zone planning
 Checked October 28, 2026. All endpoints below are public, query-only references.
 

@@ -17,7 +17,7 @@ import { blend } from './flood-scenario-model.js?v=0.39.0';
 import { installMapContext } from './map-context.js?v=0.29.0';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.64.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.65.0';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -254,6 +254,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
         const sandbagKey=hit.results.find(r=>r.graphic?.attributes?.countySandbagKey)?.graphic.attributes.countySandbagKey;if(sandbagKey){onSandbagSelect(sandbagKey);return;}
         const populationKey=hit.results.find(r=>r.graphic?.attributes?.populationZoneKey)?.graphic.attributes.populationZoneKey;if(populationKey){window.dispatchEvent(new CustomEvent('frogPopulationZoneSelect',{detail:{key:populationKey}}));return;}
+        const acsHit=hit.results.find(r=>r.graphic?.layer?.id==='frog-acs-population'||r.graphic?.attributes?.acsTractId);if(acsHit){window.dispatchEvent(new CustomEvent('frogAcsTractSelect',{detail:{id:acsHit.graphic.attributes.acsTractId||acsHit.graphic.attributes.GEOID}}));return;}
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const drainageKey=hit.results.find(r=>r.graphic?.attributes?.drainageKey)?.graphic.attributes.drainageKey;
         if(drainageKey){onDrainageSelect(drainageKey);return;}

@@ -1,0 +1,417 @@
+{
+  "version": "0.65.0",
+  "checked": "2026-10-28",
+  "tests": 608,
+  "sources": "Public Living Atlas replacement ACS hosted views; metadata-verified 2020–2024",
+  "samples": [
+    {
+      "id": "06019000200",
+      "period": "2020–2024",
+      "population": [
+        {
+          "label": "Total residents",
+          "estimate": 3029,
+          "moe": 546
+        },
+        {
+          "label": "Under 18",
+          "estimate": 1151,
+          "moe": 279
+        },
+        {
+          "label": "Age 65+",
+          "estimate": 209,
+          "moe": 90
+        }
+      ],
+      "pio": [
+        {
+          "key": "language",
+          "error": null,
+          "measures": [
+            {
+              "label": "Speaks English less than very well · all languages",
+              "estimate": 639,
+              "moe": 195
+            },
+            {
+              "label": "Spanish · English less than very well",
+              "estimate": 603,
+              "moe": 187
+            },
+            {
+              "label": "French, Haitian or Cajun · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "German or other West Germanic languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Russian, Polish or other Slavic languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Other Indo-European languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Korean · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Chinese (incl. Mandarin, Cantonese) · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Vietnamese · English less than very well",
+              "estimate": 2,
+              "moe": 13
+            },
+            {
+              "label": "Tagalog (incl. Filipino) · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Other Asian and Pacific Island languages · English less than very well",
+              "estimate": 24,
+              "moe": 26
+            },
+            {
+              "label": "Arabic · English less than very well",
+              "estimate": 10,
+              "moe": 25
+            },
+            {
+              "label": "Other and unspecified languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            }
+          ]
+        },
+        {
+          "key": "internet",
+          "error": null,
+          "measures": [
+            {
+              "label": "No internet access",
+              "estimate": 60,
+              "moe": 46
+            },
+            {
+              "label": "Cellular data plan only",
+              "estimate": 153,
+              "moe": 67
+            }
+          ]
+        },
+        {
+          "key": "disability",
+          "error": null,
+          "measures": [
+            {
+              "label": "Residents with a disability",
+              "estimate": 490,
+              "moe": 135
+            }
+          ]
+        },
+        {
+          "key": "vehicles",
+          "error": null,
+          "measures": [
+            {
+              "label": "No vehicle available",
+              "estimate": 146,
+              "moe": 71
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "06019004214",
+      "period": "2020–2024",
+      "population": [
+        {
+          "label": "Total residents",
+          "estimate": 5549,
+          "moe": 906
+        },
+        {
+          "label": "Under 18",
+          "estimate": 1448,
+          "moe": 429
+        },
+        {
+          "label": "Age 65+",
+          "estimate": 1202,
+          "moe": 203
+        }
+      ],
+      "pio": [
+        {
+          "key": "language",
+          "error": null,
+          "measures": [
+            {
+              "label": "Speaks English less than very well · all languages",
+              "estimate": 419,
+              "moe": 203
+            },
+            {
+              "label": "Spanish · English less than very well",
+              "estimate": 83,
+              "moe": 72
+            },
+            {
+              "label": "French, Haitian or Cajun · English less than very well",
+              "estimate": 8,
+              "moe": 12
+            },
+            {
+              "label": "German or other West Germanic languages · English less than very well",
+              "estimate": 9,
+              "moe": 14
+            },
+            {
+              "label": "Russian, Polish or other Slavic languages · English less than very well",
+              "estimate": 0,
+              "moe": 19
+            },
+            {
+              "label": "Other Indo-European languages · English less than very well",
+              "estimate": 79,
+              "moe": 72
+            },
+            {
+              "label": "Korean · English less than very well",
+              "estimate": 0,
+              "moe": 19
+            },
+            {
+              "label": "Chinese (incl. Mandarin, Cantonese) · English less than very well",
+              "estimate": 28,
+              "moe": 44
+            },
+            {
+              "label": "Vietnamese · English less than very well",
+              "estimate": 18,
+              "moe": 31
+            },
+            {
+              "label": "Tagalog (incl. Filipino) · English less than very well",
+              "estimate": 0,
+              "moe": 19
+            },
+            {
+              "label": "Other Asian and Pacific Island languages · English less than very well",
+              "estimate": 107,
+              "moe": 113
+            },
+            {
+              "label": "Arabic · English less than very well",
+              "estimate": 87,
+              "moe": 115
+            },
+            {
+              "label": "Other and unspecified languages · English less than very well",
+              "estimate": 0,
+              "moe": 19
+            }
+          ]
+        },
+        {
+          "key": "internet",
+          "error": null,
+          "measures": [
+            {
+              "label": "No internet access",
+              "estimate": 121,
+              "moe": 87
+            },
+            {
+              "label": "Cellular data plan only",
+              "estimate": 132,
+              "moe": 78
+            }
+          ]
+        },
+        {
+          "key": "disability",
+          "error": null,
+          "measures": [
+            {
+              "label": "Residents with a disability",
+              "estimate": 838,
+              "moe": 203
+            }
+          ]
+        },
+        {
+          "key": "vehicles",
+          "error": null,
+          "measures": [
+            {
+              "label": "No vehicle available",
+              "estimate": 96,
+              "moe": 66
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "06019004409",
+      "period": "2020–2024",
+      "population": [
+        {
+          "label": "Total residents",
+          "estimate": 3400,
+          "moe": 284
+        },
+        {
+          "label": "Under 18",
+          "estimate": 638,
+          "moe": 154
+        },
+        {
+          "label": "Age 65+",
+          "estimate": 602,
+          "moe": 137
+        }
+      ],
+      "pio": [
+        {
+          "key": "language",
+          "error": null,
+          "measures": [
+            {
+              "label": "Speaks English less than very well · all languages",
+              "estimate": 186,
+              "moe": 109
+            },
+            {
+              "label": "Spanish · English less than very well",
+              "estimate": 128,
+              "moe": 91
+            },
+            {
+              "label": "French, Haitian or Cajun · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "German or other West Germanic languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Russian, Polish or other Slavic languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Other Indo-European languages · English less than very well",
+              "estimate": 32,
+              "moe": 38
+            },
+            {
+              "label": "Korean · English less than very well",
+              "estimate": 10,
+              "moe": 16
+            },
+            {
+              "label": "Chinese (incl. Mandarin, Cantonese) · English less than very well",
+              "estimate": 12,
+              "moe": 20
+            },
+            {
+              "label": "Vietnamese · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Tagalog (incl. Filipino) · English less than very well",
+              "estimate": 4,
+              "moe": 8
+            },
+            {
+              "label": "Other Asian and Pacific Island languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Arabic · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            },
+            {
+              "label": "Other and unspecified languages · English less than very well",
+              "estimate": 0,
+              "moe": 14
+            }
+          ]
+        },
+        {
+          "key": "internet",
+          "error": null,
+          "measures": [
+            {
+              "label": "No internet access",
+              "estimate": 69,
+              "moe": 76
+            },
+            {
+              "label": "Cellular data plan only",
+              "estimate": 80,
+              "moe": 47
+            }
+          ]
+        },
+        {
+          "key": "disability",
+          "error": null,
+          "measures": [
+            {
+              "label": "Residents with a disability",
+              "estimate": 515,
+              "moe": 187
+            }
+          ]
+        },
+        {
+          "key": "vehicles",
+          "error": null,
+          "measures": [
+            {
+              "label": "No vehicle available",
+              "estimate": 8,
+              "moe": 14
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unchangedZoneBaseline": {
+    "zone": "L62",
+    "display": "≈ 1,630",
+    "wholePopulation": 802,
+    "boundaryPopulation": 1398,
+    "wholeBlocks": 26,
+    "boundaryBlocks": 44
+  },
+  "notes": [
+    "ACS age/MOEs and PIO counts remain whole-tract context.",
+    "2020 block-zone estimator is unchanged; no ACS MOE applies to it.",
+    "No new hosted items, private-data publication, dependencies or permission changes."
+  ]
+}
