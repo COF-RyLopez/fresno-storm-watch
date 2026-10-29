@@ -1,0 +1,40 @@
+F.R.O.G. 0.71.0 — PIO source-review verification
+October 28, 2026 (America/Los_Angeles)
+
+Automated checks
+- 694 Node tests passed. Includes immutable approvals and saved evidence,
+  boundary/status/removal checks, AFN membership/value/MOE/source-version changes,
+  ignored query-only timestamps, one-record counts, source-failure deduplication,
+  exact-revision acknowledgement, scoped/frozen PIO briefings, retry, bounded
+  concurrency/cache, sign-out and late asynchronous response privacy.
+- npm run check passed (syntax, page links, source contracts and public config).
+- Python contracts run in GitHub CI; local Python remains blocked by application
+  control. No attempt was made to bypass it.
+
+Browser verification
+- Existing named county test account loaded the private EXERCISE incident in
+  Area Watch and EOC. Current outreach is closed, so no active source review is
+  inferred. No private record, approval, message, membership or hosted item changed.
+- Private PIO notification button opened Incident follow-ups in County Watch.
+- Browser-only fictional source-change exercise used the real comparison model,
+  Area Watch controller and county notification strip. Simultaneous zone and AFN
+  changes produced one grouped outreach review. Failed SVI produced one unavailable
+  source check, not a local-needs estimate. Sign-out removed the private list and
+  banner. Matching data produced no source-change flag.
+- Desktop and 390px phone layouts inspected. No horizontal overflow: phone viewport
+  / scroll width 390px, real Area Watch review pane 361px, exercise pane 342px.
+  Temporary device emulation was cleared. Fixtures remain under ignored work/,
+  outside deployed site/; they contain fictional records only.
+
+Live public-source probe
+- Queried public county zone L39 and current AFN context: 1 whole PUMA, 4 SVI tracts,
+  4 CalEnviroScreen tracts and 4 CDSS reference records returned successfully.
+  These are contextual source records, not affected people or confirmed needs.
+- Identical frozen/current public evidence produced no change flag. Changing only
+  a COPY of the CDSS publisher edit revision in memory produced a source-wide
+  revision review explicitly saying zone values may be unchanged. No publisher
+  or private AGOL data was edited.
+
+Release / recovery
+Existing EXERCISE groups/storage and OAuth permissions retained. No data migration.
+Rollback code: redeploy c1fc58d / 0.70.0. Compatible saved evidence remains readable.

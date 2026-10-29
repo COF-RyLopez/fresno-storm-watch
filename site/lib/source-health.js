@@ -14,6 +14,7 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
     pumpCounts.hidden=!compact.matches||!(pumpPowerCount||readinessCount||taskCounts?.active||taskCounts?.review);pumpCounts.textContent=`Pump power · ${pumpPowerCount??'unassessed'} / Pump readiness follow-ups · ${readinessCount??'unassessed'}${taskCounts?` / Assigned · ${taskCounts.active} / Overdue · ${taskCounts.overdue} / Task reviews · ${taskCounts.review}`:''}`;
     const areaDetail=$('notify-areas').getAttribute('aria-label');$('notify-areas').title=areaDetail;
     $('notify-areas').textContent=`Area reviews · ${areaCount===null||careCount===null?'checking':areaCount+careCount+(drainageCount??0)}${incidentFollowups?.overdue?' · '+incidentFollowups.overdue+' '+(incidentFollowups.overdue===1?'incident task overdue':'incident tasks overdue'):''}`;
+    const pio=$('notify-pio');pio.hidden=!incidentFollowups?.assessed;pio.textContent=incidentFollowups?.pioBusy?'PIO · checking':`PIO · ${incidentFollowups?.pioReview??0} source ${incidentFollowups?.pioReview===1?'review':'reviews'}${incidentFollowups?.pioFailures?' · '+incidentFollowups.pioFailures+' unavailable':''}${incidentFollowups?.pioError?' · check interrupted':''}`;pio.setAttribute('aria-label',pio.textContent+' · private selected incident');
     $('notify-alerts').title=`Weather alerts · ${alertCount??'checking'} across five counties${briefingUpdated?' · Hanford briefing updated':''}`;$('notify-alerts').setAttribute('aria-label',$('notify-alerts').title);$('notify-alerts').textContent=`NWS · ${alertCount??'checking'}${briefingUpdated?' · new briefing':''}`;
     $('notify-health').setAttribute('icon-start',issues?'exclamation-mark-triangle':'information');
     $('notify-health').setAttribute('aria-label',exercise?'Source health · exercise':health.groups.filter(g=>g.rows.length).map(g=>`${g.label}: ${g.rows.length}`).join(' · ')||'Source checks starting');
@@ -27,6 +28,7 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
   window.addEventListener('storm-source-health',e=>{checks.set(e.detail.key,e.detail);render();});
   for(const [id,topic]of [['notify-areas','watch'],['notify-alerts','alerts'],['notify-power','power']])$(id).onclick=()=>{onOpen(topic);if(id==='notify-areas'&&incidentFollowups?.overdue){document.getElementById('mission-followups').open=true;}};
   $('notify-health').onclick=()=>{$('source-health-dialog').setAttribute('open','');render();};
+  $('notify-pio').onclick=()=>{onOpen('watch');const section=$('mission-followups');section.open=true;$('mission-pio-reviews').scrollIntoView({block:'nearest'});};
   setInterval(()=>{if(!document.hidden)render();},30000);render();
   compact.addEventListener('change',render);
   return {care:n=>{careCount=n;render();},drainage:(n,pumps=null,readiness=null,tasks=null)=>{drainageCount=n;pumpPowerCount=n===null?null:pumps;readinessCount=n===null?null:readiness;taskCounts=n===null?null:tasks;render();},briefing:n=>{briefingUpdated=!!n;render();},areas:n=>{areaCount=n;render();},alerts:n=>{alertCount=n;render();},power:n=>{powerCount=n;render();}};

@@ -32,3 +32,16 @@ test('private follow-up failure and sign-out clear retained records, and stale r
  fail=false;defer=true;const pending=controller.selectIncident('exercise');await new Promise(resolve=>setImmediate(resolve));assert(release);controller.setSession(null);release();await pending;
  assert.equal(controller.snapshot(item).rows.length,0);assert.equal(get('mission-followups-list').children.length,0);assert.equal(get('mission-followups-incident').children.length,0);assert.match(get('mission-followups-status').textContent,/sign-in required/);
 }));
+
+test('PIO records are separate from general assignments and do not inflate their counts',()=>{
+ assert.equal(missionFollowups([record(),{...record('pio',{pioOutreach:{schema:1}}),entity:'pio'},{...record('receipt',{pioDistribution:{schema:1}}),entity:'receipt'}]).length,1);
+});
+
+test('Area Watch receives private PIO source flags, then clears details and banner counts on logout',()=>withController(async({get,win})=>{
+ const events=[];win.addEventListener('storm-mission-followups',e=>events.push(e.detail));let release=null,defer=false,closed=0;
+ const monitor={clear(){closed++;},async check(){if(defer)await new Promise(r=>release=r);return {checked:now,notices:[{key:'pio-afn:entity',evidence:{outreachEvent:'event'},category:'Planning review cues',location:'PIO · EXERCISE',change:'AFN context changed',owner:'EXERCISE PIO',verification:'Approved message unchanged',nextReview:'Review sources',sourceTime:now},{key:'pio-zone:entity',evidence:{outreachEvent:'event'},category:'Planning review cues',location:'PIO · EXERCISE',change:'County zone changed',owner:'EXERCISE PIO',verification:'Approved message unchanged',nextReview:'Review sources',sourceTime:now}]};}};
+ const controller=createMissionFollowups({sourceMonitor:monitor,openStore:async()=>({close(){},async incidents(){return [{incident:'exercise',payload:{name:'EXERCISE'}}];},async loadCollection(key){return key==='coordination'?[record()]:[];}})});
+ controller.setSession({username:'test'});await controller.selectIncident('exercise');assert.equal(events.at(-1).pioReview,1);assert.equal(events.at(-1).overdue,1);assert.equal(get('mission-pio-reviews').hidden,false);assert.equal(get('mission-pio-reviews').children.filter(n=>n.className==='mission-card').length,1);assert(get('mission-pio-reviews').children.some(n=>n.textContent?.includes('Approved messages')));
+ defer=true;const pending=controller.selectIncident('exercise');await new Promise(r=>setImmediate(r));assert(release);controller.setSession(null);release();await pending;
+ assert.equal(events.at(-1).pioReview,0);assert.equal(events.at(-1).assessed,false);assert.equal(get('mission-pio-reviews').children.length,0);assert.equal(get('mission-pio-reviews').hidden,true);assert(closed>0);
+}));

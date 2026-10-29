@@ -1,5 +1,5 @@
-import {createMissionFollowups} from './mission-followup-ui.js?v=0.59.0';
-import {missionEvidenceKey} from './mission-followup-model.js?v=0.59.0';
+import {createMissionFollowups} from './mission-followup-ui.js?v=0.71.0';
+import {missionEvidenceKey} from './mission-followup-model.js?v=0.71.0';
 import {captureBriefingEvidence,briefingNeedsSave,briefingPeriods,protectBriefingDraft} from './briefing-draft-model.js?v=0.59.0';
 import {libraryMapStatus} from './library-status-model.js?v=0.58.1';
 import {commandQueue,queuePage,CONCERN_TYPES} from './command-queue-model.js?v=0.59.0';

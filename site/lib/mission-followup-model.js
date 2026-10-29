@@ -6,7 +6,7 @@ export function missionEvidenceKey(item){
 }
 /** @param {object[]} records @param {number} now @returns {object[]} Preserve conflicting corrections and unlinked legacy entries. */
 export function missionFollowups(records,now=Date.now()){
-  return heads(records).filter(h=>h.record.payload.kind==='Follow-up').map(h=>{
+  return heads(records).filter(h=>h.record.payload.kind==='Follow-up'&&!h.record.payload.pioOutreach&&!h.record.payload.pioDistribution).map(h=>{
     const r=h.record,p=r.payload;let key=p.sourceKey||null;
     if(!key&&typeof p.evidence==='string'){try{key=missionEvidenceKey(JSON.parse(p.evidence));}catch{/* Legacy free-text evidence has no verified link. */}}
     const closed=!h.conflict&&['Complete','Canceled'].includes(p.status);

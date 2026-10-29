@@ -1,3 +1,59 @@
+F.R.O.G. 0.71.0 — PIO source applicability reviews
+Checked October 28, 2026. Existing private EXERCISE storage; no schema migration.
+
+Where to review
+- County Watch / Area Watch: sign in, expand Incident follow-ups · private and
+  choose the exercise incident. PIO source reviews lists the affected outreach,
+  owner, changed context, comparison time and next step. The private PIO button
+  in the county notification strip opens this section. Counts cover the selected
+  incident only; map extent and display filters cannot change them.
+- EOC workspace → PIO outreach: Check outreach sources forces a comparison;
+  active records are also checked each five minutes while the page is visible.
+  Existing EOC notification reviews and newly created PIO briefings include the
+  applicability flags. Approved earlier briefing versions are never rewritten.
+
+Comparison rules
+County zones: same public source/key/OID, name, published status and geometry
+representation digest as saved outreach. A changed or missing record requests
+verification; this does not establish a new order, order issue time or boundary
+survey. Geometry representation changes can conservatively request review.
+AFN: compare saved whole-area memberships and whitelisted values, including MOEs,
+SVI/CES context, SB 535 designation and CDSS reference records, against current
+bounded publisher queries. Compare known publisher edit stamps and language
+reference collection/version metadata separately. A layer-wide stamp change is
+explicitly labeled as such; zone values may be unchanged. Query and capture times
+alone never count as a source revision. Missing publication/edit dates are unknown.
+Older outreach without AFN evidence requests capture; no old values are inferred.
+
+Safety and operation
+Approved messages, manually confirmed languages, approvals, receipts and saved
+source evidence remain unchanged. Flags are derived read-only; they do not
+invalidate or approve a message. To refresh saved evidence, update outreach,
+review applicability, explicitly refresh evidence and save a new version. That
+new version needs its own documented message approval. Closing/canceling outreach
+stops monitoring without deleting history; it does not clear an evacuation/hazard.
+
+The record-level PIO count deduplicates zone and AFN flags for one outreach version.
+Failed topic comparisons are separate, deduplicated source issues, never zero
+needs or no change. A new substantive revision changes the review identity, while
+repeating a check with new query times does not. Known source failures require
+retry, not acknowledgement as an all-clear. Manual refresh retries immediately.
+
+Private records and review details stay in memory and restricted AGOL tables;
+source queries receive only public county-zone geometry, not messages, contacts,
+incident IDs or credentials. Two zone workers share reads for outreach using the
+same zone, with a five-minute in-memory cache. Sign-out, scope changes and private
+query failures clear private details; obsolete async replies cannot restore them.
+No persistent browser storage, new AGOL items, permissions or group memberships.
+Monitoring is only while the page is open/visible, with no email/SMS delivery,
+unattended escalation, automatic sending or complete source-change archive.
+
+Rollback: redeploy c1fc58d (0.70.0); no data migration or record deletion is needed.
+Saved AFN/population readers remain compatible. Reload open tabs after release.
+
+Historical 0.70 notes:
+=====================
+
 F.R.O.G. 0.70.0 — Saved AFN and language evidence in private outreach and briefings
 Checked October 28, 2026. Existing private EXERCISE AGOL tables and permissions.
 
