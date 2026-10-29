@@ -1,4 +1,4 @@
-import {createPopulationWatch} from './lib/population-ui.js?v=0.67.0';
+import {createPopulationWatch} from './lib/population-ui.js?v=0.69.0';
 import {createCountySandbags} from './lib/county-sandbag-ui.js?v=0.63.0';
 import {createDwrFloodFight} from './lib/dwr-flood-fight-ui.js?v=0.62.0';
 import {createDwrSupplyPlanning} from './lib/dwr-supply-planning-ui.js?v=0.62.0';
