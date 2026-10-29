@@ -9,15 +9,15 @@ const sourceLinks={zones:CARE_SOURCES.zoneItem,acs:POPULATION_SOURCES.acsItem,bl
 const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
 
 /** Links contain public identifiers only. Counts and private form fields never enter the URL. */
-export function pioZoneLink(oid,snapshot=null){
-  if(!Number.isSafeInteger(oid)||oid<1||snapshot!==null&&!shaPattern.test(snapshot))throw Error('Invalid public zone link.');
-  return './eoc.html?'+new URLSearchParams({pioZone:String(oid),...(snapshot?{populationMap:snapshot}:{})})+'#outreach';
+export function pioZoneLink(oid,snapshot=null,built=null){
+  if(!Number.isSafeInteger(oid)||oid<1||snapshot!==null&&(!shaPattern.test(snapshot)||!date(built))||snapshot===null&&built!==null)throw Error('Invalid public zone link.');
+  return './eoc.html?'+new URLSearchParams({pioZone:String(oid),...(snapshot?{populationMap:snapshot,populationBuilt:String(built)}:{})})+'#outreach';
 }
 export function readPioZoneRequest(search){
-  const q=new URLSearchParams(search);if(!q.has('pioZone')&&!q.has('populationMap'))return null;
-  const id=q.get('pioZone'),snapshot=q.get('populationMap');
-  if(q.getAll('pioZone').length!==1||q.getAll('populationMap').length>1||!/^\d{1,12}$/.test(id||'')||Number(id)<1||snapshot!==null&&!shaPattern.test(snapshot))throw Error('The zone outreach link is invalid. Open the population map and select the zone again.');
-  return {oid:Number(id),key:'county-zone:'+Number(id),snapshot};
+  const q=new URLSearchParams(search);if(!q.has('pioZone')&&!q.has('populationMap')&&!q.has('populationBuilt'))return null;
+  const id=q.get('pioZone'),snapshot=q.get('populationMap'),built=q.has('populationBuilt')?Number(q.get('populationBuilt')):null;
+  if(q.getAll('pioZone').length!==1||q.getAll('populationMap').length>1||q.getAll('populationBuilt').length>1||!/^\d{1,12}$/.test(id||'')||Number(id)<1||snapshot!==null&&(!shaPattern.test(snapshot)||!date(built))||snapshot===null&&built!==null)throw Error('The zone outreach link is invalid. Open the population map and select the zone again.');
+  return {oid:Number(id),key:'county-zone:'+Number(id),snapshot,built};
 }
 
 /** Require the same public boundary snapshot before importing its population assumptions. */
@@ -53,7 +53,7 @@ export async function loadPioZoneContext(request,collection,{fetcher=fetch,signa
   const zone=collection.rows.find(r=>r.oid===request.oid);if(!zone)throw Error('This county zone is no longer returned. Verify the source before creating outreach.');
   if(!request.snapshot)return {zone,populationMap:null};
   const {meta,data}=await readProduct({fetcher,signal});
-  if(meta.geojson.sha256!==request.snapshot)throw Error('The population map has changed since this link was created. Open the current map and select the zone again.');
+  if(meta.geojson.sha256!==request.snapshot||meta.built!==request.built)throw Error('The population map has changed since this link was created. Open the current map and select the zone again.');
   const feature=data.features.find(f=>f.properties.oid===request.oid);if(!feature)throw Error('This zone is not in the population map snapshot.');
   const manifest=meta.evidence;
   if(manifest?.file!=='evidence.json'||!shaPattern.test(manifest.sha256)||!Number.isSafeInteger(manifest.bytes)||manifest.bytes<1||manifest.bytes>10000000)throw Error('Population map calculation evidence is unavailable. Rebuild the map snapshot.');

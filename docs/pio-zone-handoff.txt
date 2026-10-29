@@ -40,8 +40,9 @@ Languages and AFN remain separate whole-area planning context and require local
 confirmation. No alert is sent by these actions.
 
 Integrity, access and recovery
-Links contain only the public county zone ID and optional public map digest.
-No messages, contacts, private incident/record identifiers or tokens enter the
+Links contain only the public county zone ID and optional public map digest and calculation time.
+An unchanged figure file with newer calculation/source dates is a different
+snapshot. No messages, contacts, private incident/record identifiers or tokens enter the
 link. Private drafts remain in memory until saved to existing restricted AGOL
 coordination views. The interface role selector grants no privileges. Existing
 viewer/coordinator/approver groups and storage schema are unchanged.

@@ -45,7 +45,7 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
     catch(error){if(generation===epoch&&request===activeRequest&&entryPending===token&&error.name!=='AbortError')entryError=error.message;}
     finally{if(entryPending===token){entryPending=null;if(generation===epoch)render();}}
   }
-  function showAll(){entryAbort?.abort();entryPending=null;request=null;requestError=null;entry=null;entryError=null;const url=new URL(location.href);url.searchParams.delete('pioZone');url.searchParams.delete('populationMap');history.replaceState(null,'',url);render();}
+  function showAll(){entryAbort?.abort();entryPending=null;request=null;requestError=null;entry=null;entryError=null;const url=new URL(location.href);url.searchParams.delete('pioZone');url.searchParams.delete('populationMap');url.searchParams.delete('populationBuilt');history.replaceState(null,'',url);render();}
   function renderEntry(){
     if(!request&&!entryError)return;if(request&&!entry&&!entryError&&!entryPending)void resolveEntry();
     const box=el('section');box.className='pio-zone-context';box.setAttribute('aria-label','Selected zone outreach');

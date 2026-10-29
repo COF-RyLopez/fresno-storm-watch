@@ -14,13 +14,13 @@ async function fixture(){
   const [meta,data,bytes]=await Promise.all([readFile(new URL('manifest.json',folder),'utf8').then(JSON.parse),readFile(new URL('zones.geojson',folder),'utf8').then(JSON.parse),readFile(new URL('evidence.json',folder))]);
   const feature=data.features.find(f=>f.properties.name==='L39'),row={oid:feature.properties.oid,key:feature.properties.key,name:'L39',status:'unknown',geometry:{rings:[[[-119.8,36.7],[-119.8,36.71],[-119.79,36.71],[-119.8,36.7]]],spatialReference:{wkid:4326}}},collection={rows:[row],checked:now};
   meta.geometryFingerprint=await boundaryFingerprint(collection.rows);
-  return {meta,data,bytes,feature,row,collection,contributions:JSON.parse(bytes)[row.key],request:{oid:row.oid,key:row.key,snapshot:meta.geojson.sha256},readProduct:async()=>({meta,data})};
+  return {meta,data,bytes,feature,row,collection,contributions:JSON.parse(bytes)[row.key],request:{oid:row.oid,key:row.key,snapshot:meta.geojson.sha256,built:meta.built},readProduct:async()=>({meta,data})};
 }
 async function saved(){const f=await fixture();return {f,s:freezePopulationMapEvidence(f.meta,f.feature,f.contributions,{checked:now,captured:now})};}
 function plan(s){return {kind:'Follow-up',title:'EXERCISE zone link check',location:s.zone.name,owner:'EXERCISE PIO',due:now+3600000,nextReview:'EXERCISE',status:'Open',evidence:'',pioOutreach:{schema:1,zone:{...s.zone,source:CARE_SOURCES.zones,status:'unknown',checked:now,revision:'a'.repeat(64)},languages:['English'],confirmedBy:'EXERCISE partner',confirmedAt:now,languageEvidence:'EXERCISE only',messageLanguage:'English',message:'EXERCISE ONLY — do not distribute.',channels:['EXERCISE channel'],partners:[],zoneVerifiedBy:'EXERCISE authority',zoneVerifiedAt:now,zoneEvidence:'EXERCISE source check',analysisNotes:'',populationMapEvidence:s}};}
 
 test('zone outreach URL carries only the public ID and optional snapshot hash',()=>{
-  const url=pioZoneLink(299,'a'.repeat(64));assert.equal(url,'./eoc.html?pioZone=299&populationMap='+'a'.repeat(64)+'#outreach');assert.deepEqual(readPioZoneRequest(url.split('?')[1].split('#')[0]),{oid:299,key:'county-zone:299',snapshot:'a'.repeat(64)});assert.deepEqual(readPioZoneRequest('?pioZone=299'),{oid:299,key:'county-zone:299',snapshot:null});assert.equal(readPioZoneRequest('?unrelated=x'),null);
+  const url=pioZoneLink(299,'a'.repeat(64),now);assert.equal(url,'./eoc.html?pioZone=299&populationMap='+'a'.repeat(64)+'&populationBuilt='+now+'#outreach');assert.deepEqual(readPioZoneRequest(url.split('?')[1].split('#')[0]),{oid:299,key:'county-zone:299',snapshot:'a'.repeat(64),built:now});assert.deepEqual(readPioZoneRequest('?pioZone=299'),{oid:299,key:'county-zone:299',snapshot:null,built:null});assert.equal(readPioZoneRequest('?unrelated=x'),null);
   for(const q of ['?pioZone=-1','?pioZone=0','?pioZone=abc','?populationMap=abc','?pioZone=1&pioZone=2','?pioZone=1&populationMap=x','?pioZone=1&populationMap='+'a'.repeat(64)+'&populationMap='+'b'.repeat(64)])assert.throws(()=>readPioZoneRequest(q));
 });
 test('snapshot retains the exact map figures, source times, MOE, assumptions and bounded contributions',async()=>{
@@ -41,7 +41,8 @@ test('current public boundaries and the evidence-file hash are checked before im
 });
 test('stale links, missing zones and source failures never silently select a replacement estimate',async()=>{
   const f=await fixture();await assert.rejects(loadPioZoneContext({...f.request,snapshot:'b'.repeat(64)},f.collection,{readProduct:f.readProduct}),/changed since/);await assert.rejects(loadPioZoneContext(f.request,{rows:[],checked:now}),/no longer returned/);await assert.rejects(loadPioZoneContext(f.request,f.collection,{readProduct:f.readProduct,fetcher:async()=>new Response('',{status:503})}),/HTTP 503/);
-  const live=await loadPioZoneContext({...f.request,snapshot:null},f.collection,{readProduct:()=>{throw Error('Must not read map snapshot');}});assert.equal(live.populationMap,null);assert.equal(live.zone.key,f.row.key);
+  await assert.rejects(loadPioZoneContext({...f.request,built:f.meta.built-1},f.collection,{readProduct:f.readProduct}),/changed since/);
+  const live=await loadPioZoneContext({...f.request,snapshot:null,built:null},f.collection,{readProduct:()=>{throw Error('Must not read map snapshot');}});assert.equal(live.populationMap,null);assert.equal(live.zone.key,f.row.key);
 });
 test('snapshot evidence delivery bytes remain reproducible',async()=>{const f=await fixture();assert.equal(f.bytes.length,f.meta.evidence.bytes);assert.equal(createHash('sha256').update(f.bytes).digest('hex'),f.meta.evidence.sha256);});
 test('a PIO version chooses either the frozen map or live calculated population evidence',async()=>{const {s}=await saved(),p=plan(s);validatePioPayload(p);p.pioOutreach.populationEvidence={};assert.throws(()=>validatePioPayload(p),/Choose one/);assert.equal(GROUP_FOR.coordination,'coordinators');});

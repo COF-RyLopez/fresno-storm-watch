@@ -22,7 +22,7 @@ function renderList(){
 async function select(feature,updateUrl=false){
   const generation=++epoch;selected=feature;const p=feature.properties,host=$('selected-zone');host.hidden=false;host.replaceChildren(el('h2','Zone '+p.name),el('p',p.population===null?'Estimate unavailable':estimatedResidents(p.population)+' residents'));host.children[1].className='residents';
   host.append(el('p',p.population===null?p.reason:`ACS ${product.meta.period} · ${p.tracts} contributing Fresno tract${p.tracts===1?'':'s'}.`));
-  const outreach=el('a','Open private PIO outreach for this zone');outreach.href=pioZoneLink(p.oid,product.meta.geojson.sha256);outreach.className='outreach-link';host.append(outreach);
+  const outreach=el('a','Open private PIO outreach for this zone');outreach.href=pioZoneLink(p.oid,product.meta.geojson.sha256,product.meta.built);outreach.className='outreach-link';host.append(outreach);
   if(p.countyShare<.999)host.append(el('p','This source zone extends outside the county. The estimate includes only its Fresno County portion.'));
   host.append(el('p',p.samplingMoe===null?'Sampling-only MOE component unavailable.':`Sampling-only MOE component: ± ${Math.ceil(p.samplingMoe).toLocaleString()} residents. Total allocation uncertainty is not quantified.`));
   const details=el('details');details.append(el('summary','Calculation evidence & dates'),el('p',product.meta.limits.method),el('p',product.meta.limits.uncertainty),el('p',`County zone snapshot queried ${time(product.meta.zonesChecked)}. Calculation prepared ${time(product.meta.built)}. Neither is a population observation or order issue time.`));
