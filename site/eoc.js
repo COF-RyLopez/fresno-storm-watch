@@ -1,17 +1,19 @@
-import {createPioWorkspace} from './lib/pio-ui.js?v=0.71.1';
+import {createPioWorkspace} from './lib/pio-ui.js?v=0.73.0';
+import {readPioZoneRequest} from './lib/pio-zone-context.js?v=0.73.0';
 import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.71.1';
 import {isPio} from './lib/pio-model.js?v=0.70.0';
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
 import {setupAuth} from './lib/auth.js?v=0.40.0';
-import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.70.0';
+import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.73.0';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';
-import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.71.1';
+import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.73.0';
 import {formatTime} from './lib/model.js';
 
 const $=id=>document.getElementById(id),el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};
 const exercise=new URLSearchParams(location.search).get('exercise')==='1';
+let zoneRequest=null,zoneRequestError=null;try{zoneRequest=readPioZoneRequest(location.search);}catch(error){zoneRequestError=error.message;}
 const team=EOC_CONFIG.teamLabel||'F.R.O.G. EOC exercise team';
 const time=v=>Number.isFinite(v)?new Intl.DateTimeFormat('en-US',{timeZone:CONFIG.timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(v):'Unknown';
 let store=null,auth=null,records=emptyRecords(),incidents=[],incident=exercise?'exercise-fresno-2026':null,periodId=null,role='Management',section=['outreach','notifications'].includes(location.hash.slice(1))?location.hash.slice(1):'overview',generation=0,busy=false,checked=null,recordError=null;
@@ -20,7 +22,8 @@ const liveHeads=key=>heads(records[key]),can=key=>!!store?.allowed.has(key)&&!re
 const notices=()=>[...buildNotifications(records,publicState.notifications),...pio.sourceNotifications()];
 const action=(text,fn,enabled=true)=>{const b=el('calcite-button',text);b.setAttribute('scale',matchMedia('(max-width:600px)').matches?'m':'s');b.setAttribute('appearance','outline');b.toggleAttribute('disabled',!enabled);b.onclick=fn;return b;};
 const card=(title,body,kind)=>{const n=el('article','','eoc-card');if(kind)n.dataset.kind=kind;n.append(el('h3',title));if(body)n.append(el('p',body));return n;};
-const pio=createPioWorkspace({host:$('pio-workspace'),getState:()=>({records,incident,can,periodReady:!!selectedPeriod()}),commit,message,time,onSourceChange:()=>renderSection(),onBriefing:({zoneKey=null}={})=>void createBriefing({scope:'pio',zoneKey}),exercise,team});
+if(zoneRequest||zoneRequestError){section='outreach';role='Public Information';$('role-view').value=role;}
+const pio=createPioWorkspace({host:$('pio-workspace'),getState:()=>({records,incident,can,periodReady:!!selectedPeriod()}),commit,message,time,onSourceChange:()=>renderSection(),onBriefing:({zoneKey=null}={})=>void createBriefing({scope:'pio',zoneKey}),exercise,team,zoneRequest,zoneRequestError});
 function message(text){$('workspace-message').textContent=text;}
 function getHeads(key,entity){return liveHeads(key).filter(h=>h.record.entity===entity).flatMap(h=>h.heads.map(r=>r.id));}
 function resetPrivate(){generation++;pio.clear();store?.close();store=null;records=emptyRecords();incidents=[];incident=null;periodId=null;checked=null;recordError=null;pendingForm=null;shownBriefing=null;omitted.clear();for(const id of ['record-dialog','briefing-dialog','evidence-dialog'])$(id).removeAttribute('open');for(const id of ['record-form','briefing-text','print-output','evidence-text'])$(id).replaceChildren();$('record-form').reset();$('form-error').textContent='';$('workspace-message').textContent='';render();}

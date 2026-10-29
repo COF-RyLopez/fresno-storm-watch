@@ -12,3 +12,5 @@
 #pio-error{color:var(--calcite-color-status-danger);margin-block:1rem}#pio-workspace :focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:3px}
 .pio-record p,#pio-population p{overflow-wrap:anywhere}.pio-record details,#pio-population details{margin-block:.75rem}#pio-population{padding-block:1rem;border-block:1px solid var(--calcite-color-border-3);margin-block:1rem}
 #pio-afn p{overflow-wrap:anywhere}#pio-afn details{margin-block:.75rem}#pio-afn{padding-block:1rem;border-block:1px solid var(--calcite-color-border-3);margin-block:1rem}
+
+.pio-zone-context{border-block:1px solid var(--calcite-color-border-2);padding-block:.75rem;margin-block:.75rem;overflow-wrap:anywhere}.pio-zone-context h3{margin:0}.pio-zone-context p{margin-block:.5rem}

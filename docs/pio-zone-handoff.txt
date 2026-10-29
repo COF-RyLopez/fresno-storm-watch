@@ -1,0 +1,72 @@
+F.R.O.G. 0.73.0 — Population map to private PIO outreach
+Checked October 29, 2026.
+
+Workflow
+1. Open zone-population.html, search/select a county zone, then choose
+   Open private PIO outreach for this zone.
+2. Sign in to county AGOL. Choose the intended private exercise incident.
+   The PIO list shows only that zone's outreach in the selected incident.
+3. Open an existing record, or New outreach for [zone]. New drafts preselect
+   the county zone and include the exact dated population-map estimate.
+4. Complete the PIO, message, channel, confirmation and update fields, then
+   save. Saving is explicit; following the link creates no private record.
+5. Create zone PIO handoff snapshot to freeze the selected zone's records,
+   assumptions, population source dates and uncertainty in a private briefing.
+   Message approval, briefing approval and manual distribution remain separate.
+
+Storm Watch's selected-zone population evidence also has the PIO link. That
+route passes the zone ID only and calculates fresh public population evidence
+for a new draft. The standalone map route additionally pins the map snapshot.
+Show all outreach removes the public zone filter. Monitoring and incident-wide
+notification counts remain independent of this display filter.
+
+Evidence
+The private pioOutreach.populationMapEvidence payload retains the unrounded ACS
+estimate, sampling-only MOE component, unknown reasons, Fresno-only scope,
+tract contributions, source URLs/times, map calculation time, delivery digests,
+boundary fingerprint and allocation/uncertainty limitations. No source geometry
+or full county collection is stored with the outreach. Census privacy, growth,
+boundary and spatial-allocation uncertainty remain outside the sampling-only
+component; it is not a complete zone 90% confidence interval.
+
+Existing records and approvals are not changed by navigation or source refresh.
+Update outreach preserves the saved evidence. To change an existing draft's
+population source, choose Use selected map estimate in this draft or Calculate
+latest population evidence, then save a new version. A version uses one
+population evidence type. Fresh exact-version approval is required as before.
+Approved briefing snapshots retain the exact saved evidence without rereading
+current sources. Unknown population remains unknown, never confirmed zero.
+Languages and AFN remain separate whole-area planning context and require local
+confirmation. No alert is sent by these actions.
+
+Integrity, access and recovery
+Links contain only the public county zone ID and optional public map digest.
+No messages, contacts, private incident/record identifiers or tokens enter the
+link. Private drafts remain in memory until saved to existing restricted AGOL
+coordination views. The interface role selector grants no privileges. Existing
+viewer/coordinator/approver groups and storage schema are unchanged.
+Fixed public files are checked against their delivery hashes and the estimate
+is reconciled to its tract weights. Changed/missing zones, stale map links,
+invalid links and failed source reads disable the linked draft path and show
+recovery guidance. County boundary applicability is checked before importing
+and again before saving a new/active map-backed outreach version. Closing an
+existing record may preserve its historical evidence without claiming current
+applicability. No estimate is silently rebound to a changed county boundary.
+The current check conservatively compares the full county boundary snapshot;
+rebuild the population map or use fresh calculations after a boundary change.
+Evidence.json now has a delivery hash in the existing map manifest; population
+calculations, source dates and map counts are unchanged by this release.
+
+Validation
+718 Node checks pass, including link validation, exact snapshot handoff,
+contribution/MOE reconciliation, missingness, tampered/stale delivery, current
+boundaries, unchanged permissions and private briefing immutability. Existing
+regression and deployment checks remain required. Browser validation uses the
+county owner's account and clearly labeled exercise records. The new outreach
+test is closed; its briefing is an unapproved exercise draft. No public message
+is sent or operational approval recorded.
+
+Rollback: redeploy 0.72.0. No hosted layer, group or table migration is required.
+Retain exercise test history and private snapshots. The previous interface does
+not display the new populationMapEvidence payload, so reopen a current release
+to inspect those saved map estimates.

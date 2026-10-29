@@ -73,5 +73,10 @@
     "polygonClipping": "0.15.7",
     "geographiclib": "2.2.0"
   },
-  "issues": []
+  "issues": [],
+  "evidence": {
+    "file": "evidence.json",
+    "sha256": "7ebe780afc55dda5d09b0727b218aa29e4699ed635b2ad7afdd1de7987ab7348",
+    "bytes": 216885
+  }
 }

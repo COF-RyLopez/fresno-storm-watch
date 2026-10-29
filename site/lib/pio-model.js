@@ -1,6 +1,7 @@
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
 import {validatePopulationEvidence,populationEvidenceLines} from './population-snapshot-model.js?v=0.68.0';
 import {validateAfnEvidence,afnEvidenceLines} from './afn-snapshot-model.js?v=0.70.0';
+import {validatePopulationMapEvidence,populationMapLines} from './pio-zone-context.js?v=0.73.0';
 export const PIO_RECEIPTS=['Sent / posted · receipt unconfirmed','Partner acknowledged','Delivery issue'];
 export const isPio=p=>!!(p?.pioOutreach||p?.pioDistribution);
 const text=(v,name,max=1500)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw Error(`${name} is required (up to ${max} characters).`);};
@@ -17,7 +18,9 @@ export function validatePioPayload(p){
     text(o.message,'Message text',8000);text(o.messageLanguage,'Message language',100);if(typeof o.analysisNotes!=='string'||o.analysisNotes.length>2000)throw Error('Keep planning evidence within 2,000 characters.');
     if(o.languages.length){text(o.confirmedBy,'Language confirmation by',200);text(o.languageEvidence,'Language confirmation evidence');past(o.confirmedAt,'Language confirmation time');}
     if(o.zoneVerifiedBy||o.zoneEvidence||o.zoneVerifiedAt){text(o.zoneVerifiedBy,'County applicability confirmation by',200);text(o.zoneEvidence,'County applicability evidence');past(o.zoneVerifiedAt,'County applicability confirmation time');}
+    if(o.populationMapEvidence&&o.populationEvidence)throw Error('Choose one population estimate for this outreach version.');
     if(o.populationEvidence!==undefined&&o.populationEvidence!==null)validatePopulationEvidence(o.populationEvidence,z);
+    if(o.populationMapEvidence)validatePopulationMapEvidence(o.populationMapEvidence,z);
     if(o.afnEvidence!==undefined&&o.afnEvidence!==null)validateAfnEvidence(o.afnEvidence,z);
   }
   if(p.pioDistribution){const d=p.pioDistribution;if(d.schema!==1||p.kind!=='Follow-up'||p.status!=='Complete'||![d.outreachEvent,d.outreachEntity,d.approvalEvent].every(identifier))throw Error('Distribution must reference an exact outreach version and approval.');
@@ -82,6 +85,6 @@ export function pioBriefingLines(records,heads,time,now){return pioStates(record
   `Zone source ${o.zone.source} · ${o.zone.key} / ${o.zone.name} · published ${o.zone.status} · queried ${time(o.zone.checked)} · source issue time unavailable · revision ${o.zone.revision}`,
   `County applicability confirmation: ${o.zoneVerifiedBy||'Unconfirmed'} · ${time(o.zoneVerifiedAt)} · ${o.zoneEvidence||'No evidence'}`,
   `Planning evidence: ${o.analysisNotes||'None recorded'}. Population estimates do not establish an evacuation order, language preference or delivery.`,
-  ...populationEvidenceLines(o.populationEvidence,o.zone,time),
+  ...(o.populationMapEvidence?populationMapLines(o.populationMapEvidence,time):populationEvidenceLines(o.populationEvidence,o.zone,time)),
   ...afnEvidenceLines(o.afnEvidence,o.zone,time)
 ];});}

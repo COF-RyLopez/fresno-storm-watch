@@ -21,8 +21,8 @@ export function validateZoneProduct(meta,data){
   if(estimated!==meta.counts.estimated||data.features.length-estimated!==meta.counts.unknown)throw Error('Estimate accounting does not reconcile.');return {meta,data};
 }
 
-export async function readZoneProduct({fetcher=fetch,base=new URL('../data/zone-population/',import.meta.url)}={}){
-  const get=async name=>{const r=await fetcher(new URL(name,base),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Population file HTTP '+r.status);return r;};
+export async function readZoneProduct({fetcher=fetch,base=new URL('../data/zone-population/',import.meta.url),signal}={}){
+  const get=async name=>{const r=await fetcher(new URL(name,base),{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});if(!r.ok)throw Error('Population file HTTP '+r.status);return r;};
   const meta=await(await get('manifest.json')).json(),buffer=await(await get('zones.geojson')).arrayBuffer();
   if(buffer.byteLength!==meta.geojson?.bytes)throw Error('Population map download is incomplete.');
   const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(b=>b.toString(16).padStart(2,'0')).join('');

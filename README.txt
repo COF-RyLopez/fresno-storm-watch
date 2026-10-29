@@ -1,5 +1,11 @@
 FRESNO COUNTY STORM WATCH — GITHUB PAGES PROTOTYPE
-Version 0.72.0 | October 29, 2026 | Standalone evacuation-zone population
+Version 0.73.0 | October 29, 2026 | Zone population to private PIO outreach
+
+ZONE-TO-PIO HANDOFF (v0.73.0)
+Select a zone -> Open private PIO outreach for this zone. The private incident
+list filters to that zone; new drafts retain its dated map estimate, source
+times and uncertainty. Existing approvals remain unchanged. Named-account
+access and explicit saving are required. See docs/pio-zone-handoff.txt.
 
 EVACUATION-ZONE POPULATION (v0.72.0)
 Share /zone-population.html for the read-only Sheriff zone / ACS map.

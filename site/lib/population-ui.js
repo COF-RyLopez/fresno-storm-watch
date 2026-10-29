@@ -1,4 +1,5 @@
 import {populationSourceGuide} from './population-guide.js?v=0.67.0';
+import {pioZoneLink} from './pio-zone-context.js?v=0.73.0';
 import {calculateAcsZonePopulation} from './zone-acs-data.js?v=0.67.0';
 import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_MOE_SOURCE,ZONE_ACS_BOUNDARIES,formatAllocationWeight} from './zone-acs-model.js?v=0.67.0';
 import {loadSdk} from './map.js?v=0.65.0-r1';
@@ -42,6 +43,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   function detail(){
     const host=$('population-details');host.replaceChildren();if(!selected){disposeAfn();pane.heading='Population & evacuation-zone evidence';host.append(node('p',problem||'Choose a county evacuation zone from Area Watch.'));return;}
     pane.heading=`${selected.name} · population planning`;
+    host.append(link('Open private PIO outreach for this zone',pioZoneLink(selected.oid)));
     host.append(node('p',`County published status: ${ZONE_STATUS[selected.status]||'Unknown'} · zone query ${time(zones?.checked)}. Individual issue/update time is not supplied.`));
     if(zoneError){const notice=node('calcite-notice');notice.open=true;notice.kind='warning';const text=node('div','Zone check failed; the retained boundary/status requires verification.');text.slot='message';notice.append(text);host.append(notice);}
     const latest=node('section');latest.setAttribute('aria-label','Newer ACS zone planning estimate');latest.append(node('h3','Newer zone planning estimate'));
