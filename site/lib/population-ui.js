@@ -1,5 +1,5 @@
-import {loadSdk} from './map.js?v=0.65.0';
-import {createAcsContext} from './acs-ui.js?v=0.65.0';
+import {loadSdk} from './map.js?v=0.65.0-r1';
+import {createAcsContext} from './acs-ui.js?v=0.65.0-r1';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.65.0';
@@ -17,7 +17,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   const cache=new Map();let zonePending=null;
   const acs=createAcsContext({exercise,onMap,onOpenWatch});
   const isWatch=()=>$('storm-shell').dataset.workspace==='watch'&&$('storm-shell').dataset.destination==='watch';
-  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.65.0');$('population-share').href=u.href;}
+  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.65.0-r1');$('population-share').href=u.href;}
   function list(){
     const rows=populationZoneRows(zones?.rows||[],{query:$('population-query').value,status:$('population-filter').value}),picker=$('population-zone'),value=selected?.key||'';picker.replaceChildren();
     const empty=node('option',rows.length?'Choose a county zone…':'No matching county zones');empty.value='';picker.append(empty);

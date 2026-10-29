@@ -15,7 +15,7 @@ export const ACS_SOURCES=Object.freeze({
 });
 export const PIO_GUIDANCE=Object.freeze({
   communication:'https://www.caloes.ca.gov/office-of-the-director/policy-administration/access-functional-needs/communication/',
-  templates:'https://www.calalerts.org/resources.html'
+  templates:'https://calalerts.org/resources.html'
 });
 export function acsFields(key){return ['GEOID','NAME',...(key==='population'?['ALAND']:[]),...new Set(ACS_SOURCES[key].measures.flatMap(m=>m.slice(1)))];}
 export function acsPeriod(description){

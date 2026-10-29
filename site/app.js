@@ -1,4 +1,4 @@
-import {createPopulationWatch} from './lib/population-ui.js?v=0.65.0';
+import {createPopulationWatch} from './lib/population-ui.js?v=0.65.0-r1';
 import {createCountySandbags} from './lib/county-sandbag-ui.js?v=0.63.0';
 import {createDwrFloodFight} from './lib/dwr-flood-fight-ui.js?v=0.62.0';
 import {createDwrSupplyPlanning} from './lib/dwr-supply-planning-ui.js?v=0.62.0';
@@ -18,7 +18,7 @@ import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
 import { clockLabel } from './lib/flood-scenario-model.js?v=0.39.0';
-import { createMap } from './lib/map.js?v=0.65.0';
+import { createMap } from './lib/map.js?v=0.65.0-r1';
 import { setupAuth } from './lib/auth.js?v=0.40.0';
 import { setupSceneCompanion } from './lib/scene-companion.js';
 import { exerciseBatches } from './lib/exercise.js';

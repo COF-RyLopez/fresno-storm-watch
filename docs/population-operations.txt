@@ -2,7 +2,7 @@ F.R.O.G. 0.65.0 — Living Atlas ACS and PIO planning context
 Checked October 28, 2026. Supersedes the COG overlay described in the historical
 0.64 implementation notes below; the 2020 block-based zone method is unchanged.
 
-Law Branch test entry: /?view=watch&population=1&v=0.65.0
+Law Branch test entry: /?view=watch&population=1&v=0.65.0-r1
 Open ACS & PIO details, or click a displayed census tract. From a selected zone,
 expand Newer ACS & PIO context and explore intersecting tracts. That list includes
 boundary touches; it is context only and does not allocate or sum tract population.
@@ -50,7 +50,7 @@ Distribution guidance follows Cal OES: coordinate with community partners, use
 qualified translation/interpreters and accessible formats, and plan multiple
 channels including offline outreach. Counts do not gate accessible messaging.
 https://www.caloes.ca.gov/office-of-the-director/policy-administration/access-functional-needs/communication/
-https://www.calalerts.org/resources.html
+https://calalerts.org/resources.html
 Confirm hazard, location, protective action, timing and issuing authority before
 public release. The app neither sends alerts nor approves public information.
 County PIO/JIC should validate preferred languages, trusted local partners,
@@ -139,3 +139,5 @@ Rollback: redeploy 0.63.0. No data migration or access changes.
 
 0.64.1: fit the selected zone after the evidence dock and density legend finish layout.
 The initial direct link and reopening evidence use the same guarded framing path.
+
+0.65.0-r1: operational map feature selections precede ACS context hit tests.

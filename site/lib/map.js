@@ -254,7 +254,6 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
         const sandbagKey=hit.results.find(r=>r.graphic?.attributes?.countySandbagKey)?.graphic.attributes.countySandbagKey;if(sandbagKey){onSandbagSelect(sandbagKey);return;}
         const populationKey=hit.results.find(r=>r.graphic?.attributes?.populationZoneKey)?.graphic.attributes.populationZoneKey;if(populationKey){window.dispatchEvent(new CustomEvent('frogPopulationZoneSelect',{detail:{key:populationKey}}));return;}
-        const acsHit=hit.results.find(r=>r.graphic?.layer?.id==='frog-acs-population'||r.graphic?.attributes?.acsTractId);if(acsHit){window.dispatchEvent(new CustomEvent('frogAcsTractSelect',{detail:{id:acsHit.graphic.attributes.acsTractId||acsHit.graphic.attributes.GEOID}}));return;}
         const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
         const drainageKey=hit.results.find(r=>r.graphic?.attributes?.drainageKey)?.graphic.attributes.drainageKey;
         if(drainageKey){onDrainageSelect(drainageKey);return;}
@@ -276,6 +275,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         const networkKey=hit.results.find(r=>r.graphic?.attributes?.networkKey)?.graphic.attributes.networkKey;if(networkKey){onNetworkSelect(networkKey);return;}
         const key=hit.results.find(r=>r.graphic?.attributes?.alertKey)?.graphic.attributes.alertKey;
         if(key){onSelect(key);return;}
+        const acsHit=hit.results.find(r=>r.graphic?.layer?.id==='frog-acs-population'||r.graphic?.attributes?.acsTractId);if(acsHit){window.dispatchEvent(new CustomEvent('frogAcsTractSelect',{detail:{id:acsHit.graphic.attributes.acsTractId||acsHit.graphic.attributes.GEOID}}));return;}
         const seen=new Set(),graphics=hit.results.filter(r=>r.graphic?.layer?.popupEnabled!==false&&(r.graphic?.popupTemplate||r.graphic?.layer?.popupTemplate)).map(r=>r.graphic).filter(g=>{const id=`${g.layer?.uid}:${g.getObjectId?.()??g.uid}`;if(seen.has(id))return false;seen.add(id);return true;});
         if(graphics.length)onFeatureSelect({graphics,view:targetView});
         else if(basemapKey===WATERWAY_BASEMAP.key){
