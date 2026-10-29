@@ -8,7 +8,7 @@ export async function readAcsMetadata(key,options={}){
   const s=ACS_SOURCES[key];if(!s)throw Error('Unknown ACS topic.');
   const [item,layer]=await Promise.all([read('https://www.arcgis.com/sharing/rest/content/items/'+s.id,null,options),read(s.url,null,options)]);
   if(item.id!==s.id||item.owner!=='esri_demographics'||layer.geometryType!=='esriGeometryPolygon'||!acsFields(key).every(n=>layer.fields?.some(f=>f.name===n)))throw Error('ACS publisher or field schema changed.');
-  return {key,period:acsPeriod(item.description),checked:Date.now()};
+  return {key,period:acsPeriod(item.description),checked:Date.now(),modified:item.modified??null,edited:layer.editingInfo?.dataLastEditDate??layer.editingInfo?.lastEditDate??null};
 }
 /** Bounded county or single-tract read. No tract estimates are allocated to a zone. */
 export async function readAcsTracts({key='population',id=null,geometry=null,metadata=null,...options}={}){

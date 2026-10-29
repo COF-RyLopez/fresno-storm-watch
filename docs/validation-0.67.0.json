@@ -1,0 +1,32 @@
+{
+  "version": "0.67.0",
+  "checked": "2026-10-28",
+  "nodeTests": 647,
+  "method": "ACS total allocation weighted by the within-tract 2020 Census block population pattern",
+  "sourcePeriod": "2020–2024",
+  "analysisGeometry": "Full Census TIGERweb ACS2024 tracts, January 1, 2024 vintage; not Living Atlas water-erased display polygons",
+  "liveDisplayedZoneChecks": [
+    {"zone": "L62", "newerRoundedResidents": 1580, "baseline2020RoundedResidents": 1630},
+    {"zone": "L1", "newerRoundedResidents": 310, "baseline2020RoundedResidents": 290},
+    {"zone": "K1", "newerRoundedResidents": null, "baseline2020RoundedResidents": 0, "reason": "No usable populated 2020 pattern in a partial overlap; newer allocation remains unknown"}
+  ],
+  "publisherComparisons": [
+    {"tract": "06019000701", "total": 2593, "moe90": 491},
+    {"tract": "06019000702", "total": 1310, "moe90": 361},
+    {"tract": "06019008600", "total": 3880, "moe90": 440}
+  ],
+  "checks": {
+    "rapidSelectionRestoresLatestZone": true,
+    "sourceTableFits251PixelPane": true,
+    "zeroBaselineDoesNotImplyZeroCurrentPopulation": true,
+    "samplingComponentIsNotFullZoneConfidenceInterval": true,
+    "noNewItemsPermissionsOrDataWrites": true
+  },
+  "limitations": [
+    "Five-year survey estimates are not current occupants or confirmed evacuees.",
+    "2020 population weights cannot identify later development or movement within tracts.",
+    "Age and PIO topic values remain whole-tract context.",
+    "No phone runtime test or statistical accuracy claim for the zone allocation.",
+    "Future ACS periods require matching analysis-boundary configuration."
+  ]
+}

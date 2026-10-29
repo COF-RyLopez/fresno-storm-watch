@@ -4,7 +4,7 @@ import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {loadCounties} from './nws.js';
 import {localDateValue} from './eoc-forms.js';
-import {populationSourceGuide} from './population-guide.js?v=0.66.0';
+import {populationSourceGuide} from './population-guide.js?v=0.67.0';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 const lines=value=>value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);

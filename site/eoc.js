@@ -1,4 +1,4 @@
-import {createPioWorkspace} from './lib/pio-ui.js?v=0.66.0';
+import {createPioWorkspace} from './lib/pio-ui.js?v=0.67.0';
 import {isPio} from './lib/pio-model.js?v=0.66.0';
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';

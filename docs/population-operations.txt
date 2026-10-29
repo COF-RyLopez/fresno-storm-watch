@@ -1,3 +1,83 @@
+F.R.O.G. 0.67.0 — Newer evacuation-zone population planning
+Checked October 28, 2026.
+
+County Watch -> Population & evacuation zones -> select a county zone.
+Read-only example: /?view=watch&population=1&zone=L62&v=0.67.0
+
+Newer source totals: Living Atlas ACS Population view, published by
+esri_demographics, Current Vintage 2020-2024 checked from item metadata.
+https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83
+Use B01001_001E total residents and B01001_001M published 90% MOE.
+This is a five-year survey estimate, not 2026 population or live occupancy.
+
+Analysis geometry: Census TIGERweb full Census Tracts, January 1, 2024 vintage.
+https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_ACS2024/MapServer/8
+The matching period is pinned to 2020-2024. An annual ACS period change fails
+this allocation explicitly until matching Census analysis boundaries are configured.
+Full tract boundaries are read from Census with STATE='06', COUNTY='019',
+positive-area intersection with the selected current county evacuation zone,
+reconciled object-ID batches, WGS84 output and no simplification.
+Living Atlas water-erased display outlines are not used for calculation.
+https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.2024.html
+
+Allocation method (F.R.O.G. implementation, not a county/Census zone product):
+For each intersecting full tract T and the selected zone Z, calculate:
+  denominator = sum(P2020_block * area(block intersect T) / area(block))
+  numerator   = sum(P2020_block * area(block intersect T intersect Z) / area(block))
+  weight      = numerator / denominator
+  contribution = weight * ACS_tract_total
+Sum the unrounded contributions, rounding only the displayed result.
+A wholly contained tract uses its whole published ACS total with weight 1.
+All intersections and areas use the ArcGIS SDK operators in geodetic square metres;
+tracts/blocks retain holes and multipart geometry. Reject overlapping tract coverage.
+This also handles block-to-tract boundary differences without assuming GEOID nesting.
+
+The 2020 block source and complete ID reconciliation remain unchanged. Each
+partial tract queries its full block population pattern, not just zone-cut blocks.
+Unknown or unpopulated patterns in a partial overlap produce unknown allocation,
+not a current zero or inferred new development. Missing ACS totals prevent a
+complete estimate. Never sum whole intersecting tracts as zone totals.
+No building, parcel, address or individual demographic assignment is performed.
+
+Uncertainty:
+Weights assume the within-tract distribution has remained like 2020; new growth,
+group-quarters changes, rural block uniformity, water/boundary differences and
+Census privacy protection can materially affect results. Newer is not necessarily
+more spatially accurate. Keep the separate 2020 block estimate, not a growth delta.
+No zone-level age, language, disability or household allocation is made; those
+remain whole-tract context and do not establish individual communication needs.
+
+The expandable evidence retains whole-tract estimates/MOEs and each allocation
+weight. The optional sampling-only component is sqrt(sum((weight * tract_MOE)^2)).
+It treats weights as fixed and ignores tract covariance; it excludes all allocation,
+boundary, Census and population-change errors. Do not label it a full zone 90%
+confidence interval, fabricate confidence bounds or attach it to the 2020 baseline.
+https://www.census.gov/content/dam/Census/library/publications/2020/acs/acs_general_handbook_2020_ch08.pdf
+No overlap, missing data and failed sources never become confirmed zero/safety.
+Overlapping zone totals must not be added; no countywide affected total is claimed.
+
+Runtime:
+Public query-only requests, credentials omitted, bounded 25/30-second requests.
+No new AGOL items, permissions, API keys, dependencies, scheduled jobs or credits.
+ACS current period/item modification/layer edit markers are rechecked after math;
+changed metadata discards the result. Full boundary IDs are reconciled twice.
+Bound: 500 source tracts, 25,000 blocks/request and 75,000 block records of work.
+Geometry yields every 25 blocks. Aborted or superseded selections cannot repaint.
+Newer calculation runs independently of the 2020 baseline. Partial source failure
+retains the available counterpart with distinct timestamps and failure notice.
+At most five newer zone results / eight tract block collections cached for ten
+minutes in memory; zone geometry changes and Retry invalidate the relevant caches.
+No public or private operational data is written to persistent browser storage.
+
+Acceptance: focused allocation/source tests plus regression suite and check.
+Verify three live county zones; compare contributing ACS records with publisher
+values; exercise rapid switching and inspect the evidence table for overflow.
+No actual evacuations, current occupants or population growth are inferred.
+Rollback: redeploy 0.66.0. No data migration; compatible PIO private reader retained.
+
+Historical implementation notes through 0.66.0:
+================================================
+
 F.R.O.G. 0.65.0 — Living Atlas ACS and PIO planning context
 Checked October 28, 2026. Supersedes the COG overlay described in the historical
 0.64 implementation notes below; the 2020 block-based zone method is unchanged.
