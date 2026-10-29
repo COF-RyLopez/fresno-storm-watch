@@ -69,3 +69,6 @@ Browser: validate three zone estimates against source GEOIDs and overlap evidenc
 compare three ACS tract popup values with publisher attributes; test empty filter,
 rapid switching, narrow layout, read-only share link and contextual layer restoration.
 Rollback: redeploy 0.63.0. No data migration or access changes.
+
+0.64.1: fit the selected zone after the evidence dock and density legend finish layout.
+The initial direct link and reopening evidence use the same guarded framing path.

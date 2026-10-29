@@ -15,7 +15,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   let county=null,map=null,tools=null,zones=null,zoneError=null,busy=false,selected=null,result=null,collection=null,problem=null,epoch=0,abort=null,graphics=null,blocksLayer=null,density=null,operators=null,pendingTools=null,legendError=null;
   const cache=new Map();let zonePending=null;
   const isWatch=()=>$('storm-shell').dataset.workspace==='watch'&&$('storm-shell').dataset.destination==='watch';
-  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.64.0');$('population-share').href=u.href;}
+  function share(){const u=new URL('https://cof-rylopez.github.io/fresno-storm-watch/');u.searchParams.set('view','watch');u.searchParams.set('population','1');if(selected)u.searchParams.set('zone',selected.name);u.searchParams.set('v','0.64.1');$('population-share').href=u.href;}
   function list(){
     const rows=populationZoneRows(zones?.rows||[],{query:$('population-query').value,status:$('population-filter').value}),picker=$('population-zone'),value=selected?.key||'';picker.replaceChildren();
     const empty=node('option',rows.length?'Choose a county zone…':'No matching county zones');empty.value='';picker.append(empty);
@@ -67,12 +67,17 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
       }return tools;
     })().catch(e=>{tools=null;throw e;}).finally(()=>{pendingTools=null;});return pendingTools;
   }
+  async function focusZone(row,generation){
+    // The dock and density legend change the view's dimensions. Fit after both layout frames.
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if(generation===epoch&&isWatch()&&map)await map.focusReferenceGeometry(row.geometry);
+  }
   async function select(key){
     const row=zones?.rows.find(r=>r.key===key);if(!row||exercise)return;
     abort?.abort();abort=new AbortController();const generation=++epoch;selected=row;result=null;collection=null;problem=null;list();detail();onMap();pane.setAttribute('open','');
     try{
       await ensureTools();if(generation!==epoch||!isWatch())return;
-      map?.setLayerPreference('populationZones',true);map?.setLayerPreference('populationDensity',$('population-density').checked);draw();void map?.focusReferenceGeometry(row.geometry);
+      map?.setLayerPreference('populationZones',true);map?.setLayerPreference('populationDensity',$('population-density').checked);draw();void focusZone(row,generation);
       const signature=JSON.stringify(row.geometry),saved=cache.get(row.key);
       if(saved?.signature===signature&&Date.now()-saved.result.checked<600000){result=saved.result;collection=saved.collection;}
       else{const records=await readPopulationBlocks(row.geometry,{signal:abort.signal});const summary=await calculateZonePopulation(row,records,{...operators,current:()=>generation===epoch&&isWatch()});if(generation!==epoch||!isWatch())return;collection=records;result=summary;cache.set(row.key,{signature,collection,result});if(cache.size>5)cache.delete(cache.keys().next().value);}
@@ -103,5 +108,5 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   setInterval(()=>{if(root.open&&isWatch()&&!document.hidden)void refresh();},300000);
   if(exercise){$('population-refresh').disabled=true;$('population-density').disabled=true;$('population-zone').disabled=true;}
   list();legend();
-  return {open,async selectZone(key){open();if(!zones)await refresh();if(zones?.rows.some(r=>r.key===key))await select(key);},setCounty(value){county=value;if(params.get('population')==='1')open();},async setMap(value){map=value;if(root.open){await showContext();if(selected&&isWatch())void map.focusReferenceGeometry(selected.geometry);}}};
+  return {open,async selectZone(key){open();if(!zones)await refresh();if(zones?.rows.some(r=>r.key===key))await select(key);},setCounty(value){county=value;if(params.get('population')==='1')open();},async setMap(value){map=value;if(root.open){await showContext();if(selected)void focusZone(selected,epoch);}}};
 }
