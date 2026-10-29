@@ -1,4 +1,4 @@
-import {PRODUCT_METHOD,readZoneProduct,boundaryFingerprint,estimatedResidents} from './zone-population-product.js?v=0.73.0';
+import {PRODUCT_METHOD,readZoneProduct,boundaryFingerprint,estimatedResidents} from './zone-population-product.js?v=0.73.0-r1';
 import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js';
 import {CARE_SOURCES} from './care-model.js';
 import {POPULATION_SOURCES} from './population-model.js';
@@ -11,7 +11,7 @@ const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',
 /** Links contain public identifiers only. Counts and private form fields never enter the URL. */
 export function pioZoneLink(oid,snapshot=null,built=null){
   if(!Number.isSafeInteger(oid)||oid<1||snapshot!==null&&(!shaPattern.test(snapshot)||!date(built))||snapshot===null&&built!==null)throw Error('Invalid public zone link.');
-  return './eoc.html?'+new URLSearchParams({pioZone:String(oid),...(snapshot?{populationMap:snapshot,populationBuilt:String(built)}:{})})+'#outreach';
+  return './eoc.html?'+new URLSearchParams({v:'0.73.0-r1',pioZone:String(oid),...(snapshot?{populationMap:snapshot,populationBuilt:String(built)}:{})})+'#outreach';
 }
 export function readPioZoneRequest(search){
   const q=new URLSearchParams(search);if(!q.has('pioZone')&&!q.has('populationMap')&&!q.has('populationBuilt'))return null;
