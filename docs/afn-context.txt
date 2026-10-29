@@ -1,0 +1,33 @@
+F.R.O.G. 0.68.0 — AFN & language context for a selected county evacuation zone
+
+Where: Population & evacuation zones > choose a zone > "AFN & language context · whole areas".
+Loads on first open. Anonymous, read-only public queries; nothing is stored or written.
+Read-only example: /?view=watch&population=1&zone=L39&v=0.68.0
+
+What each number comes from
+- Hmong and Punjabi speakers, and those speaking English less than "very well": ACS 2020–2024
+  table B16001 (lines 054/056 Punjabi, 084/086 Hmong, 001 age 5+), with 90% MOEs. The Census Bureau
+  publishes this table for PUMAs only (7 in Fresno County, ~100k+ residents each), not tracts.
+  Stored in site/data/acs-b16001-fresno.json by `npm run collect:pio-languages [year]` from the public
+  summary file (no API key). PUMAs intersecting the zone come from TIGERweb ACS2024 layer 0.
+- CDC/ATSDR SVI 2022 (2020 tracts, ACS 2018–2022): overall and household-characteristics national
+  percentiles, limited-English persons ± MOE. Summary = tract count, tracts at or above the 75th
+  percentile, highest value. No averaging.
+- CalEnviroScreen 4.0 percentile and linguistic-isolation percentile (OEHHA, 2010 tracts) with the
+  SB 535 2022 designation (CalEPA, tribal update 2024). 2010 tracts are matched to the zone by spatial
+  overlap only, never by GEOID against 2020 tracts.
+- CDSS Community Care Licensing, PROGRAM_TYPE 'ADULT AND SENIOR' (elderly and adult residential,
+  adult day care, ARFPSHN, social rehabilitation). Children's residential, resource family homes and
+  child care are not requested. Phone, licensee and street address are never requested.
+  CDSS STATUS is an undocumented numeric code (Fresno 2026-10-28: 3 most records, also 4 and 6);
+  records and capacity are grouped by code and never added across codes. Capacity is licensed
+  capacity, not residents or transport need. CDPH skilled nursing stays in Resident care.
+
+Limits
+Every value describes a whole PUMA or tract that intersects the zone, including tracts that only
+touch it. Nothing is allocated to the zone, buildings or people. Sources differ in period and
+geography; do not add, average or compare across them. A source failure shows "Unavailable" for that
+topic only. No message is sent, translated or approved here; the PIO/JIC workflow is unchanged.
+
+Checked live 2026-10-28: L62 (PUMA 01904; 3/3 SVI tracts ≥75th; 3 SB 535 tracts), L1 (PUMAs 01906
+and 01907; none ≥75th), L39 (4 elderly residential, capacity 22, status code 3), L36.

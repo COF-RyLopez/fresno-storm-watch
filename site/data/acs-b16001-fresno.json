@@ -1,0 +1,170 @@
+{
+ "schemaVersion": 1,
+ "table": "B16001",
+ "period": "2020–2024",
+ "source": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b16001.dat",
+ "collected": "2026-10-29",
+ "rows": [
+  {
+   "puma": "0601901",
+   "age5": {
+    "estimate": 135402,
+    "moe": 2498
+   },
+   "punjabi": {
+    "estimate": 2609,
+    "moe": 651
+   },
+   "punjabiLep": {
+    "estimate": 1127,
+    "moe": 329
+   },
+   "hmong": {
+    "estimate": 144,
+    "moe": 132
+   },
+   "hmongLep": {
+    "estimate": 89,
+    "moe": 111
+   }
+  },
+  {
+   "puma": "0601902",
+   "age5": {
+    "estimate": 185882,
+    "moe": 3678
+   },
+   "punjabi": {
+    "estimate": 4455,
+    "moe": 1007
+   },
+   "punjabiLep": {
+    "estimate": 1930,
+    "moe": 457
+   },
+   "hmong": {
+    "estimate": 1206,
+    "moe": 368
+   },
+   "hmongLep": {
+    "estimate": 313,
+    "moe": 174
+   }
+  },
+  {
+   "puma": "0601903",
+   "age5": {
+    "estimate": 103097,
+    "moe": 2688
+   },
+   "punjabi": {
+    "estimate": 870,
+    "moe": 464
+   },
+   "punjabiLep": {
+    "estimate": 265,
+    "moe": 157
+   },
+   "hmong": {
+    "estimate": 6326,
+    "moe": 996
+   },
+   "hmongLep": {
+    "estimate": 3274,
+    "moe": 603
+   }
+  },
+  {
+   "puma": "0601904",
+   "age5": {
+    "estimate": 165146,
+    "moe": 3341
+   },
+   "punjabi": {
+    "estimate": 3904,
+    "moe": 778
+   },
+   "punjabiLep": {
+    "estimate": 1946,
+    "moe": 505
+   },
+   "hmong": {
+    "estimate": 4580,
+    "moe": 1006
+   },
+   "hmongLep": {
+    "estimate": 1479,
+    "moe": 420
+   }
+  },
+  {
+   "puma": "0601905",
+   "age5": {
+    "estimate": 106336,
+    "moe": 3513
+   },
+   "punjabi": {
+    "estimate": 3284,
+    "moe": 809
+   },
+   "punjabiLep": {
+    "estimate": 1459,
+    "moe": 361
+   },
+   "hmong": {
+    "estimate": 8059,
+    "moe": 969
+   },
+   "hmongLep": {
+    "estimate": 4008,
+    "moe": 613
+   }
+  },
+  {
+   "puma": "0601906",
+   "age5": {
+    "estimate": 125534,
+    "moe": 1589
+   },
+   "punjabi": {
+    "estimate": 3162,
+    "moe": 959
+   },
+   "punjabiLep": {
+    "estimate": 1027,
+    "moe": 410
+   },
+   "hmong": {
+    "estimate": 3000,
+    "moe": 985
+   },
+   "hmongLep": {
+    "estimate": 1280,
+    "moe": 393
+   }
+  },
+  {
+   "puma": "0601907",
+   "age5": {
+    "estimate": 124242,
+    "moe": 2182
+   },
+   "punjabi": {
+    "estimate": 418,
+    "moe": 225
+   },
+   "punjabiLep": {
+    "estimate": 187,
+    "moe": 105
+   },
+   "hmong": {
+    "estimate": 686,
+    "moe": 327
+   },
+   "hmongLep": {
+    "estimate": 296,
+    "moe": 131
+   }
+  }
+ ]
+}

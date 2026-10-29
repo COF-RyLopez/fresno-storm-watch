@@ -31,6 +31,6 @@
 .acs-context a:focus-visible,.acs-context summary:focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:3px}
 .acs-context ul{padding-inline-start:1.2rem}.acs-context li+li{margin-top:.65rem}
 @media(max-width:600px){.acs-context{padding:.75rem}}
-#population-details .zone-acs-allocation{table-layout:fixed;font-size:.75rem}
-#population-details .zone-acs-allocation :is(th,td){min-width:0;white-space:normal;overflow-wrap:anywhere;padding-inline:.3rem}
+#population-details :is(.zone-acs-allocation,.afn-table){table-layout:fixed;font-size:.75rem}
+#population-details :is(.zone-acs-allocation,.afn-table) :is(th,td){min-width:0;white-space:normal;overflow-wrap:anywhere;padding-inline:.3rem}
 #population-details .zone-acs-allocation td[colspan]{text-align:left;font-weight:400;color:var(--calcite-color-text-2)}
