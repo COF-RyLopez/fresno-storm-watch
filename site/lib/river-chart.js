@@ -1,6 +1,6 @@
 import { HOUR, riverValue, convertRiverUnits } from './river-model.js';
 /** @param {string} tag @param {object} attributes @param {string} text @returns {SVGElement} */
-function svgNode(tag, attributes = {}, text = '') {
+export function svgNode(tag, attributes = {}, text = '') {
   const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
   for (const [k,v] of Object.entries(attributes)) el.setAttribute(k,String(v));
   el.textContent=text; return el;

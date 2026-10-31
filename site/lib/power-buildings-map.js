@@ -1,5 +1,5 @@
-import {BUILDING_LIMITS} from './power-buildings-model.js?v=0.51.1';
-import {powerFocusExtent} from './power-focus.js?v=0.52.1';
+import {BUILDING_LIMITS} from './power-buildings-model.js?v=0.74.0-helpers';
+import {powerFocusExtent} from './power-focus.js?v=0.74.0-helpers';
 
 /** Small selected-footprint layers; only published positive metre heights receive extrusion. */
 export function createPowerBuildingsMap({FeatureLayer,Graphic,Extent,registerLayer,removeLayer,getView,focusGeometry}){

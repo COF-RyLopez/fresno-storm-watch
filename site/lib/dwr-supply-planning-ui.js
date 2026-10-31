@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js?v=0.74.0-infra-weather';
+import {loadSdk} from './map.js?v=0.74.0-helpers';
 import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js?v=0.73.1';
 import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js?v=0.61.0';
 
