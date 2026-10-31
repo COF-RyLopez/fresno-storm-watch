@@ -2,11 +2,11 @@ import {createCareReviews} from './care-review-ui.js?v=0.74.0-planning';
 import {careReviewExercise} from './care-review-exercise.js?v=0.57.0';
 import {careIdentity,careTime} from './care-review-model.js?v=0.74.0-planning';
 import {reportHealth} from './source-health.js?v=0.73.1';
-import {CARE_SOURCES,careBox,comparePlaces,compareBuildings,zonesAt,normalizeText} from './care-model.js?v=0.56.0-r1';
+import {CARE_SOURCES,careBox,comparePlaces,compareBuildings,zonesAt,normalizeText} from './care-model.js?v=0.74.0-helpers';
 import {readCareCollection,readCarePlaces} from './care-data.js?v=0.74.0-planning';
 import {loadPowerBuildings} from './power-buildings-data.js';
-import {createCareMap} from './care-map.js?v=0.57.0-r1';
-import {loadSdk} from './map.js?v=0.74.0-infra-weather';
+import {createCareMap} from './care-map.js?v=0.74.0-helpers';
+import {loadSdk} from './map.js?v=0.74.0-helpers';
 
 const $=id=>document.getElementById(id),el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=()=>void fn();return b;};

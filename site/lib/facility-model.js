@@ -1,4 +1,4 @@
-import {pointInRings, powerGeometry, powerScope} from './power-geometry.js';
+import {pointInRings, powerGeometry, powerScope, bounds} from './power-geometry.js?v=0.74.0-helpers';
 import {POWER_FEEDS, POWER_STATES, powerHealth, powerRowIssues} from './power-model.js';
 
 export const FACILITY_MAX_AGE = 10 * 60_000;
@@ -51,7 +51,7 @@ export function normalizeFacility(feature, source, metadata) {
  */
 export function assessFacilities(sites, rows, feeds, previous = new Map(), now = Date.now()) {
   const footprints = rows.map(row => ({row,polygons:row.geometries.filter(g=>g.rings).map(g=>({rings:g.rings,
-    box:g.rings.flat().reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity])}))}));
+    box:bounds(g.rings.flat())}))}));
   const feedGaps = POWER_FEEDS.map(f=>powerHealth(feeds.find(d=>d.id===f.id),now)).filter(Boolean);
   const unique = new Map();
   for (const site of sites) {

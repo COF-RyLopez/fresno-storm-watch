@@ -1,4 +1,4 @@
-import { loadSdk } from './map.js?v=0.74.0-infra-weather';
+import { loadSdk } from './map.js?v=0.74.0-helpers';
 /** Shared PKCE sign-in. Private controllers clear memory before sign-out or expiry. */
 export async function setupAuth(config,exercise,onChange=()=>{}) {
   const button=document.querySelector('#sign-in'),status=document.querySelector('#identity-status');

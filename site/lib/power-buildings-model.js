@@ -1,9 +1,8 @@
-import {powerGeometry,powerScope} from './power-geometry.js';
+import {powerGeometry,powerScope,bounds as pointBounds,overlaps} from './power-geometry.js?v=0.74.0-helpers';
 
 export const BUILDING_LIMITS=Object.freeze({tiles:80,bytes:28_000_000,rows:15000,labelsScale:6000,drawScale:0});
 export class BuildingQueryLimitError extends Error{constructor(message){super(message);this.name='BuildingQueryLimitError';this.code='building-query-limit';}}
-export const overlaps=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
-export const buildingBounds=g=>g.rings.flat().reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
+const buildingBounds=g=>pointBounds(g.rings.flat());
 export const buildingHeight=v=>typeof v==='number'&&Number.isFinite(v)&&v>0&&v<=850?v:null;
 
 /** Polygon overlap only. A point, circuit match or expired status never supplies an affected-area boundary. */

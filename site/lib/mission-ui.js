@@ -12,9 +12,10 @@ import {EOC_CONFIG} from '../eoc-config.js';
 import {createScenarioClient} from './scenario-client.js';
 import {runnable,validateRun,modelFitsArea} from './scenario-contract.js';
 import {concernSummary,concernOrder,freezeConcern,briefText,pumpHandoffLines,incidentHandoffLines} from './mission-model.js?v=0.59.0';
-import {createPrivateStore} from './eoc-store.js?v=0.74.0-population';
-import {makeEvent,digest,briefingSnapshot} from './eoc-model.js?v=0.74.0-population';
+import {createPrivateStore} from './eoc-store.js?v=0.74.0-helpers';
+import {makeEvent,digest,briefingSnapshot} from './eoc-model.js?v=0.74.0-helpers';
 import {formatTime} from './model.js';
+import {localDateValue} from './eoc-forms.js';
 import {clockLabel} from './flood-scenario-model.js?v=0.39.0';
 const $=id=>document.getElementById(id);
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
@@ -91,7 +92,7 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onGa
   const version=epoch;try{const {choices}=await loadPrivate();if(version!==epoch||!current())return;if(!privateStore.allowed.has('coordination'))throw Error('The coordination editing group is required.');
    const incidentPick=field('Exercise incident','select');for(const [id,label]of choices){const o=el('option',label);o.value=id;incidentPick.input.append(o);}incidentPick.input.value=incident;
    const form=el('form'),owner=field('Responsible person / team'),due=field('Review due','datetime-local'),next=field('Requested verification','textarea',item.nextReview),status=el('p');owner.input.required=true;due.input.required=true;next.input.required=true;
-   const date=new Date(Date.now()+3600000);due.input.value=new Date(date-date.getTimezoneOffset()*60000).toISOString().slice(0,16);
+   due.input.value=localDateValue(Date.now()+3600000);
    let pendingEvent=null;const save=el('button','Save private follow-up');save.type='submit';form.append(el('h3','Private exercise follow-up'),incidentPick.label,owner.label,due.label,next.label,save,status);host.append(form);
    form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{const target=pendingEvent?.incident||incidentPick.input.value;pendingEvent??=makeEvent('coordination',{sourceKey:missionEvidenceKey(item),kind:'Follow-up',title:`Verify ${item.name}`,location:item.name,owner:owner.input.value.trim(),due:new Date(due.input.value).getTime(),nextReview:next.input.value.trim(),status:'Open',evidence:JSON.stringify(item)},{incident:target});for(const input of [incidentPick.input,owner.input,due.input,next.input])input.disabled=true;const records=await privateStore.load(target);if(version!==epoch||!current())return;await privateStore.append(pendingEvent,records);if(version===epoch&&current()){save.hidden=true;status.textContent='Follow-up saved to the private exercise incident. This is not a dispatch.';incident=target;void followups.selectIncident(target);}}catch(e){if(version===epoch&&current())status.textContent=e.message+(pendingEvent?' Retry keeps this exact update ID and values; open a new form to change them.':'');}finally{save.disabled=false;}};
   }catch(e){if(version===epoch&&current())host.append(el('p',e.message),link('Open EOC workspace','./eoc.html'));}
