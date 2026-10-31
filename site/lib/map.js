@@ -248,29 +248,11 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         const data=viewEventData(event),point=data.mapPoint?.clone()??data.mapPoint??targetView.toMap({x:data.x,y:data.y});
         const hit=await targetView.hitTest(data);
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
-        const sandbagKey=hit.results.find(r=>r.graphic?.attributes?.countySandbagKey)?.graphic.attributes.countySandbagKey;if(sandbagKey){onSandbagSelect(sandbagKey);return;}
-        const populationKey=hit.results.find(r=>r.graphic?.attributes?.populationZoneKey)?.graphic.attributes.populationZoneKey;if(populationKey){window.dispatchEvent(new CustomEvent('frogPopulationZoneSelect',{detail:{key:populationKey}}));return;}
-        const areaId=hit.results.find(r=>r.graphic?.attributes?.areaId)?.graphic.attributes.areaId;if(areaId){onAreaSelect(areaId);return;}
-        const drainageKey=hit.results.find(r=>r.graphic?.attributes?.drainageKey)?.graphic.attributes.drainageKey;
-        if(drainageKey){onDrainageSelect(drainageKey);return;}
-        const drainageDetailKey=hit.results.find(r=>r.graphic?.attributes?.drainageDetailKey)?.graphic.attributes.drainageDetailKey;
-        if(drainageDetailKey){window.dispatchEvent(new CustomEvent('frogDrainageNearbySelect',{detail:{key:drainageDetailKey}}));return;}
-        const roadKey=hit.results.find(r=>r.graphic?.attributes?.roadKey)?.graphic.attributes.roadKey;
-        if(roadKey){onRoadSelect(roadKey);return;}
-        const cameraId=hit.results.find(r=>r.graphic?.attributes?.cameraId)?.graphic.attributes.cameraId;
-        if(cameraId){onCameraSelect(cameraId);return;}
-        const gaugeId=hit.results.find(r=>r.graphic?.attributes?.gaugeId)?.graphic.attributes.gaugeId;
-        if(gaugeId){onGaugeSelect(gaugeId);return;}
-        const facilityKey=hit.results.find(r=>r.graphic?.attributes?.facilityKey)?.graphic.attributes.facilityKey;
-        if(facilityKey){onFacilitySelect(facilityKey);return;}
-        const buildingId=hit.results.find(r=>r.graphic?.attributes?.building_id)?.graphic.attributes.building_id;
-        if(buildingId){window.dispatchEvent(new CustomEvent('frogPowerBuildingSelect',{detail:{id:buildingId}}));return;}
-        const powerKey=hit.results.find(r=>r.graphic?.attributes?.powerKey)?.graphic.attributes.powerKey;
-        if(powerKey){onPowerSelect(powerKey);return;}
-        const careKey=hit.results.find(r=>r.graphic?.attributes?.careKey)?.graphic.attributes.careKey;if(careKey){onCareSelect(careKey);return;}
-        const networkKey=hit.results.find(r=>r.graphic?.attributes?.networkKey)?.graphic.attributes.networkKey;if(networkKey){onNetworkSelect(networkKey);return;}
-        const key=hit.results.find(r=>r.graphic?.attributes?.alertKey)?.graphic.attributes.alertKey;
-        if(key){onSelect(key);return;}
+        const emit=(name,detail)=>window.dispatchEvent(new CustomEvent(name,{detail}));
+        // Priority order: the first graphic attribute found wins.
+        for(const[attr,select]of[['countySandbagKey',onSandbagSelect],['populationZoneKey',key=>emit('frogPopulationZoneSelect',{key})],['areaId',onAreaSelect],['drainageKey',onDrainageSelect],['drainageDetailKey',key=>emit('frogDrainageNearbySelect',{key})],['roadKey',onRoadSelect],['cameraId',onCameraSelect],['gaugeId',onGaugeSelect],['facilityKey',onFacilitySelect],['building_id',id=>emit('frogPowerBuildingSelect',{id})],['powerKey',onPowerSelect],['careKey',onCareSelect],['networkKey',onNetworkSelect],['alertKey',onSelect]]){
+          const value=hit.results.find(r=>r.graphic?.attributes?.[attr])?.graphic.attributes[attr];if(value){select(value);return;}
+        }
         const acsHit=hit.results.find(r=>r.graphic?.layer?.id==='frog-acs-population'||r.graphic?.attributes?.acsTractId);if(acsHit){window.dispatchEvent(new CustomEvent('frogAcsTractSelect',{detail:{id:acsHit.graphic.attributes.acsTractId||acsHit.graphic.attributes.GEOID}}));return;}
         const seen=new Set(),graphics=hit.results.filter(r=>r.graphic?.layer?.popupEnabled!==false&&(r.graphic?.popupTemplate||r.graphic?.layer?.popupTemplate)).map(r=>r.graphic).filter(g=>{const id=`${g.layer?.uid}:${g.getObjectId?.()??g.uid}`;if(seen.has(id))return false;seen.add(id);return true;});
         if(graphics.length)onFeatureSelect({graphics,view:targetView});
