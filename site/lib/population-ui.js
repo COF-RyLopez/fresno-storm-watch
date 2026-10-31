@@ -1,14 +1,15 @@
-import {populationSourceGuide} from './population-guide.js?v=0.73.1';
+import {populationSourceGuide} from './population-guide.js?v=0.74.0-population';
 import {pioZoneLink} from './pio-zone-context.js?v=0.73.0-r2';
-import {calculateAcsZonePopulation} from './zone-acs-data.js?v=0.73.1';
+import {calculateAcsZonePopulation,cached} from './zone-acs-data.js?v=0.74.0-population';
+import {populationGeometryTools} from './population-snapshot-data.js?v=0.74.0-population';
 import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_MOE_SOURCE,ZONE_ACS_BOUNDARIES,formatAllocationWeight} from './zone-acs-model.js?v=0.67.0';
 import {loadSdk} from './map.js?v=0.74.0-infra-weather';
 import {createAcsContext} from './acs-ui.js?v=0.74.0-infra-weather';
-import {afnContext} from './afn-ui.js?v=0.73.1';
+import {afnContext} from './afn-ui.js?v=0.74.0-population';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
-import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.73.1';
-import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.73.1';
+import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.74.0-population';
+import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.74.0-population';
 import {reportHealth} from './source-health.js?v=0.73.1';
 const $=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
@@ -81,7 +82,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   }
   async function ensureTools(){
     if(tools&&(!map||graphics))return tools;if(pendingTools)return pendingTools;
-    pendingTools=(async()=>{const sdk=await loadSdk();const [GraphicsLayer,Graphic,Polygon,intersection,area]=await sdk.import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/geometry/Polygon.js','@arcgis/core/geometry/operators/intersectionOperator.js','@arcgis/core/geometry/operators/geodeticAreaOperator.js']);if(!area.isLoaded())await area.load();operators={Polygon,intersection,area};tools={GraphicsLayer,Graphic};
+    pendingTools=(async()=>{const sdk=await loadSdk();const [[GraphicsLayer,Graphic],geometry]=await Promise.all([sdk.import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']),populationGeometryTools()]);operators=geometry;tools={GraphicsLayer,Graphic};
       if(map){graphics=new GraphicsLayer({title:'Selected county evacuation zone · population reference',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});blocksLayer=new GraphicsLayer({title:'Queried 2020 census block boundaries · not zone boundaries',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
         map.registerLayer('populationZones',blocksLayer);map.registerLayer('populationZones',graphics);draw();
       }return tools;
@@ -101,17 +102,14 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
       await ensureTools();if(generation!==epoch||!isWatch())return;
       map?.setLayerPreference('populationZones',true);map?.setLayerPreference('populationDensity',$('population-density').checked);draw();void focusZone(row,generation);
       void calculateNewer(row,generation,abort.signal);
-      const signature=JSON.stringify(row.geometry),saved=cache.get(row.key);
-      if(saved?.signature===signature&&Date.now()-saved.result.checked<600000){result=saved.result;collection=saved.collection;}
-      else{const records=await readPopulationBlocks(row.geometry,{signal:abort.signal});const summary=await calculateZonePopulation(row,records,{...operators,current:()=>generation===epoch&&isWatch()});if(generation!==epoch||!isWatch())return;collection=records;result=summary;cache.set(row.key,{signature,collection,result});if(cache.size>5)cache.delete(cache.keys().next().value);}
+      ({collection,result}=await cached(cache,row.key,JSON.stringify(row.geometry),600000,5,async()=>{const records=await readPopulationBlocks(row.geometry,{signal:abort.signal});const summary=await calculateZonePopulation(row,records,{...operators,current:()=>generation===epoch&&isWatch()});if(generation!==epoch||!isWatch())throw new DOMException('Selection changed','AbortError');return {collection:records,result:summary,checked:summary.checked};}));
       if(generation!==epoch)return;reportHealth('population:blocks','Selected zone · 2020 Census population',{checked:result.checked,state:result.missing||!result.blocks?'coverage':null,maxAgeMs:Infinity,detail:'2020 baseline; boundary allocation is approximate, not live occupancy. Assessed only for the selected zone.'});list();detail();draw();
     }catch(e){if(generation!==epoch||e.name==='AbortError')return;problem=e.message||'Source or geometry calculation failed';result=null;collection=null;if(!operators){newerPending=false;newerProblem='Map geometry tools unavailable.';}list();detail();draw();reportHealth('population:blocks','Selected zone · 2020 Census population',{error:problem,detail:'Selected zone population remains unknown; retry or consult the source.'});}
   }
   async function calculateNewer(row,generation,signal){
     try{
-      const signature=JSON.stringify(row.geometry),saved=acsCache.get(row.key);
-      const value=saved?.signature===signature&&Date.now()-saved.result.checked<600000?saved.result:await calculateAcsZonePopulation(row,{...operators,signal,blockCache:tractBlocks,current:()=>generation===epoch,onProgress:text=>{if(generation===epoch){newerProgress=text;const progress=$('population-newer-progress');if(progress)progress.textContent=text;}}});
-      if(generation!==epoch)return;newer=value;acsCache.set(row.key,{signature,result:value});if(acsCache.size>5)acsCache.delete(acsCache.keys().next().value);
+      const value=await cached(acsCache,row.key,JSON.stringify(row.geometry),600000,5,async()=>{const value=await calculateAcsZonePopulation(row,{...operators,signal,blockCache:tractBlocks,current:()=>generation===epoch,onProgress:text=>{if(generation===epoch){newerProgress=text;const progress=$('population-newer-progress');if(progress)progress.textContent=text;}}});if(generation!==epoch)throw new DOMException('Selection changed','AbortError');return value;});
+      if(generation!==epoch)return;newer=value;
       reportHealth('population:acs-zone','Selected zone · newer ACS allocation',{checked:value.checked,state:value.missing||!value.tracts||value.missingMoe?'coverage':null,maxAgeMs:Infinity,detail:`${value.period} five-year total with 2020 pattern weights; not current occupancy. Sampling error excludes allocation uncertainty.`});
     }catch(e){if(generation!==epoch||e.name==='AbortError')return;newerProblem=e.message;reportHealth('population:acs-zone','Selected zone · newer ACS allocation',{error:e.message,detail:'Newer zone estimate is unknown; 2020 baseline remains separate.'});}
     finally{if(generation===epoch){newerPending=false;list();detail();}}

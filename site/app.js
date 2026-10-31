@@ -1,14 +1,14 @@
-import {createPopulationWatch} from './lib/population-ui.js?v=0.74.0-infra-weather';
+import {createPopulationWatch} from './lib/population-ui.js?v=0.74.0-population';
 import {createCountySandbags} from './lib/county-sandbag-ui.js?v=0.74.0-infra-weather';
 import {createDwrFloodFight} from './lib/dwr-flood-fight-ui.js?v=0.74.0-infra-weather';
 import {createDwrSupplyPlanning} from './lib/dwr-supply-planning-ui.js?v=0.74.0-infra-weather';
 import {createCareWatch} from './lib/care-ui.js?v=0.74.0-infra-weather';
 import {createDrainageWatch} from './lib/drainage-ui.js?v=0.74.0-infra-weather';
 import {createDrainageNearby} from './lib/drainage-nearby-ui.js?v=0.55.0';
-import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.74.0-eoc';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-infra-weather';
-import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.74.0-eoc';
-import {createMission} from './lib/mission-ui.js?v=0.74.0-infra-weather';
+import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.74.0-population';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-population';
+import {createDrainageReviews} from './lib/drainage-review-ui.js?v=0.74.0-population';
+import {createMission} from './lib/mission-ui.js?v=0.74.0-population';
 import {createForecastReview} from './lib/forecast-review-ui.js?v=0.74.0-infra-weather';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js?v=0.74.0-infra-weather';
 import {createMapSearch} from './lib/map-search-ui.js?v=0.73.1';
@@ -28,12 +28,12 @@ import { createEnvironmentWatch } from './lib/environment-ui.js?v=0.74.0-infra-w
 import { createPlanningWatch } from './lib/planning-ui.js?v=0.74.0-infra-weather';
 import { createWorkspace } from './lib/workspace-ui.js?v=0.73.1';
 import {createCountyStrip,reportHealth} from './lib/source-health.js?v=0.73.1';
-import { createPowerWatch } from './lib/power-ui.js?v=0.74.0-infra-weather';
+import { createPowerWatch } from './lib/power-ui.js?v=0.74.0-population';
 import { createFacilityWatch } from './lib/facility-ui.js?v=0.74.0-infra-weather';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.73.1';
-import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.73.1';
-import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.74.0-infra-weather';
-import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.39.0';
+import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.74.0-population';
+import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.74.0-population';
+import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.74.0-population';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.27.0';
 
 const $ = id => document.getElementById(id);
