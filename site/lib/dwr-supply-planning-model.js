@@ -3,7 +3,7 @@ import {prepareWatchGeometry,nearbyWatchpoints} from './watch-proximity.js';
 export const SUPPLY_CONTEXT_KM=Object.freeze([10,25,50]);
 export const ROAD_CONTEXT_METERS=5000;
 const MAX_CHECK_AGE=420000,DAY=86400000;
-const current=(checked,error,now)=>!error&&Number.isFinite(checked)&&checked<=now+120000&&now-checked<=MAX_CHECK_AGE;
+export const current=(checked,error,now)=>!error&&Number.isFinite(checked)&&checked<=now+120000&&now-checked<=MAX_CHECK_AGE;
 
 /** Public source records only; require stable location IDs, Fresno attribution and WGS84 point geometry. */
 export function normalizeSupplyFeatures(features) {
@@ -61,7 +61,7 @@ export function correlateDwrSupplies({supplies,planning,roads,radiusKm=25,areaId
       return [{row,siteMeters,areaMeters,pointName:areaMeters!==null?nearArea.pointName:null,meters:Math.min(siteMeters??Infinity,areaMeters??Infinity),
         verification:!roadCurrent||row.active!=='yes'||!!row.issues?.length||Number.isFinite(row.end)&&row.end<=now||!row.sourceTime&&!row.edited}];
     }).sort((a,b)=>a.meters-b.meters||a.row.key.localeCompare(b.row.key));
-    return {site,areas,roads:nearbyRoads,inspection:inspectionAge(site.inspection,now)};
+    return {site,areas,points:watchpoints,roads:nearbyRoads,inspection:inspectionAge(site.inspection,now)};
   });
   return {rows:areaId==='all'?result:result.filter(r=>r.areas.length),total:result.length,loaded:!!supplies?.loaded,supplyCurrent,supplyError:supplies?.error||null,supplyChecked:supplies?.checked??null,
     planningReady:groups.length>0,roadCurrent,roadChecked:roads?.snapshot?.checked??null,roadError:roads?.error||null,roadRejected:rejected,roadConflicts:conflicts,radiusKm,areaId};

@@ -1,4 +1,4 @@
-import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,careTime} from './care-review-model.js?v=0.57.0-r2';
+import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,careTime} from './care-review-model.js?v=0.74.0-planning';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';

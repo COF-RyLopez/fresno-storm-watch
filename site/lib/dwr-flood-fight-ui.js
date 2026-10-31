@@ -2,7 +2,7 @@ import {loadSdk} from './map.js?v=0.73.1';
 import {countyGeometry} from './model.js';
 import {reportHealth} from './source-health.js?v=0.73.1';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js?v=0.61.0';
-import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js?v=0.73.1';
+import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js?v=0.74.0-planning';
 
 const KEY='dwrFloodFight', REFRESH_MS=300000;
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
@@ -81,6 +81,7 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
       }finally{s.pending=null;}
     })();return s.pending;
   }
+  const refreshWatched=()=>Promise.all([...states.values()].filter(s=>group?.visible&&s.box.checked||inventoryWatching&&s.config.key==='supplies').map(refreshLayer));
   async function setup(){
     if(started){if(group?.visible)await Promise.all([...states.values()].filter(s=>s.box.checked&&!s.checked).map(refreshLayer));return;}if(pendingCatalog)return pendingCatalog;
     pendingCatalog=(async()=>{
@@ -98,7 +99,7 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
         box.addEventListener('calciteCheckboxChange',()=>{if(box.checked){controller.setLayerPreference(KEY,true);void refreshLayer(s);}else if(s.layer)s.layer.visible=false;});
       }
       $('dwr-status').textContent=catalog.scopeNote+' Select a mapped feature for publisher attributes.';
-      started=true;await Promise.all([...states.values()].filter(s=>group.visible&&s.box.checked||inventoryWatching&&s.config.key==='supplies').map(refreshLayer));
+      started=true;await refreshWatched();
     })().catch(error=>{$('dwr-status').textContent='DWR context unavailable · '+error.message;onSupplies({loaded:true,rows:[],checked:null,error:error.message});}).finally(()=>{pendingCatalog=null;});return pendingCatalog;
   }
   async function loadInventory({refresh=false}={}){
@@ -110,6 +111,6 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
   $('dwr-open').addEventListener('click',open);
   $('dwr-refresh').addEventListener('click',()=>{if(!started)void setup();else void Promise.all([...states.values()].filter(s=>s.box.checked).map(refreshLayer));});
   document.addEventListener('frogLayerPreference',e=>{if(e.detail.key===KEY&&e.detail.wanted)void setup();});
-  setInterval(()=>{if(!document.hidden)void Promise.all([...states.values()].filter(s=>group?.visible&&s.box.checked||inventoryWatching&&s.config.key==='supplies').map(refreshLayer));},REFRESH_MS);
+  setInterval(()=>{if(!document.hidden)void refreshWatched();},REFRESH_MS);
   return {open,loadInventory,setMap(map,feature){controller=map;county={type:'polygon',...countyGeometry(feature.geometry)};if(new URLSearchParams(location.search).get('dwr')==='1')open();if(inventoryWatching)void loadInventory();}};
 }
