@@ -1,9 +1,10 @@
 /** Public CDEC collector. Run locally or before a Pages deployment; no credentials/proxy. */
-import { readFile, writeFile, rename } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { CDEC_URL, cdecSeries, validateReservoirSnapshot } from '../site/lib/environment-model.js';
 import {scheduledRecords,RELEASE_LOOKBACK_DAYS,RELEASE_HORIZON_DAYS} from '../site/lib/release-model.js';
+import {loadPrevious,writeAtomic} from './lib/snapshot-io.mjs';
 
 const selectionUrl=new URL('../site/data/reservoir-watchlist.json',import.meta.url);
 const outputUrl=new URL('../site/data/reservoir-latest.json',import.meta.url);
@@ -56,19 +57,9 @@ export async function collectReservoirs({fetchImpl=fetch,now=Date.now(),previous
 
 /** @returns {Promise<void>} Atomic same-directory write; never claim a failed source check succeeded. */
 async function main(){
-  let previous=null;try{previous=validateReservoirSnapshot(JSON.parse(await readFile(outputUrl,'utf8')));}catch(error){if(error.code!=='ENOENT')console.warn('Previous snapshot unavailable:',error.message);}
-  if(process.argv.includes('--published')){
-    try{
-      const response=await fetch(`${PUBLISHED_SNAPSHOT}?check=${Date.now()}`,{signal:AbortSignal.timeout(15_000),headers:{Accept:'application/json'}});
-      if(!response.ok)throw new Error(`HTTP ${response.status}`);
-      const published=validateReservoirSnapshot(await response.json()),stamp=Date.parse(published.generatedAt);
-      if(stamp>Date.now()+120_000)throw new Error('Published snapshot timestamp is in the future');
-      if(!previous||stamp>Date.parse(previous.generatedAt))previous=published;
-    }catch(error){console.warn('Published prior snapshot unavailable; using local fallback:',error.message);}
-  }
+  const previous=await loadPrevious(outputUrl,validateReservoirSnapshot,'Previous snapshot unavailable:',{url:PUBLISHED_SNAPSHOT,init:{headers:{Accept:'application/json'}},future:'Published snapshot timestamp is in the future',warning:'Published prior snapshot unavailable; using local fallback:'});
   const snapshot=await collectReservoirs({previous});validateReservoirSnapshot(snapshot);
-  const temporary=new URL('../site/data/reservoir-latest.tmp',import.meta.url);
-  await writeFile(temporary,JSON.stringify(snapshot,null,2)+'\n','utf8');await rename(temporary,outputUrl);
+  await writeAtomic(outputUrl,JSON.stringify(snapshot,null,2)+'\n');
   console.log(JSON.stringify({event:'reservoir-collection',time:snapshot.generatedAt,stations:snapshot.stations.map(s=>({id:s.id,error:s.error,series:Object.keys(s.metrics).length,values:Object.values(s.metrics).filter(m=>m.lastValid).length,conflicts:Object.values(s.metrics).reduce((n,m)=>n+(m.conflicts||0),0),scheduleError:s.scheduled.error,notices:s.scheduled.records?.length||0}))}));
   if(snapshot.stations.some(s=>s.error||s.scheduled.error))console.warn('CDEC collection incomplete; the published snapshot marks failed sources and retained values.');
 }

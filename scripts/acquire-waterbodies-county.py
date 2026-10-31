@@ -6,48 +6,21 @@ to the county envelope to retain boundary-crossing lake/reservoir context.
 """
 from __future__ import annotations
 
-import gzip
 import hashlib
 import importlib.util
 import json
 import logging
 import math
-import ssl
-import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = 'https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/60'
 FIELDS = ['id3dhp', 'gnisid', 'gnisidlabel', 'featuretype', 'featuretypelabel', 'featuredate', 'areasqkm']
 LOG = logging.getLogger('county-waterbodies')
-
-
-def request(params: dict[str, Any], url: str = SOURCE + '/query') -> dict[str, Any]:
-    """Retry bounded public REST requests; preserve errors and verify TLS."""
-    for attempt in range(3):
-        try:
-            req = Request(url, data=urlencode({'f': 'json', **params}).encode(),
-                          headers={'User-Agent': 'FresnoStormWatch/0.33 reference-export', 'Accept-Encoding': 'gzip'})
-            with urlopen(req, timeout=90, context=ssl.create_default_context()) as response:
-                data = response.read()
-                if response.headers.get('Content-Encoding') == 'gzip':
-                    data = gzip.decompress(data)
-            result = json.loads(data)
-            if result.get('error'):
-                raise RuntimeError(f"USGS waterbody service error: {result['error']}")
-            return result
-        except (HTTPError, URLError, TimeoutError, ConnectionError):
-            if attempt == 2:
-                raise
-            LOG.warning('Retrying public waterbody request (%s)', attempt + 1)
-            time.sleep(2 ** attempt)
-    raise AssertionError('Unreachable retry state')
 
 
 def convert(features: list[dict[str, Any]], county: Any, oid: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -101,6 +74,12 @@ def acquire() -> None:
     spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
     source = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(source)
+
+    def request(params: dict[str, Any], url: str = SOURCE + '/query') -> dict[str, Any]:
+        """Retry bounded public REST requests; preserve errors and verify TLS."""
+        return source.request_json(url, params, retries=3, error='USGS waterbody service error',
+                                   headers={'User-Agent': 'FresnoStormWatch/0.33 reference-export', 'Accept-Encoding': 'gzip'})
+
     boundary = ROOT / 'site' / 'data' / 'counties.geojson'
     county, filter_geometry = source.county_filter(boundary)
     output = ROOT / 'work' / 'waterbodies-county'
@@ -149,10 +128,7 @@ def acquire() -> None:
     (output / 'rejected.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
     if rejected or len(rows) != len(ids):
         raise RuntimeError('Waterbody validation failed; inspect rejected.json. Prior public output retained.')
-    kinds: dict[str, int] = {}
-    for row in rows:
-        label = row['properties']['kind_label']
-        kinds[label] = kinds.get(label, 0) + 1
+    kinds = dict(Counter(row['properties']['kind_label'] for row in rows))
     manifest = {'source': SOURCE, 'publisher': 'USGS 3D Hydrography Program', 'countyGeoid': '06019',
         'retrievalStartedAt': min(started, datetime.fromtimestamp(min(p.stat().st_mtime for p in cache.glob(key + '-*.json')), timezone.utc).isoformat()),
         'retrievedAt': datetime.now(timezone.utc).isoformat(),
@@ -165,12 +141,7 @@ def acquire() -> None:
         'limitations': 'Published reference footprints, not current shorelines, observed water levels, flood extents, predicted inundation or a complete local pond/basin inventory. Feature types remain publisher classifications.',
         'dimensionPolicy': 'Requested RFC7946 WGS84 XY with outSR=4326, returnZ=false and returnM=false; no vertical datum or elevation use.',
         'license': 'USGS open, non-proprietary federal reference data; acknowledgment retained.'}
-    for name, data in [('county.geojson', {'type': 'FeatureCollection', 'features': rows}), ('manifest.json', manifest)]:
-        target = output / name
-        temporary = target.with_suffix('.tmp')
-        temporary.write_text(json.dumps(data, separators=(',', ':') if name.endswith('geojson') else None,
-                                        indent=None if name.endswith('geojson') else 2), encoding='utf-8')
-        temporary.replace(target)
+    source.write_snapshot(output, rows, manifest)
     LOG.info('Validated %s waterbodies; types: %s', len(rows), kinds)
 
 

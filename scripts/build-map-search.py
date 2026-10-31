@@ -9,15 +9,12 @@ from __future__ import annotations
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-import gzip
 import hashlib
 import importlib.util
 import json
 import logging
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 STREETS = 'https://gisprod10.co.fresno.ca.us/server/rest/services/PublicWorks/PublicWorks_BaseLayers/MapServer/4'
@@ -25,20 +22,6 @@ USGS = 'https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServe
 VERSION = 'v0.31.0'
 FIELDS = ['OBJECTID', 'LABEL', 'PREFIX', 'NAME', 'TYPE', 'SUFFIX', 'ALIAS', 'ALIAS_XR', 'ALIAS_HWY', 'HWY_NUM', 'HWY_NUM2']
 LOG = logging.getLogger('map-search-build')
-
-
-def request(params: dict[str, Any]) -> dict[str, Any]:
-    """Query public streets with verified TLS and a bounded request timeout."""
-    req = Request(STREETS + '/query', data=urlencode({'f': 'json', **params}).encode(),
-                  headers={'Accept-Encoding': 'gzip'})
-    with urlopen(req, timeout=90) as response:
-        raw = response.read()
-        if response.headers.get('Content-Encoding') == 'gzip':
-            raw = gzip.decompress(raw)
-    data = json.loads(raw)
-    if data.get('error'):
-        raise RuntimeError(f'County street query failed: {data["error"]}')
-    return data
 
 
 def name_key(value: Any) -> str:
@@ -55,6 +38,11 @@ def main() -> None:
     spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
+
+    def request(params: dict[str, Any]) -> dict[str, Any]:
+        """Query public streets with verified TLS and a bounded request timeout."""
+        return helper.request_json(STREETS + '/query', params, error='County street query failed', headers={'Accept-Encoding': 'gzip'})
+
     boundary = ROOT / 'site/data/counties.geojson'
     county, spatial = helper.county_filter(boundary)
     started = datetime.now(timezone.utc)

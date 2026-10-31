@@ -1,9 +1,8 @@
 /** Build the countywide, static MVT reference basemap. Never reads private services or credentials. */
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import geojsonvt from 'geojson-vt';
-import vtpbf from 'vt-pbf';
-import {addWaterbodyStyle} from './waterbody-cartography.mjs';
+import {addWaterbodyStyle,suppressNames,writeTiles,thumbnailPoint,PUBLIC_URL as publicUrl} from './waterbody-cartography.mjs';
 import {waterwayRole,overviewRank} from './waterway-cartography.mjs';
 
 const root=new URL('../',import.meta.url),input=new URL('work/waterways-county/',root);
@@ -47,24 +46,7 @@ for(const feature of data.features){
 // placement choice, not a merge of source geometries or inferred connectivity.
 const names={type:'FeatureCollection',features:[...named.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([,v],i)=>({type:'Feature',id:i+1,properties:v.properties,geometry:{type:'Point',coordinates:v.point}}))};
 const options={maxZoom:maxzoom,indexMaxZoom:8,indexMaxPoints:50000,extent:4096,buffer:128,tolerance:2};
-const linesIndex=geojsonvt(data,options),namesIndex=geojsonvt(names,options);
-const x=(lon,z)=>Math.floor((lon+180)/360*2**z);
-const y=(lat,z)=>Math.floor((1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*2**z);
-let tiles=0,bytes=0;const hashes=[],represented=new Set();
-for(let z=0;z<=maxzoom;z++){
-  for(let tx=x(bounds[0],z);tx<=x(bounds[2],z);tx++){
-    const dir=new URL(`${tileDirectory}/${z}/${tx}/`,output);await mkdir(dir,{recursive:true});
-    for(let ty=y(bounds[3],z);ty<=y(bounds[1],z);ty++){
-      const layers={};const lines=linesIndex.getTile(z,tx,ty),labels=namesIndex.getTile(z,tx,ty);
-      if(z===maxzoom)for(const feature of lines?.features??[])represented.add(feature.tags.source_id);
-      if(lines)layers.flowlines=lines;if(labels)layers.names=labels;
-      const buffer=Buffer.from(vtpbf.fromGeojsonVt(layers));
-      const relative=`${tileDirectory}/${z}/${tx}/${ty}.pbf`;await writeFile(new URL(relative,output),buffer);
-      hashes.push([relative,createHash('sha256').update(buffer).digest('hex')]);tiles++;bytes+=buffer.length;
-    }
-  }
-}
-const publicUrl='https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/';
+const {tiles,bytes,represented,tilesSha256}=await writeTiles(output,tileDirectory,bounds,maxzoom,{flowlines:geojsonvt(data,options),names:geojsonvt(names,options)});
 const tilejson={tilejson:'3.0.0',name:'F.R.O.G. Waterways — Dark',scheme:'xyz',tiles:[publicUrl+tileDirectory+'/{z}/{x}/{y}.pbf'],minzoom:0,maxzoom,bounds,tileSize:512,
   attribution:'USGS 3DHP; Esri and its data providers',vector_layers:[{id:'flowlines',geometry_type:'line',fields:{name:'String',kind:'Number',role:'String',rank:'Number',source_id:'String'}},{id:'names',geometry_type:'point',fields:{name:'String',kind:'Number',role:'String',rank:'Number',source_id:'String'}}]};
 await writeFile(new URL('tilejson.json',output),JSON.stringify(tilejson,null,2)+'\n');
@@ -75,13 +57,7 @@ style.sources.frog={type:'vector',url:publicUrl+'tilejson.json?v='+version};
 style.layers=style.layers.filter(l=>!['Water line/label/Default','Water point/Canal or ditch','Water point/Stream or river','Water area/label/Canal or ditch','Water area/label/Small river','Water area/label/Large river','Water area large scale/label/River'].includes(l.id));
 // Esri can classify a named ditch as a water-area label. Suppress matching
 // names in all remaining water label classes, retaining other lake names.
-const publishedNames=names.features.map(f=>f.properties.name);
-for(const layer of style.layers){
-  const field=/^\{(_name(?:_global)?)\}$/.exec(layer.layout?.['text-field']??'')?.[1];
-  if(field&&/^(Water |Marine waterbody)/.test(layer['source-layer']??'')){
-    const unique=['!in',field,...publishedNames];layer.filter=layer.filter?['all',layer.filter,unique]:unique;
-  }
-}
+suppressNames(style,names.features.map(f=>f.properties.name));
 for(const layer of style.layers)if(/^Water line (small|medium|large) scale$/.test(layer.id)||/^Water line\/(Canal or ditch|Stream or river)/.test(layer.id))layer.maxzoom=Math.min(layer.maxzoom??24,10);
 const line=(id,filter,color,width,minzoom=10,dash)=>({id,type:'line',source:'frog','source-layer':'flowlines',filter,minzoom,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':color,'line-width':{stops:[[10,width*.5],[14,width],[18,width*1.4]]},...(dash?{'line-dasharray':dash}:{})}});
 const hydro=[
@@ -110,7 +86,7 @@ const waterbodies=JSON.parse(await readFile(new URL('waterbodies-manifest.json',
 style=addWaterbodyStyle(style,waterbodies,publicUrl);
 await writeFile(new URL('root.json',output),JSON.stringify(style,null,2)+'\n');
 const preview=data.features.filter(f=>f.properties.rank===0).flatMap(f=>(f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates).flatMap(path=>{
-  const projected=path.map(p=>[(p[0]-bounds[0])/(bounds[2]-bounds[0])*240,145-(p[1]-bounds[1])/(bounds[3]-bounds[1])*125]);
+  const projected=path.map(thumbnailPoint(bounds));
   const points=[projected[0]];for(let i=1;i<projected.length;i++)if(i===projected.length-1||Math.hypot(projected[i][0]-points.at(-1)[0],projected[i][1]-points.at(-1)[1])>=.8)points.push(projected[i]);
   if(Math.hypot(points.at(-1)[0]-points[0][0],points.at(-1)[1]-points[0][1])<.4&&points.length<=2)return [];
   return [`<path d="M${points.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' L')}" stroke="${f.properties.role==='canal'?'#83d4e6':'#70b9f4'}"${f.properties.role==='canal'?' stroke-dasharray="3 2"':''}/>`];
@@ -122,5 +98,5 @@ await writeFile(new URL('manifest.json',output),JSON.stringify({...manifest,base
   cartography:{projection:'EPSG:3857 web tiles',tileSize:512,extent:4096,buffer:128,maxzoom,simplificationTolerance:2,labelAnchors:names.features.length,labelTargets,labelRule:'One point anchor per normalized published name; four principal names snap to source paths near the dam areas, others use the midpoint of the longest clipped source path. Matching Esri water-area names suppressed; other lake names retained. Native collision avoidance may hide crowded names.',symbolRule:'Canal: source type 2 or published name containing canal/ditch; source type 3 is a drainageway. River: type 1 or named type 5 containing river. Other network connectors dotted. Drainageways are distinct from canals. Named waterbody centerlines remain references, not channel beds.'},
   displayAccounting:{inputFeatures:data.features.length,representedAtMaxZoom:represented.size,
     notRepresentedAtMaxZoom:data.features.filter(f=>!represented.has(f.properties.source_id)).map(f=>({source_id:f.properties.source_id,kind:f.properties.kind,name:f.properties.name,reason:'Subpixel geometry removed during display tiling; original source remains in validated download / publisher service.'}))},
-  tileCount:tiles,tileBytes:bytes,tilesSha256:createHash('sha256').update(JSON.stringify(hashes)).digest('hex')},null,2)+'\n');
+  tileCount:tiles,tileBytes:bytes,tilesSha256},null,2)+'\n');
 console.log(JSON.stringify({features:data.features.length,names:names.features.length,tiles,bytes}));
