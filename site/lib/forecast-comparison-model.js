@@ -1,12 +1,11 @@
 /** Bounded point comparisons, not basin rainfall, runoff or model confidence. */
 import {forecastInterval,windForecast,HOUR} from './weather-model.js';
+import {MPH} from './hrrr-model.js';
 export const MODELS=Object.freeze([
   {id:'noaa-hrrr-forecast-48-hour',label:'HRRR · Dynamical',resolution:'3 km',hours:48,gust:true},
   {id:'noaa-gfs-forecast',label:'GFS · Dynamical',resolution:'0.25°',hours:72,gust:false}
 ]);
-const MPH=2.2369362920544;
-const finite=v=>typeof v==='number'&&Number.isFinite(v);
-const positive=v=>finite(v)&&v>=0?v:null;
+const positive=v=>Number.isFinite(v)&&v>=0?v:null;
 const stamp=t=>typeof t==='string'&&/[Zz]|[+-]\d\d:\d\d$/.test(t)&&Number.isFinite(Date.parse(t))?Date.parse(t):NaN;
 
 /** Next full UTC six-hour boundary; never compare different forecast windows. */
@@ -22,7 +21,7 @@ export function comparisonAreas(areas,associations,winds,gauges){
     const ids=association?.windPoints?.length?association.windPoints:area.gauges.slice(0,1);
     const points=ids.map(id=>{
       const p=[...winds,...gauges].find(s=>s.id===id);
-      if(!p||!finite(p.longitude)||!finite(p.latitude)||p.longitude< -121.5||p.longitude> -118||p.latitude<35.5||p.latitude>38)throw Error('Comparison point is not in the configured Fresno inventory.');
+      if(!p||!Number.isFinite(p.longitude)||!Number.isFinite(p.latitude)||p.longitude< -121.5||p.longitude> -118||p.latitude<35.5||p.latitude>38)throw Error('Comparison point is not in the configured Fresno inventory.');
       return {id:p.id,name:p.name,latitude:p.latitude,longitude:p.longitude};
     });
     return {id:area.id,name:area.name,note:association?.windPoints?.length?association.note:'Forecast sampled at the existing river gauge location; this adds point weather context, not coverage across the reach.',points};
@@ -32,7 +31,7 @@ export function comparisonAreas(areas,associations,winds,gauges){
 /** Strict interval identity and non-overlap; never resolve conflicting source order. */
 function intervals(rows){
   const ordered=rows.sort((a,b)=>a.start-b.start);
-  if(ordered.some((r,i)=>!finite(r.start)||!finite(r.end)||r.end<=r.start||(i&&r.start<ordered[i-1].end)))throw Error('Forecast intervals overlap or are invalid.');
+  if(ordered.some((r,i)=>!Number.isFinite(r.start)||!Number.isFinite(r.end)||r.end<=r.start||(i&&r.start<ordered[i-1].end)))throw Error('Forecast intervals overlap or are invalid.');
   return ordered;
 }
 
@@ -40,20 +39,20 @@ function intervals(rows){
 export function modelSeries(result,model,point,now=Date.now()){
   if(result?.dataProduct?.id!==model.id||result?.point?.requested?.latitude!==point.latitude||result?.point?.requested?.longitude!==point.longitude)throw Error('Model response identity does not match the requested point.');
   const selected=result.point.selected;
-  if(!finite(selected?.latitude)||!finite(selected?.longitude)||Math.abs(selected.latitude-point.latitude)>0.5||Math.abs(selected.longitude-point.longitude)>0.5)throw Error('Selected model grid cell is missing or too distant.');
+  if(!Number.isFinite(selected?.latitude)||!Number.isFinite(selected?.longitude)||Math.abs(selected.latitude-point.latitude)>0.5||Math.abs(selected.longitude-point.longitude)>0.5)throw Error('Selected model grid cell is missing or too distant.');
   const keys=['precipitation_surface','wind_u_10m','wind_v_10m',...(model.gust?['wind_gust_surface']:[])];
   for(const k of keys)if(result.variables?.[k]?.unit!==(k==='precipitation_surface'?'kg m-2 s-1':'m s-1'))throw Error('Model variable units changed: '+k);
   if(result.forecasts?.length!==1)throw Error('Expected one resolved model run.');
   const f=result.forecasts[0],issued=stamp(f.initTime),times=f.validTimes?.map(stamp),leads=f.leadTimeHours;
-  if(!finite(issued)||issued>now+300000||now-issued>18*HOUR)throw Error('Model run is old or in the future.');
-  if(!Array.isArray(times)||times.length<2||times.length>73||!Array.isArray(leads)||times.length!==leads.length||times.some((t,i)=>!finite(t)||!finite(leads[i])||leads[i]<0||leads[i]>model.hours||t!==issued+leads[i]*HOUR||(i&&t<=times[i-1])))throw Error('Model valid-time axes do not match its run and lead times.');
+  if(!Number.isFinite(issued)||issued>now+300000||now-issued>18*HOUR)throw Error('Model run is old or in the future.');
+  if(!Array.isArray(times)||times.length<2||times.length>73||!Array.isArray(leads)||times.length!==leads.length||times.some((t,i)=>!Number.isFinite(t)||!Number.isFinite(leads[i])||leads[i]<0||leads[i]>model.hours||t!==issued+leads[i]*HOUR||(i&&t<=times[i-1])))throw Error('Model valid-time axes do not match its run and lead times.');
   for(const k of keys)if(!Array.isArray(f.data?.[k])||f.data[k].length!==times.length)throw Error('Model values do not match the valid-time axis.');
   const rain=[],wind=[],gust=[];
   for(let i=0;i<times.length;i++){
     // Lead zero has no previous interval. Missing data stay null, including U/V.
     if(i){const rate=positive(f.data.precipitation_surface[i]);rain.push({start:times[i-1],end:times[i],value:rate===null?null:rate*(times[i]-times[i-1])/1000/25.4});}
     const u=f.data.wind_u_10m[i],v=f.data.wind_v_10m[i];
-    wind.push({start:times[i],end:times[i]+HOUR,value:finite(u)&&finite(v)?Math.hypot(u,v)*MPH:null});
+    wind.push({start:times[i],end:times[i]+HOUR,value:Number.isFinite(u)&&Number.isFinite(v)?Math.hypot(u,v)*MPH:null});
     if(model.gust)gust.push({start:times[i],end:times[i]+HOUR,value:positive(f.data.wind_gust_surface[i])===null?null:f.data.wind_gust_surface[i]*MPH});
   }
   const canonical=f.links?.canonical;

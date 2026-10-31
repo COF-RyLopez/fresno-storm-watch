@@ -1,10 +1,11 @@
-import {digest} from './eoc-model.js?v=0.73.1';
+import {digest} from './eoc-model.js?v=0.74.0-eoc';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {loadCounties} from './nws.js';
+import {pool} from './pool.js';
 import {readAfnContext} from './afn-data.js?v=0.70.0';
 import {freezeAfnEvidence,AFN_TOPIC_KEYS} from './afn-snapshot-model.js?v=0.70.0';
-import {PIO_SOURCE_CHECK_MS,pioSourceReviews} from './pio-source-review.js?v=0.73.1';
+import {PIO_SOURCE_CHECK_MS,pioSourceReviews} from './pio-source-review.js?v=0.74.0-eoc';
 
 async function readZones({signal}){
   const counties=await loadCounties(new URL('../data/counties.geojson',import.meta.url));
@@ -29,22 +30,19 @@ export function createPioSourceMonitor({loadZones=readZones,readContext=readAfnC
     const byKey=new Map(data.rows.map(row=>[row.key,row])),current={},jobs=[...new Set(active.map(s=>s.record.payload.pioOutreach.zone.key))];
     // Retain only selected active zones. Neither geometry nor private records persist.
     for(const key of cache.keys())if(!jobs.includes(key))cache.delete(key);
-    async function worker(){
-      while(jobs.length){
-        valid();const key=jobs.shift(),row=byKey.get(key);if(!row)continue;
-        const zone=await pioZoneSnapshot(row,data.checked);valid();let result=cache.get(key);
-        const needsAfn=active.some(s=>s.record.payload.pioOutreach.zone.key===key&&s.record.payload.pioOutreach.afnEvidence);
-        if(needsAfn&&(!result||force||result.zone.revision!==zone.revision||now()-result.checked>=PIO_SOURCE_CHECK_MS)){
-          try{
-            const topics=exercise?AFN_TOPIC_KEYS.map(key=>({key,error:'EXERCISE · live AFN checks disabled'})):await readContext(row.geometry,{signal:AbortSignal.any([signal,AbortSignal.timeout(60000)])});valid();
-            result={zone,afn:freezeAfnEvidence({zone,topics,exercise,captured:now()}),checked:now()};
-          }catch(e){valid();result={zone,afnError:true,checked:now()};}
-          cache.set(key,result);
-        }
-        for(const s of active.filter(s=>s.record.payload.pioOutreach.zone.key===key))current[s.record.entity]={...result,zone};
+    await pool(jobs,2,async key=>{
+      valid();const row=byKey.get(key);if(!row)return;
+      const zone=await pioZoneSnapshot(row,data.checked);valid();let result=cache.get(key);
+      const needsAfn=active.some(s=>s.record.payload.pioOutreach.zone.key===key&&s.record.payload.pioOutreach.afnEvidence);
+      if(needsAfn&&(!result||force||result.zone.revision!==zone.revision||now()-result.checked>=PIO_SOURCE_CHECK_MS)){
+        try{
+          const topics=exercise?AFN_TOPIC_KEYS.map(key=>({key,error:'EXERCISE · live AFN checks disabled'})):await readContext(row.geometry,{signal:AbortSignal.any([signal,AbortSignal.timeout(60000)])});valid();
+          result={zone,afn:freezeAfnEvidence({zone,topics,exercise,captured:now()}),checked:now()};
+        }catch(e){valid();result={zone,afnError:true,checked:now()};}
+        cache.set(key,result);
       }
-    }
-    await Promise.all([worker(),worker()]);valid();
+      for(const s of active.filter(s=>s.record.payload.pioOutreach.zone.key===key))current[s.record.entity]={...result,zone};
+    });valid();
     const checked=now(),notices=await pioSourceReviews(active,{current,checked:data.checked});valid();return {notices,checked};
   }
   return {check,clear};

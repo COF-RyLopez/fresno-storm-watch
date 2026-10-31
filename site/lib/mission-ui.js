@@ -1,4 +1,4 @@
-import {createMissionFollowups} from './mission-followup-ui.js?v=0.73.1';
+import {createMissionFollowups} from './mission-followup-ui.js?v=0.74.0-infra-weather';
 import {missionEvidenceKey} from './mission-followup-model.js?v=0.71.1';
 import {captureBriefingEvidence,briefingNeedsSave,briefingPeriods,protectBriefingDraft} from './briefing-draft-model.js?v=0.59.0';
 import {libraryMapStatus} from './library-status-model.js?v=0.58.1';
@@ -12,8 +12,8 @@ import {EOC_CONFIG} from '../eoc-config.js';
 import {createScenarioClient} from './scenario-client.js';
 import {runnable,validateRun,modelFitsArea} from './scenario-contract.js';
 import {concernSummary,concernOrder,freezeConcern,briefText,pumpHandoffLines,incidentHandoffLines} from './mission-model.js?v=0.59.0';
-import {createPrivateStore} from './eoc-store.js?v=0.73.1';
-import {makeEvent,digest,briefingSnapshot} from './eoc-model.js?v=0.73.1';
+import {createPrivateStore} from './eoc-store.js?v=0.74.0-infra-weather';
+import {makeEvent,digest,briefingSnapshot} from './eoc-model.js?v=0.74.0-eoc';
 import {formatTime} from './model.js';
 import {clockLabel} from './flood-scenario-model.js?v=0.39.0';
 const $=id=>document.getElementById(id);
