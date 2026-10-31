@@ -1,4 +1,4 @@
-import {acsNumber} from './acs-model.js?v=0.65.0';
+import {acsMeasure as measure} from './acs-model.js?v=0.65.0';
 
 /** Fixed public endpoints. Every value is whole-geography context; nothing here is allocated to a zone. */
 export const AFN_SOURCES=Object.freeze({
@@ -18,7 +18,6 @@ export const CCL_LIMIT='CDSS licensed capacity, not current residents, occupancy
 
 const tract=(v,digits=11)=>{const id=String(v??'').padStart(digits,'0');return /^06019\d{6}$/.test(id)?id:null;};
 const percentile=(v,scale)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=scale?v/scale:null;
-const measure=(a,e,m)=>({estimate:acsNumber(a[e]),moe:acsNumber(a[m])});
 
 export function validateLanguageAreas(d){
   if(d?.schemaVersion!==1||d.table!=='B16001'||!/^20\d{2}–20\d{2}$/.test(d.period||'')||!Array.isArray(d.rows)||d.rows.length<1||d.rows.length>20)throw Error('Language reference is invalid.');

@@ -1,4 +1,4 @@
-import {heads} from './eoc-model.js?v=0.73.1';
+import {heads} from './eoc-model.js?v=0.74.0-population';
 import {pumpBinding,bindingKey,validatePumpReadiness} from './pump-readiness-contract.js';
 export {pumpBinding,bindingKey};
 

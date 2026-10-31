@@ -1,9 +1,9 @@
 import {EOC_CONFIG} from '../eoc-config.js';
-import {createPrivateStore,createExerciseStore} from './eoc-store.js?v=0.73.1';
-import {emptyRecords,makeEvent,heads,digest,canonical} from './eoc-model.js?v=0.73.1';
+import {createPrivateStore,createExerciseStore} from './eoc-store.js?v=0.74.0-population';
+import {emptyRecords,makeEvent,heads,digest,canonical} from './eoc-model.js?v=0.74.0-population';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION_OPTIONS,FUEL_OPTIONS,pumpBinding,bindingKey,validatePumpReadiness} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
-import {openPumpTask,renderPumpTasks} from './pump-task-ui.js?v=0.73.1';
+import {openPumpTask,renderPumpTasks} from './pump-task-ui.js?v=0.74.0-population';
 import {reportHealth} from './source-health.js?v=0.73.1';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
