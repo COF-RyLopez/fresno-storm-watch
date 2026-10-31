@@ -1,3 +1,4 @@
+import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
 import {CONFIG} from '../config.js';
 import {fetchRiverWatch} from './nwps.js';
 import {fetchPlanningRain} from './planning-data.js';
@@ -25,7 +26,6 @@ export async function refreshPilotSnapshot(snapshot,{now=Date.now(),fetchImpl=fe
  });
  const rain=rainResult.status==='fulfilled'?rainResult.value:{...original.rain,error:rainResult.reason?.message||'Rainfall check failed',checked:now};
  const input={...original,entries,rain};
- const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(input)));
- const dataId=[...new Uint8Array(hash)].map(n=>n.toString(16).padStart(2,'0')).join('');
+ const dataId=await sha256Hex(new TextEncoder().encode(JSON.stringify(input)));
  return {...snapshot,input,dataId,sourceBundleGeneratedAt:snapshot.sourceBundleGeneratedAt||snapshot.generatedAt,generatedAt:new Date(now).toISOString(),collectionMode:'Shared browser check of NWPS/WPC; scheduled public wind, utility, reservoir and comparison source copies'};
 }

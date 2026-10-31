@@ -1,25 +1,27 @@
+import {readArcgis} from './acs-data.js?v=0.74.0-helpers';
 import {POPULATION_SOURCES,normalizePopulationFeature,summarizePopulation} from './population-model.js?v=0.73.1';
 
+/** objectId inventory → 100-ID WGS84 batches → same inventory re-read; any gap or change is an error. */
+export async function readAllByIds(read,filter,{idField,outFields,limit,errors:[inventoryError,batchError,changedError],row}){
+  const inventory=await read('/query',filter),ids=inventory.objectIds===null?[]:inventory.objectIds;
+  if(!Array.isArray(ids)||ids.length>limit||inventory.exceededTransferLimit||new Set(ids).size!==ids.length||ids.some(i=>!Number.isSafeInteger(i)))throw Error(inventoryError);
+  const rows=[];
+  for(let i=0;i<ids.length;i+=100){
+    const batch=ids.slice(i,i+100),d=await read('/query',{objectIds:batch.join(','),outFields,returnGeometry:true,outSR:4326});
+    if((d.spatialReference?.latestWkid||d.spatialReference?.wkid)!==4326||d.exceededTransferLimit||!Array.isArray(d.features)||d.features.length!==batch.length||new Set(d.features.map(f=>f.attributes?.[idField])).size!==batch.length||d.features.some(f=>!batch.includes(f.attributes?.[idField])))throw Error(batchError);
+    for(const f of d.features)rows.push(row(f));
+  }
+  const after=await read('/query',filter),afterIds=after.objectIds===null?[]:after.objectIds;
+  if(!Array.isArray(afterIds)||after.exceededTransferLimit||JSON.stringify([...afterIds].sort((a,b)=>a-b))!==JSON.stringify([...ids].sort((a,b)=>a-b)))throw Error(changedError);
+  return {ids,rows};
+}
 /** Public read-only REST queries. Reconcile all IDs; incomplete data never becomes a population total. */
 export async function readPopulationBlocks(geometry,{fetcher=fetch,signal}={}){
-  const read=async(path,query)=>{
-    const url=POPULATION_SOURCES.blocks+path,body=new URLSearchParams({f:'json',...query});
-    const timeout=AbortSignal.timeout(30000);const r=await fetcher(query?url:url+'?f=json',{...(query?{method:'POST',body}:{}),credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,timeout]):timeout});
-    if(!r.ok)throw Error('Census source HTTP '+r.status);const d=await r.json();if(d.error)throw Error('Census publisher query failed.');return d;
-  };
+  const read=(path,query)=>readArcgis(POPULATION_SOURCES.blocks+path,query,{fetcher,signal},30000,'Census source HTTP ','Census publisher query failed.');
   const metadata=await read('');
   if(metadata.geometryType!=='esriGeometryPolygon'||!['GEOID','P0010001','COUNTY'].every(name=>metadata.fields?.some(f=>f.name===name))||!metadata.objectIdField)throw Error('Census source schema changed.');
   const filter={where:"COUNTY = '019'",geometry:JSON.stringify(geometry),geometryType:'esriGeometryPolygon',inSR:4326,spatialRel:'esriSpatialRelIntersects',returnIdsOnly:true};
-  const inventory=await read('/query',filter),ids=inventory.objectIds===null?[]:inventory.objectIds;
-  if(!Array.isArray(ids)||ids.length>25000||inventory.exceededTransferLimit||new Set(ids).size!==ids.length||ids.some(i=>!Number.isSafeInteger(i)))throw Error('Census inventory is incomplete or exceeds the bounded query limit.');
-  const rows=[],seen=new Set(),idField=metadata.objectIdField;
-  for(let i=0;i<ids.length;i+=100){
-    const batch=ids.slice(i,i+100),d=await read('/query',{objectIds:batch.join(','),outFields:`${idField},GEOID,P0010001`,returnGeometry:true,outSR:4326});
-    if((d.spatialReference?.latestWkid||d.spatialReference?.wkid)!==4326||d.exceededTransferLimit||!Array.isArray(d.features)||d.features.length!==batch.length||new Set(d.features.map(f=>f.attributes?.[idField])).size!==batch.length||d.features.some(f=>!batch.includes(f.attributes?.[idField])))throw Error('Census polygon query returned incomplete records.');
-    for(const f of d.features){const row=normalizePopulationFeature({...f,geometry:{...f.geometry,spatialReference:{wkid:4326}}});if(seen.has(row.id))throw Error('Duplicate census GEOID in source.');seen.add(row.id);rows.push(row);}
-  }
-  const after=await read('/query',filter),afterIds=after.objectIds===null?[]:after.objectIds;
-  if(!Array.isArray(afterIds)||after.exceededTransferLimit||JSON.stringify([...afterIds].sort((a,b)=>a-b))!==JSON.stringify([...ids].sort((a,b)=>a-b)))throw Error('Census inventory changed; retry the selection.');
+  const seen=new Set(),idField=metadata.objectIdField,{ids,rows}=await readAllByIds(read,filter,{idField,outFields:`${idField},GEOID,P0010001`,limit:25000,errors:['Census inventory is incomplete or exceeds the bounded query limit.','Census polygon query returned incomplete records.','Census inventory changed; retry the selection.'],row:f=>{const row=normalizePopulationFeature({...f,geometry:{...f.geometry,spatialReference:{wkid:4326}}});if(seen.has(row.id))throw Error('Duplicate census GEOID in source.');seen.add(row.id);return row;}});
   return {rows,checked:Date.now(),edited:metadata.editingInfo?.dataLastEditDate||metadata.editingInfo?.lastEditDate||null,accounting:{queried:ids.length,retained:rows.length}};
 }
 

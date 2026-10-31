@@ -1,4 +1,5 @@
-import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.73.1';
+import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
+import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.74.0-helpers';
 import {validatePumpReadiness} from './pump-readiness-contract.js';
 import {validatePumpTask} from './pump-task-contract.js';
 /** Append-only EOC records. No source cue changes activation or official status. */
@@ -9,7 +10,7 @@ export const CHECKS=['Staffing','Communications','Source coverage','Partner coor
 export const PLAN_URL='https://fresnocounty.legistar.com/View.ashx?M=F&ID=13374832&GUID=3C309AAE-B5AC-4764-8293-946B62BAB68F';
 export const emptyRecords=()=>Object.fromEntries(COLLECTIONS.map(k=>[k,[]]));
 export const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
-export async function digest(value){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))))).map(b=>b.toString(16).padStart(2,'0')).join('');}
+export const digest=value=>sha256Hex(new TextEncoder().encode(canonical(value)));
 const required=(data,fields)=>{for(const f of fields)if(data[f]===null||data[f]===undefined||String(data[f]).trim()==='')throw new Error(`${f} is required.`);};
 const oneOf=(value,values,label)=>{if(!values.includes(value))throw new Error(`${label} is not recognized.`);};
 const time=(v,label)=>{if(!Number.isFinite(v)||v<=0)throw new Error(`${label} must include a valid date and time.`);};

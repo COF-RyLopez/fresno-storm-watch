@@ -1,6 +1,6 @@
 import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation} from './population-model.js?v=0.73.1';
 import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_BOUNDARIES,summarizeZoneAcs} from './zone-acs-model.js?v=0.67.0';
-import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
+import {CARE_SOURCES} from './care-model.js?v=0.74.0-helpers';
 
 const methods={allocation:ZONE_ACS_METHOD,baseline:POPULATION_METHOD,sampling:ZONE_ACS_ERROR,limits:ZONE_ACS_LIMIT+' '+POPULATION_LIMIT};
 const count=value=>value===null||Number.isFinite(value)&&value>=0;

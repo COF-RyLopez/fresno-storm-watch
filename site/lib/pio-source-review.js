@@ -1,6 +1,6 @@
-import {canonical,digest,reviewState} from './eoc-model.js?v=0.73.1';
-import {pioZoneNotices} from './pio-model.js?v=0.73.1';
-import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
+import {canonical,digest,reviewState} from './eoc-model.js?v=0.74.0-helpers';
+import {pioZoneNotices} from './pio-model.js?v=0.74.0-helpers';
+import {CARE_SOURCES} from './care-model.js?v=0.74.0-helpers';
 
 export const PIO_SOURCE_CHECK_MS=300000;
 const labels={languages:'Language / PUMA',svi:'SVI',ces:'CalEnviroScreen / SB 535',ccl:'CDSS licensing'};

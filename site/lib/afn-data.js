@@ -1,9 +1,7 @@
+import {readArcgis} from './acs-data.js?v=0.74.0-helpers';
 import {AFN_SOURCES,validateLanguageAreas,normalizePuma,normalizeSvi,normalizeCes,normalizeDac,normalizeCcl} from './afn-model.js?v=0.69.0';
 
-async function read(url,query,{fetcher=fetch,signal}={}){
-  const timeout=AbortSignal.timeout(25000),r=await fetcher(query?url:url+'?f=json',{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,timeout]):timeout,...(query?{method:'POST',body:new URLSearchParams({f:'json',...query})}:{})});
-  if(!r.ok)throw Error('Source HTTP '+r.status);const data=await r.json();if(data.error)throw Error('Publisher query failed.');return data;
-}
+const read=(url,query,options)=>readArcgis(url,query,options,25000,'Source HTTP ','Publisher query failed.');
 const normalizers={puma:normalizePuma,svi:normalizeSvi,ces:normalizeCes,sb535:normalizeDac,ccl:normalizeCcl};
 
 /** Bounded read of every record intersecting the zone; a partial result is an error, never a smaller count. */

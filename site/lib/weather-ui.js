@@ -1,6 +1,7 @@
+import {svgNode} from './river-chart.js?v=0.74.0-helpers';
 import {reportHealth} from './source-health.js?v=0.73.1';
-import {createHrrrWeather} from './hrrr-ui.js?v=0.73.1';
-import {loadSdk} from './map.js?v=0.73.1';
+import {createHrrrWeather} from './hrrr-ui.js?v=0.74.0-helpers';
+import {loadSdk} from './map.js?v=0.74.0-helpers';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.19.0';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 
@@ -24,21 +25,20 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   function chart(site){
     const host=$('wind-chart');host.replaceChildren();
     if(!site?.forecast||windAt(site,Date.now(),Date.now(),overdue()).reason)return;
-    const ns='http://www.w3.org/2000/svg',make=(tag,attrs,text)=>{const n=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(text)n.textContent=text;return n;};
     const start=Math.ceil(Date.now()/HOUR)*HOUR,end=start+72*HOUR;
     const samples=Array.from({length:73},(_,i)=>({at:start+i*HOUR,...windAt(site,start+i*HOUR,Date.now(),overdue())}));
     const ymax=Math.max(10,Math.ceil(Math.max(0,...samples.flatMap(r=>[r.speed??0,r.gust??0]))/5)*5);
     const x=t=>35+(t-start)/(end-start)*270,y=v=>125-v/ymax*102;
-    const svg=make('svg',{viewBox:'0 0 320 155',role:'img','aria-label':`${site.name}, wind and gust forecast in miles per hour for the next 72 hours`});
-    for(const n of [0,ymax/2,ymax]){svg.append(make('line',{x1:35,y1:y(n),x2:305,y2:y(n),stroke:'var(--chart-grid)'}),make('text',{x:30,y:y(n)+4,'text-anchor':'end',fill:'var(--chart-text)','font-size':10},String(n)));}
-    for(const h of [0,24,48,72])svg.append(make('text',{x:x(start+h*HOUR),y:144,'text-anchor':'middle',fill:'var(--chart-text)','font-size':10},`+${h}h`));
-    svg.append(make('text',{x:4,y:12,fill:'var(--chart-text)','font-size':10},'mph'));
+    const svg=svgNode('svg',{viewBox:'0 0 320 155',role:'img','aria-label':`${site.name}, wind and gust forecast in miles per hour for the next 72 hours`});
+    for(const n of [0,ymax/2,ymax]){svg.append(svgNode('line',{x1:35,y1:y(n),x2:305,y2:y(n),stroke:'var(--chart-grid)'}),svgNode('text',{x:30,y:y(n)+4,'text-anchor':'end',fill:'var(--chart-text)','font-size':10},String(n)));}
+    for(const h of [0,24,48,72])svg.append(svgNode('text',{x:x(start+h*HOUR),y:144,'text-anchor':'middle',fill:'var(--chart-text)','font-size':10},`+${h}h`));
+    svg.append(svgNode('text',{x:4,y:12,fill:'var(--chart-text)','font-size':10},'mph'));
     for(const [key,color,dash] of [['speed','var(--chart-observed)',''],['gust','var(--chart-forecast)','4 2']]){
       let d='',prior=null;
       for(const sample of samples){const n=sample[key];if(n===null){prior=null;continue;}d+=prior===null?`M${x(sample.at)},${y(n)}`:`H${x(sample.at)}V${y(n)}`;prior=n;}
-      svg.append(make('path',{d,fill:'none',stroke:color,'stroke-width':2,'stroke-dasharray':dash}));
+      svg.append(svgNode('path',{d,fill:'none',stroke:color,'stroke-width':2,'stroke-dasharray':dash}));
     }
-    if(target()>=start&&target()<=end)svg.append(make('line',{x1:x(target()),x2:x(target()),y1:18,y2:125,stroke:'var(--chart-now)','stroke-dasharray':'3 3'}));
+    if(target()>=start&&target()<=end)svg.append(svgNode('line',{x1:x(target()),x2:x(target()),y1:18,y2:125,stroke:'var(--chart-now)','stroke-dasharray':'3 3'}));
     host.append(svg,el('figcaption','Latest forecast · sustained wind (solid), gust (dashed) · hourly samples, next 72h. Gaps are unknown.'));
   }
 
