@@ -1,6 +1,6 @@
-import {windForecast,validateWindSnapshot} from './weather-model.js';
+import {windForecast,validateWindSnapshot,GOES_URL,GOES_PRODUCTS,satelliteFrames} from './weather-model.js';
 import {environmentalJson} from './environment-data.js';
-import {GOES_URL,GOES_PRODUCTS,satelliteFrames} from './weather-model.js';
+import {pool} from './pool.js';
 
 /** @param {object} options @returns {Promise<object>} Fall back to public NWS in memory if the scheduled copy is old/unavailable. */
 export async function fetchCurrentWind({previous=null,fetchImpl=fetch,now=Date.now()}={}){
@@ -43,24 +43,20 @@ async function nwsJson(url,fetchImpl,headers){
 /** @param {object} options @returns {Promise<object>} Two workers; each failed site retains explicitly dated prior data and an error. */
 export async function fetchWindForecasts({selection,previous=null,fetchImpl=fetch,now=Date.now(),headers={},sourceMode='browser-direct'}={}){
   if(!Array.isArray(selection?.sites)||selection.sites.length>9)throw new Error('Wind inventory must contain at most nine configured points.');
-  const results=new Array(selection.sites.length);let cursor=0;
-  async function worker(){
-    while(cursor<selection.sites.length){
-      const index=cursor++,site=selection.sites[index],old=previous?.sites?.find(s=>s.id===site.id);
-      const row={...site,lastAttempt:new Date(now).toISOString(),lastSuccess:old?.lastSuccess||null,error:null,forecast:old?.forecast||null};
-      try{
-        const points=`https://api.weather.gov/points/${site.latitude.toFixed(4)},${site.longitude.toFixed(4)}`;
-        const p=(await nwsJson(points,fetchImpl,headers)).properties;
-        if(!/^[A-Z]{3}$/.test(p?.gridId)||!Number.isInteger(p?.gridX)||!Number.isInteger(p?.gridY))throw new Error('NWS point-to-grid mapping is invalid.');
-        const grid={office:p.gridId,x:p.gridX,y:p.gridY};
-        // Rebuild a trusted NWS URL rather than requesting a payload-supplied host.
-        const url=`https://api.weather.gov/gridpoints/${grid.office}/${grid.x},${grid.y}`;
-        row.forecast=windForecast(await nwsJson(url,fetchImpl,headers),grid,now);
-        row.source=url;row.pointSource=points;row.lastSuccess=new Date(now).toISOString();
-      }catch(error){row.error=String(error.name==='TimeoutError'?'NWS forecast request timed out':error.message||'NWS forecast check failed').slice(0,180);}
-      results[index]=row;
-    }
-  }
-  await Promise.all([worker(),worker()]);
+  const results=await pool(selection.sites,2,async site=>{
+    const old=previous?.sites?.find(s=>s.id===site.id);
+    const row={...site,lastAttempt:new Date(now).toISOString(),lastSuccess:old?.lastSuccess||null,error:null,forecast:old?.forecast||null};
+    try{
+      const points=`https://api.weather.gov/points/${site.latitude.toFixed(4)},${site.longitude.toFixed(4)}`;
+      const p=(await nwsJson(points,fetchImpl,headers)).properties;
+      if(!/^[A-Z]{3}$/.test(p?.gridId)||!Number.isInteger(p?.gridX)||!Number.isInteger(p?.gridY))throw new Error('NWS point-to-grid mapping is invalid.');
+      const grid={office:p.gridId,x:p.gridX,y:p.gridY};
+      // Rebuild a trusted NWS URL rather than requesting a payload-supplied host.
+      const url=`https://api.weather.gov/gridpoints/${grid.office}/${grid.x},${grid.y}`;
+      row.forecast=windForecast(await nwsJson(url,fetchImpl,headers),grid,now);
+      row.source=url;row.pointSource=points;row.lastSuccess=new Date(now).toISOString();
+    }catch(error){row.error=String(error.name==='TimeoutError'?'NWS forecast request timed out':error.message||'NWS forecast check failed').slice(0,180);}
+    return row;
+  });
   return {schemaVersion:1,generatedAt:new Date(now).toISOString(),publisher:'NOAA National Weather Service',sourceMode,collection:sourceMode==='browser-direct'?'Direct NWS check while application open':'15-minute target, not guaranteed',scope:selection.scope,sites:results};
 }

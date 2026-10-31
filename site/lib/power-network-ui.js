@@ -73,8 +73,7 @@ export function createPowerNetwork({timeZone,exercise=false,exerciseNow=Date.now
   $('power-dialog').addEventListener('stormEvidenceClose',clearSelection);
   window.addEventListener('stormWorkspaceChange',()=>{if(!active())clearSelection();});
   window.addEventListener('stormWorkspaceChange',activate);window.addEventListener('popstate',activate);setInterval(()=>{if(!document.hidden&&active())activate();},60000);
-  window.addEventListener('storm-theme-change',renderNetworkKeys);
-  window.addEventListener('storm-basemap-change',renderNetworkKeys);
+  for(const event of ['storm-theme-change','storm-basemap-change'])window.addEventListener(event,renderNetworkKeys);
   if(exercise){snapshot=networkExercise(exerciseNow);checked=exerciseNow;}render();queueMicrotask(activate);
   return {setMap(value){map=value;nearby.setMap(value);if(snapshot)map.setPowerNetwork(snapshot);if(referenceKey)map.setPowerNetworkSelection([referenceKey]);renderAssociation();},select(row,host){referenceKey=null;selected=row;associationHost=host;renderAssociation();activate();},clearSelection,setFacilities:nearby.setFacilities,setReadiness:nearby.setReadiness,setSession:nearby.setSession,showFeature:key=>{const f=all().find(f=>f.key===key);if(f)showFeature(f);}};
 }

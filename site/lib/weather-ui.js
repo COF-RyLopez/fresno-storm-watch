@@ -1,7 +1,7 @@
 import {reportHealth} from './source-health.js?v=0.73.1';
 import {createHrrrWeather} from './hrrr-ui.js?v=0.74.0-shell';
 import {loadSdk} from './map.js?v=0.74.0-shell';
-import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.19.0';
+import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.74.0-infra-weather';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -119,8 +119,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   $('wind-map-toggle').addEventListener('calciteCheckboxChange',()=>{controller?.setLayerPreference('wind',$('wind-map-toggle').checked);render();onChange();});
   $('wind-site').addEventListener('calciteSelectChange',e=>{selected=e.target.value;render();const site=wind?.sites.find(s=>s.id===selected);if(site){onMap();controller?.focusWind(site.longitude,site.latitude);}});
   $('wind-locate').addEventListener('click',()=>{const s=wind?.sites.find(s=>s.id===selected);if(s){onMap();controller?.focusWind(s.longitude,s.latitude);}});
-  $('weather-refresh').addEventListener('click',()=>void refresh());
-  $('weather-refresh').addEventListener('click',()=>void hrrr.refresh());
+  $('weather-refresh').addEventListener('click',()=>{void refresh();void hrrr.refresh();});
   $('satellite-legend-image').addEventListener('error',()=>{$('satellite-legend-note').textContent='Publisher legend unavailable; verify the NOAA source before interpreting image colors.';});
   const tick=()=>{if(document.hidden)return;render();if(Date.now()>=next)void refresh();};
   setInterval(tick,60_000);document.addEventListener('visibilitychange',tick);

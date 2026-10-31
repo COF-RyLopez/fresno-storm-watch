@@ -80,10 +80,8 @@ export async function installWaterwayLabels({map,sdk,reactiveUtils,getView,enabl
   const layer=new GraphicsLayer({id:'fresno-waterway-names',title:'USGS waterway names · spaced once per view',
     elevationInfo:{mode:'relative-to-ground',offset:2},popupEnabled:false,listMode:'hide',minScale,visible:false});
   map.add(layer);const views=new WeakMap();let timer;
-  const query=latestWaterwayLabels({read:async({view,source},signal)=>{
-    // Default query preserves the full county polygon filter; screen clipping handles the viewport.
-    return (await source.queryFeatures(undefined,{signal})).features;
-  },draw:(features,{view})=>{
+  // Default query preserves the full county polygon filter; screen clipping handles the viewport.
+  const query=latestWaterwayLabels({read:({source},signal)=>source.queryFeatures(undefined,{signal}).then(r=>r.features),draw:(features,{view})=>{
     if(view!==getView()||!enabled()||view.scale>minScale)return;
     const blocked=[];for(const other of map.layers){if(other===layer||!other.visible||!other.graphics)continue;for(const graphic of other.graphics){if(graphic.geometry?.type!=='point')continue;const screen=view.toScreen(graphic.geometry);if(finitePoint(screen)&&screen.x>0&&screen.x<view.width&&screen.y>0&&screen.y<view.height)blocked.push({left:screen.x-14,right:screen.x+14,top:screen.y-14,bottom:screen.y+14});}}
     const labels=waterwayLabelCandidates(features,{width:view.width,height:view.height,blocked,

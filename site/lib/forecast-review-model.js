@@ -1,7 +1,6 @@
 import {comparisonWindow,compareForecasts,MODELS} from './forecast-comparison-model.js';
 export const REVIEW_MAX_AGE=45*60000;
 const HOUR=3600000,IDS=['nws',...MODELS.map(m=>m.id)];
-const finite=n=>typeof n==='number'&&Number.isFinite(n);
 
 /** Seven unique public locations; shared Friant sample is fetched once. */
 export function uniqueComparisonPoints(areas){
@@ -13,17 +12,17 @@ export function uniqueComparisonPoints(areas){
 
 /** Reject drift in public snapshots, including extra/private inventory or source URLs. */
 export function validateComparisonSnapshot(snapshot,points){
-  if(snapshot?.schemaVersion!==1||!finite(Date.parse(snapshot.generatedAt))||!Array.isArray(snapshot.points)||snapshot.points.length!==points.length||new Set(snapshot.points.map(p=>p.point?.id)).size!==points.length)throw Error('Invalid comparison snapshot inventory.');
+  if(snapshot?.schemaVersion!==1||!Number.isFinite(Date.parse(snapshot.generatedAt))||!Array.isArray(snapshot.points)||snapshot.points.length!==points.length||new Set(snapshot.points.map(p=>p.point?.id)).size!==points.length)throw Error('Invalid comparison snapshot inventory.');
   for(const p of snapshot.points){
     const expected=points.find(e=>e.id===p.point?.id);
-    if(!expected||p.point.latitude!==expected.latitude||p.point.longitude!==expected.longitude||!finite(p.checked)||!Array.isArray(p.rows)||p.rows.length!==3||new Set(p.rows.map(r=>r.id)).size!==3)throw Error('Comparison point or source identity changed.');
+    if(!expected||p.point.latitude!==expected.latitude||p.point.longitude!==expected.longitude||!Number.isFinite(p.checked)||!Array.isArray(p.rows)||p.rows.length!==3||new Set(p.rows.map(r=>r.id)).size!==3)throw Error('Comparison point or source identity changed.');
     for(const row of p.rows){
       if(!IDS.includes(row.id))throw Error('Unexpected comparison source.');
       if(row.error){if(typeof row.error!=='string')throw Error('Invalid source failure.');continue;}
-      if(!finite(row.issued)||typeof row.gustProvided!=='boolean'||!row.source?.startsWith(row.id==='nws'?'https://api.weather.gov/gridpoints/':'https://api.dynamical.org/v1/data/'))throw Error('Invalid source time or link.');
+      if(!Number.isFinite(row.issued)||typeof row.gustProvided!=='boolean'||!row.source?.startsWith(row.id==='nws'?'https://api.weather.gov/gridpoints/':'https://api.dynamical.org/v1/data/'))throw Error('Invalid source time or link.');
       for(const key of ['rain','wind','gust']){
         const list=row[key];
-        if(!Array.isArray(list)||list.length>500||list.some((r,i)=>!finite(r.start)||!finite(r.end)||r.end<=r.start||(i&&r.start<list[i-1].end)||(r.value!==null&&(!finite(r.value)||r.value<0))))throw Error('Invalid comparison intervals or values.');
+        if(!Array.isArray(list)||list.length>500||list.some((r,i)=>!Number.isFinite(r.start)||!Number.isFinite(r.end)||r.end<=r.start||(i&&r.start<list[i-1].end)||(r.value!==null&&(!Number.isFinite(r.value)||r.value<0))))throw Error('Invalid comparison intervals or values.');
       }
     }
   }
@@ -33,7 +32,7 @@ export function validateComparisonSnapshot(snapshot,points){
 /** Keep all tied peak periods at display precision; never invent a unique peak. */
 function peakPeriods(row,key,places){
   const values=row.periods.map(p=>p[key].value);
-  if(values.some(v=>!finite(v)))return [];
+  if(values.some(v=>!Number.isFinite(v)))return [];
   const rounded=values.map(v=>Number(v.toFixed(places))),maximum=Math.max(...rounded);
   return maximum>0?row.periods.filter((_,i)=>rounded[i]===maximum).map(p=>({start:p.start,end:p.end})):[];
 }
@@ -52,9 +51,9 @@ function timing(rows,key,places){
 
 /** Point differences use a single valid window, fresh sources and an NWS anchor. */
 export function pointDifferences(input,now=Date.now()){
-  const window=comparisonWindow(now),fresh=input&&finite(input.checked)&&input.checked<=now+120000&&now-input.checked<=REVIEW_MAX_AGE;
+  const window=comparisonWindow(now),fresh=input&&Number.isFinite(input.checked)&&input.checked<=now+120000&&now-input.checked<=REVIEW_MAX_AGE;
   const rows=compareForecasts((input?.rows||[]).map(row=>row.error?row:!fresh?{...row,error:'Comparison collection overdue'}:row.issued>now+300000||now-row.issued>(row.id==='nws'?24:18)*HOUR?{...row,error:'Forecast update/run is old or invalid'}:row),window);
-  const rain=rows.filter(r=>!r.error&&finite(r.summary?.rain.value)),wind=rows.filter(r=>!r.error&&finite(r.summary?.wind.value));
+  const rain=rows.filter(r=>!r.error&&Number.isFinite(r.summary?.rain.value)),wind=rows.filter(r=>!r.error&&Number.isFinite(r.summary?.wind.value));
   const anchored=list=>list.some(r=>r.id==='nws')&&list.some(r=>r.id!=='nws');
   const rainSpread=anchored(rain)?Math.max(...rain.map(r=>r.summary.rain.value))-Math.min(...rain.map(r=>r.summary.rain.value)):null;
   const windSpread=anchored(wind)?Math.max(...wind.map(r=>r.summary.wind.value))-Math.min(...wind.map(r=>r.summary.wind.value)):null;
@@ -69,7 +68,7 @@ export function areaDifferences(areas,snapshot,now=Date.now()){
   return areas.map(area=>{
     const samples=area.points.map(point=>pointDifferences(points.get(point.id)||{point,rows:[],checked:null},now));
     const maximum=(value,eligible)=>samples.filter(eligible).reduce((a,b)=>!a||value(b)>value(a)?b:a,null);
-    return {id:area.id,name:area.name,samples,window:comparisonWindow(now),rain:maximum(p=>p.rainSpread,p=>p.rainSpread!==null),wind:maximum(p=>p.windTiming.hours,p=>!!p.windTiming),rainTiming:maximum(p=>p.rainTiming.hours,p=>!!p.rainTiming),review:samples.some(s=>s.review),complete:samples.every(s=>s.complete),checked:samples.every(s=>finite(s.checked))?Math.min(...samples.map(s=>s.checked)):null};
+    return {id:area.id,name:area.name,samples,window:comparisonWindow(now),rain:maximum(p=>p.rainSpread,p=>p.rainSpread!==null),wind:maximum(p=>p.windTiming.hours,p=>!!p.windTiming),rainTiming:maximum(p=>p.rainTiming.hours,p=>!!p.rainTiming),review:samples.some(s=>s.review),complete:samples.every(s=>s.complete),checked:samples.every(s=>Number.isFinite(s.checked))?Math.min(...samples.map(s=>s.checked)):null};
   });
 }
 
