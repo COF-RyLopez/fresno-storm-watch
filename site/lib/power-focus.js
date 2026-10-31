@@ -1,4 +1,4 @@
-import {powerGeometry,bounds as pointBounds} from './power-geometry.js';
+import {powerGeometry,bounds as pointBounds} from './power-geometry.js?v=0.74.0-helpers';
 
 const METRES_PER_DEGREE=111320;
 const MINIMUM_SPAN_METRES=180;

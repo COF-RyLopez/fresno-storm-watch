@@ -1,4 +1,4 @@
-import {powerGeometry,powerScope,bounds as pointBounds,overlaps} from './power-geometry.js';
+import {powerGeometry,powerScope,bounds as pointBounds,overlaps} from './power-geometry.js?v=0.74.0-helpers';
 
 export const BUILDING_LIMITS=Object.freeze({tiles:80,bytes:28_000_000,rows:15000,labelsScale:6000,drawScale:0});
 export class BuildingQueryLimitError extends Error{constructor(message){super(message);this.name='BuildingQueryLimitError';this.code='building-query-limit';}}

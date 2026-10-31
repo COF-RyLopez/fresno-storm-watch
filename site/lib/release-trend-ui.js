@@ -1,7 +1,7 @@
 import {buildReleaseTrend,TREND_REACHES,trendSegments} from './release-trend-model.js';
 import {HOUR,riverValue} from './river-model.js';
 import {formatTime} from './model.js';
-import {svgNode as svg} from './river-chart.js';
+import {svgNode as svg} from './river-chart.js?v=0.74.0-helpers';
 
 const $=id=>document.getElementById(id);
 const el=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;n.className=className;return n;};

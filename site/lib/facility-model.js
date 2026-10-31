@@ -1,4 +1,4 @@
-import {pointInRings, powerGeometry, powerScope, bounds} from './power-geometry.js';
+import {pointInRings, powerGeometry, powerScope, bounds} from './power-geometry.js?v=0.74.0-helpers';
 import {POWER_FEEDS, POWER_STATES, powerHealth, powerRowIssues} from './power-model.js';
 
 export const FACILITY_MAX_AGE = 10 * 60_000;
