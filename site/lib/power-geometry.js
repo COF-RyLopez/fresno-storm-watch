@@ -1,6 +1,6 @@
 /** WGS84 intersection predicates. Preserve the county boundary; never use its envelope as the final scope. */
-const bounds=points=>points.reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
-const overlaps=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
+export const bounds=points=>points.reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
+export const overlaps=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
 const cross=(a,b,p)=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
 const onSegment=(p,a,b)=>Math.abs(cross(a,b,p))<1e-12&&overlaps(bounds([p]),bounds([a,b]));
 /** @param {number[]} p @param {number[][][]} rings @returns {boolean} Even/odd parity supports holes and multipart rings. Boundary is included. */

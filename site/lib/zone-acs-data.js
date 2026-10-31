@@ -1,5 +1,5 @@
-import {readAcsMetadata,readAcsTracts} from './acs-data.js?v=0.67.0';
-import {readPopulationBlocks} from './population-data.js?v=0.74.0-population';
+import {readAcsMetadata,readAcsTracts,readArcgis} from './acs-data.js?v=0.74.0-helpers';
+import {readPopulationBlocks,readAllByIds} from './population-data.js?v=0.74.0-helpers';
 import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js?v=0.67.0';
 import {powerGeometry} from './power-geometry.js';
 
@@ -12,23 +12,11 @@ export async function cached(cache,key,signature,ttl,cap,read){
 
 /** Full Census boundaries, not the Living Atlas water-erased display polygons. */
 export async function readCensusAnalysisTracts(geometry,{fetcher=fetch,signal}={}){
-  const read=async(path,query)=>{
-    const timeout=AbortSignal.timeout(30000),response=await fetcher(ZONE_ACS_BOUNDARIES.url+path+(query?'':'?f=json'),{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,timeout]):timeout,...(query?{method:'POST',body:new URLSearchParams({f:'json',...query})}:{})});
-    if(!response.ok)throw Error('Census tract boundary HTTP '+response.status);const data=await response.json();if(data.error)throw Error('Census tract boundary query failed.');return data;
-  };
+  const read=(path,query)=>readArcgis(ZONE_ACS_BOUNDARIES.url+path,query,{fetcher,signal},30000,'Census tract boundary HTTP ','Census tract boundary query failed.');
   const metadata=await read(''),oid=metadata.fields?.find(field=>field.type==='esriFieldTypeOID')?.name;
   if(metadata.name!=='Census Tracts'||!metadata.description?.includes(ZONE_ACS_BOUNDARIES.vintage)||metadata.geometryType!=='esriGeometryPolygon'||!oid||!['GEOID','STATE','COUNTY'].every(name=>metadata.fields?.some(field=>field.name===name)))throw Error('Census analysis-boundary schema or vintage changed.');
   const filter={where:"STATE = '06' AND COUNTY = '019'",geometry:JSON.stringify(geometry),geometryType:'esriGeometryPolygon',inSR:4326,spatialRel:'esriSpatialRelIntersects',returnIdsOnly:true};
-  const inventory=await read('/query',filter),ids=inventory.objectIds===null?[]:inventory.objectIds;
-  if(!Array.isArray(ids)||ids.length>500||inventory.exceededTransferLimit||new Set(ids).size!==ids.length||ids.some(id=>!Number.isSafeInteger(id)))throw Error('Census analysis-boundary inventory is incomplete.');
-  const rows=[],seen=new Set();
-  for(let i=0;i<ids.length;i+=100){
-    const batch=ids.slice(i,i+100),data=await read('/query',{objectIds:batch.join(','),outFields:`${oid},GEOID`,returnGeometry:true,outSR:4326});
-    if((data.spatialReference?.latestWkid||data.spatialReference?.wkid)!==4326||data.exceededTransferLimit||data.features?.length!==batch.length||new Set(data.features.map(f=>f.attributes?.[oid])).size!==batch.length||data.features.some(f=>!batch.includes(f.attributes?.[oid])))throw Error('Census analysis boundaries are incomplete or in an unexpected CRS.');
-    for(const feature of data.features){const id=String(feature.attributes?.GEOID||'');if(!/^06019\d{6}$/.test(id)||seen.has(id))throw Error('Duplicate or outside-county analysis tract.');seen.add(id);const polygon=powerGeometry({...feature.geometry,spatialReference:{wkid:4326}});if(!polygon.rings)throw Error('Census analysis polygon missing.');rows.push({id,geometry:polygon});}
-  }
-  const after=await read('/query',filter),afterIds=after.objectIds===null?[]:after.objectIds;
-  if(!Array.isArray(afterIds)||after.exceededTransferLimit||JSON.stringify([...afterIds].sort((a,b)=>a-b))!==JSON.stringify([...ids].sort((a,b)=>a-b)))throw Error('Census analysis-boundary inventory changed; retry.');
+  const seen=new Set(),{rows}=await readAllByIds(read,filter,{idField:oid,outFields:`${oid},GEOID`,limit:500,errors:['Census analysis-boundary inventory is incomplete.','Census analysis boundaries are incomplete or in an unexpected CRS.','Census analysis-boundary inventory changed; retry.'],row:feature=>{const id=String(feature.attributes?.GEOID||'');if(!/^06019\d{6}$/.test(id)||seen.has(id))throw Error('Duplicate or outside-county analysis tract.');seen.add(id);const polygon=powerGeometry({...feature.geometry,spatialReference:{wkid:4326}});if(!polygon.rings)throw Error('Census analysis polygon missing.');return {id,geometry:polygon};}});
   return {rows,checked:Date.now(),source:ZONE_ACS_BOUNDARIES.url,vintage:ZONE_ACS_BOUNDARIES.vintage};
 }
 

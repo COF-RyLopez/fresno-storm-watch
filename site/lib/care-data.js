@@ -1,4 +1,5 @@
-import {CARE_SOURCES,normalizeCare,normalizeZone} from './care-model.js?v=0.56.0-r1';
+import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
+import {CARE_SOURCES,normalizeCare,normalizeZone} from './care-model.js?v=0.74.0-helpers';
 import {powerScope} from './power-geometry.js';
 import {countyGeometry} from './model.js';
 
@@ -25,7 +26,7 @@ export async function readCarePlaces({fetcher=fetch}={}){
  const index=await(await read(new URL('index.json',base))).json();
  if(index.schemaVersion!==1||!/^\d{4}-\d{2}-\d{2}\.\d+$/.test(index.release)||index.file!==`${index.release}.json.gz`||index.crs!=='EPSG:4326'||index.compression!=='gzip'||index.count>100000||index.bytes>10000000||index.decodedBytes>60000000||!/^[a-f0-9]{64}$/.test(index.sha256))throw Error('Invalid Places reference manifest.');
  const buffer=await(await read(new URL(index.file,base))).arrayBuffer();if(buffer.byteLength!==index.bytes)throw Error('Places reference size changed.');
- const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(b=>b.toString(16).padStart(2,'0')).join('');if(digest!==index.sha256)throw Error('Places reference version changed.');
+ if(await sha256Hex(buffer)!==index.sha256)throw Error('Places reference version changed.');
  const decoded=await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();if(decoded.byteLength!==index.decodedBytes)throw Error('Places reference expanded size changed.');
  const data=JSON.parse(new TextDecoder().decode(decoded)),seen=new Set();if(data.schemaVersion!==1||data.release!==index.release||!Array.isArray(data.rows)||data.rows.length!==index.count)throw Error('Places reference is incomplete.');
  for(const p of data.rows){if(typeof p.id!=='string'||!p.id.trim()||seen.has(p.id)||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x< -121.1||p.x> -118.2||p.y<35.7||p.y>37.7||!Array.isArray(p.addresses)||typeof p.name!=='string')throw Error('Invalid Places record.');seen.add(p.id);}

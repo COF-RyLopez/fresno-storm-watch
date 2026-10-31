@@ -1,7 +1,7 @@
 import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,B16001,validateLanguageAreas,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.74.0-population';
 import {formatAcsMeasure} from './acs-model.js?v=0.65.0-r1';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
-import {optionalDate as stamp,date,count} from './population-snapshot-model.js?v=0.74.0-population';
+import {optionalDate as stamp,date,count} from './population-snapshot-model.js?v=0.74.0-helpers';
 
 export const AFN_TOPIC_KEYS=['languages','svi','ces','ccl'];
 export const AFN_EVIDENCE_MAX=24000;
