@@ -1,4 +1,4 @@
-import {POWER_COLORS, POWER_STATES} from './power-model.js?v=0.16.0';
+import {POWER_COLORS, POWER_STATES} from './power-model.js';
 
 /** One visual vocabulary for map markers, utility cards and both legends. */
 export const POWER_SYMBOLS = Object.freeze({

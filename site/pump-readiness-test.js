@@ -1,10 +1,10 @@
 import {CONFIG} from './config.js';
-import {setupAuth} from './lib/auth.js?v=0.74.0-shell';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-shell';
+import {setupAuth} from './lib/auth.js';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js';
 import {PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
-import {pumpTasks} from './lib/pump-task-model.js?v=0.74.0-helpers';
+import {pumpTasks} from './lib/pump-task-model.js';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
-import {drainageReviewExercise} from './lib/drainage-review-exercise.js?v=0.42.0';
+import {drainageReviewExercise} from './lib/drainage-review-exercise.js';
 const $=id=>document.getElementById(id),record=drainageReviewExercise().snapshot.rows[1];
 let controller,state=null;
 controller=createPumpReadiness({timeZone:CONFIG.timeZone,scope:PUMP_READINESS_TEST_SCOPE,onData:value=>{state=value;$('test-open').disabled=$('test-task').disabled=!value.connected;const host=$('test-summary');host.replaceChildren();if(controller)controller.renderSummary(host,{readiness:pumpReadiness(record,state),tasks:pumpTasks(record,state,pumpReadiness(record,state).event)});},onSaved:()=>{$('test-form').replaceChildren();$('test-result').textContent='Private test saved. Reload or use Refresh saved test to verify persistence. Normal Area Watch is unchanged.';}});

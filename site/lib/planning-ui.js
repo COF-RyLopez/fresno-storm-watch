@@ -1,6 +1,6 @@
 import {mergeForecastReviews} from './forecast-review-model.js';
-import {differenceText} from './forecast-review-ui.js?v=0.74.0-infra-weather';
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {differenceText} from './forecast-review-ui.js';
+import {reportHealth} from './source-health.js';
 import { environmentalJson } from './environment-data.js';
 import { planningPoints,evaluateAreas } from './planning-model.js';
 import { fetchPlanningRain } from './planning-data.js';

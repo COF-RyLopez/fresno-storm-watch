@@ -1,7 +1,7 @@
-import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT} from './population-model.js?v=0.74.0-population';
-import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
-import {PIO_GUIDANCE} from './acs-model.js?v=0.65.0-r1';
-import {ZONE_ACS_METHOD,ZONE_ACS_ERROR,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js?v=0.67.0';
+import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT} from './population-model.js';
+import {CARE_SOURCES} from './care-model.js';
+import {PIO_GUIDANCE} from './acs-model.js';
+import {ZONE_ACS_METHOD,ZONE_ACS_ERROR,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 export function populationSourceGuide(){

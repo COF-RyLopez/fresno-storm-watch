@@ -1,4 +1,4 @@
-import {ACS_SOURCES,acsFields,acsPeriod,normalizeAcs} from './acs-model.js?v=0.65.0';
+import {ACS_SOURCES,acsFields,acsPeriod,normalizeAcs} from './acs-model.js';
 
 /** Public ArcGIS REST JSON: GET metadata (?f=json) or POST a form query; caller signal combined with a timeout. */
 export async function readArcgis(url,query,{fetcher=fetch,signal}={},timeoutMs=25000,httpError='ACS source HTTP ',queryError='ACS publisher query failed.'){

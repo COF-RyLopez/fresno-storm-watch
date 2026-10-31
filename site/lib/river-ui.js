@@ -1,4 +1,4 @@
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {reportHealth} from './source-health.js';
 import { fetchJson } from './nws.js';
 import { fetchRiverWatch } from './nwps.js';
 import { assessGauge, riverValue, formatRiverTime } from './river-model.js';

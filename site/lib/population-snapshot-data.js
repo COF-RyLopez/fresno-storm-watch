@@ -1,7 +1,7 @@
-import {loadSdk} from './map.js?v=0.74.0-shell';
-import {calculateAcsZonePopulation} from './zone-acs-data.js?v=0.74.0-helpers';
-import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.74.0-helpers';
-import {freezePopulationEvidence} from './population-snapshot-model.js?v=0.74.0-helpers';
+import {loadSdk} from './map.js';
+import {calculateAcsZonePopulation} from './zone-acs-data.js';
+import {readPopulationBlocks,calculateZonePopulation} from './population-data.js';
+import {freezePopulationEvidence} from './population-snapshot-model.js';
 
 let geometryTools=null;
 export async function populationGeometryTools(){

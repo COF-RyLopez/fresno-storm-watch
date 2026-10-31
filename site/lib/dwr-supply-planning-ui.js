@@ -1,6 +1,6 @@
-import {loadSdk} from './map.js?v=0.74.0-shell';
-import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js?v=0.74.0-planning';
-import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js?v=0.61.0';
+import {loadSdk} from './map.js';
+import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js';
+import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js';
 
 const KEY='dwrSupplyContext';
 const mapSignature=row=>JSON.stringify([row.site.key,row.points,row.roads.map(r=>[r.row.key,r.row.revision])]);

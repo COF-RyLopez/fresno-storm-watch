@@ -1,5 +1,5 @@
-import {bounds as pointBounds} from './power-geometry.js?v=0.74.0-helpers';
-import {NETWORK_LAYER_KEYS,NETWORK_SCALES,networkSymbol,networkSourceProblem} from './power-network-model.js?v=0.50.0';
+import {bounds as pointBounds} from './power-geometry.js';
+import {NETWORK_LAYER_KEYS,NETWORK_SCALES,networkSymbol,networkSourceProblem} from './power-network-model.js';
 /** A focused reference is separate from verified event identity. The grid never supplies a fault or trace. */
 export function createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect}){
   const layers={},focusLayers={};

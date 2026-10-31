@@ -1,4 +1,4 @@
-import {POWER_FEEDS,normalizePower,deduplicatePower} from './power-model.js?v=0.49.0';
+import {POWER_FEEDS,normalizePower,deduplicatePower} from './power-model.js';
 import {powerScope} from './power-geometry.js';
 import {countyGeometry} from './model.js';
 

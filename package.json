@@ -26,7 +26,8 @@
     "collect:sandbags": "node --use-system-ca scripts/collect-sandbags.mjs",
     "collect:pio-languages": "node --use-system-ca scripts/collect-pio-languages.mjs",
     "collect:zone-population": "node --use-system-ca scripts/acquire-zone-population.mjs",
-    "build:zone-population": "node --use-system-ca scripts/build-zone-population.mjs"
+    "build:zone-population": "node --use-system-ca scripts/build-zone-population.mjs",
+    "build:import-map": "node scripts/import-map.mjs"
   },
   "devDependencies": {
     "@mapbox/vector-tile": "2.0.4",

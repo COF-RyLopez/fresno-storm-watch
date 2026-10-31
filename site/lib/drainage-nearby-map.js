@@ -1,6 +1,6 @@
-import {FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js?v=0.53.0';
-import {fmfcdDetailSymbol,fmfcdSceneArrows,fmfcdLayerColor} from './fmfcd-symbology.js?v=0.54.0';
-import {CONNECTION_GROUPS,connectionShown} from './drainage-connections.js?v=0.55.0';
+import {FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js';
+import {fmfcdDetailSymbol,fmfcdSceneArrows,fmfcdLayerColor} from './fmfcd-symbology.js';
+import {CONNECTION_GROUPS,connectionShown} from './drainage-connections.js';
 export const DETAIL_KEYS=Object.freeze({mapped:'drainageNetwork',unknown:'drainageNetworkUnknown',planned:'drainageNetworkPlanned'});
 /** Selection-bounded reference graphics. Proposed and unknown features never share the mapped-asset symbol. */
 export function createDrainageDetailMap({GraphicsLayer,Graphic,registerLayer,setLayerEligibility,focusGeometry,getView=()=>({type:'2d',scale:10000}),isDark=()=>true}){

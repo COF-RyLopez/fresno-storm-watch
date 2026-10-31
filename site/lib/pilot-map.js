@@ -38,7 +38,7 @@ export async function createPilotMap({engine,container,view,features,county,onSe
   return {settledError,setFeatures(data){map.getSource('records').setData(data);},highlight(data){map.getSource('selection').setData(data);},async fit(bounds,duration=0){map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:25,maxZoom:14,duration});await idle();},resize:()=>map.resize(),destroy:()=>map.remove()};
  }
  // The comparison mode uses the main app's pinned unified SDK loader.
- const {loadSdk}=await import('./map.js?v=0.74.0-shell');const sdk=await loadSdk();
+ const {loadSdk}=await import('./map.js');const sdk=await loadSdk();
  const [Map,MapView,Basemap,TileLayer,VectorTileLayer,GraphicsLayer,Graphic,Extent,reactive]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/MapView.js','@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/VectorTileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/geometry/Extent.js','@arcgis/core/core/reactiveUtils.js']);
  const css=document.createElement('link');css.rel='stylesheet';css.href='https://js.arcgis.com/5.1/esri/themes/dark/main.css';document.head.append(css);
  const basemap=view==='rivers'?new Basemap({baseLayers:[new VectorTileLayer({style})]}):new Basemap({baseLayers:[new TileLayer({url:BASE+'Base/MapServer'})],referenceLayers:[new TileLayer({url:BASE+'Reference/MapServer'})]});

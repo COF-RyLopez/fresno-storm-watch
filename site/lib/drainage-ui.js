@@ -1,7 +1,7 @@
 import {EOC_CONFIG} from '../eoc-config.js';
-import {loadSdk} from './map.js?v=0.74.0-shell';
+import {loadSdk} from './map.js';
 import {formatTime} from './model.js';
-import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts,unchangedDrainageSelection} from './drainage-model.js?v=0.53.0';
+import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts,unchangedDrainageSelection} from './drainage-model.js';
 import {openDrainage} from './drainage-data.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Private, read-only drainage context; memory cleared on sign-out, expiry, disconnect and failure. */

@@ -1,4 +1,4 @@
-import {searchGeometry} from './nearby-search.js?v=0.32.0';
+import {searchGeometry} from './nearby-search.js';
 
 export const FMFCD_DETAIL_URL='https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFCD_Layers/FeatureServer';
 export const FMFCD_DETAIL_LIMIT=1200;

@@ -1,9 +1,9 @@
 import {EOC_CONFIG} from '../eoc-config.js';
 import {formatTime} from './model.js';
-import {openDrainageDetail} from './drainage-nearby-data.js?v=0.55.0';
-import {FMFCD_DETAIL_URL,FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js?v=0.53.0';
-import {DETAIL_KEYS} from './drainage-nearby-map.js?v=0.55.0';
-import {drainageConnections,CONNECTION_GROUPS} from './drainage-connections.js?v=0.55.0';
+import {openDrainageDetail} from './drainage-nearby-data.js';
+import {FMFCD_DETAIL_URL,FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js';
+import {DETAIL_KEYS} from './drainage-nearby-map.js';
+import {drainageConnections,CONNECTION_GROUPS} from './drainage-connections.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 const link=(label,url)=>{const a=el('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};

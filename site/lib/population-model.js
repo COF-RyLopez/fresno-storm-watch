@@ -1,5 +1,5 @@
 import {powerGeometry} from './power-geometry.js';
-import {ACS_SOURCES} from './acs-model.js?v=0.65.0-r1';
+import {ACS_SOURCES} from './acs-model.js';
 
 export const POPULATION_SOURCES=Object.freeze({
   blocksItem:'https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3',

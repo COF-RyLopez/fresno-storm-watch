@@ -1,8 +1,75 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>F.R.O.G. · Map comparison pilot</title>
-<link rel="icon" href="./assets/frog-logo.png"><link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css"><link rel="stylesheet" href="./map-pilot.css?v=0.38.0">
-<script type="module" src="https://js.arcgis.com/calcite-components/5.1.1/index.js"></script><script type="module" src="./map-pilot.js?v=0.38.0"></script></head>
+<link rel="icon" href="./assets/frog-logo.png"><link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="stylesheet" href="./map-pilot.css?v=09285ec3a0">
+<script type="importmap">
+{"imports":{
+"./config.js":"./config.js?v=d82b554e1d",
+"./lib/acs-model.js":"./lib/acs-model.js?v=f7f8d10a79",
+"./lib/afn-model.js":"./lib/afn-model.js?v=06d708fe9a",
+"./lib/afn-snapshot-model.js":"./lib/afn-snapshot-model.js?v=c3b0970e67",
+"./lib/area-concern-model.js":"./lib/area-concern-model.js?v=e5c976f8cc",
+"./lib/basemap-gallery-ui.js":"./lib/basemap-gallery-ui.js?v=2d2e451f3b",
+"./lib/care-model.js":"./lib/care-model.js?v=4af36b3643",
+"./lib/drainage-connections.js":"./lib/drainage-connections.js?v=0e7fae95f2",
+"./lib/drainage-model.js":"./lib/drainage-model.js?v=8eede1bed0",
+"./lib/drainage-nearby-map.js":"./lib/drainage-nearby-map.js?v=7704858ac5",
+"./lib/drainage-nearby-model.js":"./lib/drainage-nearby-model.js?v=9c03e77069",
+"./lib/drainage-power-model.js":"./lib/drainage-power-model.js?v=491ff36c8e",
+"./lib/drainage-review-data.js":"./lib/drainage-review-data.js?v=6a49de7816",
+"./lib/drainage-review-model.js":"./lib/drainage-review-model.js?v=648c5b7462",
+"./lib/environment-data.js":"./lib/environment-data.js?v=650d68b6fa",
+"./lib/environment-model.js":"./lib/environment-model.js?v=9f4a33988d",
+"./lib/eoc-model.js":"./lib/eoc-model.js?v=97ebee8586",
+"./lib/facility-model.js":"./lib/facility-model.js?v=558e4542ad",
+"./lib/flood-scenario-model.js":"./lib/flood-scenario-model.js?v=b23ebd16cc",
+"./lib/fmfcd-symbology.js":"./lib/fmfcd-symbology.js?v=57ed1f2698",
+"./lib/forecast-comparison-model.js":"./lib/forecast-comparison-model.js?v=a08d0c9ac1",
+"./lib/forecast-review-model.js":"./lib/forecast-review-model.js?v=c8c118599d",
+"./lib/frame-window.js":"./lib/frame-window.js?v=2db08f9200",
+"./lib/hrrr-model.js":"./lib/hrrr-model.js?v=2dcd07b4ad",
+"./lib/map-context.js":"./lib/map-context.js?v=7f0ce6ee24",
+"./lib/map-events.js":"./lib/map-events.js?v=47c9f9b76f",
+"./lib/map.js":"./lib/map.js?v=cc631bff80",
+"./lib/model.js":"./lib/model.js?v=444661a407",
+"./lib/nearby-search.js":"./lib/nearby-search.js?v=5a1eac60a0",
+"./lib/nwps.js":"./lib/nwps.js?v=c194ab4c35",
+"./lib/nws.js":"./lib/nws.js?v=3813d5f1c3",
+"./lib/pilot-data.js":"./lib/pilot-data.js?v=074e208e1a",
+"./lib/pilot-map.js":"./lib/pilot-map.js?v=d3b5b5d30b",
+"./lib/pilot-model.js":"./lib/pilot-model.js?v=138c8f202a",
+"./lib/pio-model.js":"./lib/pio-model.js?v=904686f830",
+"./lib/pio-zone-context.js":"./lib/pio-zone-context.js?v=a1277ae572",
+"./lib/planning-data.js":"./lib/planning-data.js?v=ad49639585",
+"./lib/planning-model.js":"./lib/planning-model.js?v=87e721d934",
+"./lib/population-model.js":"./lib/population-model.js?v=dd56053986",
+"./lib/population-snapshot-model.js":"./lib/population-snapshot-model.js?v=e1cbf529d7",
+"./lib/power-buildings-map.js":"./lib/power-buildings-map.js?v=e7d2f74514",
+"./lib/power-buildings-model.js":"./lib/power-buildings-model.js?v=a196298264",
+"./lib/power-focus.js":"./lib/power-focus.js?v=29e86245c3",
+"./lib/power-geometry.js":"./lib/power-geometry.js?v=a674d1b9ba",
+"./lib/power-model.js":"./lib/power-model.js?v=902d500b9b",
+"./lib/power-network-map.js":"./lib/power-network-map.js?v=f1a38d4d31",
+"./lib/power-network-model.js":"./lib/power-network-model.js?v=2a98bdb85d",
+"./lib/power-symbols.js":"./lib/power-symbols.js?v=70c32b6ded",
+"./lib/pump-readiness-contract.js":"./lib/pump-readiness-contract.js?v=8b27765203",
+"./lib/pump-readiness-model.js":"./lib/pump-readiness-model.js?v=867a532e0d",
+"./lib/pump-task-contract.js":"./lib/pump-task-contract.js?v=1db010c194",
+"./lib/pump-task-model.js":"./lib/pump-task-model.js?v=b1f152e351",
+"./lib/release-model.js":"./lib/release-model.js?v=f2dcebaa96",
+"./lib/river-chart.js":"./lib/river-chart.js?v=84bae751aa",
+"./lib/river-model.js":"./lib/river-model.js?v=f4cfa150af",
+"./lib/selection-focus.js":"./lib/selection-focus.js?v=c1c3a8d19c",
+"./lib/waterway-basemap.js":"./lib/waterway-basemap.js?v=c81195703c",
+"./lib/waterway-labels.js":"./lib/waterway-labels.js?v=f72288a0a3",
+"./lib/weather-model.js":"./lib/weather-model.js?v=1bd1a127dc",
+"./lib/workspace-model.js":"./lib/workspace-model.js?v=7e5d37f483",
+"./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
+"./lib/zone-population-product.js":"./lib/zone-population-product.js?v=47199f3b6f",
+"./map-pilot.js":"./map-pilot.js?v=4de12a8024"
+}}
+</script>
+<script type="module" src="https://js.arcgis.com/calcite-components/5.1.1/index.js"></script><script type="module" src="./map-pilot.js?v=4de12a8024"></script></head>
 <body><a class="skip" href="#topic">Skip to watch list</a><calcite-shell>
 <div slot="header"><calcite-navigation><a slot="logo" class="brand" href="./"><img src="./assets/frog-logo.png" alt="F.R.O.G."><span>Fresno Storm Watch<small>Map comparison pilot · 0.38.0</small></span></a><calcite-button slot="content-end" href="./?view=watch" appearance="transparent" icon-start="launch">Full app</calcite-button></calcite-navigation>
 <div class="toolbar"><div role="tablist" aria-label="Pilot workspace"><button id="watch-tab" role="tab" aria-selected="true">Area Watch</button><button id="rivers-tab" role="tab" aria-selected="false">Rivers</button></div><calcite-label layout="inline">Map engine<calcite-select id="engine" label="Map engine" scale="s"><calcite-option value="maplibre" selected>MapLibre pilot</calcite-option><calcite-option value="arcgis">ArcGIS comparison</calcite-option></calcite-select></calcite-label><calcite-button id="mobile-toggle" appearance="outline" scale="s">Show map</calcite-button><calcite-button id="metrics-toggle" appearance="transparent" icon-start="dashboard" scale="s">Compare speed</calcite-button></div>

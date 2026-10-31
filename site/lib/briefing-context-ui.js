@@ -1,4 +1,4 @@
-import {validateBriefingContext,correlateBriefingContext,LOOKUP_KM} from './briefing-context-model.js?v=0.74.0-population';
+import {validateBriefingContext,correlateBriefingContext,LOOKUP_KM} from './briefing-context-model.js';
 import {POWER_STATES} from './power-model.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,action)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=action;return n;};

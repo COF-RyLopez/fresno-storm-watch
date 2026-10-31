@@ -1,7 +1,7 @@
-import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
-import {validatePopulationEvidence,populationEvidenceLines} from './population-snapshot-model.js?v=0.74.0-helpers';
-import {validateAfnEvidence,afnEvidenceLines} from './afn-snapshot-model.js?v=0.74.0-helpers';
-import {validatePopulationMapEvidence,populationMapLines} from './pio-zone-context.js?v=0.73.0-r2';
+import {CARE_SOURCES} from './care-model.js';
+import {validatePopulationEvidence,populationEvidenceLines} from './population-snapshot-model.js';
+import {validateAfnEvidence,afnEvidenceLines} from './afn-snapshot-model.js';
+import {validatePopulationMapEvidence,populationMapLines} from './pio-zone-context.js';
 export const PIO_RECEIPTS=['Sent / posted · receipt unconfirmed','Partner acknowledged','Delivery issue'];
 export const isPio=p=>!!(p?.pioOutreach||p?.pioDistribution);
 const text=(v,name,max=1500)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw Error(`${name} is required (up to ${max} characters).`);};

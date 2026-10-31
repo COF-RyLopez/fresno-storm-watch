@@ -1,4 +1,4 @@
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {reportHealth} from './source-health.js';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {

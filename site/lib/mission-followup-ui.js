@@ -1,11 +1,11 @@
 import {EOC_CONFIG} from '../eoc-config.js';
 import {createPrivateStore} from './eoc-store.js';
-import {missionFollowups,followupsForEvidence} from './mission-followup-model.js?v=0.71.1';
-import {emptyRecords,heads} from './eoc-model.js?v=0.74.0-helpers';
-import {pioStates} from './pio-model.js?v=0.74.0-helpers';
-import {createPioSourceMonitor} from './pio-source-data.js?v=0.74.0-planning';
-import {pioReviewCount,pendingPioSourceReviews} from './pio-source-review.js?v=0.74.0-helpers';
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {missionFollowups,followupsForEvidence} from './mission-followup-model.js';
+import {emptyRecords,heads} from './eoc-model.js';
+import {pioStates} from './pio-model.js';
+import {createPioSourceMonitor} from './pio-source-data.js';
+import {pioReviewCount,pendingPioSourceReviews} from './pio-source-review.js';
+import {reportHealth} from './source-health.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** Named-account, read-only incident follow-ups. No persistence and no automatic dispatch. */
 export function createMissionFollowups({openStore=createPrivateStore,sourceMonitor=createPioSourceMonitor()}={}){

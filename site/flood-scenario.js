@@ -1,9 +1,9 @@
-import { loadSdk } from './lib/map.js?v=0.74.0-shell';
-import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js?v=0.60.0';
-import { createTrafficCanvas } from './lib/evacuation-traffic.js?v=0.74.0-scenarios';
-import { createFrameWindow } from './lib/frame-window.js?v=0.39.0';
-import { createZarrFrames } from './lib/zarr-frames.js?v=0.73.1';
-import { buildingFields, classRenderer, createPlayer, fieldInfos, hydrograph, pickScenario, showScenario, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js?v=0.74.0-scenarios';
+import { loadSdk } from './lib/map.js';
+import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
+import { createTrafficCanvas } from './lib/evacuation-traffic.js';
+import { createFrameWindow } from './lib/frame-window.js';
+import { createZarrFrames } from './lib/zarr-frames.js';
+import { buildingFields, classRenderer, createPlayer, fieldInfos, hydrograph, pickScenario, showScenario, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
 
 const ROOT = './data/flood-scenarios/';
 // Phones get the map first: the panel starts collapsed behind Details, and traffic loads only when switched on.

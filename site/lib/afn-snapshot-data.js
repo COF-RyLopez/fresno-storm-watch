@@ -1,5 +1,5 @@
-import {readAfnContext} from './afn-data.js?v=0.74.0-helpers';
-import {AFN_TOPIC_KEYS,freezeAfnEvidence} from './afn-snapshot-model.js?v=0.74.0-helpers';
+import {readAfnContext} from './afn-data.js';
+import {AFN_TOPIC_KEYS,freezeAfnEvidence} from './afn-snapshot-model.js';
 
 /** Only a public county-zone geometry reaches the public source readers. */
 export async function captureAfnEvidence(row,zone,{signal,current=()=>true,readContext=readAfnContext}={}){
