@@ -6,7 +6,7 @@ import {CARE_SOURCES,careBox,comparePlaces,compareBuildings,zonesAt,normalizeTex
 import {readCareCollection,readCarePlaces} from './care-data.js?v=0.74.0-helpers';
 import {loadPowerBuildings} from './power-buildings-data.js';
 import {createCareMap} from './care-map.js?v=0.74.0-helpers';
-import {loadSdk} from './map.js?v=0.74.0-helpers';
+import {loadSdk} from './map.js?v=0.74.0-shell';
 
 const $=id=>document.getElementById(id),el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=()=>void fn();return b;};
