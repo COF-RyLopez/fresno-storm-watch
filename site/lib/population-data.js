@@ -1,5 +1,5 @@
 import {readArcgis} from './acs-data.js?v=0.74.0-helpers';
-import {POPULATION_SOURCES,normalizePopulationFeature,summarizePopulation} from './population-model.js?v=0.73.1';
+import {POPULATION_SOURCES,normalizePopulationFeature,summarizePopulation} from './population-model.js?v=0.74.0-population';
 
 /** objectId inventory → 100-ID WGS84 batches → same inventory re-read; any gap or change is an error. */
 export async function readAllByIds(read,filter,{idField,outFields,limit,errors:[inventoryError,batchError,changedError],row}){

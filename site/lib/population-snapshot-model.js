@@ -1,11 +1,11 @@
-import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation} from './population-model.js?v=0.73.1';
+import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation} from './population-model.js?v=0.74.0-population';
 import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_BOUNDARIES,summarizeZoneAcs} from './zone-acs-model.js?v=0.67.0';
 import {CARE_SOURCES} from './care-model.js?v=0.74.0-helpers';
 
 const methods={allocation:ZONE_ACS_METHOD,baseline:POPULATION_METHOD,sampling:ZONE_ACS_ERROR,limits:ZONE_ACS_LIMIT+' '+POPULATION_LIMIT};
-const count=value=>value===null||Number.isFinite(value)&&value>=0;
-const date=value=>value===null||Number.isFinite(value)&&value>0&&value<=Date.now()+300000;
-const optionalDate=value=>value===0||value===undefined?null:value;
+export const count=value=>value===null||Number.isFinite(value)&&value>=0;
+export const date=value=>value===null||Number.isFinite(value)&&value>0&&value<=Date.now()+300000;
+export const optionalDate=value=>value===0||value===undefined?null:value;
 const close=(a,b)=>a===null||b===null?a===b:Math.abs(a-b)<=Math.max(1,Math.abs(b))*1e-9;
 
 /** Whitelist public evidence only: no geometry, full source collections or private form fields. */

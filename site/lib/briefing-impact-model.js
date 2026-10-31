@@ -1,4 +1,5 @@
 import {briefingState,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF} from './briefing-model.js';
+import {pacificDate} from './briefing-context-model.js?v=0.74.0-population';
 
 export const PARTNER_BRIEFING=Object.freeze({url:'./data/briefings/nws-hanford-2026-10-19.pdf',sha256:'28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4',bytes:6247407});
 const day=value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
@@ -20,7 +21,7 @@ export function validateBriefingImpacts(value){
 /** @param {object|null} register @param {object|null} snapshot @param {number} now @returns {object} Never carry a reviewed summary forward to a different public PDF. */
 export function briefingImpacts(register,snapshot,now=Date.now()){
   if(!register)return {rows:[],unreviewed:false,missing:true};
-  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+  const today=pacificDate(now);
   const current=snapshot?.document?.sha256,health=briefingState(snapshot,now),docs=new Map(register.documents.map(d=>[d.id,d]));
   const rows=register.impacts.flatMap(i=>{
     const document=docs.get(i.document);

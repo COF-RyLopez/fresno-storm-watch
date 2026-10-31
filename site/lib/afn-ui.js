@@ -1,4 +1,4 @@
-import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.69.0';
+import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.74.0-population';
 import {formatAcsMeasure} from './acs-model.js?v=0.65.0-r1';
 import {readAfnContext} from './afn-data.js?v=0.74.0-helpers';
 import {reportHealth} from './source-health.js?v=0.73.1';

@@ -1,4 +1,4 @@
-import {validateBriefingImpacts,briefingImpacts} from './briefing-impact-model.js?v=0.21.0';
+import {validateBriefingImpacts,briefingImpacts} from './briefing-impact-model.js?v=0.74.0-population';
 import {HNX_BRIEFING_PAGE} from './briefing-model.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Read-only planning context; never mutates attention counts, assignments or private records. */

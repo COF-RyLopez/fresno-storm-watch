@@ -33,7 +33,7 @@ import { createFacilityWatch } from './lib/facility-ui.js?v=0.74.0-helpers';
 import { createRoadWatch } from './lib/roads-ui.js?v=0.73.1';
 import {createHanfordBriefing} from './lib/briefing-ui.js?v=0.74.0-helpers';
 import {createBriefingLayers} from './lib/briefing-layer-ui.js?v=0.74.0-helpers';
-import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.39.0';
+import {createBriefingContextView} from './lib/briefing-context-ui.js?v=0.74.0-population';
 import { createReleaseTrends } from './lib/release-trend-ui.js?v=0.74.0-helpers';
 
 const $ = id => document.getElementById(id);

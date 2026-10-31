@@ -1,11 +1,12 @@
 import {powerGeometry} from './power-geometry.js';
+import {ACS_SOURCES} from './acs-model.js?v=0.65.0-r1';
 
 export const POPULATION_SOURCES=Object.freeze({
   blocksItem:'https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3',
   countyWebMap:'https://www.arcgis.com/home/item.html?id=b60b27d16eac4a078c406030abd267ad',
   blocks:'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/California_Census_2020_Redistricting_Blocks/FeatureServer/0',
-  acs:'https://P3ePLMYs2RVChkJx.svcs.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/ACS_Population_View_Boundaries/FeatureServer/2',
-  acsItem:'https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83',
+  acs:ACS_SOURCES.population.url,
+  acsItem:ACS_SOURCES.population.item,
   countyMap:'https://cofgisonline.maps.arcgis.com/apps/webappviewer/index.html?id=22c8df4e3d854b39bbbf36b8042ba08d'
 });
 export const POPULATION_METHOD='2020 Census block population × fraction of each block polygon inside the selected county zone, measured with geodetic square-metre areas. Boundary blocks assume evenly distributed residents, including across water; this can be inaccurate, especially in large rural blocks.';

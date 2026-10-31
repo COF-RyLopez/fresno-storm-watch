@@ -1,4 +1,4 @@
-import {CARE_SOURCES} from './care-model.js?v=0.74.0-helpers';
+import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
 import {validatePopulationEvidence,populationEvidenceLines} from './population-snapshot-model.js?v=0.74.0-helpers';
 import {validateAfnEvidence,afnEvidenceLines} from './afn-snapshot-model.js?v=0.74.0-helpers';
 import {validatePopulationMapEvidence,populationMapLines} from './pio-zone-context.js?v=0.73.0-r2';

@@ -10,7 +10,7 @@ import {readCareCollection} from './care-data.js?v=0.74.0-helpers';
 import {ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {loadCounties} from './nws.js';
 import {localDateValue} from './eoc-forms.js';
-import {populationSourceGuide} from './population-guide.js?v=0.74.0-helpers';
+import {populationSourceGuide} from './population-guide.js?v=0.74.0-population';
 import {loadPioZoneContext,assertPopulationMapBoundary,populationMapSummary,populationMapLines} from './pio-zone-context.js?v=0.73.0-r2';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};

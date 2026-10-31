@@ -17,8 +17,6 @@ import logging
 from pathlib import Path
 import struct
 from typing import Any
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 
@@ -29,17 +27,6 @@ FIELDS = ['objectid', 'globalid', 'legacy_pod_id', 'wr_id', 'name',
           'diversion_type', 'diversion_subtype', 'diversion_status',
           'data_management_status', 'water_course_name', 'last_edited_date']
 LOG = logging.getLogger('irrigation-audit')
-
-
-def query(layer: int, params: dict[str, Any]) -> dict[str, Any]:
-    """POST bounded read-only queries; fail on service errors instead of truncating."""
-    request = Request(f'{CALWATRS}/{layer}/query',
-                      data=urlencode({'f': 'json', **params}).encode('utf-8'))
-    with urlopen(request, timeout=60) as response:
-        result = json.load(response)
-    if result.get('error'):
-        raise RuntimeError(f'CalWATRS layer {layer}: {result["error"]}')
-    return result
 
 
 def audit_attributes(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -101,6 +88,11 @@ def main() -> None:
     spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+
+    def query(layer: int, params: dict[str, Any]) -> dict[str, Any]:
+        """POST bounded read-only queries; fail on service errors instead of truncating."""
+        return module.request_json(f'{CALWATRS}/{layer}/query', params, timeout=60, error=f'CalWATRS layer {layer}', headers={})
+
     boundary = ROOT / 'site' / 'data' / 'counties.geojson'
     _, geometry = module.county_filter(boundary)
     spatial = {'where': '1=1', 'geometry': json.dumps(geometry),

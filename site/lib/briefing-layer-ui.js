@@ -7,6 +7,7 @@ import {probabilityRecord,PROBABILITY_MAX_CHECK_AGE} from './precip-probability-
 import {slideMapping,chooseSlideLayer} from './briefing-follow-model.js';
 const $=id=>document.getElementById(id);
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+const cycleQuery=s=>{const q=new URL(`${s.service}/${s.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(s.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});return q;};
 /** Public live services only. Tour state, source revisions and features stay in page memory. */
 export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onStart=()=>{},onStop=()=>{},onBriefing=()=>{},onManual=()=>{}}){
   let map=null,FeatureLayer=null,MediaLayer=null,ImageElement=null,ExtentAndRotationGeoreference=null,Extent=null,index=0,active=false,busy=false,cycle=null,checked=null,error=null,generation=0,abort=null,next=0,legend=[];
@@ -16,6 +17,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
   const compactTime=t=>new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(t);
   const picker=$('briefing-layer-select');
   for(const s of BRIEFING_LAYERS){const o=el('calcite-option',s.label);o.value=s.id;picker.append(o);}
+  function watchLayer(layer,id){layer.on('layerview-create-error',e=>{failed.add(`${id}:${e.view.type}`);render();});layer.on('layerview-create',e=>{failed.delete(`${id}:${e.view.type}`);render();});}
   function disableLayers(){for(const l of layers.values())map?.setLayerEligibility(l,false);}
   function render(){
     const s=step(),l=layers.get(s.id),stale=!checked||Date.now()-checked>BRIEFING_LAYER_CHECK_MS||(cycle?.collected&&Date.now()-cycle.collected>PROBABILITY_MAX_CHECK_AGE),expired=cycle&&(Date.now()>=cycle.end||Date.now()-cycle.issue>s.maxAge),bad=!!error||stale||expired||failed.has(`${s.id}:${map?.view?.type}`);
@@ -56,7 +58,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
         const mercator=(lon,lat)=>[6378137*lon*Math.PI/180,6378137*Math.log(Math.tan(Math.PI/4+lat*Math.PI/360))];
         const b=snapshot.bounds,[xmin,ymin]=mercator(b.xmin,b.ymin),[xmax,ymax]=mercator(b.xmax,b.ymax);
         const element=new ImageElement({image,georeference:new ExtentAndRotationGeoreference({extent:new Extent({xmin,ymin,xmax,ymax,spatialReference:{wkid:3857}})})});
-        if(!layer){layer=new MediaLayer({title:'WPC probability · '+s.label,visible:false,opacity:1,source:[element],copyright:'NOAA / National Weather Service / Weather Prediction Center'});layers.set(s.id,layer);map.registerLayer('briefingLayers',layer,false,1);layer.on('layerview-create-error',e=>{failed.add(`${s.id}:${e.view.type}`);render();});layer.on('layerview-create',e=>{failed.delete(`${s.id}:${e.view.type}`);render();});}
+        if(!layer){layer=new MediaLayer({title:'WPC probability · '+s.label,visible:false,opacity:1,source:[element],copyright:'NOAA / National Weather Service / Weather Prediction Center'});layers.set(s.id,layer);map.registerLayer('briefingLayers',layer,false,1);watchLayer(layer,s.id);}
         else{layer.source.elements.removeAll();layer.source.elements.add(element);}
         const old=imageUrls.get(s.id);imageUrls.set(s.id,url);installed=true;if(old)URL.revokeObjectURL(old);
       }
@@ -71,15 +73,14 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
         const result=await probability(s,signal,request);if(!result||request!==generation)return;
         cycle=result.candidate;legend=result.symbols;checked=Date.now();
       }else{
-      const q=new URL(`${s.service}/${s.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(s.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});
-      const [payload,metadata,legendPayload]=await Promise.all([json(q,signal),json(`${s.service}/${s.layer}?f=json`,signal),json(`${s.service}/legend?f=json`,signal)]);
+      const [payload,metadata,legendPayload]=await Promise.all([json(cycleQuery(s),signal),json(`${s.service}/${s.layer}?f=json`,signal),json(`${s.service}/legend?f=json`,signal)]);
       const candidate=briefingLayerCycle(payload,s),symbols=briefingLayerLegend(legendPayload,s);
       verifyFollowWindow(s,candidate);
       if(metadata.geometryType!=='esriGeometryPolygon'||metadata.drawingInfo?.renderer?.field1!==s.field)throw new Error('Source geometry or renderer changed; verification required.');
       if(request!==generation)return;
       if(FeatureLayer&&map){
         let layer=layers.get(s.id);
-        if(!layer){layer=new FeatureLayer({url:`${s.service}/${s.layer}`,title:'NWS briefing · '+s.label,visible:false,definitionExpression:'1=0',opacity:0.72,outFields:['*'],popupTemplate:{title:s.label,content:[{type:'text',text:s.meaning+' Source times below are UTC.'},{type:'fields',fieldInfos:[{fieldName:s.field,label:s.field==='qpf'?'Liquid precipitation (inches)':s.field==='dn'?'Risk category code':'Winter impact'},...['issue_time','start_time','end_time'].map(fieldName=>({fieldName,label:fieldName.replaceAll('_',' ')+' (UTC)'}))]}]}});layers.set(s.id,layer);map.registerLayer('briefingLayers',layer,false);layer.on('layerview-create-error',e=>{failed.add(`${s.id}:${e.view.type}`);render();});layer.on('layerview-create',e=>{failed.delete(`${s.id}:${e.view.type}`);render();});}
+        if(!layer){layer=new FeatureLayer({url:`${s.service}/${s.layer}`,title:'NWS briefing · '+s.label,visible:false,definitionExpression:'1=0',opacity:0.72,outFields:['*'],popupTemplate:{title:s.label,content:[{type:'text',text:s.meaning+' Source times below are UTC.'},{type:'fields',fieldInfos:[{fieldName:s.field,label:s.field==='qpf'?'Liquid precipitation (inches)':s.field==='dn'?'Risk category code':'Winter impact'},...['issue_time','start_time','end_time'].map(fieldName=>({fieldName,label:fieldName.replaceAll('_',' ')+' (UTC)'}))]}]}});layers.set(s.id,layer);map.registerLayer('briefingLayers',layer,false);watchLayer(layer,s.id);}
         await layer.load();if(request!==generation)return;
         layer.definitionExpression=candidate.where;layer.refresh();
       }
@@ -114,7 +115,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
         const snapshot=await json('./data/precip-probability.json',signal);
         candidates=choices.flatMap(s=>{try{const r=probabilityRecord(snapshot,s);return [{id:s.id,start:Date.parse(r.start),end:Date.parse(r.end)}];}catch{return [];}});
       }else{
-        const results=await Promise.allSettled(choices.map(async s=>{const q=new URL(`${s.service}/${s.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(s.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});return {id:s.id,...briefingLayerCycle(await json(q,signal),s)};}));
+        const results=await Promise.allSettled(choices.map(async s=>({id:s.id,...briefingLayerCycle(await json(cycleQuery(s),signal),s)})));
         candidates=results.filter(r=>r.status==='fulfilled').map(r=>r.value);
       }
       const selected=chooseSlideLayer(mapping,candidates);

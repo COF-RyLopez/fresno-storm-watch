@@ -1,5 +1,5 @@
 import {readArcgis} from './acs-data.js?v=0.74.0-helpers';
-import {AFN_SOURCES,validateLanguageAreas,normalizePuma,normalizeSvi,normalizeCes,normalizeDac,normalizeCcl} from './afn-model.js?v=0.69.0';
+import {AFN_SOURCES,validateLanguageAreas,normalizePuma,normalizeSvi,normalizeCes,normalizeDac,normalizeCcl} from './afn-model.js?v=0.74.0-population';
 
 const read=(url,query,options)=>readArcgis(url,query,options,25000,'Source HTTP ','Publisher query failed.');
 const normalizers={puma:normalizePuma,svi:normalizeSvi,ces:normalizeCes,sb535:normalizeDac,ccl:normalizeCcl};
