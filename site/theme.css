@@ -36,13 +36,6 @@
 }
 :root.calcite-mode-dark {
   color-scheme: dark;
-  --app-canvas: var(--calcite-color-surface-1);
-  --app-surface: var(--calcite-color-surface-2);
-  --app-text: var(--calcite-color-text-1);
-  --app-muted: var(--calcite-color-text-2);
-  --app-link: var(--calcite-color-text-link);
-  --app-border: var(--calcite-color-border-2);
-  --app-map-background: var(--calcite-color-surface-1);
   --warning: #ef8d87;
   --watch: #e0b663;
   --advisory: #75bddd;

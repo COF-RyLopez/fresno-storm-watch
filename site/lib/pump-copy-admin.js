@@ -1,5 +1,5 @@
 import {COPY_PARENT,COPY_VIEW,COPY_TAG,pumpCopyLayer,verifyCopySchema,verifyStagedCopy,readPumpCopy} from './pump-copy-model.js';
-import {privateObjectIds} from './eoc-store.js?v=0.73.1';
+import {privateObjectIds} from './eoc-store.js?v=0.74.0-shell';
 import {copyUrl} from './pump-copy-data.js';
 
 /** Only the existing county exercise owner may create or advance inventory snapshots. */

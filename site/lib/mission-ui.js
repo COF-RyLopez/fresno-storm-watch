@@ -12,7 +12,7 @@ import {EOC_CONFIG} from '../eoc-config.js';
 import {createScenarioClient} from './scenario-client.js';
 import {runnable,validateRun,modelFitsArea} from './scenario-contract.js';
 import {concernSummary,concernOrder,freezeConcern,briefText,pumpHandoffLines,incidentHandoffLines} from './mission-model.js?v=0.59.0';
-import {createPrivateStore} from './eoc-store.js?v=0.73.1';
+import {createPrivateStore} from './eoc-store.js?v=0.74.0-shell';
 import {makeEvent,digest,briefingSnapshot} from './eoc-model.js?v=0.73.1';
 import {formatTime} from './model.js';
 import {clockLabel} from './flood-scenario-model.js?v=0.39.0';

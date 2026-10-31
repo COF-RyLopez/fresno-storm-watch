@@ -365,11 +365,9 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 }
 
 .topic-notice{--calcite-block-content-space:0;}
-#header-tools-open{display:none;}
 @media(max-width:900px){
  #header-actions-host{display:none;}
- #header-tools-open{display:block;margin-inline:4px;}
- #header-tools-host .navigation-actions{display:flex;flex-direction:column;align-items:stretch;padding:8px;gap:4px;max-width:280px;}
+ #header-tools-host .navigation-actions{max-width:280px;}
  #header-tools-host .official-link{display:block;}
  .shell-header .navigation-actions{flex-wrap:nowrap;}
 }
