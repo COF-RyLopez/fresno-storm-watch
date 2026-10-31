@@ -64,5 +64,5 @@ export function correlateDwrSupplies({supplies,planning,roads,radiusKm=25,areaId
     return {site,areas,roads:nearbyRoads,inspection:inspectionAge(site.inspection,now)};
   });
   return {rows:areaId==='all'?result:result.filter(r=>r.areas.length),total:result.length,loaded:!!supplies?.loaded,supplyCurrent,supplyError:supplies?.error||null,supplyChecked:supplies?.checked??null,
-    planningReady:groups.length>0,areaOptions:groups.map(r=>({id:r.area.id,name:r.area.name})),roadCurrent,roadChecked:roads?.snapshot?.checked??null,roadError:roads?.error||null,roadRejected:rejected,roadConflicts:conflicts,radiusKm,areaId};
+    planningReady:groups.length>0,roadCurrent,roadChecked:roads?.snapshot?.checked??null,roadError:roads?.error||null,roadRejected:rejected,roadConflicts:conflicts,radiusKm,areaId};
 }

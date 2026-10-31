@@ -1,6 +1,5 @@
 /** Caltrans camera contracts. Catalog times never stand in for image capture times. */
 export const CAMERA_FEED = 'https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json';
-export const CAMERA_SOURCE = 'https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm';
 
 /** @param {unknown} value @param {'image'|'video'} kind @returns {string|null} */
 export function cameraMediaUrl(value, kind) {

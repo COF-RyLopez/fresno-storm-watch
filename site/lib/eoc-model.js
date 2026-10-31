@@ -1,4 +1,4 @@
-import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.73.0-r2';
+import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.73.1';
 import {validatePumpReadiness} from './pump-readiness-contract.js';
 import {validatePumpTask} from './pump-task-contract.js';
 /** Append-only EOC records. No source cue changes activation or official status. */
@@ -7,7 +7,6 @@ export const AUTHORITIES=['CAO / Director of Emergency Services','Public Health 
 export const COLLECTIONS=['incidents','periods','reports','verifications','coordination','checklists','staging','briefings','approvals','references','reviews'];
 export const CHECKS=['Staffing','Communications','Source coverage','Partner coordination','Briefing preparation'];
 export const PLAN_URL='https://fresnocounty.legistar.com/View.ashx?M=F&ID=13374832&GUID=3C309AAE-B5AC-4764-8293-946B62BAB68F';
-export const ROLE_VIEWS=['Management','Planning / Intelligence','Operations','Public Information'];
 export const emptyRecords=()=>Object.fromEntries(COLLECTIONS.map(k=>[k,[]]));
 export const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 export async function digest(value){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))))).map(b=>b.toString(16).padStart(2,'0')).join('');}

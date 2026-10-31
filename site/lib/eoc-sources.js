@@ -60,5 +60,4 @@ export function createEocSources(config,onChange){
     await emit();
   }catch{health.set('inventory',{key:'inventory',name:'Source inventory',checked:null,error:true});await emit();}finally{busy=false;}}
   void refresh();setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!busy)void emit();},30000);
-  return {refresh};
 }

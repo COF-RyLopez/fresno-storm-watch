@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {preparePumpCopy,verifyStagedCopy,readPumpCopy,samePumpAssociation,pumpCopyLayer,COPY_TAG} from '../site/lib/pump-copy-model.js';
+import {preparePumpCopy,verifyStagedCopy,readPumpCopy,pumpCopyLayer,COPY_TAG} from '../site/lib/pump-copy-model.js';
+import {pumpBinding,bindingKey} from '../site/lib/pump-readiness-contract.js';
 import {authorizePumpCopyAdmin,verifyCopyAccess,advancePumpCopy} from '../site/lib/pump-copy-admin.js';
 import {copyUrl,openPumpCopy} from '../site/lib/pump-copy-data.js';
 import {drainageRecord,DRAINAGE_LAYERS} from '../site/lib/drainage-model.js';
@@ -14,7 +15,7 @@ test('copy preserves original pump association despite different hosted IDs/proj
   const s=await snapshot();assert.equal(s.total,4);assert.equal(s.counts.pumps,2);assert.equal(s.counts.proposed,1);assert.equal(s.counts.other,1);
   await verifyStagedCopy(hosted(s.features),s);
   const copy=readPumpCopy(hosted(s.features.filter(f=>f.attributes.source_subtype===1)),now);assert.equal(copy.total,4);assert.equal(copy.rows.length,2);assert.equal(copy.sourceChecked,now);
-  for(let i=0;i<copy.rows.length;i++)assert(samePumpAssociation(rows[i],copy.rows[i]));
+  for(let i=0;i<copy.rows.length;i++)assert.equal(bindingKey(pumpBinding(rows[i])),bindingKey(pumpBinding(copy.rows[i])));
   assert.equal(copy.rows[0].key,'fmfcd:0:150');assert.equal(copy.rows[0].geometry.x,rows[0].geometry.x);
 });
 test('corrupt, partial, duplicated and mixed generations fail closed',async()=>{

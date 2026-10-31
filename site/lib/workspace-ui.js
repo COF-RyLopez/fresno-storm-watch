@@ -1,4 +1,4 @@
-import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.57.0';
+import {WORKSPACES,workspaceRoute} from './workspace-model.js?v=0.73.1';
 /** One active topic, independent map state, and no persisted operational data. */
 export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
@@ -45,8 +45,6 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   // events must not re-navigate after a topic-menu choice or a browser history change.
   window.addEventListener('popstate',()=>{cameraStates.set(section,camerasOpen);section=workspaceRoute(location.href);camerasOpen=cameraStates.get(section)||false;mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';evidence?.close({restoreFocus:false});render();if(map)void map.setWorkspace(section);onCameraChange(camerasOpen);onActivate(section);});
   $('workspace-list').addEventListener('click',()=>{panelOpen=true;render();});
-  $('view-map').addEventListener('click',showMap);
-  $('view-cameras').addEventListener('click',()=>onCameraChange(!camerasOpen));
   document.querySelectorAll('[data-show-map]').forEach(b=>b.addEventListener('click',showMap));
   $('camera-sheet').addEventListener('calciteSheetClose',()=>{if(!dock.matches&&!evidence?.isOpen&&camerasOpen){setCameras(false);onCameraChange(false);}});
   compact.addEventListener('change',()=>{if(evidence?.isOpen)panelOpen=!compact.matches;render();});dock.addEventListener('change',render);

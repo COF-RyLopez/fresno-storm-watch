@@ -14,10 +14,10 @@ import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { blend } from './flood-scenario-model.js?v=0.39.0';
-import { installMapContext } from './map-context.js?v=0.29.0';
+import { installMapContext } from './map-context.js?v=0.73.1';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
-import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.65.0';
+import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.73.1';
 import {installBasemapGallery} from './basemap-gallery-ui.js?v=0.26.0';
 
 let sdkPromise;
@@ -163,10 +163,6 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     host.textContent=!fema.visible?'FEMA overlay off':femaError||femaViews.get(view)==='error'?'FEMA unavailable in this view — check publisher source':fema.loadStatus!=='loaded'||!femaViews.get(view)?'Loading FEMA reference':view.scale>100_000?'Fresno FEMA zones · zoom to 1:100,000 or closer':'FEMA zones intersecting Fresno County';
   };
   void fema.load().then(femaStatus).catch(()=>{femaError=true;femaStatus();});
-  document.querySelector('#toggle-fema').addEventListener('click',()=>{
-    setLayerPreference('fema',!currentState().layers.fema);document.querySelector('#toggle-fema').textContent=`FEMA zones: ${fema.visible?'on':'off'}`;
-    document.querySelector('#toggle-fema').setAttribute('aria-pressed',String(fema.visible));document.querySelector('#fema-legend').hidden=!fema.visible;femaStatus();
-  });
   const drawGauges=()=>{
     gauges.removeAll();
     for(const row of gaugeRows.filter(r=>(activeProfile!=='rivers'||riverBasin==='All'||r.station.basin===riverBasin)&&(activeProfile!=='reservoirs'||currentState().layers.upstream||['SJXC1','RSBC1','GVAC1','SJMC1'].includes(r.station.id)))){const g=row.gauge||row.station,tone=row.assessment.tone;
@@ -304,14 +300,12 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       ? terrainError?'3D terrain unavailable · return to 2D for map context':'3D terrain context · no flood-depth model'
       : '2D map';
     document.querySelector('#scene-controls').hidden=view.type!=='3d';
-    for(const mode of ['2d','3d']){const button=document.querySelector(`#mode-${mode}`);button.setAttribute('aria-pressed',String(view.type===mode));button.setAttribute('appearance',view.type===mode?'solid':'outline');}
     const control=document.querySelector('#map-mode');for(const item of control.children)item.checked=item.getAttribute('value')===view.type;
     for(const listener of viewListeners)listener();
     syncVisibility();
   };
   const switchMode=async mode=>{
     if(mode===view.type)return;modeBusy=true;onFeatureSelect(null);
-    for(const m of ['2d','3d'])document.querySelector(`#mode-${m}`).setAttribute('disabled','');
     const previous=view, originalViewpoint=view.viewpoint.clone(), viewpoint=originalViewpoint.clone();
     const status=document.querySelector('#map-status');status.hidden=false;status.textContent=`Opening ${mode==='3d'?'3D terrain':'2D map'}…`;
     try{
@@ -343,14 +337,13 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       previous.container='map';view=previous;previous.viewpoint=originalViewpoint;
       status.hidden=false;status.textContent=`${mode==='3d'?'3D':'2D'} could not open. The previous view and data panels remain available.`;
       console.warn('Storm Watch view switch:',error.message);modeStatus();
-    }finally{modeBusy=false;for(const m of ['2d','3d'])document.querySelector(`#mode-${m}`).removeAttribute('disabled');}
+    }finally{modeBusy=false;}
   };
   let modeQueue=Promise.resolve();const setMode=mode=>{modeQueue=modeQueue.catch(()=>{}).then(()=>switchMode(mode));return modeQueue;};
-  for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).addEventListener('click',()=>{selectionFocus.cancel();void setMode(mode);});
   document.querySelector('#map-mode').addEventListener('calciteSegmentedControlChange',e=>{const mode=e.target.selectedItem?.value;if(['2d','3d'].includes(mode)){selectionFocus.cancel();const state=currentState();state.mode=mode;void setMode(mode).then(()=>{state.mode=view.type;state.viewpoint=view.viewpoint?.clone();});}});
   document.querySelector('#scene-overhead').addEventListener('click',()=>{selectionFocus.cancel();void navigate({tilt:0,heading:0});});
   document.querySelector('#scene-tilt').addEventListener('click',()=>{selectionFocus.cancel();void navigate({tilt:55,heading:0});});
-  modeStatus();for(const mode of ['2d','3d'])document.querySelector(`#mode-${mode}`).removeAttribute('disabled');
+  modeStatus();
   function drawPower(){
     power.removeAll();const keys=new Set(planningRows.filter(r=>planningFilter==='all'||r.review).flatMap(r=>[...r.power.matches,...r.power.followups].map(m=>m.row.key)));
     for(const key of drainagePowerKeys)keys.add(key);
@@ -509,14 +502,12 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusDrainageGroup(keys){const selected=drainageRows.filter(r=>r.category==='existing'&&keys.includes(r.key));if(!selected.length)return Promise.resolve(false);setLayerPreference('drainage',true);setLayerPreference('roads',true);setLayerPreference('facilities',true);return focusPoints(selected.flatMap(r=>r.geometry.rings?r.geometry.rings.flat().map(([longitude,latitude])=>({longitude,latitude})):[{longitude:r.geometry.x,latitude:r.geometry.y}]),.015);},
     focusDrainage(key){const row=drainageRows.find(r=>r.key===key);if(!row)return Promise.resolve(false);const group=row.category==='existing'?'drainage':row.category==='proposed'?'drainageProposed':row.category==='catchment'?'drainageCatchments':'drainageOther';setLayerPreference(group,true);const g=drainageLayers[group].graphics.find(g=>g.attributes.drainageKey===key);return focusGeometry(g.geometry,g.geometry.type==='point'?12000:null);},
     fitDrainage(){if(drainageRows.length)return focusPoints(drainageRows.flatMap(r=>r.geometry.rings?r.geometry.rings.flat().map(([longitude,latitude])=>({longitude,latitude})):[{longitude:r.geometry.x,latitude:r.geometry.y}]),.015);return Promise.resolve(false);},
-    setFacilitiesVisible:visible=>{setLayerPreference('facilities',visible);},
     focusFacility:key=>selectionFocus.focus(type=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(!g)return null;setLayerPreference('facilities',true);return {target:g.geometry,scale:14000,...(type==='3d'?{tilt:45,heading:0}:{})};}),
     setDrainagePowerKeys(keys,pumpKeys=[]){const signature=JSON.stringify([keys.slice().sort(),pumpKeys.slice().sort()]);if(signature===drainagePowerSignature)return;drainagePowerSignature=signature;drainagePowerKeys=new Set(keys);drainagePowerPumps=new Set(pumpKeys);drawPower();drawDrainagePower();},
     setPowerNetwork:data=>utilityNetwork.setSnapshot(data),setPowerNetworkSelection:keys=>utilityNetwork.setReference(keys),focusPowerNearby:(shape,category)=>utilityNetwork.showNearby(shape,category),clearPowerNearby:()=>utilityNetwork.clearNearby(),setPowerNetworkMatch:match=>utilityNetwork.setMatch(match),clearPowerNetworkMatch:()=>utilityNetwork.clearMatch(),focusPowerNetwork:keys=>utilityNetwork.focus(keys),
     capturePowerBuildingFocus:()=>{const pick=mapPick,scope=workspaceVersion;return ()=>pick===mapPick&&scope===workspaceVersion;},focusPowerBuildings:options=>powerBuildings.focusAll(options),
     setPowerBuildings:rows=>powerBuildings.set(rows),clearPowerBuildings:()=>powerBuildings.clear(),setPowerBuildingLabels:value=>powerBuildings.setLabels(value),focusPowerBuilding:id=>powerBuildings.focus(id),powerBuildingsViewport:()=>{const extent=view.extent;if(!extent)return null;const geo=extent.spatialReference.isGeographic?extent:webMercatorUtils.webMercatorToGeographic(extent);return {rings:[[[geo.xmin,geo.ymin],[geo.xmin,geo.ymax],[geo.xmax,geo.ymax],[geo.xmax,geo.ymin],[geo.xmin,geo.ymin]]],spatialReference:{wkid:4326}};},
     setPower:rows=>{powerRows=rows;drawPower();},
-    setPowerVisible:visible=>setLayerPreference('power',visible),
     focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;const geometries=power.graphics.toArray().filter(item=>item.attributes.powerKey===key).map(item=>item.geometry);if(geometries.length===1&&g.geometry.type==='point')return focusGeometry(g.geometry,25000);return focusGeometry(new Extent(powerFocusExtent(geometries)));}return focusGeometry(null);},
     setRoads:rows=>{roads.removeAll();for(const r of rows){if(!r.geometry)continue;const inactive=r.active==='no',shade=inactive?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';roads.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||inactive?'dash':'solid'}}));}},
     setRoadsVisible:visible=>setLayerPreference('roads',visible),
@@ -529,7 +520,6 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
         altitude:view.type==='3d'?point?.z:Math.min(20_000_000,Math.max(1000,overheadHeight)),
         heading:view.type==='3d'?view.camera.heading:0,tilt:view.type==='3d'?view.camera.tilt:0};
     },
-    addEnvironmentLayers:(overlays,reservoirs)=>{map.addMany(overlays,1);map.add(reservoirs);},
     onViewChanged:listener=>{viewListeners.add(listener);},onPowerBuildingsViewSettled:listener=>{buildingViewListeners.add(listener);return ()=>buildingViewListeners.delete(listener);},
     clearEnvironmentPopup:()=>{view.closePopup();onFeatureSelect(null);},
     focusEnvironment:(longitude,latitude)=>focusLocation(longitude,latitude,45000,'reservoirs'),
@@ -539,12 +529,10 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
     focusPlanningPoints:points=>{setLayerPreference('areas',true);return focusPoints(points);},
     updateCameras: rows=>{cameraRows=rows;drawCameras();},
     selectCamera: id=>{selectedCamera=id;drawCameras();},
-    setCamerasVisible: visible=>setLayerPreference('cameras',visible),
     focusCamera: id=>{const row=cameraRows.find(c=>c.id===id);if(row){return focusLocation(row.longitude,row.latitude,25000,'cameras');}},
     updateGauges:(rows,basin='All')=>{gaugeRows=rows;riverBasin=basin;drawGauges();},
     selectGauge: id=>{selectedGauge=id;drawGauges();},
     focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){const g=validLocation(row.gauge)?row.gauge:row.station;return focusLocation(g.longitude,g.latitude,35000,'gauges');}},
-    setScope: scope=>{if(mapScope!==scope){mapScope=scope;followRegion=true;for(const layer of [boundaryLayer,labels])layer.graphics.forEach(g=>{g.visible=scope!=='fresno'||g.attributes.countyId==='06019';});return navigate(fitTarget());}},
     fit: () => { followRegion = false; return focusNavigate(fitTarget()); },
     update: alerts => {
       alertLayer.removeAll();

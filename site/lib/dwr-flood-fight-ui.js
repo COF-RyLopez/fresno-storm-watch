@@ -1,8 +1,8 @@
-import {loadSdk} from './map.js?v=0.62.0';
+import {loadSdk} from './map.js?v=0.73.1';
 import {countyGeometry} from './model.js';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js?v=0.61.0';
-import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js?v=0.62.0';
+import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js?v=0.73.1';
 
 const KEY='dwrFloodFight', REFRESH_MS=300000;
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};

@@ -1,7 +1,7 @@
 import {countyGeometry} from './model.js';
 import {pointInRings} from './power-geometry.js';
 import {prepareWatchGeometry} from './watch-proximity.js';
-import {correlateDwrSupplies} from './dwr-supply-planning-model.js?v=0.62.0';
+import {correlateDwrSupplies} from './dwr-supply-planning-model.js?v=0.73.1';
 
 export const SANDBAG_SOURCE='https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Sandbag_Locations/FeatureServer/0';
 export const SANDBAG_APP='https://gisportal.co.fresno.ca.us/portal/apps/webappviewer/index.html?id=ab6bf09e95cb4a23b4aa2e97ed61a843';

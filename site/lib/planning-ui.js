@@ -1,6 +1,6 @@
 import {mergeForecastReviews} from './forecast-review-model.js';
-import {differenceText} from './forecast-review-ui.js?v=0.59.0';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {differenceText} from './forecast-review-ui.js?v=0.73.1';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import { environmentalJson } from './environment-data.js';
 import { planningPoints,evaluateAreas } from './planning-model.js';
 import { fetchPlanningRain } from './planning-data.js';
@@ -109,8 +109,6 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     $('river-summary').textContent=`${focus.length?focus.map(r=>`${r.area.name}: ${windSummary(r)}`).join(' · '):windPeak?windSummary(windPeak):'Wind context unknown'}. ${scheduleCues.length?`${scheduleCues.length} scheduled release notice(s) to review. `:''}Known PSPS + river matches at watchpoints: ${overlaps.length}${rows.some(r=>r.power.gaps.length)?' (utility coverage incomplete)':''} · ${verification.length} ${verification.length===1?'area needs':'areas need'} power verification · ${gaps.length}/6 with evidence gaps. Review cues are not deployment instructions.`;
     $('river-banner').setAttribute('kind',threshold?'danger':reviews.length||gaps.length?'warning':'info');
     $('review-areas').setAttribute('text',`Review areas${reviews.length?' ('+reviews.length+')':''}`);
-    $('view-watch').setAttribute('text',reviews.length?`Area watch · ${reviews.length}`:'Area watch');
-    $('view-watch').toggleAttribute('indicator',reviews.length>0);
     $('watch-rule-summary').textContent=`${reviews.length} review · ${overlaps.length} PSPS + river · ${verification.length} power verification · ${gaps.length} with gaps`;
     const host=$('area-watch-list');host.replaceChildren();if(filterMode==='review'&&!reviews.length)host.append(el('p','No current review cues returned. Check source issues or choose All areas; this is not an all-clear.','empty-state'));
     for(const r of rows.filter(r=>filterMode==='all'||r.review)){

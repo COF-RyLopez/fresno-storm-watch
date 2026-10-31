@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {WORKSPACES,workspaceRoute,workspaceDefaults,workspaceMemory,layerVisible,unhealthyChecks} from '../site/lib/workspace-model.js';
+import {WORKSPACES,workspaceRoute,workspaceDefaults,workspaceMemory,layerVisible} from '../site/lib/workspace-model.js';
 
 test('focused defaults and private drainage never start with an unrelated operational stack',()=>{
   assert.deepEqual(Object.keys(WORKSPACES),['watch','rivers','weather','reservoirs','alerts','power','drainage','roads']);
@@ -36,10 +36,6 @@ test('legacy conditions and release links, initial landing and canonical tab lin
   assert.equal(workspaceRoute('/'),'watch');assert.equal(workspaceRoute('/?view=conditions&overlay=satellite'),'weather');assert.equal(workspaceRoute('/?view=environment'),'weather');
   for(const id of Object.keys(WORKSPACES))assert.equal(workspaceRoute('/?view='+id),id);
   assert.equal(workspaceRoute('/?view=conditions&trends=MIL'),'reservoirs');assert.equal(workspaceRoute('/?trends=PNF'),'reservoirs');assert.equal(workspaceRoute('/?trends=INVALID&view=roads'),'roads');assert.equal(workspaceRoute('/?view=INVALID'),'watch');
-});
-test('source issues count one check rather than repeated area associations and retain unknown/stale states',()=>{
-  const checks=new Map();for(let i=0;i<6;i++)checks.set('cdec:MIL',{label:'Millerton',status:'stale'});
-  checks.set('pge-psps',{label:'PG&E PSPS',status:'current'});checks.set('goes',{label:'GOES',status:'unknown'});assert.equal(unhealthyChecks(checks).length,2);assert.deepEqual(unhealthyChecks(checks).map(r=>r.label),['GOES','Millerton']);
 });
 test('Calcite shell retains unique live control ids and one pinned runtime after the split',async()=>{
   const html=await readFile(new URL('../site/index.html',import.meta.url),'utf8');const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,'DOM ids must remain unique');

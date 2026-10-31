@@ -1,6 +1,4 @@
 /** Shared browser/service contracts. Operational data never belongs in the public catalog. */
-export const SCENARIO_SCHEMA=1;
-export const RUN_STATES=['queued','running','preparing','complete','failed','cancelled','interrupted'];
 export const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 export const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(value);
 const requireValue=(ok,message)=>{if(!ok)throw Error(message);};

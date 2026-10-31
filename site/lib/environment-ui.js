@@ -1,11 +1,11 @@
-import {reportHealth} from './source-health.js?v=0.59.0';
-import { loadSdk } from './map.js?v=0.42.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
+import { loadSdk } from './map.js?v=0.73.1';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js?v=0.40.1';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.59.0';
+import {createWeatherTimeline} from './weather-ui.js?v=0.73.1';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);
@@ -15,7 +15,7 @@ function el(tag,text='',className=''){const n=document.createElement(tag);n.text
 function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Independent public weather/reservoir controller. */
-export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{},onOverlayChange=()=>{},onWeatherData=()=>{}}){
+export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{},onOverlayChange=()=>{},onWeatherData=()=>{}}){
   let map=null,layers=null,selection=null,snapshot=null,snapshotError=null,snapshotRead=null;
   let radar=[],radarError=null,radarChecked=null,qpf=null,qpfError=null,qpfChecked=null;
   let overlay='radar',period=QPF_PERIODS[1],frameChoice='latest',busy=false,resBusy=false,layerError=null;
@@ -159,7 +159,6 @@ export function createEnvironmentWatch({config,timeZone,exercise,onOpen,onMap=()
   $('environment-refresh').addEventListener('click',()=>void refreshWeather());
   $('reservoir-refresh').addEventListener('click',()=>void refreshReservoirs());
   $('environment-extent').addEventListener('click',()=>{onMap();map?.fitEnvironment();});
-  $('open-environment').addEventListener('click',()=>{onOpen();if(overlay==='off')selectOverlay('radar');});
   $('qpf-band-list').replaceChildren(...QPF_BANDS.map(b=>{const n=el('span',`${b.label} in`);const swatch=el('i');swatch.style.background=b.color;n.prepend(swatch);return n;}));
   if(exercise){for(const id of ['env-radar','env-qpf','env-satellite','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
   void environmentalJson(new URL('../data/reservoir-watchlist.json',import.meta.url)).then(s=>{selection=s;renderReservoirs();}).catch(error=>{snapshotError=error.message;renderReservoirs();});

@@ -1,5 +1,5 @@
-import {loadSdk} from './map.js?v=0.42.0';
-import {COLLECTIONS,emptyRecords,validateEvent,validatePayload,canonical} from './eoc-model.js?v=0.73.0-r2';
+import {loadSdk} from './map.js?v=0.73.1';
+import {COLLECTIONS,emptyRecords,validateEvent,validatePayload,canonical} from './eoc-model.js?v=0.73.1';
 export const GROUP_FOR={incidents:'recorders',periods:'coordinators',reports:'reporters',verifications:'reviewers',coordination:'coordinators',checklists:'coordinators',staging:'reviewers',briefings:'coordinators',approvals:'approvers',references:'coordinators',reviews:'reporters'};
 const idPattern=/^[a-zA-Z0-9_-]{1,80}$/;
 function safeService(url){if(!/^https:\/\/services\d*\.arcgis\.com\/[A-Za-z0-9]+\/arcgis\/rest\/services\/[^?#]+\/FeatureServer\/\d+$/.test(url))throw new Error('Private storage must use configured AGOL hosted table views.');return url;}

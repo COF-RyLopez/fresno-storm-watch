@@ -1,5 +1,5 @@
-import {loadSdk} from './map.js?v=0.42.0';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {loadSdk} from './map.js?v=0.73.1';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import {validateHrrrManifest,validateHrrrFrame,hrrrAt,hrrrPoint,hrrrPixels,GUST_STOPS} from './hrrr-model.js';
 
 const $=id=>document.getElementById(id);
