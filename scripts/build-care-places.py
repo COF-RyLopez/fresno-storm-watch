@@ -8,16 +8,14 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
+import importlib.util
 import json
 import logging
 import re
 from pathlib import Path
 
-from overturemaps.core import record_batch_reader
 from shapely import from_wkb
 from shapely.geometry import shape
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 LOG = logging.getLogger(__name__)
 
@@ -30,23 +28,14 @@ def build(root: Path, release: str) -> None:
     county = shape(next(f['geometry'] for f in boundary['features'] if f['properties']['GEOID'] == '06019'))
     cache = root / 'work' / ('care-places-' + release)
     cache.mkdir(parents=True, exist_ok=True)
-    source = cache / 'places.parquet'
-    if not source.exists():
-        reader = record_batch_reader('place', bbox=county.bounds, release=release, connect_timeout=20, request_timeout=90)
-        if reader is None:
-            raise RuntimeError('Overture Places stream is unavailable.')
-        columns = [k for k in ['id', 'version', 'geometry', 'names', 'addresses', 'operating_status', 'confidence', 'basic_category', 'categories', 'taxonomy', 'sources'] if k in reader.schema.names]
-        temporary = source.with_suffix('.tmp')
-        count = 0
-        with pq.ParquetWriter(temporary, pa.schema([reader.schema.field(k) for k in columns]), compression='zstd') as writer:
-            for batch in reader:
-                writer.write_batch(batch.select(columns))
-                count += batch.num_rows
-                LOG.info('Read %d public bbox places', count)
-        temporary.replace(source)
+    spec = importlib.util.spec_from_file_location('power_buildings', root / 'scripts' / 'build-power-buildings.py')
+    overture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(overture)
+    records = overture.acquire('place', release, county.bounds, cache, path=cache / 'places.parquet', error='Overture Places stream is unavailable.',
+                               columns=('id', 'version', 'geometry', 'names', 'addresses', 'operating_status', 'confidence', 'basic_category', 'categories', 'taxonomy', 'sources'))
     rows, seen = [], set()
     accounting = dict(read=0, outside=0, invalid=0, retained=0)
-    for record in pq.read_table(source).to_pylist():
+    for record in records:
         accounting['read'] += 1
         point = from_wkb(record['geometry'])
         if point.is_empty or not point.is_valid or point.geom_type != 'Point':

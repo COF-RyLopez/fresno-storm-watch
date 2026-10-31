@@ -11,7 +11,6 @@ import importlib.util
 import json
 import logging
 import math
-import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -77,15 +76,10 @@ def acquire() -> None:
 
     def request(url: str, params: dict[str, Any]) -> dict[str, Any]:
         """Retry bounded transient transport errors, never bypass TLS checks."""
-        for attempt in range(3):
-            try:
-                return source.request_json(url, params)
-            except (HTTPError, URLError, TimeoutError, ConnectionError) as error:
-                if attempt == 2:
-                    raise RuntimeError('USGS download incomplete; rerun to resume validated batches.') from error
-                LOG.warning('Retry %s after transport error: %s', attempt+1, type(error).__name__)
-                time.sleep(2**attempt)
-        raise AssertionError('Unreachable request retry state')
+        try:
+            return source.request_json(url, params, retries=3)
+        except (HTTPError, URLError, TimeoutError, ConnectionError) as error:
+            raise RuntimeError('USGS download incomplete; rerun to resume validated batches.') from error
 
     metadata = request(source.SOURCE, {})
     oid = next(field['name'] for field in metadata['fields'] if field['type'] == 'esriFieldTypeOID')
@@ -159,11 +153,7 @@ def acquire() -> None:
         'dimensionPolicy': 'Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.',
         'limitations': 'Countywide USGS reference coverage, not a complete verified irrigation-district ditch inventory. Not live flow, gate state, hydraulic routing or predicted inundation.',
         'networkAudit': audit, 'license': 'USGS public-domain federal reference data; Esri background attribution retained separately.'}
-    for name, doc in [('county.geojson', {'type': 'FeatureCollection', 'features': rendered}), ('manifest.json', manifest)]:
-        target = output / name
-        temporary = target.with_suffix('.tmp')
-        temporary.write_text(json.dumps(doc, separators=(',', ':') if name.endswith('geojson') else None, indent=None if name.endswith('geojson') else 2), encoding='utf-8')
-        temporary.replace(target)
+    source.write_snapshot(output, rendered, manifest)
     LOG.info('Validated %s county features, zero rejected; %s named / %s unnamed', len(rows), manifest['namedSegments'], manifest['unnamedSegments'])
     print(json.dumps({'accepted': len(rows), 'types': types, 'networkAudit': audit}, indent=2))
 
