@@ -1,5 +1,5 @@
 import {EOC_CONFIG} from '../eoc-config.js';
-import {createPrivateStore,createExerciseStore} from './eoc-store.js?v=0.74.0-helpers';
+import {createPrivateStore,createExerciseStore} from './eoc-store.js?v=0.74.0-shell';
 import {emptyRecords,makeEvent,heads,digest,canonical} from './eoc-model.js?v=0.74.0-helpers';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION_OPTIONS,FUEL_OPTIONS,pumpBinding,bindingKey,validatePumpReadiness} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';

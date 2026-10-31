@@ -1,11 +1,11 @@
 import {reportHealth} from './source-health.js?v=0.73.1';
-import { loadSdk } from './map.js?v=0.74.0-helpers';
+import { loadSdk } from './map.js?v=0.74.0-shell';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js?v=0.40.1';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
-import {createWeatherTimeline} from './weather-ui.js?v=0.74.0-helpers';
+import {createWeatherTimeline} from './weather-ui.js?v=0.74.0-shell';
 import {observationAt} from './weather-model.js';
 
 const $=id=>document.getElementById(id);

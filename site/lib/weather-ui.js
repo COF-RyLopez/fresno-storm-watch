@@ -1,7 +1,7 @@
 import {svgNode} from './river-chart.js?v=0.74.0-helpers';
 import {reportHealth} from './source-health.js?v=0.73.1';
-import {createHrrrWeather} from './hrrr-ui.js?v=0.74.0-helpers';
-import {loadSdk} from './map.js?v=0.74.0-helpers';
+import {createHrrrWeather} from './hrrr-ui.js?v=0.74.0-shell';
+import {loadSdk} from './map.js?v=0.74.0-shell';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.74.0-infra-weather';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 

@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js?v=0.74.0-helpers';
+import {loadSdk} from './map.js?v=0.74.0-shell';
 import {countyGeometry} from './model.js';
 import {reportHealth} from './source-health.js?v=0.73.1';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js?v=0.61.0';

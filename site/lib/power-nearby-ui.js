@@ -1,6 +1,6 @@
 import {networkVicinityGeometry,powerNearbyCandidates,pumpInventoryProblem} from './power-nearby-model.js';
 import {createPumpVicinityInventory} from './power-nearby-data.js';
-import {openPumpCopy} from './pump-copy-data.js?v=0.74.0-helpers';
+import {openPumpCopy} from './pump-copy-data.js?v=0.74.0-shell';
 import {PUMP_INVENTORY_CONFIG} from '../pump-inventory-config.js?v=0.47.0';
 import {EOC_CONFIG} from '../eoc-config.js';
 import {pumpReadiness} from './pump-readiness-model.js';
