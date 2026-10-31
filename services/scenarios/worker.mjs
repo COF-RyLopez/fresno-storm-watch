@@ -6,7 +6,8 @@ import {createReadStream} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {RunStore,sha256} from './store.mjs';
 import {canonical,validateRun,validateResult,validId} from '../../site/lib/scenario-contract.js';
-async function confined(root,file){if(!file||isAbsolute(file)||file.split(/[\\/]/).includes('..'))throw Error('Package path rejected.');const base=await realpath(root),path=await realpath(resolve(base,file)),rel=relative(base,path);if(rel.startsWith('..')||isAbsolute(rel))throw Error('Package escapes root.');return path;}
+/** Realpath containment: rejects absolute or '..' paths, then any symlink resolving outside root. */
+export async function confined(root,file){if(!file||isAbsolute(file)||file.split(/[\\/]/).includes('..'))throw Error('Package path rejected.');const base=await realpath(root),path=await realpath(resolve(base,file)),rel=relative(base,path);if(rel.startsWith('..')||isAbsolute(rel))throw Error('Package escapes root.');return path;}
 async function fileHash(path){const hash=createHash('sha256');for await(const chunk of createReadStream(path))hash.update(chunk);return hash.digest('hex');}
 /** Execute only an administrator-installed, hash-pinned adapter; user inputs are a JSON file. */
 export async function executeAdapter(executor,jobDir,input,{cancelled=()=>false,onHeartbeat=()=>{},timeoutMs=1800000,spawnProcess=spawn}={}){

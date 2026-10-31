@@ -4,9 +4,10 @@
 // Desktop prototype: the phone-tuned 2D page is flood-scenario.html.
 import { loadSdk } from './lib/map.js';
 import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
-import { loadTraffic, positionsAt } from './lib/evacuation-traffic.js?v=0.19.0';
+import { createTrafficCanvas } from './lib/evacuation-traffic.js?v=0.74.0-scenarios';
 import { createFrameWindow } from './lib/frame-window.js';
 import { squareToQuad } from './lib/ground-homography.js';
+import { buildingFields, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, hydrograph as popupChart, pickScenario, showScenario, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js?v=0.74.0-scenarios';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
@@ -14,12 +15,8 @@ const fmt = new Intl.NumberFormat('en-US');
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
 const params = new URLSearchParams(location.search);
 
-const index = await fetch(ROOT + 'index.json', { cache: 'no-cache' }).then(r => r.json());
-const id = index.scenarios.some(s => s.id === params.get('scenario')) ? params.get('scenario') : index.default;
-const DATA = `${ROOT}${id}/`;
+const { index, id, DATA } = await pickScenario(ROOT);
 $('link-2d').href = `./flood-scenario.html?scenario=${encodeURIComponent(id)}`;
-$('scenario-pick').innerHTML = index.scenarios.map(s => `<calcite-option value="${s.id}"${s.id === id ? ' selected' : ''}>${s.label}</calcite-option>`).join('');
-$('scenario-pick').addEventListener('calciteSelectChange', e => { if (e.target.value !== id) location.search = `?scenario=${encodeURIComponent(e.target.value)}`; });
 const [scenario, buildingsJson, unmatched, sdk] = await Promise.all([
   fetch(DATA + 'scenario.json').then(r => r.json()),
   fetch(DATA + 'buildings.json').then(r => r.json()),
@@ -33,20 +30,7 @@ const [Map, SceneView, Basemap, TileLayer, MediaLayer, ImageElement, ExtentAndRo
   '@arcgis/core/geometry/Point.js', '@arcgis/core/core/reactiveUtils.js', '@arcgis/core/layers/SceneLayer.js'
 ]);
 
-const frames = scenario.frames;
-const hours = frames.map(f => f.hour);
-const { wkid, ...bounds } = scenario.extent; // an unknown 'wkid' key zeroes the Extent
-const extent = new Extent({ ...bounds, spatialReference: { wkid } });
-$('scenario-title').textContent = scenario.title;
-$('source').textContent = scenario.source;
-$('notice').innerHTML = scenario.notice;
-$('clock-note').textContent = scenario.clock_note;
-const [arriveLabel, arrive2Label] = scenario.arrival_labels;
-$('time').min = hours[0];
-$('time').max = hours.at(-1);
-const stops = scenario.legend;
-$('ramp').style.background = `linear-gradient(to right, ${stops.map(s => `rgba(${s.rgba.slice(0, 3)},${s.rgba[3] / 255}) ${(100 * s.ft) / stops.at(-1).ft}%`).join(',')})`;
-$('ramp-labels').innerHTML = stops.map(s => `<span>${s.ft}${s === stops.at(-1) ? '+' : ''}</span>`).join('');
+const { frames, hours, extent } = showScenario(scenario, Extent);
 
 // Depth frames and flood front, draped on the terrain (as in the 2D page).
 const depth = new MediaLayer({ source: [], title: 'Modeled depth', blendMode: 'normal' });
@@ -60,20 +44,9 @@ const front = new GeoJSONLayer({
 // Buildings: depth at the displayed time vs first-floor height, the same expression and classes as flood-scenario.js.
 const samples = scenario.depth_model === 'samples';
 const props = rowsToObjects(buildingsJson);
-const fieldInfos = [
-  { fieldName: 'depth_max', label: 'Maximum depth at building (ft)', format: { places: 1 } },
-  { fieldName: 'found_ht', label: 'First-floor height (ft)', format: { places: 1 } },
-  { fieldName: 'arrive_hr', label: arriveLabel, format: { places: 1 } },
-  { fieldName: 'arrive2_hr', label: arrive2Label, format: { places: 1 } },
-  { fieldName: 'peak_hr', label: 'Peak depth, hour' },
-  { fieldName: 'vel_max', label: 'Maximum velocity (ft/s)', format: { places: 1 } },
-  { fieldName: 'struct_pct', label: 'Hazus structure damage (%)', format: { places: 0 } },
-  { fieldName: 'loss_usd', label: 'Hazus direct loss, structure + contents ($)', format: { digitSeparator: true, places: 0 } },
-  { fieldName: 'pop_night', label: 'Residents, night (NSI)' }, { fieldName: 'pop_day', label: 'Occupants, day (NSI)' }];
-const hydrograph = samples ? [{ type: 'media', mediaInfos: [{ type: 'line-chart', title: 'Depth at building by model frame (ft)', value: { fields: frames.map((_, i) => `d${i}`) } }] }] : [];
-const INTEGER = new Set(['fd_id', 'stories', 'val_struct', 'pop_night', 'pop_day', 'loss_usd']);
-const fields = [{ name: 'oid', type: 'oid' }, ...buildingsJson.fields.filter(f => f !== 'lon' && f !== 'lat')
-  .map(name => ({ name, type: name === 'occtype' ? 'string' : INTEGER.has(name) ? 'integer' : 'double' }))];
+const fieldInfos = popupFields(scenario.arrival_labels);
+const hydrograph = popupChart(samples, frames);
+const fields = buildingFields(buildingsJson.fields);
 const unmatchedSet = unmatched && new Set(unmatched);
 const points = new FeatureLayer({ // NSI points with no Overture footprint (all of them when there is no footprint file)
   title: unmatched ? 'Buildings without a footprint (NSI)' : 'Buildings (NSI)', minScale: 150_000, objectIdField: 'oid', fields, geometryType: 'point',
@@ -93,13 +66,6 @@ const depthExpression = (q, { i0, i1, w }) => samples
   ? `var d = $feature.d${i0} * ${1 - w} + $feature.d${i1} * ${w};`
   : `var a = $feature.arrive_hr; var pk = $feature.peak_hr; var m = $feature.depth_max; var t = ${q}; var f = Min(1, m);
      var d = IIf(IsEmpty(a) || t < a, 0, IIf(t >= pk || pk <= a, m, f + (m - f) * (t - a) / (pk - a)));`;
-const CLASSES = [[-99, -98, '#8b949e', 4], [-98, 0, '#f2cc60', 5], [0, 2, '#f0883e', 6], [2, 6, '#da3633', 7], [6, 99, '#8e1519', 8]];
-const marker = (color, size) => ({ type: 'simple-marker', size, color, outline: { color: [0, 0, 0, 0.6], width: 0.6 } });
-const classRenderer = valueExpression => ({
-  type: 'class-breaks', valueExpression, defaultSymbol: marker('#8b949e', 5),
-  classBreakInfos: CLASSES.map(([minValue, maxValue, color, size]) => ({ minValue, maxValue, symbol: marker(color, size) }))
-});
-const classOf = d => `${d} iif(d <= 0, -99, d - $feature.found_ht)`;
 
 // Footprints (ramp scenarios): a client-side layer whose 'cls' field holds each footprint's class (index into CLASSES) at the
 // time shown, under one fixed renderer. The ramp depth only rises, so the build script stores the hour each footprint enters
@@ -170,14 +136,7 @@ function updateFootprints(at) { // one applyEdits at a time; a newer time asked 
     .finally(() => { editing = false; if (wantedAt !== at) updateFootprints(wantedAt); });
 }
 
-const basemaps = {};
-const themedBasemap = () => {
-  const m = document.documentElement.dataset.theme === 'light' ? 'Light' : 'Dark';
-  return basemaps[m] ??= new Basemap({
-    baseLayers: [new TileLayer({ url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${m}_Gray_Base/MapServer` })],
-    referenceLayers: [new TileLayer({ url: `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${m}_Gray_Reference/MapServer` })]
-  });
-};
+const themedBasemap = themedBasemaps(Basemap, TileLayer);
 const map = new Map({ basemap: themedBasemap(), ground: 'world-elevation', layers: [depth, front, ...(footprints ? [footprints] : []), points] });
 // Local (flat) Web Mercator scene: the car overlay maps the ground plane to the screen with one homography.
 const view = new SceneView({ container: 'view', map, viewingMode: 'local', clippingArea: extent.clone().expand(1.6), extent: extent.clone().expand(1.05),
@@ -205,19 +164,19 @@ function render(next) {
   if (hour !== shownHour) { shownHour = hour; front.definitionExpression = `hour = ${hour}`; }
   // ponytail: footprint classes in 5-minute steps, sent at most every EDIT_MS while playing; each batch makes the scene
   // re-process the edited extrusions (a frame of 100-200 ms), so fewer, larger batches play smoother
-  if (footprints && (!playing || performance.now() - editAt > EDIT_MS)) { editAt = performance.now(); updateFootprints(Math.round(t * 12) / 12); }
+  if (footprints && (!player.playing || performance.now() - editAt > EDIT_MS)) { editAt = performance.now(); updateFootprints(Math.round(t * 12) / 12); }
   const q = Math.round(t * 4) / 4; // point colours step every 15 model minutes, as in the 2D page
   // ponytail: while playing, rebuild the point renderer at most ~3 times a second, as in the 2D page
-  if (q !== shownBlend && (!playing || performance.now() - rendererAt > 330)) {
+  if (q !== shownBlend && (!player.playing || performance.now() - rendererAt > 330)) {
     shownBlend = q; rendererAt = performance.now();
     if (!footprints) swapStart = rendererAt;
     const b = blend(q, hours), bb = { ...b, w: Number(b.w.toFixed(2)) };
-    points.renderer = classRenderer(classOf(depthExpression(q, bb)));
+    points.renderer = classRenderer(depthExpression(q, bb));
   }
   $('clock').textContent = clockLabel(t);
   $('s-acres').textContent = fmt.format(Math.round(frames[i0].wet_acres * (1 - w) + frames[i1].wet_acres * w));
   // ponytail: the 44k-building tally took a quarter of each frame here; 5 times a second is enough for the counters
-  if (!playing || performance.now() - summaryAt > 200) {
+  if (!player.playing || performance.now() - summaryAt > 200) {
     summaryAt = performance.now();
     const s = summarize(props, t, hours);
     $('s-wet').textContent = fmt.format(s.wet);
@@ -233,13 +192,6 @@ function render(next) {
 // the screen by a homography, fitted from four projected points each redraw (no per-car toScreen).
 // ponytail: plane at the centre's ground height, cars are not hidden by buildings; per-car elevation + a 3D layer if that matters.
 const entry = index.scenarios.find(s => s.id === id);
-const canvas = document.createElement('canvas');
-Object.assign(canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' });
-canvas.setAttribute('aria-hidden', 'true');
-view.container.append(canvas);
-view.when(() => { const ui = view.container.querySelector('.esri-ui'); if (ui) ui.parentNode.insertBefore(canvas, ui); });
-const ctx = canvas.getContext('2d');
-
 function groundToScreen() {
   const c = view.center;
   if (!c) return null;
@@ -250,65 +202,13 @@ function groundToScreen() {
   return (x, y) => H((x - c.x) / D, (y - c.y) / D);
 }
 
+const carCanvas = createTrafficCanvas(view, Point, { fullSize: true, carColour: 'rgba(255,181,71,0.95)', lineWidth: 3,
+  project: ([ox, oy]) => { const P = groundToScreen(); return P && ((x, y) => P(x + ox, y + oy)); } });
 let traffic = null;
-let trafficLoad = 0;
-let pos = null, prev = null, seg = null, segPrev = null;
-const on = [], onPrev = [];
 function drawTraffic() {
-  const dpr = Math.min(devicePixelRatio || 1, 2), W = view.width, Hh = view.height;
-  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(Hh * dpr)) {
-    canvas.width = Math.round(W * dpr); canvas.height = Math.round(Hh * dpr); // CSS size comes from inset 0: a px size here fed a scrollbar resize loop
-  }
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const P = $('traffic-show').checked && traffic && groundToScreen();
-  if (!P) return;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const [ox, oy] = traffic.origin, seconds = t * 3600;
-  const n = traffic.trips.start.length;
-  if (!pos || pos.length !== 2 * n) { pos = new Float64Array(2 * n); prev = new Float64Array(2 * n); seg = new Int32Array(n); segPrev = new Int32Array(n); }
-  positionsAt(traffic.trips, seconds, pos, on, seg);
-  positionsAt(traffic.trips, seconds - 30, prev, onPrev, segPrev);
-  const hadPrev = new Uint8Array(n);
-  for (const i of onPrev) hadPrev[i] = 1;
-  const { start, xy } = traffic.trips;
-  const S = (x, y) => P(x + ox, y + oy);
-  for (const [colour, caught] of [['rgba(255,181,71,0.95)', 0], ['rgba(255,93,115,0.95)', 1]]) {
-    ctx.strokeStyle = colour; ctx.lineWidth = 3; ctx.lineCap = 'round';
-    ctx.beginPath();
-    for (const i of on) {
-      if ((traffic.status[i] === 1) !== !!caught) continue;
-      const [x, y, w] = S(pos[2 * i], pos[2 * i + 1]);
-      if (w <= 0 || x < -20 || y < -20 || x > W + 20 || y > Hh + 20) continue;
-      const k0 = hadPrev[i] ? segPrev[i] : start[i];
-      const [mx, my] = hadPrev[i] ? S(prev[2 * i], prev[2 * i + 1]) : S(xy[2 * k0], xy[2 * k0 + 1]);
-      ctx.moveTo(mx, my);
-      for (let k = k0 + 1; k <= seg[i]; k++) { const [kx, ky] = S(xy[2 * k], xy[2 * k + 1]); ctx.lineTo(kx, ky); }
-      ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
-  ctx.fillStyle = 'rgb(126,240,196)'; ctx.strokeStyle = 'rgba(10,16,24,0.9)'; ctx.lineWidth = 1.2;
-  for (const [ex, ey] of traffic.exits) {
-    const [X, Y, w] = S(ex, ey);
-    if (w <= 0 || X < -10 || Y < -10 || X > W + 10 || Y > Hh + 10) continue;
-    ctx.beginPath(); ctx.arc(X, Y, 4, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-  }
-  const m = Math.min(traffic.meta.minute_on_road.length - 1, Math.max(0, Math.floor(t * 60)));
-  $('t-road').textContent = fmt.format(traffic.meta.minute_on_road[m]);
-  $('t-safe').textContent = fmt.format(traffic.meta.minute_people_safe[m]);
+  if (carCanvas.draw($('traffic-show').checked ? traffic : null, t * 3600)) trafficCounts(traffic, t);
 }
-async function showTraffic(m) {
-  const ticket = ++trafficLoad;
-  try {
-    const next = await loadTraffic(`./data/evacuation/${id}/${m}/`);
-    if (ticket !== trafficLoad) return;
-    traffic = next;
-    $('t-trap').textContent = fmt.format(traffic.meta.outcome_people.Waiting);
-    $('t-exits').textContent = fmt.format(traffic.exits.length);
-    drawTraffic();
-  } catch (error) { console.warn('Evacuation traffic:', error.message); $('traffic').hidden = true; }
-}
+const showTraffic = trafficLoader(id, next => { traffic = next; drawTraffic(); });
 if (entry.evacuation) {
   $('traffic').hidden = false;
   $('traffic-note').textContent = 'Same evac-engine run as the 2D page: one car per household of night-time residents on OpenStreetMap roads, '
@@ -320,25 +220,7 @@ if (entry.evacuation) {
   showTraffic('base');
 }
 
-let playing = false;
-let last = 0;
-function tick(now) {
-  if (!playing) return;
-  const rate = Number($('speed').value) || 1;
-  if (last) render(t + ((now - last) / 1000) * rate);
-  last = now;
-  if (t >= hours.at(-1)) setPlaying(false); else requestAnimationFrame(tick);
-}
-function setPlaying(next) {
-  playing = next;
-  last = 0;
-  $('play').iconStart = next ? 'pause' : 'play';
-  $('play').textContent = next ? 'Pause' : 'Play';
-  if (!next) render(t);
-  if (next) { if (t >= hours.at(-1)) render(hours[0]); requestAnimationFrame(tick); }
-}
-$('play').addEventListener('click', () => setPlaying(!playing));
-$('time').addEventListener('calciteSliderInput', e => { const v = Number(e.target.value); setPlaying(false); render(v); });
+const player = createPlayer(hours, () => t, render);
 
 // Smoothness readout: frame rate and worst frame over the last second, how long the buildings take to redraw after a
 // colour change, and the scene's own memory estimate. window.perf3d keeps the samples for benchmarking.
@@ -348,7 +230,7 @@ requestAnimationFrame(function loop(now) {
   const dt = now - prevT; prevT = now; fpsN += 1; worst = Math.max(worst, dt);
   if (now - fpsT >= 1000) {
     const fps = (fpsN * 1000) / (now - fpsT);
-    perf.frames.push({ at: Math.round(now), fps: Number(fps.toFixed(1)), worst: Math.round(worst), playing });
+    perf.frames.push({ at: Math.round(now), fps: Number(fps.toFixed(1)), worst: Math.round(worst), playing: player.playing });
     const mem = view.performanceInfo?.usedMemory, heap = performance.memory?.usedJSHeapSize;
     $('perf').textContent = `${fps.toFixed(0)} fps, worst frame ${Math.round(worst)} ms · buildings redraw ${Math.round(lastSwapMs)} ms`
       + (mem ? ` · scene memory ${Math.round(mem / 2 ** 20)} MB` : '') + (heap ? ` · JS heap ${Math.round(heap / 2 ** 20)} MB` : '');
@@ -363,5 +245,5 @@ view.whenLayerView(footprints || points).then(lv => { watchRedraw(lv); capFeatur
 // Open tilted over the first neighbourhoods with water above the first floor (Clovis / NE Fresno for Big Dry Creek).
 const wet = props.filter(p => p.depth_max - p.found_ht > 2 && p.arrive_hr <= 6);
 if (wet.length) await view.goTo({ center: [wet.reduce((s, p) => s + p.lon, 0) / wet.length, wet.reduce((s, p) => s + p.lat, 0) / wet.length], scale: 40_000, tilt: 60 }, { animate: false });
-window.scene3d = { view, footprints, points, render, setPlaying, sceneRenderer, classAt }; // for benchmarking and checks from DevTools
+window.scene3d = { view, footprints, points, render, setPlaying: player.setPlaying, sceneRenderer, classAt }; // for benchmarking and checks from DevTools
 render(hours[Math.max(firstWet - 1, 0)]);

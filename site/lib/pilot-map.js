@@ -22,7 +22,7 @@ export async function createPilotMap({engine,container,view,features,county,onSe
  if(engine==='maplibre'){
   const ml=await import('../vendor/maplibre-6.15.0/maplibre-gl.mjs');
   const map=new ml.Map({container,style:libreStyle(style),bounds:[[PILOT_BOUNDS[0],PILOT_BOUNDS[1]],[PILOT_BOUNDS[2],PILOT_BOUNDS[3]]],fitBoundsOptions:{padding:20},attributionControl:{compact:true},renderWorldCopies:false,fadeDuration:0});
-  const errors=[];map.on('error',e=>{errors.push(e.error?.message||'Tile or map error');onError(errors.at(-1));});
+  map.on('error',e=>onError(e.error?.message||'Tile or map error'));
   try{await timeout(new Promise(resolve=>map.once('load',resolve)),20000);}catch(error){map.remove();throw error;}
   map.addControl(new ml.NavigationControl({showCompass:false}),'top-left');map.addControl(new ml.ScaleControl({unit:'imperial'}),'bottom-left');
   map.addSource('county',{type:'geojson',data:collection([county])});map.addLayer({id:'county-outline',type:'line',source:'county',paint:{'line-color':'#7cabb4','line-width':1.2}});
@@ -35,7 +35,7 @@ export async function createPilotMap({engine,container,view,features,county,onSe
   map.on('click',e=>{const f=map.queryRenderedFeatures(e.point,{layers:['area-points','gauge-points','reservoir-points','power-fill']})[0];if(f)onSelect(f.properties);});
   const idle=async()=>{await rendered();return timeout(new Promise(resolve=>{if(!map.isMoving()&&map.loaded())resolve();else map.once('idle',resolve);}),15000);};
   let settledError=null;await idle().catch(error=>{settledError=error.message;onError(settledError);});
-  return {engine,errors,settledError,setFeatures(data){map.getSource('records').setData(data);},highlight(data){map.getSource('selection').setData(data);},async fit(bounds,duration=0){map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:25,maxZoom:14,duration});await idle();},settled:idle,resize:()=>map.resize(),destroy:()=>map.remove()};
+  return {settledError,setFeatures(data){map.getSource('records').setData(data);},highlight(data){map.getSource('selection').setData(data);},async fit(bounds,duration=0){map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:25,maxZoom:14,duration});await idle();},resize:()=>map.resize(),destroy:()=>map.remove()};
  }
  // The comparison mode uses the main app's pinned unified SDK loader.
  const {loadSdk}=await import('./map.js?v=0.74.0-shell');const sdk=await loadSdk();
@@ -44,13 +44,13 @@ export async function createPilotMap({engine,container,view,features,county,onSe
  const basemap=view==='rivers'?new Basemap({baseLayers:[new VectorTileLayer({style})]}):new Basemap({baseLayers:[new TileLayer({url:BASE+'Base/MapServer'})],referenceLayers:[new TileLayer({url:BASE+'Reference/MapServer'})]});
  const records=new GraphicsLayer({title:'Identical pilot records'}),outline=new GraphicsLayer({title:'County reference'}),selection=new GraphicsLayer({title:'Selection'});
  const map=new Map({basemap,layers:[outline,records,selection]});const extent=b=>new Extent({xmin:b[0],ymin:b[1],xmax:b[2],ymax:b[3],spatialReference:{wkid:4326}});
- const display=new MapView({map,container,extent:extent(PILOT_BOUNDS),popupEnabled:false,attributionVisible:true,ui:{components:['zoom']}}),errors=[];
- display.on('layerview-create-error',e=>{errors.push(e.error?.message||'Layer failed');onError(errors.at(-1));});
+ const display=new MapView({map,container,extent:extent(PILOT_BOUNDS),popupEnabled:false,attributionVisible:true,ui:{components:['zoom']}});
+ display.on('layerview-create-error',e=>onError(e.error?.message||'Layer failed'));
  const geometry=g=>g.type==='Point'?{type:'point',longitude:g.coordinates[0],latitude:g.coordinates[1]}:g.type==='Polygon'||g.type==='MultiPolygon'?{type:'polygon',...countyGeometry(g)}:{type:'polyline',paths:g.type==='LineString'?[g.coordinates]:g.coordinates,spatialReference:{wkid:4326}};
  outline.add(new Graphic({geometry:geometry(county.geometry),symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#7cabb4',width:1.2}}}));
  const setFeatures=data=>{records.removeAll();records.addMany(data.features.map(f=>new Graphic({geometry:geometry(f.geometry),attributes:f.properties,symbol:f.geometry.type==='Point'?{type:'simple-marker',style:f.properties.kind==='area'?'triangle':f.properties.kind==='reservoir'?'diamond':'circle',size:13,color:f.properties.color,outline:{color:'#17252e',width:1.5}}:{type:'simple-fill',color:f.properties.color+'29',outline:{color:f.properties.color,width:2}}})));};
  setFeatures(features);try{await timeout(display.when(),20000);}catch(error){display.destroy();css.remove();throw error;}
  display.on('click',async e=>{const hits=await display.hitTest(e,{include:[records]});if(hits.results[0]?.graphic?.attributes)onSelect(hits.results[0].graphic.attributes);});
  const idle=async()=>{await rendered();return timeout(reactive.whenOnce(()=>!display.updating&&!display.navigating),15000);};let settledError=null;await idle().catch(error=>{settledError=error.message;onError(settledError);});
- return {engine,errors,settledError,setFeatures,highlight(data){selection.removeAll();selection.addMany(data.features.map(f=>new Graphic({geometry:geometry(f.geometry),symbol:f.geometry.type==='Point'?{type:'simple-marker',style:'circle',size:24,color:[0,0,0,0],outline:{color:'#e29de8',width:3}}:f.geometry.type.includes('Polygon')?{type:'simple-fill',color:[0,0,0,0],outline:{color:'#e29de8',width:4}}:{type:'simple-line',color:'#e29de8',width:4}})));},async fit(bounds,duration=0){await display.goTo(extent(bounds),{animate:duration>0,duration});await idle();},settled:idle,resize(){},destroy(){display.destroy();css.remove();}};
+ return {settledError,setFeatures,highlight(data){selection.removeAll();selection.addMany(data.features.map(f=>new Graphic({geometry:geometry(f.geometry),symbol:f.geometry.type==='Point'?{type:'simple-marker',style:'circle',size:24,color:[0,0,0,0],outline:{color:'#e29de8',width:3}}:f.geometry.type.includes('Polygon')?{type:'simple-fill',color:[0,0,0,0],outline:{color:'#e29de8',width:4}}:{type:'simple-line',color:'#e29de8',width:4}})));},async fit(bounds,duration=0){await display.goTo(extent(bounds),{animate:duration>0,duration});await idle();},resize(){},destroy(){display.destroy();css.remove();}};
 }
