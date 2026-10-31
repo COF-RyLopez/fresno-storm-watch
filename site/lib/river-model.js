@@ -9,7 +9,7 @@ export function formatRiverTime(value,timeZone) { return value===null||value===u
 
 /** @param {unknown} value @returns {number|null} Preserve real zero and negative gauge stages. */
 export function riverNumber(value) {
-  return typeof value === 'number' && Number.isFinite(value) && ![-999,-9999].includes(value) ? value : null;
+  return Number.isFinite(value) && ![-999,-9999].includes(value) ? value : null;
 }
 /** @param {unknown} value @returns {number|null} Ignore NWPS year-0001 sentinels. */
 export function riverTime(value) {
@@ -19,7 +19,7 @@ export function riverTime(value) {
 }
 /** @param {number|null} value @param {string} from @param {string} to @returns {number|null} Explicit dimensional conversion only. */
 export function convertRiverUnits(value, from, to) {
-  if (typeof value !== 'number' || !Number.isFinite(value) || !from || !to) return null;
+  if (!Number.isFinite(value) || !from || !to) return null;
   if (from === to) return value;
   const groups = [{ ft:0.3048, m:1 }, { cfs:1, kcfs:1000, cms:35.3146667 }];
   for (const group of groups) if (group[from] && group[to]) return value * group[from] / group[to];

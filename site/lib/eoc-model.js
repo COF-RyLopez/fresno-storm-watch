@@ -41,14 +41,16 @@ export function heads(records){
   return [...entities.values()].map(list=>({record:[...list].sort((a,b)=>b.created-a.created||b.id.localeCompare(a.id))[0],conflict:list.length>1,heads:list}));
 }
 export function current(records,entity){const h=heads(records).filter(h=>!entity||h.record.entity===entity);return h.length===1&&!h[0].conflict?h[0].record:null;}
-export function verificationFor(report,records){const h=heads(records.filter(v=>v.payload.reportEvent===report.id));if(h.length!==1||h[0].conflict)return null;return h[0].record;}
+/** Current head ids of one entity, the supersedes list a new version must carry. */
+export const headIds=(list,entity)=>heads(list.filter(r=>r.entity===entity)).flatMap(h=>h.heads.map(r=>r.id));
+export const verificationFor=(report,records)=>current(records.filter(v=>v.payload.reportEvent===report.id));
 export function reportStatus(report,records){const v=verificationFor(report,records);return v?v.payload.outcome:'Unverified';}
 export function validateEvent(event,records){
   required(event,['id','entity','incident','collection']);validatePayload(event.collection,event.payload);
   if(!Array.isArray(event.supersedes))throw new Error('Correction references are required.');
   const existing=records[event.collection]||[];
   for(const id of event.supersedes){const old=existing.find(r=>r.id===id);if(!old||old.entity!==event.entity||old.incident!==event.incident)throw new Error('Correction must reference the same incident and record.');}
-  const prior=heads(existing.filter(r=>r.entity===event.entity)).flatMap(h=>h.heads.map(r=>r.id)).sort();
+  const prior=headIds(existing,event.entity).sort();
   if(canonical(prior)!==canonical([...event.supersedes].sort()))throw new Error('This record changed. Refresh and review every current version before saving.');
   if(event.collection==='coordination')for(const old of existing.filter(r=>r.entity===event.entity&&r.payload.pumpTask)){
     if(canonical(old.payload.pumpTask.binding)!==canonical(event.payload.pumpTask?.binding)||old.payload.pumpTask.type!==event.payload.pumpTask?.type)throw Error('A pump assignment cannot be moved to another pump or work type. Create the appropriate separate task.');

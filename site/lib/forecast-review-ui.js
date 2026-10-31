@@ -1,4 +1,4 @@
-import {comparisonAreas} from './forecast-comparison-model.js';
+import {loadComparisonAreas} from './forecast-comparison-data.js';
 import {currentComparisonSnapshot} from './forecast-review-data.js';
 import {areaDifferences,rankDifferences,REVIEW_MAX_AGE} from './forecast-review-model.js';
 import {formatTime} from './model.js';
@@ -55,7 +55,7 @@ export function createForecastReview({timeZone,exercise,onData=()=>{},onCompare=
     finally{busy=false;next=Date.now()+(snapshot?5:15)*60000;render();}
   }
   function open(){onMap();pane.setAttribute('open','');render();}
-  const ready=Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>{const r=await fetch(new URL(`../data/${name}.json`,import.meta.url),{credentials:'omit',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Forecast review inventory unavailable.');return r.json();})).then(([a,c,w,g])=>{areas=comparisonAreas(a.areas,c.areas,w.sites,g.stations);render();void refresh();}).catch(e=>{error=e.message;render();});
+  const ready=loadComparisonAreas('Forecast review inventory unavailable.').then(a=>{areas=a;render();void refresh();}).catch(e=>{error=e.message;render();});
   $('notify-forecast').addEventListener('click',open);$('forecast-review-open').addEventListener('click',open);
   $('forecast-review-sort').addEventListener('calciteSelectChange',e=>{metric=['rain','wind','rainTiming'].includes(e.target.value)?e.target.value:'rain';render();});
   $('forecast-review-refresh').addEventListener('click',()=>void refresh(true));
