@@ -1,11 +1,10 @@
 import {fetchComparison} from './forecast-comparison-data.js';
+import {pool} from './pool.js';
 import {uniqueComparisonPoints,validateComparisonSnapshot,REVIEW_MAX_AGE} from './forecast-review-model.js';
 
 /** Two bounded workers; each public sample is queried once despite shared areas. */
 export async function collectComparisonSnapshot(areas,{fetchPoint=fetchComparison,now=Date.now(),signal}={}){
-  const points=uniqueComparisonPoints(areas),results=new Array(points.length);let cursor=0;
-  async function worker(){while(cursor<points.length){if(signal?.aborted)throw signal.reason;const i=cursor++;results[i]=await fetchPoint(points[i],{now,signal});}}
-  await Promise.all([worker(),worker()]);
+  const points=uniqueComparisonPoints(areas),results=await pool(points,2,point=>{if(signal?.aborted)throw signal.reason;return fetchPoint(point,{now,signal});});
   return validateComparisonSnapshot({schemaVersion:1,generatedAt:new Date(now).toISOString(),points:results},points);
 }
 
