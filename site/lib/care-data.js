@@ -1,5 +1,5 @@
-import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
-import {CARE_SOURCES,normalizeCare,normalizeZone} from './care-model.js?v=0.74.0-helpers';
+import {sha256Hex} from './zone-population-product.js';
+import {CARE_SOURCES,normalizeCare,normalizeZone} from './care-model.js';
 import {powerScope} from './power-geometry.js';
 import {countyGeometry} from './model.js';
 

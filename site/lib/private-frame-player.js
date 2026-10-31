@@ -1,4 +1,4 @@
-import {blend} from './flood-scenario-model.js?v=0.39.0';
+import {blend} from './flood-scenario-model.js';
 /** Coalesce scrubbing, serialize network batches and retain at most four private previews. */
 export function createPrivateFramePlayer({hours,load,display,onError=()=>{},maxFrames=4}){
  const cache=new Map();let pending=null,busy=false,alive=true,version=0;

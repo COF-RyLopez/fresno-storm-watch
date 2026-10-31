@@ -1,5 +1,5 @@
-import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
-import {validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from './power-buildings-model.js?v=0.74.0-helpers';
+import {sha256Hex} from './zone-population-product.js';
+import {validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from './power-buildings-model.js';
 
 /** Only a capacity limit narrows the scope; failed or incomplete feeds never silently become viewport results. */
 export async function loadPowerBuildingsAutomatic(polygons,{viewport,current=()=>true,read=loadPowerBuildings,onVisible=()=>{}}={}){

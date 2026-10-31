@@ -4,10 +4,10 @@
 // Desktop prototype: the phone-tuned 2D page is flood-scenario.html.
 import { loadSdk } from './lib/map.js';
 import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
-import { createTrafficCanvas } from './lib/evacuation-traffic.js?v=0.74.0-scenarios';
+import { createTrafficCanvas } from './lib/evacuation-traffic.js';
 import { createFrameWindow } from './lib/frame-window.js';
 import { squareToQuad } from './lib/ground-homography.js';
-import { buildingFields, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, hydrograph as popupChart, pickScenario, showScenario, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js?v=0.74.0-scenarios';
+import { buildingFields, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, hydrograph as popupChart, pickScenario, showScenario, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);

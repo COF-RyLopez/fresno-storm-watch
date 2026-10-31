@@ -1,6 +1,6 @@
 import {authorizeDrainage} from './drainage-model.js';
-import {FMFCD_DETAIL_URL,FMFCD_DETAIL_LIMIT,FMFCD_DETAIL_LAYERS,drainageDetailScope,drainageDetailSchema,drainageDetailRecord} from './drainage-nearby-model.js?v=0.53.0';
-import {FMFCD_WEBMAP_DATA,fmfcdRendererOverrides} from './fmfcd-symbology.js?v=0.54.0';
+import {FMFCD_DETAIL_URL,FMFCD_DETAIL_LIMIT,FMFCD_DETAIL_LAYERS,drainageDetailScope,drainageDetailSchema,drainageDetailRecord} from './drainage-nearby-model.js';
+import {FMFCD_WEBMAP_DATA,fmfcdRendererOverrides} from './fmfcd-symbology.js';
 
 /** Read the complete spatial ID inventory before bounded batches. No geometry simplification or silent truncation. */
 export async function readDrainageDetail(spec,scope,call,override=null){

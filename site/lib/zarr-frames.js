@@ -3,7 +3,7 @@
 // every hour, and arrival[y, x] (minutes until depth first reached 0.1 ft, from every 5-minute RAS step; 65535 never).
 // Each pixel appears once the clock passes its arrival, with depth blended between the hours around it, so the
 // water and its front spread continuously instead of stepping hour by hour. All tiles load once; playback never fetches.
-import { openArray } from './zarr-lite.js?v=0.73.1';
+import { openArray } from './zarr-lite.js';
 
 const NEVER = 65535;
 const FRONT = (230 << 24) | (0 << 16) | (176 << 8) | 255; // #ffb000 at 0.9, little-endian RGBA as the LUT

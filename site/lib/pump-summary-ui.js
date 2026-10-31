@@ -1,4 +1,4 @@
-import {pumpReadinessSummary,filterPumpSummary} from './pump-summary-model.js?v=0.45.0';
+import {pumpReadinessSummary,filterPumpSummary} from './pump-summary-model.js';
 const PAGE_SIZE=3;
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** No private records persist outside this tab. Counts always use the full loaded inventory. */

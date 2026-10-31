@@ -1,4 +1,4 @@
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {reportHealth} from './source-health.js';
 import { CAMERA_FEED, normalizeCameras, cameraAvailability, cameraImageFreshness } from './camera-model.js';
 import { createCameraVideo } from './camera-video.js';
 import { formatTime } from './model.js';

@@ -1,5 +1,5 @@
-import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
-import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js?v=0.74.0-helpers';
+import {sha256Hex} from './zone-population-product.js';
+import {isPio,validatePioPayload,validatePioApproval,validatePioEvent,pioNotifications,pioBriefingLines} from './pio-model.js';
 import {validatePumpReadiness} from './pump-readiness-contract.js';
 import {validatePumpTask} from './pump-task-contract.js';
 /** Append-only EOC records. No source cue changes activation or official status. */

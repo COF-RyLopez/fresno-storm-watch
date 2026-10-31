@@ -1,5 +1,5 @@
 import {POWER_COLORS} from './power-model.js';
-import {ZONE_COLORS} from './care-model.js?v=0.74.0-helpers';
+import {ZONE_COLORS} from './care-model.js';
 
 /** Small selection-scoped public reference overlays; comparisons are never persisted. */
 export async function createCareMap(controller,loadSdk){

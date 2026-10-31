@@ -1,5 +1,5 @@
-import {buildingPowerTarget} from './power-buildings-model.js?v=0.74.0-helpers';
-import {loadPowerBuildings,loadPowerBuildingsAutomatic} from './power-buildings-data.js?v=0.74.0-helpers';
+import {buildingPowerTarget} from './power-buildings-model.js';
+import {loadPowerBuildings,loadPowerBuildingsAutomatic} from './power-buildings-data.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 /** Session-only selected-area evidence. Refresh revisions cancel older queries, including after the pane closes. */

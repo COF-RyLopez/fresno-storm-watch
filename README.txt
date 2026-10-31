@@ -149,6 +149,9 @@ Open site/setup.html for the complete GitHub and optional ArcGIS sign-in guide.
 To run locally: Node 22.22.3; npm test; npm run check; npm start.
 Browse http://127.0.0.1:8777/ . Stop with Ctrl+C. No npm install is needed.
 For updating reservoir readings, run npm run watch:reservoirs in a second terminal.
+After editing site JS or CSS, run npm run build:import-map. Each page's import map
+gives every module a content-hash cache key; npm test fails while a page is stale.
+Import site modules with plain relative paths ('./map.js'), never with ?v= keys.
 The collector runs every 15 minutes until stopped; opening the browser does not start it.
 If a managed sandbox prevents Node from spawning its test workers, use:
 node --experimental-test-isolation=none --test tests/*.test.mjs

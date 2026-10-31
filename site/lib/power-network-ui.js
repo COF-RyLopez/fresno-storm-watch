@@ -1,6 +1,6 @@
-import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js?v=0.50.0';
-import {createPowerNearby} from './power-nearby-ui.js?v=0.74.0-shell';
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js';
+import {createPowerNearby} from './power-nearby-ui.js';
+import {reportHealth} from './source-health.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const n=el('a',text);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
 const button=(text,action)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=action;return n;};

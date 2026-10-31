@@ -1,5 +1,5 @@
-import {sandbagSearchEntries} from './county-sandbag-model.js?v=0.74.0-planning';
-import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js?v=0.34.0';
+import {sandbagSearchEntries} from './county-sandbag-model.js';
+import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
 const BASE=new URL('../data/search/v0.31.0/',import.meta.url),WATERBODY_BASE=new URL('../data/search/waterbodies-v0.34.0/',import.meta.url);
 const KIND={sandbag:'County sandbag site',waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point'};

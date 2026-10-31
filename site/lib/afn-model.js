@@ -1,4 +1,4 @@
-import {acsMeasure as measure} from './acs-model.js?v=0.65.0';
+import {acsMeasure as measure} from './acs-model.js';
 
 /** Fixed public endpoints. Every value is whole-geography context; nothing here is allocated to a zone. */
 export const AFN_SOURCES=Object.freeze({

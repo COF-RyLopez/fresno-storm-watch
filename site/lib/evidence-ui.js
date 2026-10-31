@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js?v=0.74.0-shell';
+import {loadSdk} from './map.js';
 const $=id=>document.getElementById(id);
 /** One nonmodal evidence surface. Existing open attributes remain the domain controllers' visibility contract. */
 export function createEvidencePane({onChange=()=>{},timeZone='America/Los_Angeles'}={}){

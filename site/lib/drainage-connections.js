@@ -1,4 +1,4 @@
-import {searchGeometry} from './nearby-search.js?v=0.32.0';
+import {searchGeometry} from './nearby-search.js';
 
 export const CONNECTION_GROUPS=Object.freeze({
   upstream:{label:'Upstream candidates',color:'#47dcd2'},

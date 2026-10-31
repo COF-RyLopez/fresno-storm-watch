@@ -1,8 +1,8 @@
-import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,careTime} from './care-review-model.js?v=0.74.0-planning';
+import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,careTime} from './care-review-model.js';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';
-import {reportHealth} from './source-health.js?v=0.73.1';
+import {reportHealth} from './source-health.js';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};

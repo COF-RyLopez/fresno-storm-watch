@@ -1,6 +1,6 @@
 // Shared by the 2D and 3D flood-scenario pages (flood-scenario.js, flood-scenario-3d.js): scenario picker, header and legend,
 // building popup fields and classes, themed basemap, evacuation traffic loading, and the play / slider controls.
-import { loadTraffic } from './evacuation-traffic.js?v=0.74.0-scenarios';
+import { loadTraffic } from './evacuation-traffic.js';
 
 const $ = id => document.getElementById(id);
 const fmt = new Intl.NumberFormat('en-US');

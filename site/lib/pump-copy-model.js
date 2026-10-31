@@ -1,5 +1,5 @@
 import {DRAINAGE_URL,DRAINAGE_LAYERS,drainageRecord,drainageCounts} from './drainage-model.js';
-import {canonical,digest} from './eoc-model.js?v=0.74.0-helpers';
+import {canonical,digest} from './eoc-model.js';
 export const COPY_TAG='frog-fmfcd-pumps-copy-v1';
 export const COPY_PARENT='frog_fmfcd_pumps_exercise_2026_27';
 export const COPY_VIEW=COPY_PARENT+'_read';

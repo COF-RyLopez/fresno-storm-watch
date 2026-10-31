@@ -1,6 +1,6 @@
-import {readAcsMetadata,readAcsTracts,readArcgis} from './acs-data.js?v=0.74.0-helpers';
-import {readPopulationBlocks,readAllByIds} from './population-data.js?v=0.74.0-helpers';
-import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js?v=0.67.0';
+import {readAcsMetadata,readAcsTracts,readArcgis} from './acs-data.js';
+import {readPopulationBlocks,readAllByIds} from './population-data.js';
+import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js';
 import {powerGeometry} from './power-geometry.js';
 
 const AREA_TOLERANCE=1e-6,MAX_BLOCK_WORK=75000,CACHE_LIFETIME=600000;

@@ -1,4 +1,4 @@
-import {PRODUCT_METHOD,readZoneProduct,boundaryFingerprint,estimatedResidents,SHA256,validTime,sha256Hex,fetchPublic} from './zone-population-product.js?v=0.73.0-r2';
+import {PRODUCT_METHOD,readZoneProduct,boundaryFingerprint,estimatedResidents,SHA256,validTime,sha256Hex,fetchPublic} from './zone-population-product.js';
 import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js';
 import {CARE_SOURCES} from './care-model.js';
 import {POPULATION_SOURCES} from './population-model.js';

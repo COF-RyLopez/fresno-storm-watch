@@ -1,10 +1,10 @@
-import {createPowerNetwork} from './power-network-ui.js?v=0.74.0-shell';
-import {createPowerBuildings} from './power-buildings-ui.js?v=0.74.0-helpers';
-import {reportHealth} from './source-health.js?v=0.73.1';
-import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
-import {collectPower} from './power-data.js?v=0.49.0';
+import {createPowerNetwork} from './power-network-ui.js';
+import {createPowerBuildings} from './power-buildings-ui.js';
+import {reportHealth} from './source-health.js';
+import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js';
+import {collectPower} from './power-data.js';
 import {formatTime} from './model.js';
-import {powerExercise} from './power-exercise.js?v=0.49.0';
+import {powerExercise} from './power-exercise.js';
 import {powerMarkerUrl,renderPowerLegend} from './power-symbols.js';
 
 const $=id=>document.getElementById(id);

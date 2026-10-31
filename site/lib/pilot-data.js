@@ -1,4 +1,4 @@
-import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
+import {sha256Hex} from './zone-population-product.js';
 import {CONFIG} from '../config.js';
 import {fetchRiverWatch} from './nwps.js';
 import {fetchPlanningRain} from './planning-data.js';

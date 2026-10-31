@@ -2,7 +2,7 @@ import {areaPowerEvidence} from './area-concern-model.js';
 import {pointInRings} from './power-geometry.js';
 import {searchGeometry,METERS_PER_MILE} from './nearby-search.js';
 import {roadInCurrentView} from './roads.js';
-import {current as fresh} from './dwr-supply-planning-model.js?v=0.74.0-planning';
+import {current as fresh} from './dwr-supply-planning-model.js';
 
 const dateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 export const careTime=value=>Number.isFinite(value)?dateFormat.format(value):'Not supplied';

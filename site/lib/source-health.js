@@ -1,4 +1,4 @@
-import {sourceHealthSummary} from './source-health-model.js?v=0.59.0';
+import {sourceHealthSummary} from './source-health-model.js';
 /** Source status events carry public diagnostics, never feature payloads or credentials. */
 export function reportHealth(key,label,{checked=null,error=null,maxAgeMs=420000,detail='',state=null}={}){window.dispatchEvent(new CustomEvent('storm-source-health',{detail:{key,label,checked,error,maxAgeMs,detail,state}}));}
 /** Countywide counts remain independent of workspace presentation. */

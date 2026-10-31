@@ -1,14 +1,14 @@
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
-import {setupAuth} from './lib/auth.js?v=0.74.0-shell';
-import {loadSdk} from './lib/map.js?v=0.74.0-shell';
-import {openPumpCopy} from './lib/pump-copy-data.js?v=0.74.0-shell';
-import {PUMP_INVENTORY_CONFIG} from './pump-inventory-config.js?v=0.47.0';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-shell';
+import {setupAuth} from './lib/auth.js';
+import {loadSdk} from './lib/map.js';
+import {openPumpCopy} from './lib/pump-copy-data.js';
+import {PUMP_INVENTORY_CONFIG} from './pump-inventory-config.js';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
-import {pumpFormChoices,pumpFormCurrent,pumpFormRetainsSelection,pumpFormLink} from './lib/pump-form-model.js?v=0.48.0';
+import {pumpFormChoices,pumpFormCurrent,pumpFormRetainsSelection,pumpFormLink} from './lib/pump-form-model.js';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
-import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.74.0-helpers';
+import {pumpSummaryExercise} from './lib/pump-summary-exercise.js';
 
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),exercise=params.get('exercise')==='1',acceptance=!exercise&&params.get('acceptance')==='1';
 const fictional=exercise||acceptance,fixture=fictional?pumpSummaryExercise():null;
