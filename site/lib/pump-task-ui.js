@@ -1,4 +1,4 @@
-import {makeEvent,heads,digest,canonical,emptyRecords} from './eoc-model.js?v=0.73.1';
+import {makeEvent,heads,digest,canonical,emptyRecords} from './eoc-model.js?v=0.74.0-population';
 import {pumpBinding,bindingKey} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
 import {pumpTasks} from './pump-task-model.js';
