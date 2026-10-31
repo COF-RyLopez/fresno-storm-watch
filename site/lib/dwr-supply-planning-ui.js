@@ -1,5 +1,5 @@
-import {loadSdk} from './map.js?v=0.62.0';
-import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js?v=0.62.0';
+import {loadSdk} from './map.js?v=0.73.1';
+import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js?v=0.73.1';
 import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js?v=0.61.0';
 
 const KEY='dwrSupplyContext';

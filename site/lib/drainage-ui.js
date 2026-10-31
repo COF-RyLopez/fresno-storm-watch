@@ -1,5 +1,5 @@
 import {EOC_CONFIG} from '../eoc-config.js';
-import {loadSdk} from './map.js?v=0.42.0';
+import {loadSdk} from './map.js?v=0.73.1';
 import {formatTime} from './model.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts,unchangedDrainageSelection} from './drainage-model.js?v=0.53.0';
 import {openDrainage} from './drainage-data.js';

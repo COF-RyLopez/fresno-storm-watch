@@ -1,6 +1,6 @@
 import {validateBriefingSnapshot,briefingState,BRIEFING_CHECK_MAX_AGE,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF} from './briefing-model.js';
 import {formatTime} from './model.js';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import {PARTNER_BRIEFING} from './briefing-impact-model.js?v=0.21.0';
 import {createBriefingImpactView} from './briefing-impact-ui.js?v=0.22.0';
 const $=id=>document.getElementById(id);

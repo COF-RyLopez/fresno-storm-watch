@@ -32,9 +32,6 @@ a:focus-visible { outline: 2px solid var(--calcite-color-brand, #007ac2); outlin
 #review-areas, #clear-notice { align-self: center; }
 #tools-shell { --calcite-shell-panel-width: 370px; --calcite-shell-panel-max-width: calc(100vw - 49px); }
 #camera-shell { --calcite-shell-panel-width: 320px; --calcite-shell-panel-max-width: calc(100vw - 49px); }
-#workspace-actions { width: 49px; min-width: 49px; max-width: 49px; }
-#workspace-actions calcite-action-group { width: 100%; min-width: 0; }
-#workspace-actions calcite-action { width: 100%; }
 calcite-shell-panel > calcite-panel, #map-panel { height: 100%; min-height: 0; min-width: 0; }
 /* Long source notices and a publisher legend must leave a measurable map body. */
 #map-panel{container-type:size;}
@@ -102,10 +99,8 @@ calcite-panel {
 .area-watch-evidence h4 { font-size: 14px; margin: 20px 0 8px; }
 .watch-evidence-source { border-top: 1px solid var(--calcite-color-border-3, #dedede); padding-top: 12px; margin: 12px 0; font-size: 13px; }
 .watch-threshold { color: var(--gauge-threshold); }
-.watch-review-step { font-size: 12px; line-height: 1.6; padding: 12px; background: var(--caution-surface); color: var(--caution-text); }
 .map-toolbar-stack { display: flex; flex-direction: column; width: 100%; gap: 8px; }
 .map-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; }
-.view-switch { display: flex; gap: 2px; }
 .map-tools > span { font-size: 12px; color: var(--calcite-color-text-2, #4a4a4a); }
 .map-tools calcite-link { font-size: 12px; }
 .environment-map-status { font-size: 12px; line-height: 1.5; }
@@ -336,7 +331,6 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .app-logo-image{height:48px;width:48px;}
 .scope-bar{padding:4px 16px;}
 #tools-shell{--calcite-shell-panel-width:370px;--calcite-shell-panel-max-width:100vw;}
-#workspace-actions{display:none!important;}
 .map-action-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
 .map-action-bar{width:auto;max-width:100%;--calcite-action-bar-expanded-max-width:100%;}
 .map-action-bar calcite-action{--calcite-action-padding:8px;}

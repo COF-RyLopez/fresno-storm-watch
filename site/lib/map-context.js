@@ -12,8 +12,6 @@ export const CONTEXT_SOURCES = Object.freeze({
 
 /** @param {object} options @returns {object} Attach lazy 3D context and county-filtered hydrography. */
 export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresnoGeometry, getView}) {
-  const waterButton = document.querySelector('#toggle-waterways');
-  const buildingButton = document.querySelector('#toggle-buildings');
   const waterStatus = document.querySelector('#waterways-status');
   const buildingStatus = document.querySelector('#buildings-status');
   const expandButton = document.querySelector('#expand-map');
@@ -92,8 +90,6 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const names=installWaterwayLabels({map,sdk,reactiveUtils,getView,enabled:()=>waterEnabled&&!basemapReference,minScale:CONTEXT_SOURCES.namesScale,onError:error=>{namesError=!!error;updateStatus();},onCount:count=>{namesCount=count;updateStatus();}}).catch(error=>{namesError=true;updateStatus();console.warn('Waterway names:',error.message);return null;});
   const updateStatus = () => {
     const view = getView(), state = waterViews.get(view);
-    waterButton.textContent = `Waterways: ${waterEnabled?'on':'off'}`;
-    waterButton.setAttribute('aria-pressed',String(waterEnabled));
     waterStatus.textContent = basemapReference ? 'Countywide USGS reference is built into this basemap · small unnamed waterways appear closer in'
       : !waterEnabled ? 'USGS waterway context off'
       : waterError || namesError || state?.some(s=>s==='error') ? 'Waterway reference incomplete — check USGS source'
@@ -102,9 +98,6 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
       : view.scale > CONTEXT_SOURCES.namesScale ? 'USGS waterways · zoom closer for names'
       : `USGS · ${namesCount===null?'loading names':namesCount+' spaced names'} · ${view.scale <= CONTEXT_SOURCES.detailScale ? 'unnamed details also shown' : 'unnamed detail at 1:30,000'}`;
     const scene = view.type === '3d';
-    buildingButton.disabled = !scene || buildingsLoading;
-    buildingButton.textContent = `Buildings: ${buildingsWanted?'on':'off'}`;
-    buildingButton.setAttribute('aria-pressed',String(scene && buildingsWanted));
     buildingStatus.textContent = !scene ? 'Open 3D buildings · select 3D'
       : !buildingsWanted ? 'Open 3D building context off'
       : buildingsError || buildingViews.get(view)==='error' ? 'Open 3D buildings unavailable — use facility footprints'
@@ -149,14 +142,6 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
       if(viewEventData(event).layer===buildings){buildingViews.set(view,'error');updateStatus();}
     });
   };
-  waterButton.addEventListener('click',()=>{
-    waterEnabled=!waterEnabled; named.visible=waterEnabled&&!basemapReference; unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());updateStatus();
-  });
-  buildingButton.addEventListener('click',()=>{
-    buildingsWanted=!buildingsWanted;
-    if(buildings)buildings.visible=buildingsWanted && getView().type==='3d';
-    void ensureBuildings();updateStatus();
-  });
   for (const layer of [named,unnamed]) void layer.load().catch(()=>{waterError=true;updateStatus();});
   return {
     bindView,

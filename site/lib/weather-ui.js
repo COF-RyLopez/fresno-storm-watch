@@ -1,6 +1,6 @@
-import {reportHealth} from './source-health.js?v=0.59.0';
-import {createHrrrWeather} from './hrrr-ui.js?v=0.59.0';
-import {loadSdk} from './map.js?v=0.42.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
+import {createHrrrWeather} from './hrrr-ui.js?v=0.73.1';
+import {loadSdk} from './map.js?v=0.73.1';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js?v=0.19.0';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 

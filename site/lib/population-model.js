@@ -6,17 +6,15 @@ export const POPULATION_SOURCES=Object.freeze({
   blocks:'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/California_Census_2020_Redistricting_Blocks/FeatureServer/0',
   acs:'https://P3ePLMYs2RVChkJx.svcs.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/ACS_Population_View_Boundaries/FeatureServer/2',
   acsItem:'https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83',
-  cog:'https://experience.arcgis.com/experience/98907a55cc574bcdb89403f92d34ff4f',
-  cogItem:'https://www.arcgis.com/home/item.html?id=7723dfd62f1a407fad2a60b0e95e19f0',
   countyMap:'https://cofgisonline.maps.arcgis.com/apps/webappviewer/index.html?id=22c8df4e3d854b39bbbf36b8042ba08d'
 });
 export const POPULATION_METHOD='2020 Census block population × fraction of each block polygon inside the selected county zone, measured with geodetic square-metre areas. Boundary blocks assume evenly distributed residents, including across water; this can be inaccurate, especially in large rural blocks.';
 export const POPULATION_LIMIT='Baseline residents, not people currently present, evacuees, confirmed impacts or shelter demand. The estimate is not an official Census zone count or a statistical confidence interval. No population is assigned to individual buildings.';
 
 /** Keep missing/suppressed population distinct from an observed zero. */
-export function normalizePopulationFeature(feature,kind='blocks'){
-  const a=feature.attributes||{},id=String(a.GEOID??''),raw=a[kind==='blocks'?'P0010001':'tot_pop'];
-  if(!(kind==='blocks'?/^06019\d{10}$/:/^06019\d{6}$/).test(id))throw Error('Population geography is not a Fresno County census record.');
+export function normalizePopulationFeature(feature){
+  const a=feature.attributes||{},id=String(a.GEOID??''),raw=a.P0010001;
+  if(!/^06019\d{10}$/.test(id))throw Error('Population geography is not a Fresno County census record.');
   const population=typeof raw==='number'&&Number.isFinite(raw)&&raw>=0&&Number.isInteger(raw)?raw:null;
   const geometry=powerGeometry(feature.geometry);if(!geometry.rings)throw Error('Census polygon missing.');
   return {id,population,geometry};

@@ -1,7 +1,7 @@
-import {loadSdk} from './map.js?v=0.65.0-r1';
+import {loadSdk} from './map.js?v=0.73.1';
 import {ACS_SOURCES,ACS_LIMIT,ACS_DENSITY_EXPRESSION,PIO_GUIDANCE,acsFields,formatAcsMeasure} from './acs-model.js?v=0.65.0-r1';
 import {readAcsMetadata,readAcsTracts,readPioContext} from './acs-data.js?v=0.65.0';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 const $=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 const colors=[[0,100,'#e4f1f5'],[100,500,'#b4d5e6'],[500,2000,'#74a9cf'],[2000,5000,'#3685b5'],[5000,1e12,'#145a87']];

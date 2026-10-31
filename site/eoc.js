@@ -1,15 +1,14 @@
-import {createPioWorkspace} from './lib/pio-ui.js?v=0.73.0-r2';
+import {createPioWorkspace} from './lib/pio-ui.js?v=0.73.1';
 import {readPioZoneRequest} from './lib/pio-zone-context.js?v=0.73.0-r2';
-import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.71.1';
-import {isPio} from './lib/pio-model.js?v=0.70.0';
+import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.73.1';
+import {isPio} from './lib/pio-model.js?v=0.73.1';
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
-import {setupAuth} from './lib/auth.js?v=0.40.0';
-import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.73.0-r2';
+import {setupAuth} from './lib/auth.js?v=0.73.1';
+import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.73.1';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';
-import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.73.0-r2';
-import {formatTime} from './lib/model.js';
+import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.73.1';
 
 const $=id=>document.getElementById(id),el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};
 const exercise=new URLSearchParams(location.search).get('exercise')==='1';
@@ -17,7 +16,7 @@ let zoneRequest=null,zoneRequestError=null;try{zoneRequest=readPioZoneRequest(lo
 const team=EOC_CONFIG.teamLabel||'F.R.O.G. EOC exercise team';
 const time=v=>Number.isFinite(v)?new Intl.DateTimeFormat('en-US',{timeZone:CONFIG.timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(v):'Unknown';
 let store=null,auth=null,records=emptyRecords(),incidents=[],incident=exercise?'exercise-fresno-2026':null,periodId=null,role='Management',section=['outreach','notifications'].includes(location.hash.slice(1))?location.hash.slice(1):'overview',generation=0,busy=false,checked=null,recordError=null;
-let publicState=exercise?exerciseSources():{notifications:[],health:[]},sourceController=null,noticeFilter='All',shownBriefing=null,pendingForm=null,omitted=new Set();
+let publicState=exercise?exerciseSources():{notifications:[],health:[]},noticeFilter='All',shownBriefing=null,pendingForm=null,omitted=new Set();
 const liveHeads=key=>heads(records[key]),can=key=>!!store?.allowed.has(key)&&!recordError&&(!checked||Date.now()-checked<=120000),selectedPeriod=()=>records.periods.find(r=>r.id===periodId)||null;
 const notices=()=>[...buildNotifications(records,publicState.notifications),...pio.sourceNotifications()];
 const action=(text,fn,enabled=true)=>{const b=el('calcite-button',text);b.setAttribute('scale',matchMedia('(max-width:600px)').matches?'m':'s');b.setAttribute('appearance','outline');b.toggleAttribute('disabled',!enabled);b.onclick=fn;return b;};
@@ -122,6 +121,6 @@ $('record-activation').onclick=()=>{const prior=liveHeads('incidents')[0]?.recor
 $('new-incident').onclick=()=>{const id=crypto.randomUUID();openRecord('incidents',{incidentId:id,entity:id,payload:{name:'EXERCISE — ',level:'Duty Officer monitoring'}});};
 $('record-period').onclick=()=>openRecord('periods');
 if(exercise){$('exercise-tools').hidden=false;$('access-notice').hidden=true;store=createExerciseStore();checked=Date.now();$('identity-status').textContent='Fictional operator · all permissions for rehearsal';$('sign-in').onclick=()=>$('signin-help').setAttribute('open','');$('sign-in').setAttribute('text','Exercise info');let revision=1;$('exercise-revise').onclick=()=>{revision++;publicState.notifications[1]={...publicState.notifications[1],revision:`rise-v${revision}`,change:`EXERCISE: revised river cue ${revision} — review is required again`,sourceTime:Date.now()};render();};$('exercise-failure').onclick=()=>{const key='exercise:failure',found=publicState.notifications.some(n=>n.key===key);publicState.notifications=publicState.notifications.filter(n=>n.key!==key);if(!found)publicState.notifications.push({key,revision:'failure-1',category:'Data failures',location:'Fictional county feed',change:'EXERCISE: source failed; previous records retained',sourceTime:Date.now(),verification:'Unconfirmed'});render();};$('exercise-clear').onclick=()=>{resetPrivate();$('exercise-tools').hidden=true;message('Exercise session cleared. Reload to start another fictional tabletop.');};render();}
-else{sourceController=createEocSources(CONFIG,state=>{publicState=state;renderSection();});void setupAuth(CONFIG.arcgis,false,async session=>{resetPrivate();if(!session)return;const epoch=generation;try{const next=await createPrivateStore(EOC_CONFIG,session);if(epoch!==generation){next.close();return;}store=next;await refresh();}catch(error){$('access-detail').textContent=error.message;}}).then(controller=>{auth=controller;});render();}
+else{createEocSources(CONFIG,state=>{publicState=state;renderSection();});void setupAuth(CONFIG.arcgis,false,async session=>{resetPrivate();if(!session)return;const epoch=generation;try{const next=await createPrivateStore(EOC_CONFIG,session);if(epoch!==generation){next.close();return;}store=next;await refresh();}catch(error){$('access-detail').textContent=error.message;}}).then(controller=>{auth=controller;});render();}
 setInterval(()=>{renderHeader();if(store&&!document.hidden)void refresh();},60000);
 window.addEventListener('pagehide',()=>resetPrivate());

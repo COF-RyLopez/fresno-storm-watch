@@ -6,8 +6,8 @@
 const TYPES = { uint16: Uint16Array, uint8: Uint8Array, int16: Int16Array, float32: Float32Array, float64: Float64Array };
 
 /**
- * Open an array. Returns { meta, shape, chunkShape, order, chunk(indices) -> Promise<TypedArray | null> }.
- * A chunk comes back in stored order: element at chunk-relative indices idx is at offset(idx) (see below);
+ * Open an array. Returns { meta, shape, chunkShape, strides, chunk(indices) -> Promise<TypedArray | null> }.
+ * A chunk comes back in stored order: element at chunk-relative indices idx is at sum(idx[d] * strides[d]);
  * null means the chunk is absent, i.e. every element is fill_value.
  */
 export async function openArray(url) {
@@ -30,8 +30,6 @@ export async function openArray(url) {
     meta,
     shape: meta.shape,
     chunkShape,
-    /** offset of chunk-relative indices (in array dimension order) within a decoded chunk */
-    offset: idx => idx.reduce((sum, v, d) => sum + v * strides[d], 0),
     strides,
     async chunk(indices) {
       const r = await fetch(`${base}c/${indices.join('/')}`);

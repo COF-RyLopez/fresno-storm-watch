@@ -8,4 +8,3 @@ export function validateScenarioBuildings(data,maxBuildings=5000){
  }
  return data.features;
 }
-export function buildingFrame(properties,index){const d=properties.depth_m?.[index];return {height:Number.isFinite(properties.display_height_m)?properties.display_height_m:null,depth:Number.isFinite(d)?d:null,status:!Number.isFinite(d)?'Modeled depth unknown':d>0?'Modeled water at sampled building location':'No modeled water at this sample/time'};}

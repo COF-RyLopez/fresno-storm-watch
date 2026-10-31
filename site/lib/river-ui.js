@@ -1,4 +1,4 @@
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import { fetchJson } from './nws.js';
 import { fetchRiverWatch } from './nwps.js';
 import { assessGauge, riverValue, formatRiverTime } from './river-model.js';
@@ -72,8 +72,6 @@ export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()
     updateCheckTime();
     lastAgeSignature=ageSignature(all);
     $('river-count').textContent=String(stations.length);$('river-count').setAttribute('label',`${stations.length} candidate watchpoints`);
-    $('view-rivers').setAttribute('text',critical?`River watch · ${critical} threshold cue${critical===1?'':'s'}`:'River watch');
-    $('view-rivers').toggleAttribute('indicator',critical>0);
     for(const[k,v]of Object.entries({sites:stations.length,current:fresh,forecasts,unknown}))$(`river-count-${k}`).textContent=String(v);
     const list=$('river-list');list.replaceChildren();
     for(const row of all.filter(r=>basin==='All'||r.station.basin===basin).sort((a,b)=>b.assessment.rank-a.assessment.rank||a.station.name.localeCompare(b.station.name))) {

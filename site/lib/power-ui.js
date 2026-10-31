@@ -1,6 +1,6 @@
-import {createPowerNetwork} from './power-network-ui.js?v=0.59.0';
+import {createPowerNetwork} from './power-network-ui.js?v=0.73.1';
 import {createPowerBuildings} from './power-buildings-ui.js?v=0.52.1';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import {POWER_FEEDS,POWER_LINKS,POWER_STATES,POWER_COLORS,powerHealth,powerRowIssues,powerChanges,validatePowerSnapshot} from './power-model.js?v=0.49.0';
 import {collectPower} from './power-data.js?v=0.49.0';
 import {formatTime} from './model.js';
@@ -57,7 +57,6 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     $('power-banner-title').textContent=prefix+(snapshot?`${active.length} outage record${active.length===1?'':'s'} · ${notices.length} PSPS watch / warning area${notices.length===1?'':'s'}${unknown?` · ${unknown} statuses to verify`:''}`:'Checking Fresno County power feeds');
     $('power-banner-detail').textContent=[loadError?'Power snapshot unavailable · check official utility maps':gaps?`${gaps} source checks unavailable or overdue · review power status`:`Fresno County · ${pending.size} new / changed records in this tab`,missing?`${missing} previous records no longer returned; restoration unconfirmed`:'Utility estimates may change'].join(' · ');
     $('power-banner').setAttribute('kind',active.length?'danger':notices.length||gaps||loadError||unknown||missing?'warning':'info');
-    $('view-power').setAttribute('text',`Power / PSPS${snapshot?` · ${all.length}`:''}`);$('view-power').toggleAttribute('indicator',!!(active.length||notices.length||gaps||loadError));
     $('power-summary').textContent=snapshot?`${all.length} utility record${all.length===1?'':'s'} returned for Fresno County. Filters do not change the banner.`:'Power status unknown until source checks complete.';
     $('power-check-time').textContent=`Application checked ${time(checked)}. ${loadError||''}`;
     $('power-clear').toggleAttribute('disabled',!pending.size&&!missing);

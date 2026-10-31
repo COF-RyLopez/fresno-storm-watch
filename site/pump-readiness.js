@@ -1,14 +1,14 @@
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
-import {setupAuth} from './lib/auth.js?v=0.40.0';
-import {loadSdk} from './lib/map.js?v=0.42.0';
-import {openPumpCopy} from './lib/pump-copy-data.js?v=0.48.0';
+import {setupAuth} from './lib/auth.js?v=0.73.1';
+import {loadSdk} from './lib/map.js?v=0.73.1';
+import {openPumpCopy} from './lib/pump-copy-data.js?v=0.73.1';
 import {PUMP_INVENTORY_CONFIG} from './pump-inventory-config.js?v=0.47.0';
-import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.59.0';
+import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.73.1';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
 import {pumpFormChoices,pumpFormCurrent,pumpFormRetainsSelection,pumpFormLink} from './lib/pump-form-model.js?v=0.48.0';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
-import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.45.0';
+import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.73.1';
 
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),exercise=params.get('exercise')==='1',acceptance=!exercise&&params.get('acceptance')==='1';
 const fictional=exercise||acceptance,fixture=fictional?pumpSummaryExercise():null;

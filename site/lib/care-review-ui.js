@@ -2,7 +2,7 @@ import {assessCareReviews,careRoadVicinity,freezeCareReview,CARE_ROAD_MILES,care
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};

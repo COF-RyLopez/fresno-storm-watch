@@ -1,5 +1,5 @@
 import {readAcsMetadata,readAcsTracts} from './acs-data.js?v=0.67.0';
-import {readPopulationBlocks} from './population-data.js?v=0.64.0';
+import {readPopulationBlocks} from './population-data.js?v=0.73.1';
 import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js?v=0.67.0';
 import {powerGeometry} from './power-geometry.js';
 

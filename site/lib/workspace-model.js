@@ -18,5 +18,3 @@ export function workspaceDefaults(id){return {mode:id==='power'?'3d':'2d',basema
 export const layerVisible=(state,key,eligible=true)=>!!state.layers[key]&&!!eligible;
 /** @returns {object} Independent mutable presentation state, held only in this page. */
 export function workspaceMemory(){const states=new Map();let active=null;return {get:id=>{if(!WORKSPACES[id])throw new Error('Unknown workspace');if(!states.has(id))states.set(id,workspaceDefaults(id));return states.get(id);},activate:id=>{if(!WORKSPACES[id])throw new Error('Unknown workspace');active=id;},get active(){return active;}};}
-/** @param {Map} checks @returns {object[]} Count an underlying check once, never once per area association. */
-export const unhealthyChecks=checks=>[...checks.values()].filter(s=>s.status!=='current').sort((a,b)=>a.label.localeCompare(b.label));

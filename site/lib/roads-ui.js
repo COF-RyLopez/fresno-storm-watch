@@ -1,4 +1,4 @@
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {
@@ -35,7 +35,6 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=
   async function refresh(){if(busy||exercise)return;busy=true;document.getElementById('roads-refresh').setAttribute('loading','');try{snapshot=await fetchRoads();error=null;}catch(cause){error=cause;}finally{busy=false;document.getElementById('roads-refresh').removeAttribute('loading');render();}}
   document.getElementById('roads-refresh').onclick=()=>void refresh();document.getElementById('roads-all').addEventListener('change',render);
   for(const [id,url] of [['county-roads-link',ROAD_MAP],['county-evac-link',EVAC_MAP]])document.getElementById(id).setAttribute('href',url);
-  document.getElementById('toggle-roads').onclick=()=>{const b=document.getElementById('toggle-roads'),visible=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(visible));b.textContent=`County roads: ${visible?'on':'off'}`;map?.setRoadsVisible(visible);};
   void refresh();setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{status.textContent=exercise?'Exercise mode · live road feed disabled':roadHealth(snapshot,error);},15000);
   return {setMap(controller){map=controller;render();if(selected)map.focusRoad(selected);},select(key,{keepWorkspace=false}={}){const row=snapshot?.rows.find(r=>r.key===key);if(row){if(!roadInCurrentView(row)){document.getElementById('roads-all').checked=true;render();}if(!keepWorkspace)onOpen();map?.setRoadsVisible(true);detail(row);}},get snapshot(){return snapshot;}};
 }

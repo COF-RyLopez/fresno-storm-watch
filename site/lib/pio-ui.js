@@ -1,16 +1,16 @@
-import {makeEvent,heads,digest} from './eoc-model.js?v=0.73.0-r2';
-import {pioStates,pioApprovalFor,PIO_RECEIPTS,assertReadyForApproval} from './pio-model.js?v=0.73.0-r2';
-import {createPioSourceMonitor} from './pio-source-data.js?v=0.71.1';
-import {pendingPioSourceReviews} from './pio-source-review.js?v=0.71.1';
-import {capturePopulationEvidence} from './population-snapshot-data.js?v=0.70.0';
-import {freezePopulationEvidence,populationEvidenceSummary,populationEvidenceLines} from './population-snapshot-model.js?v=0.70.0';
+import {makeEvent,heads,digest} from './eoc-model.js?v=0.73.1';
+import {pioStates,pioApprovalFor,PIO_RECEIPTS,assertReadyForApproval} from './pio-model.js?v=0.73.1';
+import {createPioSourceMonitor} from './pio-source-data.js?v=0.73.1';
+import {pendingPioSourceReviews} from './pio-source-review.js?v=0.73.1';
+import {capturePopulationEvidence} from './population-snapshot-data.js?v=0.73.1';
+import {freezePopulationEvidence,populationEvidenceSummary,populationEvidenceLines} from './population-snapshot-model.js?v=0.73.1';
 import {captureAfnEvidence} from './afn-snapshot-data.js?v=0.70.0';
 import {AFN_TOPIC_KEYS,freezeAfnEvidence,afnEvidenceSummary,afnEvidenceLines} from './afn-snapshot-model.js?v=0.70.0';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {loadCounties} from './nws.js';
 import {localDateValue} from './eoc-forms.js';
-import {populationSourceGuide} from './population-guide.js?v=0.67.0';
+import {populationSourceGuide} from './population-guide.js?v=0.73.1';
 import {loadPioZoneContext,assertPopulationMapBoundary,populationMapSummary,populationMapLines} from './pio-zone-context.js?v=0.73.0-r2';
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
@@ -187,5 +187,5 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
     }
   }
   setInterval(()=>{if(!document.hidden&&getState().incident&&!editor)void reviewZones();},300000);
-  return {render,checkSources(){if(!editor)return reviewZones();},sourceNotifications(){return zoneNotices;},clear(){epoch++;entryAbort?.abort();entryPending=null;entry=null;entryError=requestError;entryFocusPending=!!request;monitor.clear();abort?.abort();zones=null;zoneError=null;editor?.populationAbort?.abort();editor?.afnAbort?.abort();zonePending=null;reviewPending=null;reviewSignature=null;reviewChecked=null;zoneNotices=[];editor=null;saveBusy=false;host.replaceChildren();},incidentChanged(){this.clear();render();}};
+  return {render,checkSources(){if(!editor)return reviewZones();},sourceNotifications(){return zoneNotices;},clear(){epoch++;entryAbort?.abort();entryPending=null;entry=null;entryError=requestError;entryFocusPending=!!request;monitor.clear();abort?.abort();zones=null;zoneError=null;editor?.populationAbort?.abort();editor?.afnAbort?.abort();zonePending=null;reviewPending=null;reviewSignature=null;reviewChecked=null;zoneNotices=[];editor=null;saveBusy=false;host.replaceChildren();}};
 }

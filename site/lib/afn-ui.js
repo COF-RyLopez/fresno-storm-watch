@@ -1,7 +1,7 @@
 import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.69.0';
 import {formatAcsMeasure} from './acs-model.js?v=0.65.0-r1';
 import {readAfnContext} from './afn-data.js?v=0.69.0';
-import {reportHealth} from './source-health.js?v=0.59.0';
+import {reportHealth} from './source-health.js?v=0.73.1';
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 const number=v=>v===null?'Unknown':new Intl.NumberFormat('en-US').format(v);

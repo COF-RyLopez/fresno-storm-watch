@@ -1,7 +1,5 @@
 /** Public configuration only. Never put a password, token, or client secret here. */
 export const CONFIG = Object.freeze({
-  title: 'Fresno County Storm Watch',
-  season: '2026–27',
   nwsLayerUrl: 'https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/FeatureServer/1',
   pollMs: 300_000,
   staleMs: 420_000,
