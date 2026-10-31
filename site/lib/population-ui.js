@@ -5,7 +5,7 @@ import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_MOE_SOURCE,ZONE_A
 import {loadSdk} from './map.js?v=0.73.1';
 import {createAcsContext} from './acs-ui.js?v=0.73.1';
 import {afnContext} from './afn-ui.js?v=0.73.1';
-import {readCareCollection} from './care-data.js?v=0.56.0-r1';
+import {readCareCollection} from './care-data.js?v=0.74.0-planning';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js?v=0.73.1';
 import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.73.1';

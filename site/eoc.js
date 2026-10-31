@@ -1,4 +1,4 @@
-import {createPioWorkspace} from './lib/pio-ui.js?v=0.73.1';
+import {createPioWorkspace} from './lib/pio-ui.js?v=0.74.0-planning';
 import {readPioZoneRequest} from './lib/pio-zone-context.js?v=0.73.0-r2';
 import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.73.1';
 import {isPio} from './lib/pio-model.js?v=0.73.1';

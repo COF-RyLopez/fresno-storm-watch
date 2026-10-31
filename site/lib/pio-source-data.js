@@ -1,6 +1,6 @@
 import {digest} from './eoc-model.js?v=0.73.1';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
-import {readCareCollection} from './care-data.js?v=0.56.0-r1';
+import {readCareCollection} from './care-data.js?v=0.74.0-planning';
 import {loadCounties} from './nws.js';
 import {readAfnContext} from './afn-data.js?v=0.70.0';
 import {freezeAfnEvidence,AFN_TOPIC_KEYS} from './afn-snapshot-model.js?v=0.70.0';

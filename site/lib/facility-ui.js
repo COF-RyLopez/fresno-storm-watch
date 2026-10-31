@@ -1,4 +1,5 @@
-import {assessFacilities,facilityExercise,facilityFields,FACILITY_COLORS,FACILITY_MAX_AGE,POWER_STATES} from './facility-model.js';
+import {assessFacilities,facilityExercise,facilityFields,FACILITY_COLORS,FACILITY_MAX_AGE} from './facility-model.js';
+import {POWER_STATES} from './power-model.js';
 import {openFacilitySource,queryFacilities} from './facility-data.js';
 import {loadSdk} from './map.js?v=0.73.1';
 import {formatTime} from './model.js';

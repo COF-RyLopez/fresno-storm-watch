@@ -91,5 +91,3 @@ export function facilityExercise(now=Date.now()) {
   ].map(([id,name,kind,x,y,backup])=>({key:`exercise:${id}`,id,name,kind,geometry:{x,y,spatialReference:{wkid:4326}},owner:'EXERCISE facilities team',backup,
     sourceId:'exercise',sourceTitle:'Fictional sites — no county asset data',fetched:now,updated:now-3600000,runtime:null,load:null}));
 }
-
-export {POWER_STATES};

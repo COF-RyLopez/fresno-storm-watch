@@ -1,4 +1,4 @@
-import {createMissionFollowups} from './mission-followup-ui.js?v=0.73.1';
+import {createMissionFollowups} from './mission-followup-ui.js?v=0.74.0-planning';
 import {missionEvidenceKey} from './mission-followup-model.js?v=0.71.1';
 import {captureBriefingEvidence,briefingNeedsSave,briefingPeriods,protectBriefingDraft} from './briefing-draft-model.js?v=0.59.0';
 import {libraryMapStatus} from './library-status-model.js?v=0.58.1';

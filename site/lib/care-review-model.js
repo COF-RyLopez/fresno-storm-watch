@@ -2,13 +2,12 @@ import {areaPowerEvidence} from './area-concern-model.js';
 import {pointInRings} from './power-geometry.js';
 import {searchGeometry,METERS_PER_MILE} from './nearby-search.js';
 import {roadInCurrentView} from './roads.js';
+import {current as fresh} from './dwr-supply-planning-model.js?v=0.74.0-planning';
 
 const dateFormat=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 export const careTime=value=>Number.isFinite(value)?dateFormat.format(value):'Not supplied';
-export const CARE_CHECK_MAX=420000;
 export const CARE_ROAD_MILES=1;
 export const careIdentity=f=>JSON.stringify([f.key,f.sourceId,f.name,f.address,f.city,f.geometry]);
-const fresh=(checked,now)=>Number.isFinite(checked)&&checked<=now+120000&&now-checked<=CARE_CHECK_MAX;
 const activeZone=z=>['Order','Warn','unknown'].includes(z.status);
 
 /** One-mile horizontal distance to whole county road geometries; never a routing test. */
@@ -30,9 +29,9 @@ export async function careRoadVicinity(facilities,roads,lookup,{current=()=>true
 export function assessCareReviews({facilities,zones,power,roads,vicinity,previous=new Map(),sourceErrors={}},now=Date.now()){
  if(!facilities)return [];
  const zoneIndex=(zones?.rows||[]).map(z=>({zone:z,bounds:searchGeometry(z.geometry)?.bounds}));
- const facilitiesCurrent=fresh(facilities.checked,now)&&!sourceErrors.facilities;
- const zoneCurrent=!!zones&&fresh(zones.checked,now)&&!sourceErrors.zones;
- const roadCurrent=!!roads?.snapshot&&!roads.error&&fresh(roads.snapshot.checked,now);
+ const facilitiesCurrent=fresh(facilities.checked,sourceErrors.facilities,now);
+ const zoneCurrent=!!zones&&fresh(zones.checked,sourceErrors.zones,now);
+ const roadCurrent=!!roads?.snapshot&&fresh(roads.snapshot.checked,roads.error,now);
  const result=[];
  for(const f of new Map(facilities.rows.map(f=>[f.key,f])).values()){
   if(!searchGeometry(f.geometry)||f.geometry.rings||f.geometry.paths)throw Error('Resident-care location requires a WGS84 point.');
