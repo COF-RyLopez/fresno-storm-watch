@@ -3,7 +3,6 @@ import geodesic from 'geographiclib-geodesic';
 import {arcgisToGeoJSON} from '@terraformer/arcgis';
 import {summarizeZoneAcs} from '../../site/lib/zone-acs-model.js';
 
-export const BATCH_METHOD='frog-zone-acs-batch/1';
 const MAX_SEGMENT_DEGREES=.0005,TOLERANCE=1e-6;
 
 /** The county feed also contains a neighboring county context polygon. */

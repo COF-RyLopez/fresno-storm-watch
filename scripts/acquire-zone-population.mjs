@@ -10,6 +10,7 @@ import {POPULATION_SOURCES} from '../site/lib/population-model.js';
 import {CARE_SOURCES} from '../site/lib/care-model.js';
 
 export const fingerprint=rows=>createHash('sha256').update(JSON.stringify([...rows].sort((a,b)=>(a.key||a.id).localeCompare(b.key||b.id)))).digest('hex');
+export const acsChanged=(a,b)=>['period','modified','edited'].some(k=>a[k]!==b[k]);
 const folder=new URL('../work/zone-population/',import.meta.url);
 
 /** Public county inputs only. Reconcile source IDs and preserve complete raw geometry. */
@@ -26,7 +27,7 @@ export async function acquire(){
   ]);
   const [afterZones,afterAcs]=await Promise.all([readCareCollection('zones',{county,fetcher}),readAcsMetadata('population',{fetcher})]);
   if(fingerprint(zones.rows)!==fingerprint(afterZones.rows))throw Error('County evacuation zones changed during acquisition; rerun.');
-  if(['period','modified','edited'].some(k=>tracts.metadata[k]!==afterAcs[k]))throw Error('ACS source changed during acquisition; rerun.');
+  if(acsChanged(tracts.metadata,afterAcs))throw Error('ACS source changed during acquisition; rerun.');
   const data={schema:1,started,acquired:Date.now(),county,zones,tracts,blocks,sources:{zones:CARE_SOURCES.zoneItem,acs:POPULATION_SOURCES.acsItem,blocks:POPULATION_SOURCES.blocksItem},fingerprints:{zones:fingerprint(zones.rows),tracts:fingerprint(tracts.rows),blocks:fingerprint(blocks.rows)}};
   const temporary=new URL('inputs.json.tmp',folder),target=new URL('inputs.json',folder);await writeFile(temporary,JSON.stringify(data),'utf8');await rename(temporary,target);
   console.log(JSON.stringify({status:'complete',zones:zones.rows.length,tracts:tracts.rows.length,blocks:blocks.rows.length,seconds:(Date.now()-started)/1000,file:fileURLToPath(target)}));return data;
