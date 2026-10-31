@@ -1,5 +1,5 @@
 /** Public-only comparison bundle: same collectors and models as the main app. */
-import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -13,7 +13,7 @@ import {validatePowerSnapshot} from '../site/lib/power-model.js';
 import {validateWindSnapshot} from '../site/lib/weather-model.js';
 import {validateReservoirSnapshot} from '../site/lib/environment-model.js';
 import {chartWindow} from '../site/lib/pilot-data.js';
-export {chartWindow} from '../site/lib/pilot-data.js';
+import {writeAtomic} from './lib/snapshot-io.mjs';
 
 const ROOT=new URL('../site/data/',import.meta.url);
 const read=async name=>JSON.parse(await readFile(new URL(name+'.json',ROOT),'utf8'));
@@ -36,7 +36,7 @@ export async function collectPilot({fetchImpl=fetch,now=Date.now(),published=fal
 }
 async function main(){
  const started=Date.now(),output=new URL('map-pilot-latest.json',ROOT);
- try{const s=await collectPilot({published:process.argv.includes('--published')});const tmp=new URL('map-pilot-latest.tmp',ROOT);await mkdir(ROOT,{recursive:true});await writeFile(tmp,JSON.stringify(s)+'\n','utf8');await rename(tmp,output);console.log(JSON.stringify({event:'map-pilot-collection',dataId:s.dataId,durationMs:Date.now()-started,gauges:s.input.entries.length,failed:s.input.entries.filter(e=>e.error).length,rainError:s.input.rain.error}));}
+ try{const s=await collectPilot({published:process.argv.includes('--published')});await mkdir(ROOT,{recursive:true});await writeAtomic(output,JSON.stringify(s)+'\n');console.log(JSON.stringify({event:'map-pilot-collection',dataId:s.dataId,durationMs:Date.now()-started,gauges:s.input.entries.length,failed:s.input.entries.filter(e=>e.error).length,rainError:s.input.rain.error}));}
  catch(e){console.warn('::warning title=Map pilot unavailable::'+e.message);await writeFile(output,JSON.stringify({schemaVersion:1,error:'Public pilot collection failed. Check workflow and original sources.',generatedAt:new Date().toISOString()}),'utf8');}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();

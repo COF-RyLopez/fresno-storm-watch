@@ -46,16 +46,15 @@ validatePowerSnapshot(JSON.parse(await readFile(new URL('site/data/power-latest.
 validateWindSnapshot(JSON.parse(await readFile(new URL('site/data/wind-latest.json',root),'utf8')));
 const areaSettings=JSON.parse(await readFile(new URL('site/data/river-areas.json',root),'utf8'));
 assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,11);
-validateAreaConcerns(JSON.parse(await readFile(new URL('site/data/area-concerns.json',root),'utf8')),areaSettings.areas,JSON.parse(await readFile(new URL('site/data/wind-watchlist.json',root),'utf8')).sites);
+const areaConcerns=JSON.parse(await readFile(new URL('site/data/area-concerns.json',root),'utf8')),windSettings=JSON.parse(await readFile(new URL('site/data/wind-watchlist.json',root),'utf8'));
+validateAreaConcerns(areaConcerns,areaSettings.areas,windSettings.sites);
 const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
 const pilotRuntime=JSON.parse(await readFile(new URL('docs/map-pilot-runtime.json',root),'utf8'));
 for(const entry of pilotRuntime.files)assert.equal(createHash('sha256').update(await readFile(new URL(entry.file,root))).digest('hex'),entry.sha256,'Pinned MapLibre runtime changed: '+entry.file);
 assert.equal(createHash('sha256').update(player).digest('hex'),'0c4f60fc126ef62dc18e8e5e7b1984cf77628aa2a230688dcf5bea7f3966e052','Pinned HLS library changed');
 console.log('Syntax, county geometry, nine river watchpoints, eight cameras, two reservoir contracts/snapshot, pinned player integrity, page links and public config checks passed.');
 
-const comparisonInputs=await Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>JSON.parse(await readFile(new URL(`site/data/${name}.json`,root),'utf8'))));
-const [comparisonAreaConfig,comparisonAssociations,comparisonWinds,comparisonGauges]=comparisonInputs;
-const comparisonSites=uniqueComparisonPoints(comparisonAreas(comparisonAreaConfig.areas,comparisonAssociations.areas,comparisonWinds.sites,comparisonGauges.stations));
+const comparisonSites=uniqueComparisonPoints(comparisonAreas(areaSettings.areas,areaConcerns.areas,windSettings.sites,watch.stations));
 assert.equal(comparisonSites.length,7);
 validateComparisonSnapshot(JSON.parse(await readFile(new URL('site/data/comparison-latest.json',root),'utf8')),comparisonSites);
 console.log('Seven public forecast-comparison points and scheduled snapshot schema checked.');

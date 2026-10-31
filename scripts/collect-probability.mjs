@@ -1,8 +1,9 @@
 /** Public WPC map images only; scheduled Pages collection bridges publisher CORS restrictions. */
-import {writeFile,mkdir,rename,readdir,unlink} from 'node:fs/promises';
+import {writeFile,mkdir,readdir,unlink} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {writeAtomic} from './lib/snapshot-io.mjs';
 import {PROBABILITY_BASE,PROBABILITY_SOURCE,PROBABILITY_BOUNDS,PROBABILITY_LEGEND,parseProbabilityCycle,probabilityPeriods,probabilityImageUrl,validateProbabilitySnapshot} from '../site/lib/precip-probability-model.js';
 const DATA=new URL('../site/data/',import.meta.url);
 /** Bound streamed files even when the server omits Content-Length. */
@@ -43,8 +44,7 @@ async function main(){
   const start=Date.now(),{snapshot,images}=await collectProbability(),folder=new URL('probability-images/',DATA);
   await mkdir(folder,{recursive:true});
   for(const [file,bytes]of images)await writeFile(new URL(file,DATA),bytes);
-  await writeFile(new URL('precip-probability.tmp',DATA),JSON.stringify(snapshot,null,2)+'\n','utf8');
-  await rename(new URL('precip-probability.tmp',DATA),new URL('precip-probability.json',DATA));
+  await writeAtomic(new URL('precip-probability.json',DATA),JSON.stringify(snapshot,null,2)+'\n');
   // Only delete orphaned public PNGs inside this collector's resolved output directory.
   const keep=new Set([...images.keys()].map(f=>f.split('/').at(-1)));
   for(const name of await readdir(folder))if(/^[a-f0-9]{64}\.png$/.test(name)&&!keep.has(name))await unlink(new URL(name,folder));

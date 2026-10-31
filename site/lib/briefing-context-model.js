@@ -2,7 +2,8 @@ import {prepareWatchGeometry,nearbyWatchpoints} from './watch-proximity.js';
 import {FACILITY_MAX_AGE} from './facility-model.js';
 const AREA_IDS=['san-joaquin-lower','san-joaquin-upper','little-dry','james-bypass','kings-upper','kings-lower'];
 export const LOOKUP_KM=Object.freeze([1,5,10]);
-const calendar=t=>Number.isFinite(t)&&t>0?new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(t):null;
+export const pacificDate=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(t);
+const calendar=t=>Number.isFinite(t)&&t>0?pacificDate(t):null;
 /** @param {object} value @returns {object} No implicit association survives a change to the reviewed briefing revision. */
 export function validateBriefingContext(value){
   if(value?.schemaVersion!==1||!Array.isArray(value.associations)||value.associations.length>40)throw new Error('Invalid briefing / river association register.');
