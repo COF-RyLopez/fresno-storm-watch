@@ -1,9 +1,14 @@
 import {readAcsMetadata,readAcsTracts} from './acs-data.js?v=0.67.0';
-import {readPopulationBlocks} from './population-data.js?v=0.73.1';
+import {readPopulationBlocks} from './population-data.js?v=0.74.0-population';
 import {summarizeZoneAcs,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js?v=0.67.0';
 import {powerGeometry} from './power-geometry.js';
 
 const AREA_TOLERANCE=1e-6,MAX_BLOCK_WORK=75000,CACHE_LIFETIME=600000;
+/** In-memory reuse of a value (with .checked) for the same key and geometry signature within ttl; oldest entry evicted past cap. */
+export async function cached(cache,key,signature,ttl,cap,read){
+  const saved=cache.get(key);if(saved?.signature===signature&&Date.now()-saved.value.checked<ttl)return saved.value;
+  const value=await read();cache.set(key,{signature,value});if(cache.size>cap)cache.delete(cache.keys().next().value);return value;
+}
 
 /** Full Census boundaries, not the Living Atlas water-erased display polygons. */
 export async function readCensusAnalysisTracts(geometry,{fetcher=fetch,signal}={}){
@@ -66,9 +71,8 @@ export async function calculateAcsZonePopulation(zone,{
     if(row.areaFraction>=1-1e-9){row.weight=1;row.method='Whole tract';}
     else{
       onProgress(`Checking 2020 block population for ${tract.name}…`);
-      const signature=JSON.stringify(tract.geometry),saved=blockCache.get(tract.id);
-      const blocks=saved?.signature===signature&&Date.now()-saved.collection.checked<CACHE_LIFETIME?saved.collection:await readBlocks(tract.geometry,{signal,fetcher});
-      check();blockCache.set(tract.id,{signature,collection:blocks});if(blockCache.size>8)blockCache.delete(blockCache.keys().next().value);
+      const blocks=await cached(blockCache,tract.id,JSON.stringify(tract.geometry),CACHE_LIFETIME,8,async()=>{const blocks=await readBlocks(tract.geometry,{signal,fetcher});check();return blocks;});
+      check();
       blockWork+=blocks.rows.length;if(blockWork>MAX_BLOCK_WORK)throw Error('ACS allocation exceeds the 75,000-block work limit; use whole-tract context and request a prepared analysis.');
       sourceBlocks+=blocks.rows.length;row.blockChecked=blocks.checked;row.blockEdited=blocks.edited??null;
       let denominator=0,numerator=0,missing=0;

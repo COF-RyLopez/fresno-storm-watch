@@ -1,6 +1,7 @@
-import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,B16001,validateLanguageAreas,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.69.0';
+import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,B16001,validateLanguageAreas,summarizeFacilities,formatPercentile} from './afn-model.js?v=0.74.0-population';
 import {formatAcsMeasure} from './acs-model.js?v=0.65.0-r1';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
+import {optionalDate as stamp,date,count} from './population-snapshot-model.js?v=0.74.0-population';
 
 export const AFN_TOPIC_KEYS=['languages','svi','ces','ccl'];
 export const AFN_EVIDENCE_MAX=24000;
@@ -14,9 +15,6 @@ const references={
   ccl:{title:'CDSS adult and senior licensing reference',url:AFN_SOURCES.ccl.url,item:AFN_SOURCES.ccl.item,period:'Publisher licensing reference; individual effective times unavailable',geography:'Facility points intersecting the zone'}
 };
 const limits={wholeArea:AFN_LIMIT,facilities:CCL_LIMIT,language:'Language estimates describe people age 5+ in entire PUMAs, not speakers inside this evacuation zone or confirmed preferred languages. B16001 English proficiency is less than very well; the SVI limited-English field uses the publisher’s less-than-well definition. Do not combine them.',freshness:'Capture and query times are not population observations, license-effective times or evacuation-order issue times. Publisher publication/issue times are not supplied. Missing values remain unknown.'};
-const stamp=v=>v===undefined||v===0?null:v;
-const date=v=>v===null||Number.isFinite(v)&&v>0&&v<=Date.now()+300000;
-const count=v=>v===null||Number.isFinite(v)&&v>=0;
 const rank=v=>v===null||Number.isFinite(v)&&v>=0&&v<=1;
 const text=(v,max)=>typeof v==='string'&&v.trim().length>0&&v.length<=max;
 const measure=m=>!!m&&count(m.estimate)&&count(m.moe);

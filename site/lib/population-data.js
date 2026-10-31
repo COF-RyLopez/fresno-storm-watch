@@ -1,4 +1,4 @@
-import {POPULATION_SOURCES,normalizePopulationFeature,summarizePopulation} from './population-model.js?v=0.73.1';
+import {POPULATION_SOURCES,normalizePopulationFeature,summarizePopulation} from './population-model.js?v=0.74.0-population';
 
 /** Public read-only REST queries. Reconcile all IDs; incomplete data never becomes a population total. */
 export async function readPopulationBlocks(geometry,{fetcher=fetch,signal}={}){

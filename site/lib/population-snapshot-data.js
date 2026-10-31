@@ -1,7 +1,7 @@
 import {loadSdk} from './map.js?v=0.74.0-infra-weather';
-import {calculateAcsZonePopulation} from './zone-acs-data.js?v=0.73.1';
-import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.73.1';
-import {freezePopulationEvidence} from './population-snapshot-model.js?v=0.73.1';
+import {calculateAcsZonePopulation} from './zone-acs-data.js?v=0.74.0-population';
+import {readPopulationBlocks,calculateZonePopulation} from './population-data.js?v=0.74.0-population';
+import {freezePopulationEvidence} from './population-snapshot-model.js?v=0.74.0-population';
 
 let geometryTools=null;
 export async function populationGeometryTools(){

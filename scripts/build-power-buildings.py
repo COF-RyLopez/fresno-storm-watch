@@ -48,16 +48,18 @@ def contained_addresses(buildings: list[dict[str, Any]], addresses: list[dict[st
     return dict(stats)
 
 
-def acquire(kind: str, release: str, bbox: tuple[float, ...], cache: Path) -> list[dict[str, Any]]:
-    """Stream bbox-filtered GeoParquet; cache public rows for a repeatable rerun."""
+def acquire(kind: str, release: str, bbox: tuple[float, ...], cache: Path,
+            columns: tuple[str, ...] = ("id", "version", "geometry", "height", "sources", "number", "street", "unit"),
+            path: Path | None = None, error: str | None = None) -> list[dict[str, Any]]:
+    """Stream bbox-filtered GeoParquet (requested columns the release has); cache public rows for a repeatable rerun."""
     import pyarrow.parquet as pq
     import pyarrow as pa
-    path = cache / (kind + ".parquet")
+    path = path or cache / (kind + ".parquet")
     if not path.exists():
         reader = record_batch_reader(kind, bbox=bbox, release=release, connect_timeout=20, request_timeout=90)
         if reader is None:
-            raise RuntimeError(f"Overture {kind} query failed.")
-        columns = [k for k in ("id", "version", "geometry", "height", "sources", "number", "street", "unit") if k in reader.schema.names]
+            raise RuntimeError(error or f"Overture {kind} query failed.")
+        columns = [k for k in columns if k in reader.schema.names]
         schema = pa.schema([reader.schema.field(k) for k in columns])
         with pq.ParquetWriter(path.with_suffix(".tmp"), schema, compression="zstd") as writer:
             count = 0
