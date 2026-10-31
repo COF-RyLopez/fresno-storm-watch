@@ -1,13 +1,13 @@
-import {makeEvent,heads,digest} from './eoc-model.js?v=0.73.1';
+import {makeEvent,heads,headIds} from './eoc-model.js?v=0.74.0-eoc';
 import {pioStates,pioApprovalFor,PIO_RECEIPTS,assertReadyForApproval} from './pio-model.js?v=0.73.1';
-import {createPioSourceMonitor} from './pio-source-data.js?v=0.73.1';
-import {pendingPioSourceReviews} from './pio-source-review.js?v=0.73.1';
+import {createPioSourceMonitor,pioZoneSnapshot} from './pio-source-data.js?v=0.74.0-eoc';
+import {pendingPioSourceReviews} from './pio-source-review.js?v=0.74.0-eoc';
 import {capturePopulationEvidence} from './population-snapshot-data.js?v=0.73.1';
 import {freezePopulationEvidence,populationEvidenceSummary,populationEvidenceLines} from './population-snapshot-model.js?v=0.73.1';
 import {captureAfnEvidence} from './afn-snapshot-data.js?v=0.70.0';
 import {AFN_TOPIC_KEYS,freezeAfnEvidence,afnEvidenceSummary,afnEvidenceLines} from './afn-snapshot-model.js?v=0.70.0';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
-import {CARE_SOURCES,ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
+import {ZONE_STATUS} from './care-model.js?v=0.56.0-r1';
 import {loadCounties} from './nws.js';
 import {localDateValue} from './eoc-forms.js';
 import {populationSourceGuide} from './population-guide.js?v=0.73.1';
@@ -26,7 +26,6 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
   const monitor=createPioSourceMonitor({loadZones:({force})=>loadZones(force),exercise});
   const button=(label,fn,enabled=true)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.disabled=!enabled;b.addEventListener('click',fn);return b;};
   const currentRows=()=>pioStates(getState().records,{heads});
-  const headIds=(key,entity)=>heads(getState().records[key].filter(r=>r.entity===entity)).flatMap(h=>h.heads.map(r=>r.id));
   function permitted(key){const s=getState();return !!s.incident&&s.can(key);}
   async function loadZones(force=false){
     if(zonePending)return zonePending;if(zones&&!force&&Date.now()-zones.checked<300000)return zones;
@@ -38,7 +37,7 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
     }catch(e){if(generation===epoch&&e.name!=='AbortError')zoneError=e.message;throw e;}
     finally{if(generation===epoch)zonePending=null;}})();return zonePending;
   }
-  async function zoneSnapshot(key){const z=zones?.rows.find(z=>z.key===key);if(!z)throw Error('Choose a current county zone.');return {source:CARE_SOURCES.zones,key:z.key,oid:z.oid,name:z.name,status:z.status,checked:zones.checked,revision:await digest({name:z.name,status:z.status,geometry:z.geometry})};}
+  async function zoneSnapshot(key){const z=zones?.rows.find(z=>z.key===key);if(!z)throw Error('Choose a current county zone.');return pioZoneSnapshot(z,zones.checked);}
   async function resolveEntry(force=false){
     if(!request||entryPending||entry&&!force)return;const generation=epoch,token={},activeRequest=request;entryPending=token;entryAbort?.abort();entryAbort=new AbortController();entryError=null;
     try{if(exercise)throw Error('A real county zone link is not applied to the fictional tabletop. Open the private workspace for county outreach.');const collection=await loadZones(force),next=await loadPioZoneContext(activeRequest,collection,{signal:entryAbort.signal});if(generation===epoch&&request===activeRequest&&entryPending===token)entry=next;}
@@ -149,12 +148,12 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
           if(e.population)o.populationEvidence=e.population;
           if(e.populationMap)o.populationMapEvidence=e.populationMap;
           if(e.afn)o.afnEvidence=e.afn;
-          e.event=makeEvent('coordination',{kind:'Follow-up',title:value('title'),location:zone.name,owner:value('owner'),due:date(value('nextUpdate')),nextReview:'Review PIO message, source applicability and next public update',status:value('status'),evidence:value('evidence'),pioOutreach:o},{incident:e.incident,entity:e.entity,supersedes:e.record?headIds('coordination',e.entity):[]});
+          e.event=makeEvent('coordination',{kind:'Follow-up',title:value('title'),location:zone.name,owner:value('owner'),due:date(value('nextUpdate')),nextReview:'Review PIO message, source applicability and next public update',status:value('status'),evidence:value('evidence'),pioOutreach:o},{incident:e.incident,entity:e.entity,supersedes:e.record?headIds(getState().records.coordination,e.entity):[]});
         }else if(e.kind==='approval'){
           if(value('decision')==='Approved'){await recheckPlan(e.record);assertReadyForApproval(e.record.payload);}
-          const prior=pioApprovalFor(e.record,getState().records,heads);e.event=makeEvent('approvals',{kind:'pio-outreach',outreachEvent:e.record.id,status:value('decision'),decisionBy:value('decisionBy'),decidedAt:date(value('decidedAt')),evidence:value('evidence')},{incident:e.incident,entity:e.entity,supersedes:prior?headIds('approvals',prior.entity):[]});
+          const prior=pioApprovalFor(e.record,getState().records,heads);e.event=makeEvent('approvals',{kind:'pio-outreach',outreachEvent:e.record.id,status:value('decision'),decisionBy:value('decisionBy'),decidedAt:date(value('decidedAt')),evidence:value('evidence')},{incident:e.incident,entity:e.entity,supersedes:prior?headIds(getState().records.approvals,prior.entity):[]});
         }else{
-          const p=e.record.payload,a=e.distribution?getState().records.approvals.find(a=>a.id===e.distribution.payload.pioDistribution.approvalEvent):pioApprovalFor(e.record,getState().records,heads);if(!a||a.payload.status!=='Approved')throw Error('Current exact-version approval is required.');e.event=makeEvent('coordination',{kind:'Follow-up',title:'Distribution · '+p.title,location:p.location,owner:value('owner'),due:date(value('nextUpdate')),nextReview:'Review next PIO update and delivery evidence',status:'Complete',evidence:value('evidence'),pioDistribution:{schema:1,outreachEvent:e.record.id,outreachEntity:e.record.entity,approvalEvent:a.id,distributedAt:date(value('distributedAt')),channels:lines(value('channels')),partners:lines(value('partners')),receipt:value('receipt'),nextUpdate:date(value('nextUpdate'))}},{incident:e.incident,entity:e.entity,supersedes:e.distribution?headIds('coordination',e.entity):[]});
+          const p=e.record.payload,a=e.distribution?getState().records.approvals.find(a=>a.id===e.distribution.payload.pioDistribution.approvalEvent):pioApprovalFor(e.record,getState().records,heads);if(!a||a.payload.status!=='Approved')throw Error('Current exact-version approval is required.');e.event=makeEvent('coordination',{kind:'Follow-up',title:'Distribution · '+p.title,location:p.location,owner:value('owner'),due:date(value('nextUpdate')),nextReview:'Review next PIO update and delivery evidence',status:'Complete',evidence:value('evidence'),pioDistribution:{schema:1,outreachEvent:e.record.id,outreachEntity:e.record.entity,approvalEvent:a.id,distributedAt:date(value('distributedAt')),channels:lines(value('channels')),partners:lines(value('partners')),receipt:value('receipt'),nextUpdate:date(value('nextUpdate'))}},{incident:e.incident,entity:e.entity,supersedes:e.distribution?headIds(getState().records.coordination,e.entity):[]});
         }
       }
       await commit(e.event);if(editor!==e||e.generation!==epoch)return;editor=null;render();message('Private PIO record saved. History is preserved; no alert was sent by this app.');

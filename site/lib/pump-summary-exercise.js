@@ -1,6 +1,6 @@
 import {drainageReviewExercise} from './drainage-review-exercise.js?v=0.42.0';
 import {pumpBinding,PUMP_READINESS_SCOPE} from './pump-readiness-contract.js';
-import {emptyRecords} from './eoc-model.js?v=0.73.1';
+import {emptyRecords} from './eoc-model.js?v=0.74.0-eoc';
 /** Synthetic rehearsal only; no actual assets, contacts or operating facts. */
 export function pumpSummaryExercise(now=Date.now()){
   const data=drainageReviewExercise(now),first=data.snapshot.rows.find(r=>r.kind==='pump'&&r.category==='existing');
