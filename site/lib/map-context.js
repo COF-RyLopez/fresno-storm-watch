@@ -1,4 +1,4 @@
-import {installWaterwayLabels} from './waterway-labels.js?v=0.27.1';
+import {installWaterwayLabels} from './waterway-labels.js?v=0.74.0-infra-weather';
 import {viewEventData} from './map-events.js?v=0.29.0';
 /** Public reference context; no facility attributes, matching or hazard inference. */
 export const CONTEXT_SOURCES = Object.freeze({

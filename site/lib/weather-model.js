@@ -27,7 +27,7 @@ export function windForecast(payload,grid,now=Date.now()){
     const unique=new Map();
     for(const row of field.values){
       const interval=forecastInterval(row.validTime),raw=row.value;
-      const value=typeof raw==='number'&&Number.isFinite(raw)&&raw>=0&&(name!=='windDirection'||raw<=360)?raw*factor:null;
+      const value=Number.isFinite(raw)&&raw>=0&&(name!=='windDirection'||raw<=360)?raw*factor:null;
       const sample={...interval,value:name==='windDirection'&&value===360?0:value};
       const key=`${interval.start}:${interval.end}`;
       const prior=unique.get(key);
