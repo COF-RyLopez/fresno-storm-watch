@@ -14,7 +14,7 @@ import { powerMapStyle } from './power-symbols.js';
 import { FACILITY_COLORS } from './facility-model.js';
 import { RIVER_COLORS } from './river-model.js';
 import { blend } from './flood-scenario-model.js?v=0.39.0';
-import { installMapContext } from './map-context.js?v=0.73.1';
+import { installMapContext } from './map-context.js?v=0.74.0-infra-weather';
 import {createWaterwayBasemap,WATERWAY_BASEMAP} from './waterway-basemap.js?v=0.33.0';
 import {viewEventData,isMapLoadCancellation} from './map-events.js?v=0.29.0';
 import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js?v=0.73.1';
