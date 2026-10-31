@@ -1,10 +1,11 @@
 import http from 'node:http';
-import {readFile,stat,realpath} from 'node:fs/promises';
+import {readFile,stat} from 'node:fs/promises';
 import {createReadStream} from 'node:fs';
 import {resolve,relative,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {RunStore,sha256} from './store.mjs';
 import {authorize} from './auth.mjs';
+import {confined} from './worker.mjs';
 import {runnable} from '../../site/lib/scenario-contract.js';
 export function configuration(env=process.env){
  const config={portalUrl:env.SCENARIO_PORTAL||'https://cofgisonline.maps.arcgis.com',orgId:env.SCENARIO_ORG_ID||'',eocGroups:(env.SCENARIO_EOC_GROUPS||'').split(',').filter(Boolean),reviewerGroups:(env.SCENARIO_REVIEW_GROUPS||'').split(',').filter(Boolean),origins:(env.SCENARIO_ORIGINS||'').split(',').filter(Boolean),dataRoot:env.SCENARIO_DATA_ROOT,registry:env.SCENARIO_REGISTRY,host:env.SCENARIO_BIND||'127.0.0.1',port:Number(env.SCENARIO_PORT||8791),maxPending:Number(env.SCENARIO_MAX_PENDING||20),maxRunsPerDay:Number(env.SCENARIO_MAX_RUNS_DAY||100)};
@@ -14,8 +15,6 @@ export function configuration(env=process.env){
  if(!Number.isInteger(config.maxPending)||config.maxPending<1||!Number.isInteger(config.maxRunsPerDay)||config.maxRunsPerDay<1)throw Error('Positive queue limits required.');
  if(config.host!=='127.0.0.1'&&env.SCENARIO_TLS_GATEWAY!=='configured')throw Error('A configured TLS gateway is required for a non-loopback bind.');return config;
 }
-/** Protect every artifact, including range reads; no public output directory. */
-export async function artifactPath(root,run,artifact){const dir=await realpath(resolve(root,run.id)),path=await realpath(resolve(dir,artifact.file)),rel=relative(dir,path);if(rel.startsWith('..')||isAbsolute(rel))throw Error('Invalid artifact path.');return path;}
 async function body(req){let size=0,parts=[];for await(const part of req){size+=part.length;if(size>64000)throw Object.assign(Error('Request too large.'),{status:413});parts.push(part);}try{return JSON.parse(Buffer.concat(parts).toString('utf8'));}catch{throw Object.assign(Error('JSON request required.'),{status:400});}}
 export function createService({config,store,catalog,authenticate=token=>authorize(token,config)}){
  const attempts=new Map();const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(data));};
@@ -40,7 +39,7 @@ export function createService({config,store,catalog,authenticate=token=>authoriz
    if(req.method==='POST'&&match[2]==='review'){if(!user.reviewer)throw Object.assign(Error('Technical reviewer group required.'),{status:403});return json(res,200,present(store.review(run.id,user.username,await body(req))));}
    if(req.method==='GET'&&['result','artifacts'].includes(match[2])){
     if(run.status!=='complete')throw Error('Verified result is not complete.');const manifest=JSON.parse(await readFile(resolve(config.dataRoot,run.id,'result.json'),'utf8'));if(sha256(manifest)!==run.resultDigest)throw Error('Result changed after its completion receipt.');
-    if(match[2]==='result')return json(res,200,manifest);const artifact=manifest.artifacts.find(a=>a.id===match[3]);if(!artifact)return json(res,404,{message:'Artifact not found.'});const path=await artifactPath(config.dataRoot,run,artifact),info=await stat(path);if(info.size!==artifact.bytes)throw Error('Artifact length does not match its receipt.');res.setHeader('Content-Type',artifact.mediaType);res.setHeader('Accept-Ranges','bytes');res.setHeader('ETag',`"${artifact.sha256}"`);
+    if(match[2]==='result')return json(res,200,manifest);const artifact=manifest.artifacts.find(a=>a.id===match[3]);if(!artifact)return json(res,404,{message:'Artifact not found.'});const path=await confined(resolve(config.dataRoot,run.id),artifact.file),info=await stat(path);if(info.size!==artifact.bytes)throw Error('Artifact length does not match its receipt.');res.setHeader('Content-Type',artifact.mediaType);res.setHeader('Accept-Ranges','bytes');res.setHeader('ETag',`"${artifact.sha256}"`);
     let start=0,end=info.size-1,status=200;if(req.headers.range){const r=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range);if(!r||Number(r[1])>end||(r[2]&&Number(r[2])<Number(r[1]))){res.setHeader('Content-Range',`bytes */${info.size}`);return res.writeHead(416).end();}start=Number(r[1]);end=r[2]?Math.min(end,Number(r[2])):end;status=206;res.setHeader('Content-Range',`bytes ${start}-${end}/${info.size}`);}res.setHeader('Content-Length',end-start+1);res.writeHead(status);const stream=createReadStream(path,{start,end});stream.on('error',()=>res.destroy());stream.pipe(res);return;
    }
    json(res,405,{message:'Method not allowed.'});
