@@ -2,18 +2,16 @@ import { COUNTIES, countyGeometry, normalizeAlerts, validateCounties } from './m
 
 /** @param {string} url @param {object} options @param {number} timeout @param {Function} fetcher @returns {Promise<object>} */
 export async function fetchJson(url, options = {}, timeout = 25_000, fetcher = fetch) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    const response = await fetcher(url, { credentials: 'omit', cache: 'no-store', ...options, signal: controller.signal });
+    const response = await fetcher(url, { credentials: 'omit', cache: 'no-store', ...options, signal: AbortSignal.timeout(timeout) });
     if (!response.ok) throw new Error(`Source request failed (HTTP ${response.status}).`);
     const json = await response.json();
     if (json.error) throw new Error(`NWS service reported an error (${json.error.code ?? 'unknown'}).`);
     return json;
   } catch (error) {
-    if (error.name === 'AbortError') throw new Error('NWS request timed out.');
+    if (error.name === 'AbortError' || error.name === 'TimeoutError') throw new Error('NWS request timed out.');
     throw error;
-  } finally { clearTimeout(timer); }
+  }
 }
 
 /** @param {URL|string} url @param {Function} fetcher @returns {Promise<object[]>} */

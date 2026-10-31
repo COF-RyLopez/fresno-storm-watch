@@ -1,3 +1,4 @@
+import {bounds as pointBounds} from './power-geometry.js';
 import {NETWORK_LAYER_KEYS,NETWORK_SCALES,networkSymbol,networkSourceProblem} from './power-network-model.js?v=0.50.0';
 /** A focused reference is separate from verified event identity. The grid never supplies a fault or trace. */
 export function createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect}){
@@ -40,7 +41,7 @@ export function createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,set
     focus(keys){
       const selected=keys.map(k=>features.get(k)).filter(Boolean);if(!selected.length)return false;
       const points=selected.flatMap(f=>f.geometry.paths?.flat()||[[f.geometry.x,f.geometry.y]]);
-      const bounds=points.reduce((b,[x,y])=>[Math.min(b[0],x),Math.min(b[1],y),Math.max(b[2],x),Math.max(b[3],y)],[Infinity,Infinity,-Infinity,-Infinity]);
+      const bounds=pointBounds(points);
       return focusGeometry(new Extent({xmin:bounds[0]-.005,xmax:bounds[2]+.005,ymin:bounds[1]-.005,ymax:bounds[3]+.005,spatialReference:{wkid:4326}}));
     },
     showNearby(shape,category){

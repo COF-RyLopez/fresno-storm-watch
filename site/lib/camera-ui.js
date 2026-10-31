@@ -64,11 +64,10 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
   const refreshImage=async()=>{
     const c=current();clearTimeout(imageTimer);
     if(!c||!open||suspended||document.hidden||exercise||!available(c).usable||!c.imageUrl||imageBusy)return;
-    imageBusy=true;const token=++imageGeneration,controller=new AbortController();imageController=controller;
-    const timeout=setTimeout(()=>controller.abort(),config.requestTimeoutMs);paint();
+    imageBusy=true;const token=++imageGeneration,controller=new AbortController();imageController=controller;paint();
     let candidateUrl;
     try {
-      const response=await fetch(c.imageUrl,{credentials:'omit',cache:'no-store',signal:controller.signal});
+      const response=await fetch(c.imageUrl,{credentials:'omit',cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(config.requestTimeoutMs)])});
       if(!response.ok)throw new Error(`Image HTTP ${response.status}`);
       if(!response.headers.get('content-type')?.startsWith('image/'))throw new Error('Publisher did not return an image.');
       const blob=await response.blob();candidateUrl=URL.createObjectURL(blob);
@@ -81,9 +80,8 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
     }catch(error){
       if(candidateUrl&&candidateUrl!==objectUrl)URL.revokeObjectURL(candidateUrl);
       if(token!==imageGeneration)return;
-      imageState={...(imageState||{}),error:error.name==='AbortError'?'Image request timed out.':error.message};
+      imageState={...(imageState||{}),error:error.name==='AbortError'||error.name==='TimeoutError'?'Image request timed out.':error.message};
     }finally{
-      clearTimeout(timeout);
       if(token===imageGeneration){imageController=null;imageBusy=false;nextImage=Date.now()+Math.max(config.imagePollMs,c.imageIntervalMs||0);paint();
         if(open&&!suspended&&!document.hidden)imageTimer=setTimeout(()=>void refreshImage(),Math.max(config.imagePollMs,c.imageIntervalMs||0));}
     }
@@ -95,15 +93,14 @@ export async function createCameraWatch({config,timeZone,exercise,onGauge,initia
   };
   const refreshCatalog=async()=>{
     if(busy||exercise||!selection.length)return;busy=true;clearTimeout(feedTimer);paint();
-    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),config.requestTimeoutMs);
     try{
-      const response=await fetch(CAMERA_FEED,{credentials:'omit',cache:'no-store',signal:controller.signal});
+      const response=await fetch(CAMERA_FEED,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(config.requestTimeoutMs)});
       if(!response.ok)throw new Error(`Caltrans HTTP ${response.status}`);
       const previous=current();cameras=normalizeCameras(await response.json(),selection);feedError=null;lastCheck=Date.now();
       const updated=current();if(previous?.checked&&updated&&(previous.videoUrl!==updated.videoUrl||previous.imageUrl!==updated.imageUrl)){video.stop('Camera source updated · press Play to reconnect');clearImage();}
       if(!selected)selected=cameras[0]?.id||null;
-    }catch(error){feedError=error.name==='AbortError'?'Camera catalog request timed out.':error.message;}
-    finally{clearTimeout(timeout);busy=false;paint();if(!document.hidden)feedTimer=setTimeout(()=>void refreshCatalog(),config.pollMs);}
+    }catch(error){feedError=error.name==='AbortError'||error.name==='TimeoutError'?'Camera catalog request timed out.':error.message;}
+    finally{busy=false;paint();if(!document.hidden)feedTimer=setTimeout(()=>void refreshCatalog(),config.pollMs);}
     void refreshImage();
   };
   const setOpen=(value,{notify=true}={})=>{

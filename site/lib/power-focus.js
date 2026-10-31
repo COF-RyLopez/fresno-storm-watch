@@ -1,4 +1,4 @@
-import {powerGeometry} from './power-geometry.js';
+import {powerGeometry,bounds as pointBounds} from './power-geometry.js';
 
 const METRES_PER_DEGREE=111320;
 const MINIMUM_SPAN_METRES=180;
@@ -11,7 +11,7 @@ export function powerFocusExtent(geometries){
   if(!geometries.length)return null;
   const shapes=geometries.map(powerGeometry),polygons=shapes.filter(g=>g.rings);
   const points=(polygons.length?polygons:shapes).flatMap(g=>g.rings?g.rings.flat():[[g.x,g.y]]);
-  const bounds=points.reduce((b,[x,y])=>[Math.min(b[0],x),Math.min(b[1],y),Math.max(b[2],x),Math.max(b[3],y)],[Infinity,Infinity,-Infinity,-Infinity]);
+  const bounds=pointBounds(points);
   const x=(bounds[0]+bounds[2])/2,y=(bounds[1]+bounds[3])/2;
   const halfWidth=Math.max(bounds[2]-bounds[0],MINIMUM_SPAN_METRES/(METRES_PER_DEGREE*Math.max(.01,Math.cos(y*Math.PI/180))))*FIT_PADDING/2;
   const halfHeight=Math.max(bounds[3]-bounds[1],MINIMUM_SPAN_METRES/METRES_PER_DEGREE)*FIT_PADDING/2;

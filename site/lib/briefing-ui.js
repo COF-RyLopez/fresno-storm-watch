@@ -1,3 +1,4 @@
+import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
 import {validateBriefingSnapshot,briefingState,BRIEFING_CHECK_MAX_AGE,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF} from './briefing-model.js';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js?v=0.73.1';
@@ -56,8 +57,8 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
       if(!archive&&!doc)throw new Error('Open the NWS page while the public briefing is unavailable.');
       const expected=archive?ARCHIVE:doc,url=archive?ARCHIVE.url:'./data/hanford-briefing-current.pdf?v='+doc.sha256;
       pdfController=new AbortController();const response=await fetch(url,{credentials:'omit',cache:'no-store',signal:AbortSignal.any([pdfController.signal,AbortSignal.timeout(20_000)])});if(!response.ok)throw new Error(`Saved briefing HTTP ${response.status}`);
-      let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>15_000_000)throw new Error('Saved PDF exceeds the size limit.');chunks.push(chunk);}const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}
-      const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+      let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>15_000_000)throw new Error('Saved PDF exceeds the size limit.');chunks.push(chunk);}const bytes=await new Blob(chunks).arrayBuffer();
+      const hash=await sha256Hex(bytes);
       if(size!==expected.bytes||hash!==expected.sha256)throw new Error('The PDF does not match its saved revision. Check the briefing again or use NWS directly.');
       if(request!==generation)return;pdfBlob=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));$('hanford-pdf-open').href=pdfBlob;$('hanford-pdf-open').disabled=false;
       $('hanford-preview-health').textContent='Verified saved document · static page preview';$('hanford-pdf-status').textContent=pages.length?'PDF revision verified. Page previews retain the original content; open the PDF for full resolution and its text layer.':'PDF revision verified. Page previews unavailable; open the PDF or original NWS source.';
