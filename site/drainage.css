@@ -29,19 +29,15 @@
 .connection-key > div { display: flex; align-items: center; gap: 10px; margin-block: 9px; }
 .connection-swatch { flex: 0 0 32px; border-block-start: 3px dashed currentColor; }
 .connection-row { display: grid; gap: 7px; padding-block: 12px; border-block-start: 1px solid var(--calcite-color-border-3); overflow-wrap: anywhere; }
-.connection-row small { color: var(--calcite-color-text-2); }
-.connection-row calcite-button { justify-self: start; max-width: 100%; }
+:is(.connection-row,.drainage-row,.drainage-review-row,.pump-summary) small { color: var(--calcite-color-text-2); }
+:is(.connection-row,.drainage-row,.drainage-review-row,.pump-summary-row) calcite-button { justify-self: start; max-width: 100%; }
 .drainage-row { display: grid; gap: 4px; padding-block: 10px; border-bottom: 1px solid var(--calcite-color-border-3); }
-.drainage-row small { color: var(--calcite-color-text-2); }
-.drainage-row calcite-button { justify-self: start; max-width: 100%; }
 .drainage-content dl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; margin: 0; }
 .drainage-content dt { margin-top: 9px; font-weight: 600; }
 .drainage-content dd { margin: 0; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
 .drainage-content [role=status] { overflow-wrap: anywhere; }
 .drainage-review-row { padding-block: 12px; border-bottom: 1px solid var(--calcite-color-border-3); display: grid; gap: 8px; }
 .drainage-review-row p, .drainage-review-row small { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
-.drainage-review-row small { color: var(--calcite-color-text-2); }
-.drainage-review-row calcite-button { justify-self: start; max-width: 100%; }
 #drainage-review-detail { padding: 16px; display: grid; gap: 12px; }
 #drainage-review-detail h3 { margin: 12px 0 0; font-size: 1rem; }
 #drainage-review-detail h4 { margin: 8px 0 0; font-size: 1rem; }
@@ -65,9 +61,7 @@
 .pump-summary-weather { font-size: 13px; }
 .pump-summary-row { display: grid; gap: 6px; padding-block: 14px; border-block-end: 1px solid var(--calcite-color-border-3); min-width: 0; }
 .pump-summary-row :is(p,strong,small) { margin: 0; overflow-wrap: anywhere; line-height: 1.5; font-size: 13px; }
-.pump-summary-row calcite-button { justify-self: start; max-width: 100%; }
 .pump-summary .drainage-actions { align-items: center; margin-block: 12px; }
-.pump-summary>small,.pump-summary small { color: var(--calcite-color-text-2); }
 .pump-summary details { margin-block: 8px; line-height: 1.5; }
 @media (max-width:900px) {
   #evidence-mobile-host:has(:is(.pump-readiness-form,.pump-task-form)) { position: fixed; inset: 60px 0 0; height: auto; max-height: none; z-index: 1000; background: var(--calcite-color-foreground-1); }

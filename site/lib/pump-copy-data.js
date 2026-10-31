@@ -1,7 +1,7 @@
-import {loadSdk} from './map.js?v=0.73.1';
+import {loadSdk} from './map.js?v=0.74.0-infra-weather';
 import {authorizeDrainage} from './drainage-model.js';
 import {verifyCopySchema,readPumpCopy} from './pump-copy-model.js';
-import {privateObjectIds} from './eoc-store.js?v=0.74.0-eoc';
+import {privateObjectIds} from './eoc-store.js?v=0.74.0-infra-weather';
 import {pumpCopyVerification} from './pump-refresh-health.js';
 export function copyUrl(url,orgId){
   if(!new RegExp(`^https://services[0-9]*\\.arcgis\\.com/${orgId}/arcgis/rest/services/[A-Za-z0-9_]+/FeatureServer/0$`,'i').test(url))throw Error('Pump copy must use a configured county AGOL layer.');return url;

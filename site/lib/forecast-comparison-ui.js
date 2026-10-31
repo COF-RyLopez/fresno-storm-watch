@@ -1,12 +1,11 @@
-import {comparisonAreas,comparisonWindow,compareForecasts} from './forecast-comparison-model.js';
-import {fetchComparison} from './forecast-comparison-data.js';
+import {comparisonWindow,compareForecasts} from './forecast-comparison-model.js';
+import {fetchComparison,loadComparisonAreas} from './forecast-comparison-data.js';
 import {formatTime} from './model.js';
-import {REVIEW_MAX_AGE,pointDifferences} from './forecast-review-model.js';
+import {REVIEW_MAX_AGE as MAX_AGE,pointDifferences} from './forecast-review-model.js';
 const $=id=>document.getElementById(id);
 const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const num=(v,unit)=>Number.isFinite(v)?`${v.toFixed(unit==='in'?2:1)} ${unit}`:'Unknown';
 const link=(label,url)=>{const n=el('a',label);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
-const MAX_AGE=REVIEW_MAX_AGE;
 
 /** Public point forecasts in tab memory only; no private assets or action thresholds. */
 export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocate=()=>{},getSnapshot=()=>null,onPointUpdate=()=>{}}){
@@ -63,8 +62,8 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
     abort?.abort();const generation=++request;
     error=null;snapshot=null;$('comparison-window').textContent='Forecast windows are being checked for this point.';
     const shared=force?null:getSnapshot(p.id);
-    if(shared&&Date.now()-shared.checked<MAX_AGE){snapshot={...shared,window:w};busy=false;render();return;}
-    if(!force&&prior&&Date.now()-prior.checked<MAX_AGE){snapshot=prior;busy=false;render();return;}
+    const hit=shared&&Date.now()-shared.checked<MAX_AGE?{...shared,window:w}:!force&&prior&&Date.now()-prior.checked<MAX_AGE?prior:null;
+    if(hit){snapshot=hit;busy=false;render();return;}
     abort=new AbortController();busy=true;render();
     try{
       const result=await fetchComparison(p,{signal:abort.signal});if(generation!==request)return;
@@ -77,7 +76,7 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
     onMap();pane.setAttribute('open','');
     try{await ready;if(id&&areas.some(a=>a.id===id)){areaId=id;pointId=area()?.points.some(p=>p.id===requestedPoint)?requestedPoint:null;}controls();if(pane.hasAttribute('open'))await load();}catch(e){error=e.message;render();}
   }
-  const ready=Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>{const r=await fetch(new URL(`../data/${name}.json`,import.meta.url),{credentials:'omit',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Comparison inventory unavailable.');return r.json();})).then(([a,c,w,g])=>{areas=comparisonAreas(a.areas,c.areas,w.sites,g.stations);controls();});
+  const ready=loadComparisonAreas('Comparison inventory unavailable.').then(a=>{areas=a;controls();});
   // Catch startup failure immediately; open() still reports the rejection to the user.
   void ready.catch(()=>{});
   for(const button of document.querySelectorAll('[data-open-comparison]'))button.addEventListener('click',()=>void open());

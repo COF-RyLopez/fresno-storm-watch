@@ -1,4 +1,7 @@
-import {MODELS,modelSeries,nwsSeries} from './forecast-comparison-model.js';
+import {MODELS,modelSeries,nwsSeries,comparisonAreas} from './forecast-comparison-model.js';
+
+/** Public area inventory shared by the comparison and review panes; only the error text differs. */
+export const loadComparisonAreas=errorText=>Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>{const r=await fetch(new URL(`../data/${name}.json`,import.meta.url),{credentials:'omit',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error(errorText);return r.json();})).then(([a,c,w,g])=>comparisonAreas(a.areas,c.areas,w.sites,g.stations));
 
 /** Credential-free fixed publisher endpoints with bounded responses and cancellation. */
 async function json(url,fetchImpl,signal,body){

@@ -2,13 +2,12 @@
 export const HOUR=3_600_000;
 export const MPH=2.2369362920544;
 export const GUST_STOPS=Object.freeze([[0,'#304560'],[15,'#436d9b'],[30,'#629bc0'],[45,'#9bc5be'],[60,'#ded59b'],[75,'#e6a16e']]);
-const stamp=s=>Date.parse(s);
 /** Validate public provenance, fixed regional coverage and a single coherent run. */
 export function validateHrrrManifest(m,now=Date.now()){
-  const g=m?.grid,run=stamp(m?.run),checked=stamp(m?.generatedAt);
+  const g=m?.grid,run=Date.parse(m?.run),checked=Date.parse(m?.generatedAt);
   if(m?.schemaVersion!==1||m.product!=='noaa-hrrr-forecast-48-hour'||m.units!=='m/s'||m.vectorConvention!=='earth-east-north'||m.license!=='CC-BY-4.0'||typeof m.attribution!=='string'||!Number.isFinite(run)||!Number.isFinite(checked)||run>now+120000||checked>now+120000)throw Error('HRRR identity, units, wind convention or timestamps changed.');
   if(!g||g.wkid!==4326||g.width!==101||g.height!==80||g.x0!==-121.25||g.y0!==38.12||g.dx!==0.03||g.dy!==-0.03)throw Error('HRRR regional grid changed; review coverage.');
-  if(!Array.isArray(m.frames)||m.frames.length!==49||m.frames.some((f,i)=>f.leadHours!==i||stamp(f.valid)!==run+i*HOUR||!/^\d{8}T\d{6}Z-f\d{2}\.json$/.test(f.file)||f.file!==m.run.replace(/[-:]/g,'')+`-f${String(i).padStart(2,'0')}.json`))throw Error('HRRR forecast run/frame inventory is inconsistent.');
+  if(!Array.isArray(m.frames)||m.frames.length!==49||m.frames.some((f,i)=>f.leadHours!==i||Date.parse(f.valid)!==run+i*HOUR||!/^\d{8}T\d{6}Z-f\d{2}\.json$/.test(f.file)||f.file!==m.run.replace(/[-:]/g,'')+`-f${String(i).padStart(2,'0')}.json`))throw Error('HRRR forecast run/frame inventory is inconsistent.');
   return m;
 }
 /** Reject mismatched files and preserve missing cells independently of valid zeros. */
@@ -22,9 +21,9 @@ export function validateHrrrFrame(f,m,entry){
 export function hrrrAt(m,target,now=Date.now()){
   if(!m)return {reason:'Waiting for HRRR grid'};
   if(m.error)return {reason:m.error};
-  if(now-stamp(m.generatedAt)>45*60000)return {reason:'HRRR collection overdue · field hidden'};
-  if(now-stamp(m.run)>18*HOUR)return {reason:'HRRR model run is old · field hidden'};
-  const frame=target>stamp(m.frames.at(-1).valid)?null:m.frames.find(f=>stamp(f.valid)<=target&&target<stamp(f.valid)+HOUR);
+  if(now-Date.parse(m.generatedAt)>45*60000)return {reason:'HRRR collection overdue · field hidden'};
+  if(now-Date.parse(m.run)>18*HOUR)return {reason:'HRRR model run is old · field hidden'};
+  const frame=target>Date.parse(m.frames.at(-1).valid)?null:m.frames.find(f=>Date.parse(f.valid)<=target&&target<Date.parse(f.valid)+HOUR);
   return frame?{frame}:{reason:'No HRRR step for selected time · field hidden'};
 }
 /** Sample nearest prepared cell for a named NWS point; label its spatial support. */

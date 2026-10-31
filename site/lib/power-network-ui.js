@@ -1,5 +1,5 @@
 import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js?v=0.50.0';
-import {createPowerNearby} from './power-nearby-ui.js?v=0.74.0-eoc';
+import {createPowerNearby} from './power-nearby-ui.js?v=0.74.0-infra-weather';
 import {reportHealth} from './source-health.js?v=0.73.1';
 const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const link=(text,url)=>{const n=el('a',text);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
@@ -73,8 +73,7 @@ export function createPowerNetwork({timeZone,exercise=false,exerciseNow=Date.now
   $('power-dialog').addEventListener('stormEvidenceClose',clearSelection);
   window.addEventListener('stormWorkspaceChange',()=>{if(!active())clearSelection();});
   window.addEventListener('stormWorkspaceChange',activate);window.addEventListener('popstate',activate);setInterval(()=>{if(!document.hidden&&active())activate();},60000);
-  window.addEventListener('storm-theme-change',renderNetworkKeys);
-  window.addEventListener('storm-basemap-change',renderNetworkKeys);
+  for(const event of ['storm-theme-change','storm-basemap-change'])window.addEventListener(event,renderNetworkKeys);
   if(exercise){snapshot=networkExercise(exerciseNow);checked=exerciseNow;}render();queueMicrotask(activate);
   return {setMap(value){map=value;nearby.setMap(value);if(snapshot)map.setPowerNetwork(snapshot);if(referenceKey)map.setPowerNetworkSelection([referenceKey]);renderAssociation();},select(row,host){referenceKey=null;selected=row;associationHost=host;renderAssociation();activate();},clearSelection,setFacilities:nearby.setFacilities,setReadiness:nearby.setReadiness,setSession:nearby.setSession,showFeature:key=>{const f=all().find(f=>f.key===key);if(f)showFeature(f);}};
 }
