@@ -1,13 +1,14 @@
 import {DRAINAGE_URL,DRAINAGE_LAYERS,drainageRecord,drainageCounts} from './drainage-model.js';
-import {canonical,digest} from './eoc-model.js?v=0.73.1';
+import {canonical,digest} from './eoc-model.js?v=0.74.0-eoc';
 export const COPY_TAG='frog-fmfcd-pumps-copy-v1';
 export const COPY_PARENT='frog_fmfcd_pumps_exercise_2026_27';
 export const COPY_VIEW=COPY_PARENT+'_read';
 const spec=DRAINAGE_LAYERS.find(s=>s.kind==='pump');
-export const COPY_FIELDS=['source_oid','source_code','source_subtype','source_modified','source_x','source_y','snapshot_id','source_checked','source_count','existing_count','source_digest','row_key'];
+const FIELDS=[['source_oid','esriFieldTypeInteger'],['source_code','esriFieldTypeString',255],['source_subtype','esriFieldTypeInteger'],['source_modified','esriFieldTypeDate'],['source_x','esriFieldTypeDouble'],['source_y','esriFieldTypeDouble'],['snapshot_id','esriFieldTypeString',36],['source_checked','esriFieldTypeDate'],['source_count','esriFieldTypeInteger'],['existing_count','esriFieldTypeInteger'],['source_digest','esriFieldTypeString',64],['row_key','esriFieldTypeString',80]];
+export const COPY_FIELDS=FIELDS.map(([n])=>n);
 export function pumpCopyLayer(){
   const fields=[{name:'OBJECTID',type:'esriFieldTypeOID',alias:'Object ID',nullable:false,editable:false}];
-  for(const [name,type,length]of [['source_oid','esriFieldTypeInteger'],['source_code','esriFieldTypeString',255],['source_subtype','esriFieldTypeInteger'],['source_modified','esriFieldTypeDate'],['source_x','esriFieldTypeDouble'],['source_y','esriFieldTypeDouble'],['snapshot_id','esriFieldTypeString',36],['source_checked','esriFieldTypeDate'],['source_count','esriFieldTypeInteger'],['existing_count','esriFieldTypeInteger'],['source_digest','esriFieldTypeString',64],['row_key','esriFieldTypeString',80]])fields.push({name,alias:name,type,nullable:['source_subtype','source_modified'].includes(name),editable:true,...(length?{length}:{})});
+  for(const [name,type,length]of FIELDS)fields.push({name,alias:name,type,nullable:['source_subtype','source_modified'].includes(name),editable:true,...(length?{length}:{})});
   return {id:0,name:'FMFCD pump source snapshots',type:'Feature Layer',geometryType:'esriGeometryPoint',objectIdField:'OBJECTID',displayField:'source_code',spatialReference:{wkid:4326},extent:{xmin:-125,ymin:32,xmax:-114,ymax:43,spatialReference:{wkid:4326}},fields,capabilities:'Query,Create',allowGeometryUpdates:false,indexes:[{name:'row_key_unique',fields:'row_key',isUnique:true,isAscending:true},{name:'snapshot_idx',fields:'snapshot_id',isUnique:false,isAscending:true}]};
 }
 export function verifyCopySchema(metadata){
