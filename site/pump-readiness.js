@@ -8,7 +8,7 @@ import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-shell';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
 import {pumpFormChoices,pumpFormCurrent,pumpFormRetainsSelection,pumpFormLink} from './lib/pump-form-model.js?v=0.48.0';
 import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
-import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.74.0-population';
+import {pumpSummaryExercise} from './lib/pump-summary-exercise.js?v=0.74.0-helpers';
 
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),exercise=params.get('exercise')==='1',acceptance=!exercise&&params.get('acceptance')==='1';
 const fictional=exercise||acceptance,fixture=fictional?pumpSummaryExercise():null;

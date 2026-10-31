@@ -2,7 +2,7 @@ import {CONFIG} from './config.js';
 import {setupAuth} from './lib/auth.js?v=0.74.0-shell';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-shell';
 import {PUMP_READINESS_TEST_SCOPE} from './lib/pump-readiness-contract.js';
-import {pumpTasks} from './lib/pump-task-model.js?v=0.74.0-population';
+import {pumpTasks} from './lib/pump-task-model.js?v=0.74.0-helpers';
 import {pumpReadiness} from './lib/pump-readiness-model.js';
 import {drainageReviewExercise} from './lib/drainage-review-exercise.js?v=0.42.0';
 const $=id=>document.getElementById(id),record=drainageReviewExercise().snapshot.rows[1];

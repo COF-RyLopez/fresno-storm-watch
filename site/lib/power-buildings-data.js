@@ -1,4 +1,5 @@
-import {validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from './power-buildings-model.js?v=0.51.1';
+import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
+import {validateBuildingIndex,planBuildingTiles,selectPowerBuildings} from './power-buildings-model.js?v=0.74.0-helpers';
 
 /** Only a capacity limit narrows the scope; failed or incomplete feeds never silently become viewport results. */
 export async function loadPowerBuildingsAutomatic(polygons,{viewport,current=()=>true,read=loadPowerBuildings,onVisible=()=>{}}={}){
@@ -23,7 +24,7 @@ export async function loadPowerBuildings(polygons,{viewport=null,current=()=>tru
       const t=tiles[next++],r=await read(new URL(`${index.release}/${t.key}.json.gz`,root)),buffer=await r.arrayBuffer();
       if(!current())return;
       if(buffer.byteLength!==t.bytes)throw Error('Building chunk size changed; reload the reference index.');
-      const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(v=>v.toString(16).padStart(2,'0')).join('');
+      const hash=await sha256Hex(buffer);
       if(hash!==t.sha256)throw Error('Building chunk version differs from its index; reload the reference.');
       const decoded=await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
       if(decoded.byteLength!==t.decodedBytes)throw Error('Building chunk expanded size differs from its index.');

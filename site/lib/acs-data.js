@@ -1,9 +1,11 @@
 import {ACS_SOURCES,acsFields,acsPeriod,normalizeAcs} from './acs-model.js?v=0.65.0';
 
-async function read(url,query,{fetcher=fetch,signal}={}){
-  const timeout=AbortSignal.timeout(25000),r=await fetcher(query?url:url+'?f=json',{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,timeout]):timeout,...(query?{method:'POST',body:new URLSearchParams({f:'json',...query})}:{})});
-  if(!r.ok)throw Error('ACS source HTTP '+r.status);const data=await r.json();if(data.error)throw Error('ACS publisher query failed.');return data;
+/** Public ArcGIS REST JSON: GET metadata (?f=json) or POST a form query; caller signal combined with a timeout. */
+export async function readArcgis(url,query,{fetcher=fetch,signal}={},timeoutMs=25000,httpError='ACS source HTTP ',queryError='ACS publisher query failed.'){
+  const timeout=AbortSignal.timeout(timeoutMs),r=await fetcher(query?url:url+'?f=json',{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,timeout]):timeout,...(query?{method:'POST',body:new URLSearchParams({f:'json',...query})}:{})});
+  if(!r.ok)throw Error(httpError+r.status);const data=await r.json();if(data.error)throw Error(queryError);return data;
 }
+const read=readArcgis;
 export async function readAcsMetadata(key,options={}){
   const s=ACS_SOURCES[key];if(!s)throw Error('Unknown ACS topic.');
   const [item,layer]=await Promise.all([read('https://www.arcgis.com/sharing/rest/content/items/'+s.id,null,options),read(s.url,null,options)]);

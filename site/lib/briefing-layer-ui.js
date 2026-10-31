@@ -1,3 +1,4 @@
+import {sha256Hex} from './zone-population-product.js?v=0.73.0-r2';
 import {BRIEFING_LAYERS,BRIEFING_LAYER_CHECK_MS,briefingLayerCycle,briefingLayerLegend} from './briefing-layer-model.js?v=0.25.0';
 import {loadSdk} from './map.js?v=0.74.0-shell';
 import {formatTime} from './model.js';
@@ -45,7 +46,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
     const response=await fetch('./data/'+r.file,{cache:'no-store',credentials:'omit',signal});
     if(!response.ok)throw new Error(`Probability image HTTP ${response.status}`);
     const bytes=await response.arrayBuffer();if(bytes.byteLength!==r.bytes)throw new Error('Probability image size changed.');
-    const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');
+    const hash=await sha256Hex(bytes);
     if(hash!==r.sha256)throw new Error('Probability image revision could not be verified.');
     const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));let installed=false;
     try{

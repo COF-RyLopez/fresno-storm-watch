@@ -2,7 +2,7 @@ import {powerGeometry,powerScope} from './power-geometry.js';
 import {DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {FACILITY_MAX_AGE} from './facility-model.js';
 import {assessDrainagePumpPower,freezeDrainagePumpPower} from './drainage-power-model.js?v=0.43.0';
-import {pumpTasks,freezePumpTasks} from './pump-task-model.js?v=0.74.0-population';
+import {pumpTasks,freezePumpTasks} from './pump-task-model.js?v=0.74.0-helpers';
 export const DRAINAGE_REVIEW_MILES=1;
 export const DRAINAGE_REVIEW_LIMIT=1000;
 export const DRAINAGE_RAIN_BOUNDS=Object.freeze([-120.95,35.88,-118.3,37.65]);

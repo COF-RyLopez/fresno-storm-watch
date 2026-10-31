@@ -1,5 +1,5 @@
-import {canonical,digest,reviewState} from './eoc-model.js?v=0.74.0-population';
-import {pioZoneNotices} from './pio-model.js?v=0.74.0-population';
+import {canonical,digest,reviewState} from './eoc-model.js?v=0.74.0-helpers';
+import {pioZoneNotices} from './pio-model.js?v=0.74.0-helpers';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
 
 export const PIO_SOURCE_CHECK_MS=300000;
