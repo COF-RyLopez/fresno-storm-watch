@@ -1,13 +1,18 @@
 import {loadSdk} from './map.js?v=0.74.0-shell';
-import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js?v=0.73.1';
+import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js?v=0.74.0-planning';
 import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js?v=0.61.0';
 
 const KEY='dwrSupplyContext';
-const mapSignature=row=>JSON.stringify([row.site.key,[...new Map(row.areas.flatMap(a=>a.points).map(p=>[p.id,p])).values()],row.roads.map(r=>[r.row.key,r.row.revision])]);
+const mapSignature=row=>JSON.stringify([row.site.key,row.points,row.roads.map(r=>[r.row.key,r.row.revision])]);
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const distance=meters=>(meters/1000).toFixed(1)+' km';
 const button=(text,action)=>{const b=node('calcite-button',text);b.scale='s';b.appearance='outline';b.addEventListener('click',action);return b;};
 const external=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+const hasOption=(select,value)=>[...select.options].some(o=>o.value===value);
+/** Retain the existing county road palette, geometry and click-through identity. */
+export const roadGraphic=(Graphic,r)=>{const shade=r.layer===2?'#65cad1':'#f6a777';return new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline'},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2?'dash':'solid'}});};
+export function fillAreaSelect(select,rows){const value=select.value,all=node('option','All river watch areas');all.value='all';select.replaceChildren(all,...rows.map(r=>{const o=node('option',r.area.name);o.value=r.area.id;return o;}));select.value=hasOption(select,value)?value:'all';}
+export function selectAreaOption(select,id){const found=hasOption(select,id);if(found)select.value=id;return found;}
 
 /** Public, memory-only supply context. Proximity never assigns supplies or establishes a usable route. */
 export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_Angeles',onLoad=()=>{},onArea=()=>{},onRoad=()=>{},onSource=()=>{},onMap=()=>{}}={}){
@@ -16,11 +21,6 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
   const formatter=new Intl.DateTimeFormat('en-US',{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone});
   const time=value=>Number.isFinite(value)?formatter.format(value):'Unknown';
   function calculate(){return correlateDwrSupplies({supplies,planning,roads,radiusKm:Number($('dwr-supply-radius').value),areaId:$('dwr-supply-area').value});}
-  function sourceHealth(host){
-    host.append(node('p',`Supply feed checked ${time(result.supplyChecked)} · ${result.supplyCurrent?'query current; inspection inventory is historical':'feed not current / unavailable'}.`));
-    host.append(node('p',`County road feed checked ${time(result.roadChecked)} · ${result.roadCurrent?'source query current':'unavailable or overdue; road status needs verification'}${result.roadError?' · '+result.roadError:''}.`));
-    if(result.roadRejected||result.roadConflicts)host.append(node('p',`${result.roadRejected} road records have unusable geometry / identity; ${result.roadConflicts} conflicting duplicate records excluded. Nearby coverage is incomplete.`));
-  }
   function inspection(host,row){
     const p=node('p',`Inspection: ${inspectionDate(row.site.inspection)} (UTC date) · ${row.inspection.label}.`);p.className='dwr-inspection';host.append(p);
   }
@@ -57,7 +57,7 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
       for(const issue of r.row.issues||[])section.append(node('p',issue));
       section.append(node('p',`Source update ${time(r.row.sourceTime||r.row.edited)} · starts ${time(r.row.start)} · ends ${time(r.row.end)}. An elapsed end date is not a reopening confirmation.`),button('Inspect road record',()=>onRoad(r.row.key)));host.append(section);
     }
-    const notes=node('details');notes.append(node('summary','Sources, map key & coverage'));sourceHealth(notes);
+    const notes=node('details');notes.append(node('summary','Sources, map key & coverage'));notes.append(node('p',`Supply feed checked ${time(result.supplyChecked)} · ${result.supplyCurrent?'query current; inspection inventory is historical':'feed not current / unavailable'}.`));notes.append(node('p',`County road feed checked ${time(result.roadChecked)} · ${result.roadCurrent?'source query current':'unavailable or overdue; road status needs verification'}${result.roadError?' · '+result.roadError:''}.`));if(result.roadRejected||result.roadConflicts)notes.append(node('p',`${result.roadRejected} road records have unusable geometry / identity; ${result.roadConflicts} conflicting duplicate records excluded. Nearby coverage is incomplete.`));
     notes.append(node('p',`Watchpoints within ${result.radiusKm} km of the supply site are linked by proximity only. They are not DWR service areas, resource commitments or verified access. White hollow circle: selected supply; cyan hollow circles: associated watchpoints. No route is drawn. County road symbols retain their source-status meanings.`));
     notes.append(external('DWR flood-fight dashboard','https://www.arcgis.com/apps/dashboards/e2ef0f8a2100424b8fb6ab0e9bd7faf6'));
     if(supplies?.source)notes.append(node('p',''),external('Publisher supply layer',supplies.source));host.append(notes);
@@ -68,17 +68,15 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
       layerPromise??=loadSdk().then(async sdk=>{const [GraphicsLayer,Graphic]=await sdk.import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);layer=new GraphicsLayer({title:'Selected DWR supply, watchpoints & road references · proximity only',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});controller.registerLayer(KEY,layer,true);return Graphic;});
       const Graphic=await layerPromise;if(generation!==drawGeneration||!pane.hasAttribute('open'))return;
       layer.removeAll();
-      const points=[...new Map(row.areas.flatMap(a=>a.points).map(p=>[p.id,p])).values()];
-      for(const [i,p]of [row.site,...points].entries())layer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:i===0?24:17,color:[0,0,0,0],outline:{color:i===0?'#ffffff':'#60dcdf',width:2.5}}}));
+      for(const [i,p]of [row.site,...row.points].entries())layer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:i===0?24:17,color:[0,0,0,0],outline:{color:i===0?'#ffffff':'#60dcdf',width:2.5}}}));
       // Include the selected context's elapsed/uncertain records without changing the Roads history filter.
-      // Retain the existing county road palette, geometry and click-through identity.
-      for(const {row:r}of row.roads){const shade=r.layer===2?'#65cad1':'#f6a777';layer.add(new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline'},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2?'dash':'solid'}}));}
+      for(const {row:r}of row.roads)layer.add(roadGraphic(Graphic,r));
       drawSignature=mapSignature(row);
       if(fit){
         for(const key of [KEY,'dwrFloodFight','roads','gauges','reservoirs'])controller.setLayerPreference(key,true);
         // Let the evidence pane resize the map before computing the fitted view.
         await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-        if(generation===drawGeneration&&pane.hasAttribute('open'))await controller.inspectPlanningPoints([row.site,...points]);
+        if(generation===drawGeneration&&pane.hasAttribute('open'))await controller.inspectPlanningPoints([row.site,...row.points]);
       }
     }catch{if(generation===drawGeneration)$('dwr-supply-map-status').textContent='Map context unavailable; the source records remain in the pane.';}
   }
@@ -111,5 +109,5 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
   setInterval(()=>{if(requested&&!document.hidden)render();},30000);
   render();
   const deepLink=new URLSearchParams(location.search).get('dwrSupplies')==='1';if(deepLink)root.open=true;
-  return {setMap(map){controller=map;if(!exercise&&(root.open||new URLSearchParams(location.search).get('view')==='watch'||!new URLSearchParams(location.search).has('view')))request();},setSupplies(data){supplies=data;render();},setPlanning(data){planning=data;const options=data.rows.map(r=>({id:r.area.id,name:r.area.name})),signature=JSON.stringify(options);if(signature!==optionsSignature){optionsSignature=signature;const select=$('dwr-supply-area'),value=select.value;select.replaceChildren(node('option','All river watch areas'));select.firstElementChild.value='all';for(const r of options){const o=node('option',r.name);o.value=r.id;select.append(o);}select.value=[...select.options].some(o=>o.value===value)?value:'all';}render();},setRoads(data){roads=data;render();},selectArea(id){const select=$('dwr-supply-area');if([...select.options].some(o=>o.value===id)){select.value=id;render();}}};
+  return {setMap(map){controller=map;if(!exercise&&(root.open||new URLSearchParams(location.search).get('view')==='watch'||!new URLSearchParams(location.search).has('view')))request();},setSupplies(data){supplies=data;render();},setPlanning(data){planning=data;const signature=JSON.stringify(data.rows.map(r=>({id:r.area.id,name:r.area.name})));if(signature!==optionsSignature){optionsSignature=signature;fillAreaSelect($('dwr-supply-area'),data.rows);}render();},setRoads(data){roads=data;render();},selectArea(id){if(selectAreaOption($('dwr-supply-area'),id))render();}};
 }

@@ -13,8 +13,7 @@ export async function readCareCollection(kind,{county,fetcher=fetch,signal}={}){
  const inventory=await read('/query',{where,returnIdsOnly:true}),ids=inventory.objectIds;
  if(!Array.isArray(ids)||ids.length>2000||ids.some(i=>!Number.isSafeInteger(i))||new Set(ids).size!==ids.length||inventory.exceededTransferLimit)throw Error('Publisher inventory is incomplete or exceeds the bounded limit.');
  const scope=powerScope(countyGeometry(county.geometry)),rows=[],accounting={returned:0,outside:0,rejected:0,retained:0};
- const fields=kind==='facilities'?'ObjectId2,OBJECTID,County,Facility_Name,Facility_Address,City,Facility_Type,Licensed_Beds,CERTIFICATION_STATUS':'OID,Name,EvacuationStatus';
- for(let i=0;i<ids.length;i+=100){const batch=ids.slice(i,i+100),d=await read('/query',{objectIds:batch.join(','),outFields:fields,returnGeometry:true,outSR:4326});
+ for(let i=0;i<ids.length;i+=100){const batch=ids.slice(i,i+100),d=await read('/query',{objectIds:batch.join(','),outFields:required.join(','),returnGeometry:true,outSR:4326});
   if((d.spatialReference?.latestWkid||d.spatialReference?.wkid)!==4326||!Array.isArray(d.features)||d.features.length!==batch.length||d.exceededTransferLimit||new Set(d.features.map(f=>f.attributes?.[metadata.objectIdField])).size!==batch.length||d.features.some(f=>!batch.includes(f.attributes?.[metadata.objectIdField])))throw Error('Publisher batch changed or returned incomplete geometry.');
   for(const f of d.features){accounting.returned++;let row;try{row=(kind==='facilities'?normalizeCare:normalizeZone)({...f,geometry:{...f.geometry,spatialReference:{wkid:4326}}});}catch{accounting.rejected++;continue;}if(!scope.intersects(row.geometry)){accounting.outside++;continue;}rows.push(row);accounting.retained++;}
  }
