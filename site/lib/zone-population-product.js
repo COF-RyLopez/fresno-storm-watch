@@ -1,12 +1,16 @@
 export const PRODUCT_METHOD='frog-zone-acs-batch/1';
 export const estimatedResidents=n=>n===null?'Unavailable':n>0&&n<5?'<10':'≈ '+new Intl.NumberFormat('en-US').format(Math.round(n/10)*10);
 export const zoneLabel=p=>p.name+'\n'+(p.population===null?'Estimate unavailable':estimatedResidents(p.population)+' residents');
-const validTime=t=>Number.isFinite(t)&&t>0&&t<=Date.now()+300000;
+export const SHA256=/^[a-f0-9]{64}$/;
+export const validTime=t=>Number.isFinite(t)&&t>0&&t<=Date.now()+300000;
+export const sha256Hex=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+/** Public same-origin file: no credentials, no cache, 30 s ceiling. */
+export async function fetchPublic(url,{fetcher=fetch,signal}={}){const r=await fetcher(url,{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});if(!r.ok)throw Error('Population file HTTP '+r.status);return r;}
 
 /** The map and CSV show independently estimated zones, never an overlapping total. */
 export function validateZoneProduct(meta,data){
   if(meta?.schema!==1||meta.method!==PRODUCT_METHOD||meta.period!=='2020–2024'||meta.baselineYear!==2020||!validTime(meta.built)||!validTime(meta.zonesChecked)||!meta.limits?.uncertainty||!meta.limits?.method||!meta.limits?.boundary)throw Error('Population source/version metadata is invalid.');
-  if(meta.geojson?.file!=='zones.geojson'||!/^[a-f0-9]{64}$/.test(meta.geojson.sha256)||!Number.isSafeInteger(meta.geojson.bytes)||meta.geojson.bytes<1||meta.geojson.bytes>25000000||meta.csv?.file!=='zone-population.csv')throw Error('Population delivery manifest is invalid.');
+  if(meta.geojson?.file!=='zones.geojson'||!SHA256.test(meta.geojson.sha256)||!Number.isSafeInteger(meta.geojson.bytes)||meta.geojson.bytes<1||meta.geojson.bytes>25000000||meta.csv?.file!=='zone-population.csv')throw Error('Population delivery manifest is invalid.');
   if(data?.type!=='FeatureCollection'||!Array.isArray(data.features)||data.features.length!==meta.counts?.zones||!data.features.length||data.features.length>1000)throw Error('Zone inventory is incomplete.');
   const seen=new Set();let estimated=0;
   for(const f of data.features){
@@ -22,11 +26,10 @@ export function validateZoneProduct(meta,data){
 }
 
 export async function readZoneProduct({fetcher=fetch,base=new URL('../data/zone-population/',import.meta.url),signal}={}){
-  const get=async name=>{const r=await fetcher(new URL(name,base),{credentials:'omit',cache:'no-store',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000)});if(!r.ok)throw Error('Population file HTTP '+r.status);return r;};
+  const get=name=>fetchPublic(new URL(name,base),{fetcher,signal});
   const meta=await(await get('manifest.json')).json(),buffer=await(await get('zones.geojson')).arrayBuffer();
   if(buffer.byteLength!==meta.geojson?.bytes)throw Error('Population map download is incomplete.');
-  const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',buffer))].map(b=>b.toString(16).padStart(2,'0')).join('');
-  if(hash!==meta.geojson.sha256)throw Error('Population files belong to different snapshots; reload.');
+  if(await sha256Hex(buffer)!==meta.geojson.sha256)throw Error('Population files belong to different snapshots; reload.');
   return validateZoneProduct(meta,JSON.parse(new TextDecoder().decode(buffer)));
 }
 
@@ -34,5 +37,5 @@ export function zoneRows(features,query='',onlyUnknown=false){const q=query.trim
 
 export async function boundaryFingerprint(rows){
   const text=JSON.stringify([...rows].sort((a,b)=>a.key.localeCompare(b.key)).map(z=>({key:z.key,name:z.name,geometry:z.geometry})));
-  return [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  return sha256Hex(new TextEncoder().encode(text));
 }
