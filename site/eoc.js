@@ -1,14 +1,14 @@
 import {createPioWorkspace} from './lib/pio-ui.js?v=0.74.0-shell';
 import {readPioZoneRequest} from './lib/pio-zone-context.js?v=0.73.0-r2';
-import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.74.0-eoc';
-import {isPio} from './lib/pio-model.js?v=0.73.1';
+import {pioReviewCount,pendingPioSourceReviews} from './lib/pio-source-review.js?v=0.74.0-population';
+import {isPio} from './lib/pio-model.js?v=0.74.0-population';
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
 import {setupAuth} from './lib/auth.js?v=0.74.0-shell';
 import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js?v=0.74.0-shell';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';
-import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.74.0-eoc';
+import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js?v=0.74.0-population';
 
 const $=id=>document.getElementById(id),el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;},link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 const exercise=new URLSearchParams(location.search).get('exercise')==='1';

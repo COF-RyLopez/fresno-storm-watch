@@ -1,8 +1,9 @@
 /** Collect only the public NWS Hanford product. County email is never a collector input. */
-import {readFile,writeFile,rename} from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {writeAtomic} from './lib/snapshot-io.mjs';
 import {HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF,parseBriefingDate,validateBriefingSnapshot} from '../site/lib/briefing-model.js';
 const DATA=new URL('../site/data/',import.meta.url),PUBLISHED='https://cof-rylopez.github.io/fresno-storm-watch/data/';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -37,8 +38,8 @@ async function main(){
   try{previous=validateBriefingSnapshot(JSON.parse(await readFile(new URL('hanford-briefing.json',DATA),'utf8')));if(previous.document){previousPdf=await readFile(new URL('hanford-briefing-current.pdf',DATA));if(sha(previousPdf)!==previous.document.sha256)throw new Error('Local prior file hash mismatch');}}catch(error){console.warn('Local prior briefing unavailable:',error.message);previous=null;previousPdf=null;}
   if(process.argv.includes('--published'))try{const metadata=await fetch(PUBLISHED+'hanford-briefing.json?check='+Date.now(),{signal:AbortSignal.timeout(15_000)});if(!metadata.ok)throw new Error(`HTTP ${metadata.status}`);const prior=validateBriefingSnapshot(await metadata.json());if(prior.document&&(!previous?.document||Date.parse(prior.lastSuccessAt||prior.document.collectedAt)>Date.parse(previous.lastSuccessAt||previous.document.collectedAt))){const pdf=previous?.document?.sha256===prior.document.sha256?previousPdf:await bounded(await fetch(PUBLISHED+'hanford-briefing-current.pdf?v='+prior.document.sha256,{signal:AbortSignal.timeout(20_000)}),15_000_000);if(sha(pdf)!==prior.document.sha256||!isPdf(pdf))throw new Error('Published prior file hash mismatch');previous=prior;previousPdf=pdf;}}catch(error){console.warn('Published prior briefing unavailable; using local fallback:',error.message);}
   const {snapshot,pdf}=await collectBriefing({previous,previousPdf});
-  if(pdf){await writeFile(new URL('hanford-briefing-current.tmp',DATA),pdf);await rename(new URL('hanford-briefing-current.tmp',DATA),new URL('hanford-briefing-current.pdf',DATA));}
-  await writeFile(new URL('hanford-briefing.tmp',DATA),JSON.stringify(snapshot,null,2)+'\n','utf8');await rename(new URL('hanford-briefing.tmp',DATA),new URL('hanford-briefing.json',DATA));
+  if(pdf)await writeAtomic(new URL('hanford-briefing-current.pdf',DATA),pdf);
+  await writeAtomic(new URL('hanford-briefing.json',DATA),JSON.stringify(snapshot,null,2)+'\n');
   console.log(JSON.stringify({event:'hanford-briefing-collection',checkedAt:snapshot.checkedAt,durationMs:Date.now()-start,sourceUpdatedAt:snapshot.document?.sourceUpdatedAt,revision:snapshot.document?.sha256,bytes:snapshot.document?.bytes,error:snapshot.error}));if(snapshot.error)console.warn('Briefing collection failed; retained evidence remains explicitly marked.');
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();

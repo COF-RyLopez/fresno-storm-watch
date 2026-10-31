@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -34,18 +35,41 @@ ROOT = Path(__file__).resolve().parents[1]
 LOG = logging.getLogger('waterways')
 
 
-def request_json(url: str, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Request one public ArcGIS REST response with verified TLS and bounded time."""
-    body = urlencode({**parameters, 'f': 'json'}).encode('utf-8')
-    req = Request(url, data=body, headers={'User-Agent': 'FresnoStormWatch/0.16 reference-export', 'Accept-Encoding': 'gzip'})
-    with urlopen(req, timeout=90, context=ssl.create_default_context()) as response:
-        data = response.read()
-        if response.headers.get('Content-Encoding') == 'gzip':
-            data = gzip.decompress(data)
+HEADERS = {'User-Agent': 'FresnoStormWatch/0.16 reference-export', 'Accept-Encoding': 'gzip'}
+
+
+def request_json(url: str, parameters: dict[str, Any], retries: int = 1, timeout: int = 90,
+                 error: str = 'USGS error', headers: dict[str, str] = HEADERS) -> dict[str, Any]:
+    """POST one public ArcGIS REST query (caller `f` wins) with verified TLS and bounded time.
+
+    Transient transport errors retry with 1 s, 2 s... backoff; the last one is re-raised.
+    Service errors are never retried."""
+    for attempt in range(retries):
+        try:
+            req = Request(url, data=urlencode({'f': 'json', **parameters}).encode('utf-8'), headers=headers)
+            with urlopen(req, timeout=timeout, context=ssl.create_default_context()) as response:
+                data = response.read()
+                if response.headers.get('Content-Encoding') == 'gzip':
+                    data = gzip.decompress(data)
+            break
+        except (HTTPError, URLError, TimeoutError, ConnectionError) as failure:
+            if attempt == retries - 1:
+                raise
+            LOG.warning('Retry %s after transport error: %s', attempt + 1, type(failure).__name__)
+            time.sleep(2 ** attempt)
     result = json.loads(data)
     if result.get('error'):
-        raise RuntimeError(f"USGS error: {result['error']}")
+        raise RuntimeError(f"{error}: {result['error']}")
     return result
+
+
+def write_snapshot(output: Path, rows: list[dict[str, Any]], manifest: dict[str, Any]) -> None:
+    """Replace county.geojson, then manifest.json, each via a same-directory temp + rename."""
+    for name, data, layout in [('county.geojson', {'type': 'FeatureCollection', 'features': rows}, {'separators': (',', ':')}),
+                               ('manifest.json', manifest, {'indent': 2})]:
+        temporary = (output / name).with_suffix('.tmp')
+        temporary.write_text(json.dumps(data, **layout), encoding='utf-8')
+        temporary.replace(output / name)
 
 
 def county_filter(path: Path) -> tuple[Any, dict[str, Any]]:
