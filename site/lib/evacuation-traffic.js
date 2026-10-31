@@ -52,11 +52,15 @@ export async function loadTraffic(base) {
   return { meta, origin, trips: { start, xy, t: Float32Array.from(t16) }, status, exits };
 }
 
-/** Canvas over the map; draw(traffic, seconds) paints cars with a short trail, plus exit points. */
-export function createTrafficCanvas(view, Point) {
+/**
+ * Canvas over the map; draw(traffic, seconds) paints cars with a short trail, plus exit points, and returns true when it drew.
+ * project(origin) returns (x, y) => [screen x, screen y, w] for positions relative to origin (w <= 0: not drawn), or null
+ * when the view cannot be drawn yet; the default is the 2D MapView's affine. fullSize sizes the canvas by CSS alone.
+ */
+export function createTrafficCanvas(view, Point, { project, fullSize = false, carColour = 'rgba(255,181,71,0.9)', lineWidth = 2.5 } = {}) {
   const canvas = document.createElement('canvas');
   canvas.setAttribute('aria-hidden', 'true');
-  Object.assign(canvas.style, { position: 'absolute', inset: '0', pointerEvents: 'none' });
+  Object.assign(canvas.style, { position: 'absolute', inset: '0', ...(fullSize && { width: '100%', height: '100%' }), pointerEvents: 'none' });
   view.container.append(canvas);
   view.when(() => { const ui = view.container.querySelector('.esri-ui'); if (ui) ui.parentNode.insertBefore(canvas, ui); }); // under the map widgets
   const ctx = canvas.getContext('2d');
@@ -71,20 +75,25 @@ export function createTrafficCanvas(view, Point) {
     return { a: (px.x - p0.x) / d, b: (py.x - p0.x) / d, c: (px.y - p0.y) / d, d: (py.y - p0.y) / d, x0: p0.x - (c.x * (px.x - p0.x) + c.y * (py.x - p0.x)) / d,
       y0: p0.y - (c.x * (px.y - p0.y) + c.y * (py.y - p0.y)) / d };
   }
+  project ??= ([ox, oy]) => {
+    const sr = view.spatialReference; // read now: it is only known once the basemap has loaded
+    if (!view.center || !sr?.isWebMercator) return null;
+    const T = transform(sr); // positions are relative to traffic.origin
+    const X0 = T.x0 + T.a * ox + T.b * oy, Y0 = T.y0 + T.c * ox + T.d * oy;
+    return (x, y) => [T.a * x + T.b * y + X0, T.c * x + T.d * y + Y0, 1];
+  };
   function draw(traffic = now, seconds = nowS) {
     now = traffic; nowS = seconds;
     const dpr = Math.min(devicePixelRatio || 1, 2), w = view.width, h = view.height; // 3x phone screens: 2x is plenty for lines
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      if (!fullSize) { canvas.style.width = w + 'px'; canvas.style.height = h + 'px'; } // fullSize: a px size here fed a SceneView scrollbar resize loop
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const sr = view.spatialReference; // read now: it is only known once the basemap has loaded
-    if (!traffic || !view.center || !sr?.isWebMercator) return;
+    const S = traffic && project(traffic.origin);
+    if (!S) return false;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const T = transform(sr), [ox, oy] = traffic.origin; // positions are relative to traffic.origin
-    const X0 = T.x0 + T.a * ox + T.b * oy, Y0 = T.y0 + T.c * ox + T.d * oy;
-    const sx = (x, y) => T.a * x + T.b * y + X0, sy = (x, y) => T.c * x + T.d * y + Y0;
     const n = traffic.trips.start.length;
     if (!pos || pos.length !== 2 * n) { pos = new Float64Array(2 * n); prev = new Float64Array(2 * n); seg = new Int32Array(n); segPrev = new Int32Array(n); }
     positionsAt(traffic.trips, seconds, pos, on, seg);
@@ -92,28 +101,29 @@ export function createTrafficCanvas(view, Point) {
     const hadPrev = new Uint8Array(n);
     for (const i of onPrev) hadPrev[i] = 1;
     const { start, xy } = traffic.trips;
-    for (const [colour, caught] of [['rgba(255,181,71,0.9)', 0], ['rgba(255,93,115,0.95)', 1]]) {
-      ctx.strokeStyle = colour; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    for (const [colour, caught] of [[carColour, 0], ['rgba(255,93,115,0.95)', 1]]) {
+      ctx.strokeStyle = colour; ctx.lineWidth = lineWidth; ctx.lineCap = 'round';
       ctx.beginPath();
       for (const i of on) {
         if ((traffic.status[i] === 1) !== !!caught) continue;
-        const x = sx(pos[2 * i], pos[2 * i + 1]), y = sy(pos[2 * i], pos[2 * i + 1]);
-        if (x < -20 || y < -20 || x > w + 20 || y > h + 20) continue;
+        const [x, y, z] = S(pos[2 * i], pos[2 * i + 1]);
+        if (z <= 0 || x < -20 || y < -20 || x > w + 20 || y > h + 20) continue;
         // trail follows the recorded path: from TRAIL_S ago (or the trip start) through every sample passed since
         const k0 = hadPrev[i] ? segPrev[i] : start[i];
-        if (hadPrev[i]) ctx.moveTo(sx(prev[2 * i], prev[2 * i + 1]), sy(prev[2 * i], prev[2 * i + 1]));
-        else ctx.moveTo(sx(xy[2 * k0], xy[2 * k0 + 1]), sy(xy[2 * k0], xy[2 * k0 + 1]));
-        for (let k = k0 + 1; k <= seg[i]; k++) ctx.lineTo(sx(xy[2 * k], xy[2 * k + 1]), sy(xy[2 * k], xy[2 * k + 1]));
+        const [mx, my] = hadPrev[i] ? S(prev[2 * i], prev[2 * i + 1]) : S(xy[2 * k0], xy[2 * k0 + 1]);
+        ctx.moveTo(mx, my);
+        for (let k = k0 + 1; k <= seg[i]; k++) { const [kx, ky] = S(xy[2 * k], xy[2 * k + 1]); ctx.lineTo(kx, ky); }
         ctx.lineTo(x, y);
       }
       ctx.stroke();
     }
     ctx.fillStyle = 'rgb(126,240,196)'; ctx.strokeStyle = 'rgba(10,16,24,0.9)'; ctx.lineWidth = 1.2;
     for (const [x, y] of traffic.exits) {
-      const X = sx(x, y), Y = sy(x, y);
-      if (X < -10 || Y < -10 || X > w + 10 || Y > h + 10) continue;
+      const [X, Y, z] = S(x, y);
+      if (z <= 0 || X < -10 || Y < -10 || X > w + 10 || Y > h + 10) continue;
       ctx.beginPath(); ctx.arc(X, Y, 4, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
     }
+    return true;
   }
   return { draw, canvas };
 }
