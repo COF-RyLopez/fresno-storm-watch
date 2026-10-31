@@ -1,15 +1,13 @@
 /** Public polygon-only MVT extension. Existing 0.29 flowline tiles remain byte-for-byte intact. */
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
+import {readFile,writeFile} from 'node:fs/promises';
 import geojsonvt from 'geojson-vt';
-import vtpbf from 'vt-pbf';
-import {addWaterbodyStyle} from './waterbody-cartography.mjs';
+import {addWaterbodyStyle,writeTiles,thumbnailPoint,PUBLIC_URL as publicUrl} from './waterbody-cartography.mjs';
+import {normalizedName as normalize} from './waterway-cartography.mjs';
 const root=new URL('../',import.meta.url),input=new URL('work/waterbodies-county/',root),output=new URL('site/basemaps/frog-waterways-dark/',root);
 const source=JSON.parse(await readFile(new URL('county.geojson',input),'utf8')),provenance=JSON.parse(await readFile(new URL('manifest.json',input),'utf8'));
 if(source.features.length!==provenance.accepted||provenance.rejected!==0||provenance.countyGeoid!=='06019')throw new Error('Unreconciled waterbody source');
 const version='0.33.0',maxzoom=12,tileDirectory='waterbodies-v'+version,bounds=provenance.bounds;
 const flowIndex=JSON.parse(await readFile(new URL('site/data/search/v0.31.0/index.json',root),'utf8'));
-const normalize=name=>String(name??'').toLocaleLowerCase('en-US').replace(/\s+/g,' ').trim();
 const channelNames=new Set(flowIndex.entries.filter(row=>row.kind==='waterway').map(row=>normalize(row.name))),named=new Map();
 const data={type:'FeatureCollection',features:source.features.map(row=>{
   const p=row.properties;if(!Number.isFinite(p.display_area_sqkm)||!Array.isArray(p.label_point))throw new Error('Missing projected area / interior label point');
@@ -18,20 +16,8 @@ const data={type:'FeatureCollection',features:source.features.map(row=>{
 })};
 const names={type:'FeatureCollection',features:[...named.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([,row])=>({type:'Feature',id:row.id,geometry:{type:'Point',coordinates:row.properties.label_point},properties:{source_id:row.properties.source_id,name:row.properties.name,area_sqkm:row.properties.display_area_sqkm}}))};
 const options={maxZoom:maxzoom,indexMaxZoom:8,indexMaxPoints:50000,extent:4096,buffer:128,tolerance:1};
-const polygons=geojsonvt(data,options),labels=geojsonvt(names,options),x=(lon,z)=>Math.floor((lon+180)/360*2**z),y=(lat,z)=>Math.floor((1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*2**z);
-let tiles=0,bytes=0;const hashes=[],represented=new Set();
-for(let z=0;z<=maxzoom;z++)for(let tx=x(bounds[0],z);tx<=x(bounds[2],z);tx++){
-  await mkdir(new URL(`${tileDirectory}/${z}/${tx}/`,output),{recursive:true});
-  for(let ty=y(bounds[3],z);ty<=y(bounds[1],z);ty++){
-    const layers={},a=polygons.getTile(z,tx,ty),b=labels.getTile(z,tx,ty);
-    if(a)layers.waterbodies=a;if(b)layers.waterbodyNames=b;
-    if(z===maxzoom)for(const row of a?.features??[])represented.add(row.tags.source_id);
-    const buffer=Buffer.from(vtpbf.fromGeojsonVt(layers)),path=`${tileDirectory}/${z}/${tx}/${ty}.pbf`;
-    await writeFile(new URL(path,output),buffer);hashes.push([path,createHash('sha256').update(buffer).digest('hex')]);tiles++;bytes+=buffer.length;
-  }
-}
-const publicUrl='https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/';
-const manifest={...provenance,version,tileDirectory,maxzoom,tileCount:tiles,tileBytes:bytes,tilesSha256:createHash('sha256').update(JSON.stringify(hashes)).digest('hex'),
+const {tiles,bytes,represented,tilesSha256}=await writeTiles(output,tileDirectory,bounds,maxzoom,{waterbodies:geojsonvt(data,options),waterbodyNames:geojsonvt(names,options)});
+const manifest={...provenance,version,tileDirectory,maxzoom,tileCount:tiles,tileBytes:bytes,tilesSha256,
   labelAnchors:names.features.length,labelNames:names.features.map(row=>row.properties.name),
   cartography:{projection:'EPSG:3857 web tiles; polygon areas measured in EPSG:26944 meters',extent:4096,tileSize:512,tolerance:1,labelRule:'One interior anchor in the largest clipped polygon per normalized name; channel-name duplicates omitted. Collision avoidance enabled. Major named bodies >=1 sqkm appear from zoom 7, smaller named bodies from zoom 11.',symbolRule:'Muted blue reference footprint with blue-gray boundary; no hazard, current level or inundation meaning.'},
   displayAccounting:{inputFeatures:data.features.length,representedAtMaxZoom:represented.size,notRepresentedAtMaxZoom:data.features.filter(row=>!represented.has(row.properties.source_id)).map(row=>({source_id:row.properties.source_id,name:row.properties.name,reason:'Subpixel reference polygon omitted during display tiling; source retained in acquisition batches / publisher service.'}))}};
@@ -43,7 +29,7 @@ console.log(JSON.stringify({polygons:data.features.length,names:names.features.l
 
 // Extend the existing gallery thumbnail using the same public footprints.
 const paths=data.features.filter(row=>row.properties.area_sqkm>=1).flatMap(row=>(row.geometry.type==='Polygon'?[row.geometry.coordinates]:row.geometry.coordinates)).map(polygon=>polygon.map(ring=>{
-  const points=ring.map(p=>[(p[0]-bounds[0])/(bounds[2]-bounds[0])*240,145-(p[1]-bounds[1])/(bounds[3]-bounds[1])*125]);
+  const points=ring.map(thumbnailPoint(bounds));
   const reduced=points.filter((p,i)=>i===0||i===points.length-1||Math.hypot(p[0]-points[i-1][0],p[1]-points[i-1][1])>.15);
   return 'M'+reduced.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' L')+' Z';
 }).join(' '));
