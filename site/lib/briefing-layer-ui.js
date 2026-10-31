@@ -1,5 +1,5 @@
 import {BRIEFING_LAYERS,BRIEFING_LAYER_CHECK_MS,briefingLayerCycle,briefingLayerLegend} from './briefing-layer-model.js?v=0.25.0';
-import {loadSdk} from './map.js?v=0.73.1';
+import {loadSdk} from './map.js?v=0.74.0-infra-weather';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js?v=0.73.1';
 import {probabilityRecord,PROBABILITY_MAX_CHECK_AGE} from './precip-probability-model.js';

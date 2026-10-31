@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js?v=0.73.1';
+import {loadSdk} from './map.js?v=0.74.0-infra-weather';
 import {authorizeDrainage} from './drainage-model.js';
 import {verifyCopySchema,readPumpCopy} from './pump-copy-model.js';
 import {privateObjectIds} from './eoc-store.js?v=0.74.0-population';

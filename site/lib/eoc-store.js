@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js?v=0.73.1';
+import {loadSdk} from './map.js?v=0.74.0-infra-weather';
 import {COLLECTIONS,emptyRecords,validateEvent,validatePayload,canonical} from './eoc-model.js?v=0.74.0-population';
 export const GROUP_FOR={incidents:'recorders',periods:'coordinators',reports:'reporters',verifications:'reviewers',coordination:'coordinators',checklists:'coordinators',staging:'reviewers',briefings:'coordinators',approvals:'approvers',references:'coordinators',reviews:'reporters'};
 const idPattern=/^[a-zA-Z0-9_-]{1,80}$/;

@@ -1,7 +1,7 @@
 import {CONFIG} from './config.js';
 import {EOC_CONFIG} from './eoc-config.js';
-import {setupAuth} from './lib/auth.js?v=0.73.1';
-import {loadSdk} from './lib/map.js?v=0.73.1';
+import {setupAuth} from './lib/auth.js?v=0.74.0-infra-weather';
+import {loadSdk} from './lib/map.js?v=0.74.0-infra-weather';
 import {openPumpCopy} from './lib/pump-copy-data.js?v=0.74.0-population';
 import {PUMP_INVENTORY_CONFIG} from './pump-inventory-config.js?v=0.47.0';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js?v=0.74.0-population';
@@ -68,9 +68,8 @@ $('pump-form-load').onclick=()=>void loadPumps();$('pump-form-search').oninput=(
 $('pump-form-reopen').onclick=()=>{if(selected){const record=selected,version=selectionEpoch;$('pump-form-reopen').hidden=true;void controller.open($('pump-form-host'),record,()=>current(record,version));}};
 $('pump-form-link').onclick=async()=>{try{await navigator.clipboard.writeText(pumpFormLink(location.href,{exercise,acceptance}));feedback('Form link copied. It contains no pump details and does not grant access.');}catch{feedback('Clipboard unavailable. Share this page’s address after removing any sign-in parameters.');}};
 window.addEventListener('storm-theme-change',()=>{if(selected){const record=selected;locationReady=false;mapView?.destroy();mapView=null;void drawLocation(record,selectionEpoch).then(ready=>{if(ready&&!$('pump-form-host').querySelector('form'))$('pump-form-reopen').hidden=false;});}});
-setInterval(()=>{if(!document.hidden)renderInventory();},30000);
 const refreshWhenDue=()=>{if(!document.hidden&&session&&!fictional&&Number.isFinite(inventory.connected?inventory.checked:inventory.failedAt)&&Date.now()-(inventory.connected?inventory.checked:inventory.failedAt)>=300000)void loadPumps({background:true});};
-setInterval(refreshWhenDue,30000);document.addEventListener('visibilitychange',refreshWhenDue);
+setInterval(()=>{if(!document.hidden)renderInventory();refreshWhenDue();},30000);document.addEventListener('visibilitychange',refreshWhenDue);
 window.addEventListener('pagehide',()=>{session=null;clearInventory();feedback('');});renderInventory();
 void setupAuth(CONFIG.arcgis,exercise,value=>{session=value;clearInventory();feedback('');controller.setSession(value);});
 if(exercise){$('identity-status').textContent='Fictional rehearsal · no sign-in required.';$('pump-store-note').textContent='Fictional updates stay in this tab and disappear on reload. No private AGOL records are written.';void loadPumps();}
