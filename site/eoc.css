@@ -4,13 +4,12 @@
 @media print{body>*{display:none!important}body>#print-output{display:block!important;color:#000;background:#fff;font:11px/1.5 Arial,sans-serif;white-space:pre-wrap}body{background:#fff;color:#000}@page{margin:18mm}}
 #eoc-banner{position:sticky;top:0;z-index:4;margin-bottom:20px;box-shadow:0 3px 12px #0003}
 
-.eoc-evidence{white-space:pre-wrap;overflow-wrap:anywhere;max-height:14rem;overflow:auto;font:12px/1.5 ui-monospace,monospace;color:var(--calcite-color-text-2)}
+.eoc-evidence{max-height:14rem;overflow:auto;font:12px/1.5 ui-monospace,monospace;color:var(--calcite-color-text-2)}
 .pio-record{border-block-end:1px solid var(--calcite-color-border-2);padding-block:1.25rem;max-width:76ch}
-.pio-record p{font-variant-numeric:tabular-nums}.pio-record blockquote,.pio-message{margin:1rem 0;padding:1rem;background:var(--calcite-color-foreground-2);white-space:pre-wrap;overflow-wrap:anywhere}
+.pio-record p{font-variant-numeric:tabular-nums}.pio-record blockquote,.pio-message{margin:1rem 0;padding:1rem;background:var(--calcite-color-foreground-2);white-space:pre-wrap}
 #pio-workspace{max-width:80ch;overflow-wrap:anywhere}#pio-form h3{margin-block:1.75rem .75rem}#pio-source-guide{padding-block:.75rem;border-block:1px solid var(--calcite-color-border-3)}
 #pio-source-guide p{margin-block:.75rem;line-height:1.55}#pio-source-guide summary{font-weight:600}#pio-workspace a{text-underline-offset:.2em}
 #pio-error{color:var(--calcite-color-status-danger);margin-block:1rem}#pio-workspace :focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:3px}
-.pio-record p,#pio-population p{overflow-wrap:anywhere}.pio-record details,#pio-population details{margin-block:.75rem}#pio-population{padding-block:1rem;border-block:1px solid var(--calcite-color-border-3);margin-block:1rem}
-#pio-afn p{overflow-wrap:anywhere}#pio-afn details{margin-block:.75rem}#pio-afn{padding-block:1rem;border-block:1px solid var(--calcite-color-border-3);margin-block:1rem}
+.pio-record details,#pio-population details,#pio-afn details{margin-block:.75rem}#pio-population,#pio-afn{padding-block:1rem;border-block:1px solid var(--calcite-color-border-3);margin-block:1rem}
 
-.pio-zone-context{border-block:1px solid var(--calcite-color-border-2);padding-block:.75rem;margin-block:.75rem;overflow-wrap:anywhere}.pio-zone-context h3{margin:0}.pio-zone-context p{margin-block:.5rem}
+.pio-zone-context{border-block:1px solid var(--calcite-color-border-2);padding-block:.75rem;margin-block:.75rem}.pio-zone-context h3{margin:0}.pio-zone-context p{margin-block:.5rem}

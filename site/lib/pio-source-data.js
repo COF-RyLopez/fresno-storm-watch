@@ -1,11 +1,11 @@
-import {digest} from './eoc-model.js?v=0.73.1';
+import {digest} from './eoc-model.js?v=0.74.0-eoc';
 import {CARE_SOURCES} from './care-model.js?v=0.56.0-r1';
 import {readCareCollection} from './care-data.js?v=0.56.0-r1';
 import {loadCounties} from './nws.js';
 import {pool} from './pool.js';
 import {readAfnContext} from './afn-data.js?v=0.70.0';
 import {freezeAfnEvidence,AFN_TOPIC_KEYS} from './afn-snapshot-model.js?v=0.70.0';
-import {PIO_SOURCE_CHECK_MS,pioSourceReviews} from './pio-source-review.js?v=0.73.1';
+import {PIO_SOURCE_CHECK_MS,pioSourceReviews} from './pio-source-review.js?v=0.74.0-eoc';
 
 async function readZones({signal}){
   const counties=await loadCounties(new URL('../data/counties.geojson',import.meta.url));
