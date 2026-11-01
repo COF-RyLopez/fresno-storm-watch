@@ -1,14 +1,13 @@
 """Local conversion contract checks; requires requirements-waterways.txt."""
-import importlib.util
+import runpy
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from shapely.geometry import Polygon
 
-spec = importlib.util.spec_from_file_location('waterway_export', Path(__file__).resolve().parents[1] / 'scripts' / 'export-waterways.py')
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+module = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1] / 'scripts' / 'export-waterways.py')))
 
 
 class ExportTests(unittest.TestCase):

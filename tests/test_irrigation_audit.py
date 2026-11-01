@@ -1,11 +1,10 @@
 """Offline audit semantics; no network or ArcGIS credentials required."""
-import importlib.util
+import runpy
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 
-spec = importlib.util.spec_from_file_location('irrigation_audit', Path(__file__).resolve().parents[1] / 'scripts' / 'audit-irrigation-sources.py')
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+module = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1] / 'scripts' / 'audit-irrigation-sources.py')))
 
 
 class AuditTests(unittest.TestCase):

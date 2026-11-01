@@ -4,6 +4,7 @@ import {readFile,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {findMapEntries,searchText,geometryShardUrl,facilitySearchEntries,roadSearchEntries,gaugeSearchEntries,pointGeometry} from '../site/lib/map-search-model.js';
 import {createMapSearch} from '../site/lib/map-search-ui.js';
+import {FakeElement} from './helpers/dom.mjs';
 const base=new URL('../site/data/search/v0.31.0/',import.meta.url),index=JSON.parse(await readFile(new URL('index.json',base),'utf8'));
 
 test('named streams and streets match abbreviations, aliases and accents; exact names rank first',()=>{
@@ -52,7 +53,7 @@ test('every public search geometry is accounted for, bounded and in the declared
 
 /** Exercise the actual controller's asynchronous invalidation with no private persistence. */
 function setup(fetchImpl,nearby=null){
-  class Node extends EventTarget{constructor(id){super();this.id=id;this.children=[];this.attrs={};this.value='';}append(...n){this.children.push(...n);}replaceChildren(...n){this.children=n;}setAttribute(k,v){this.attrs[k]=v;}hasAttribute(k){return k in this.attrs;}setFocus(){return Promise.resolve();}}
+  class Node extends FakeElement{constructor(id){super();this.id=id;this.value='';}}
   const nodes=new Map(),ids=['map-search-quick','map-search-submit','map-search-nearby','map-search-nearby-status','map-search-nearby-list','map-search-nearby-detail','map-search-radius','map-search-history','map-search-evidence','map-search-input','map-search-scope','map-search-results','map-search-status','map-search-selection','map-search-clear','search-selection-note','search-selection-label','map-search-coverage','map-search-open','search-clear-highlight'];
   ids.forEach(id=>nodes.set(id,new Node(id)));nodes.get('map-search-scope').value='all';nodes.get('map-search-evidence').setAttribute('open','');
   globalThis.document={getElementById:id=>nodes.get(id),createElement:tag=>new Node(tag)};globalThis.customElements={whenDefined:()=>Promise.resolve()};

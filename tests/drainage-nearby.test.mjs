@@ -6,6 +6,8 @@ import {createDrainageDetailMap} from '../site/lib/drainage-nearby-map.js';
 import {createDrainageNearby} from '../site/lib/drainage-nearby-ui.js';
 import {unchangedDrainageSelection} from '../site/lib/drainage-model.js';
 import {FMFCD_WEBMAP_DATA} from '../site/lib/fmfcd-symbology.js';
+import {FakeElement,withGlobals} from './helpers/dom.mjs';
+import {GraphicsLayer,Graphic} from './helpers/arcgis.mjs';
 const spec=FMFCD_DETAIL_LAYERS[0],inlet=FMFCD_DETAIL_LAYERS[1],outfall=FMFCD_DETAIL_LAYERS[2];
 const point={x:-119.77,y:36.81,spatialReference:{wkid:4326}};
 const selected={key:'fictional-pump',kind:'pump',category:'existing',geometry:point};
@@ -67,9 +69,7 @@ test('one failed source is explicitly unassessed, while closing or expiry reject
   const pending=late.read(selected);await ready;late.close();assert(signal.aborted);for(const release of releases)release(new Response('{}'));assert.equal(await pending,null);
 });
 test('map symbols distinguish pipes, inlets, outfalls and classification; clearing removes all graphics',()=>{
-  class Layer{constructor(p){Object.assign(this,p);this.graphics=[];}removeAll(){this.graphics=[];}add(g){this.graphics.push(g);}}
-  class Graphic{constructor(p){Object.assign(this,p);}}
-  const layers=[],map=createDrainageDetailMap({GraphicsLayer:Layer,Graphic,registerLayer:(key,l)=>layers.push({key,l}),setLayerEligibility(){},focusGeometry(){}});
+  const layers=[],map=createDrainageDetailMap({GraphicsLayer,Graphic,registerLayer:(key,l)=>layers.push({key,l}),setLayerEligibility(){},focusGeometry(){}});
   map.set([drainageDetailRecord(spec,feature(),'OBJECTID'),drainageDetailRecord(outfall,feature(outfall,2,{SUBTYPE:null}),'OBJECTID'),drainageDetailRecord(inlet,feature(inlet,3,{AS_BUILT:'2027'}),'OBJECTID')]);
   assert.equal(layers[0].l.graphics[0].symbol.type,'cim');assert.equal(layers[1].l.graphics[0].symbol.style,'diamond');assert.equal(layers[2].l.graphics[0].symbol.style,'square');
   map.clear();assert(layers.every(({l})=>l.graphics.length===0));
@@ -83,21 +83,15 @@ test('a credential expiring after public reads cannot return evidence to the pri
 });
 
 test('private UI clears DOM and map on sign-out; rapid selection discards old responses and plans start hidden',async()=>{
-  class Element{
-    constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;this.dataset={};this.events={};this.style={};}
-    append(...n){this.children.push(...n);}prepend(...n){this.children.unshift(...n);}replaceChildren(...n){this.children=n;}setAttribute(){}addEventListener(n,f){this.events[n]=f;}contains(n){return this===n||this.children.some(c=>c instanceof Element&&c.contains(n));}
-  }
-  const before={document:globalThis.document,window:globalThis.window,setInterval:globalThis.setInterval};
   const flush=()=>new Promise(r=>setTimeout(r,0));
-  try{
-    globalThis.document={createElement:tag=>new Element(tag),hidden:false};globalThis.window={addEventListener(){}};globalThis.setInterval=()=>0;
+  await withGlobals({document:{createElement:tag=>new FakeElement(tag),hidden:false},window:{addEventListener(){}},setInterval:()=>0},async()=>{
     let finish,reads=0;const displayed=[],prefs=[],traceOptions=[];
     const ui=createDrainageNearby({timeZone:'America/Los_Angeles',open:async()=>({close(){},read:async(_r,options)=>{reads++;assert.equal(options.planned,false);if(reads===1)return new Promise(r=>{finish=r;});return {layers:[{spec,rows:[drainageDetailRecord(spec,feature(),'OBJECTID')],sourceEdited:1000,checked:2000}],checked:2000};}})});
     ui.setSession(session());ui.setMap({clearDrainageNearby(){displayed.push([]);},setDrainageNearby:(r,_styles,options)=>{displayed.push(r);traceOptions.push(options);},setLayerPreference:(key,value)=>prefs.push({key,value})});
-    const a=new Element('parent'),b=new Element('parent');ui.renderInto(a,selected);await flush();ui.renderInto(b,{...selected,key:'new'});await flush();
+    const a=new FakeElement('parent'),b=new FakeElement('parent');ui.renderInto(a,selected);await flush();ui.renderInto(b,{...selected,key:'new'});await flush();
     assert.equal(displayed.at(-1).length,1);assert.equal(traceOptions.at(-1).trace.items.length,1);finish({layers:[],checked:1});await flush();assert.equal(displayed.at(-1).length,1);
     assert(prefs.filter(p=>p.key==='drainageNetworkPlanned').every(p=>p.value===false));
     ui.clearIfWithin(a);assert(b.children[0].children.length>0,'Closing an old evidence pane cannot clear a new one.');
     ui.setSession(null);assert.equal(b.children[0].children.length,0);assert.equal(displayed.at(-1).length,0);
-  }finally{for(const[k,v]of Object.entries(before))globalThis[k]=v;}
+  });
 });

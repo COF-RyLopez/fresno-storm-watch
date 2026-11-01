@@ -7,6 +7,8 @@ import {buildingPowerTarget,buildingHeight,validateBuildingIndex,planBuildingTil
 import {loadPowerBuildings,loadPowerBuildingsAutomatic} from '../site/lib/power-buildings-data.js';
 import {createPowerBuildingsMap} from '../site/lib/power-buildings-map.js';
 import {createPowerBuildings} from '../site/lib/power-buildings-ui.js';
+import {FakeElement,withGlobals} from './helpers/dom.mjs';
+import {Graphic} from './helpers/arcgis.mjs';
 const box=(x=0,y=0,w=1)=>({rings:[[[x,y],[x,y+w],[x+w,y+w],[x+w,y],[x,y]]],spatialReference:{wkid:4326}});
 const building=(id,g=box(.2,.2,.1),height=8,addresses=['100 Example Rd'])=>({id,version:1,geometry:g,height,addresses,sources:['EXERCISE']});
 const index=()=>({schemaVersion:1,release:'2026-10-21.0',compression:'gzip',crs:'EPSG:4326',heightUnit:'metres',tiles:[{key:'-2_1',bbox:[0,0,1,1],count:1,bytes:10,decodedBytes:100,sha256:'a'.repeat(64)}]});
@@ -54,7 +56,6 @@ test('partial, changed or cancelled downloads never yield an apparently complete
 });
 test('3D uses the same positive height field; unknown footprints stay flat and closing releases registered layers',async()=>{
   class Layer{constructor(p){Object.assign(this,p);}load(){return Promise.resolve(this);}destroy(){this.destroyed=true;}}
-  class Graphic{constructor(p){Object.assign(this,p);}}
   const registered=[],removed=[],view={type:'2d'};
   const c=createPowerBuildingsMap({FeatureLayer:Layer,Graphic,registerLayer:(k,l)=>registered.push(l),removeLayer:l=>removed.push(l),getView:()=>view,focusGeometry:()=>{}});
   await c.set([building('a'),building('b',box(.3,.3,.1),null,[])]);view.type='3d';c.sync();
@@ -79,32 +80,26 @@ test('automatic source failures and cancelled selections never disguise themselv
 });
 
 test('selecting a power area loads without a button, waits for navigation and does not refetch on unchanged refreshes',async()=>{
-  class Element{constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;}append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;}setAttribute(){}addEventListener(){}}
-  const before={document:globalThis.document,window:globalThis.window,fetch:globalThis.fetch};
   const d=index();
   // Use one source record outside the utility polygon, so the UI has an empty but complete result.
   const content=gzipSync(JSON.stringify({schemaVersion:1,release:d.release,rows:[building('outside',box(.8,.8,.1))]}));d.tiles[0].count=1;d.tiles[0].bytes=content.length;d.tiles[0].decodedBytes=gunzipSync(content).length;d.tiles[0].sha256=createHash('sha256').update(content).digest('hex');
   let reads=0,applied=0,resolveNavigation;
-  try{
-    globalThis.document={createElement:tag=>new Element(tag)};globalThis.window={addEventListener(){}};
-    globalThis.fetch=async url=>{reads++;return String(url).endsWith('index.json')?new Response(JSON.stringify(d)):new Response(content);};
+  const fetch=async url=>{reads++;return String(url).endsWith('index.json')?new Response(JSON.stringify(d)):new Response(content);};
+  await withGlobals({document:{createElement:tag=>new FakeElement(tag)},window:{addEventListener(){}},fetch},async()=>{
     const ui=createPowerBuildings(),map={clearPowerBuildings(){},capturePowerBuildingFocus:()=>()=>true,focusPower(){return Promise.resolve();},onPowerBuildingsViewSettled(){return ()=>{};},setPowerBuildingLabels(){},async setPowerBuildings(){applied++;},powerBuildingsViewport:()=>box()};
     ui.setMap(map);const row={key:'event',revision:'r1',status:'warning',geometries:[box(0,0,.5)]},ready=new Promise(resolve=>{resolveNavigation=resolve;});
-    ui.select(row,new Element('div'),{ready});ui.select(row,new Element('div'));
+    ui.select(row,new FakeElement('div'),{ready});ui.select(row,new FakeElement('div'));
     await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,0,'An unchanged refresh must not bypass pending navigation.');
     resolveNavigation();for(let i=0;i<30&&!applied;i++)await new Promise(resolve=>setTimeout(resolve,5));
     assert.equal(applied,1);assert.equal(reads,2);
-    ui.select(row,new Element('div'));await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2);
-    let finish;ui.select({...row,revision:'r2'},new Element('div'),{ready:new Promise(resolve=>{finish=resolve;})});ui.clear();finish();await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2,'Closing a pending selection prevents its automatic request.');
-  }finally{for(const [k,v]of Object.entries(before)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+    ui.select(row,new FakeElement('div'));await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2);
+    let finish;ui.select({...row,revision:'r2'},new FakeElement('div'),{ready:new Promise(resolve=>{finish=resolve;})});ui.clear();finish();await new Promise(resolve=>setTimeout(resolve,0));assert.equal(reads,2,'Closing a pending selection prevents its automatic request.');
+  });
 });
 
 test('building fits happen only for deliberate whole-area selections, never refreshes, visible queries or superseded navigation',async()=>{
-  class Element{constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;}append(...n){this.children.push(...n);}replaceChildren(...n){this.children=n;}setAttribute(){}addEventListener(){}}
-  const before={document:globalThis.document,window:globalThis.window,fetch:globalThis.fetch};
   const wait=async fn=>{for(let i=0;i<100&&!fn();i++)await new Promise(r=>setTimeout(r,5));assert(fn(),'UI operation must finish');};
-  try{
-    globalThis.document={createElement:tag=>new Element(tag)};globalThis.window={addEventListener(){}};
+  await withGlobals({document:{createElement:tag=>new FakeElement(tag)},window:{addEventListener(){}},fetch:undefined},async()=>{
     for(const scenario of ['selection','manual navigation','closed pane','background revision','visible portion']){
       const d=index(),content=gzipSync(JSON.stringify({schemaVersion:1,release:d.release,rows:[building('a')]}));
       Object.assign(d.tiles[0],{bytes:content.length,decodedBytes:gunzipSync(content).length,sha256:createHash('sha256').update(content).digest('hex')});
@@ -116,24 +111,23 @@ test('building fits happen only for deliberate whole-area selections, never refr
         async focusPowerBuildings(options){assert(options.canNavigate());fitted++;}};
       ui.setMap(map);
       const row={key:'outage',revision:'1',status:'outage',geometries:[scenario==='visible portion'?box(0,0,85):box()]};
-      ui.select(row,new Element('div'),{locate:scenario!=='background revision'});
+      ui.select(row,new FakeElement('div'),{locate:scenario!=='background revision'});
       await wait(()=>applied===1);await new Promise(r=>setTimeout(r,0));
       assert.equal(fitted,scenario==='selection'?1:0,scenario);
       if(scenario==='selection'){
-        const count=reads;ui.select(row,new Element('div'),{locate:false});await new Promise(r=>setTimeout(r,0));assert.equal(fitted,1);assert.equal(reads,count);
-        ui.select(row,new Element('div'),{locate:true});await wait(()=>fitted===2);assert.equal(reads,count,'Reselecting reuses the complete loaded footprint result.');
-        ui.select({...row,revision:'2'},new Element('div'),{locate:false});await wait(()=>applied===2);assert.equal(fitted,2,'New source revisions refresh buildings without moving the operator.');
+        const count=reads;ui.select(row,new FakeElement('div'),{locate:false});await new Promise(r=>setTimeout(r,0));assert.equal(fitted,1);assert.equal(reads,count);
+        ui.select(row,new FakeElement('div'),{locate:true});await wait(()=>fitted===2);assert.equal(reads,count,'Reselecting reuses the complete loaded footprint result.');
+        ui.select({...row,revision:'2'},new FakeElement('div'),{locate:false});await wait(()=>applied===2);assert.equal(fitted,2,'New source revisions refresh buildings without moving the operator.');
       }
       ui.clear();
     }
-  }finally{for(const[k,v]of Object.entries(before)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+  });
 });
 
 test('the building-group map target includes every footprint and retains the navigation guard',async()=>{
   class Layer{constructor(p){Object.assign(this,p);}load(){return Promise.resolve();}destroy(){}}
-  class Geometry{constructor(p){Object.assign(this,p);}}
   const targets=[],options={canNavigate:()=>true};
-  const map=createPowerBuildingsMap({FeatureLayer:Layer,Graphic:Geometry,Extent:Geometry,registerLayer(){},removeLayer(){},getView:()=>({type:'3d'}),focusGeometry:(...args)=>targets.push(args)});
+  const map=createPowerBuildingsMap({FeatureLayer:Layer,Graphic,Extent:Graphic,registerLayer(){},removeLayer(){},getView:()=>({type:'3d'}),focusGeometry:(...args)=>targets.push(args)});
   assert.equal(await map.focusAll(options),false);
   await map.set([building('near',box(-119.8,36.7,.001)),building('far',box(-119.7,36.8,.001))]);await map.focusAll(options);
   const[extent,scale,guard]=targets[0];assert(extent.xmin<-119.8&&extent.xmax>-119.699&&extent.ymin<36.7&&extent.ymax>36.801);assert.equal(scale,null,'A large group must not be cropped to address scale.');assert.equal(guard,options);

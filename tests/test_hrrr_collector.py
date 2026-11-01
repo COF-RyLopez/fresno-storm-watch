@@ -1,14 +1,13 @@
 """Offline independent rotation and missing-data checks for prepared HRRR fields."""
-import importlib.util
+import runpy
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 from pyproj import CRS, Transformer
 
-spec = importlib.util.spec_from_file_location("hrrr_collector", Path(__file__).resolve().parents[1]/"scripts"/"collect-hrrr.py")
-collector = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(collector)
+collector = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1]/"scripts"/"collect-hrrr.py")))
 
 
 class HrrrCollectorTests(unittest.TestCase):

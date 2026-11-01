@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {FMFCD_DETAIL_URL,FMFCD_DETAIL_LAYERS} from '../site/lib/drainage-nearby-model.js';
 import {fmfcdRendererOverrides,fmfcdRendererSymbol,fmfcdDetailSymbol,fmfcdSceneArrows,fmfcdInventorySymbol} from '../site/lib/fmfcd-symbology.js';
 import {readDrainageDetail} from '../site/lib/drainage-nearby-data.js';
+import {GraphicsLayer,Graphic} from './helpers/arcgis.mjs';
 import {createDrainageDetailMap} from '../site/lib/drainage-nearby-map.js';
 const pipe={layerId:6,kind:'pipe',category:'mapped',attributes:{AS_BUILT:'2020'},key:'fictional',geometry:{paths:[[[-119.8,36.8],[-119.79,36.8]]],spatialReference:{wkid:4326}}};
 const renderer={type:'simple',symbol:{type:'CIMSymbolReference',symbol:{type:'CIMLineSymbol',symbolLayers:[{type:'CIMSolidStroke',enable:true,width:1.875,color:[0,77,168,255]}]}}};
@@ -43,9 +44,7 @@ test('basins use the FMFCD pale-blue palette while proposed assets and pump read
   assert.equal(fmfcdInventorySymbol({kind:'catchment'},{dark:false}).outline.color,'#000000');
 });
 test('view switches replace unsupported CIM lines with terrain-compatible geometry and preserve source selection keys',()=>{
-  class Layer{constructor(p){Object.assign(this,p);this.graphics=[];}removeAll(){this.graphics=[];}add(g){this.graphics.push(g);}}
-  class Graphic{constructor(p){Object.assign(this,p);}}
-  const layers=[],view={type:'2d',scale:6000},map=createDrainageDetailMap({GraphicsLayer:Layer,Graphic,registerLayer:(k,l)=>layers.push(l),setLayerEligibility(){},focusGeometry(){},getView:()=>view});
+  const layers=[],view={type:'2d',scale:6000},map=createDrainageDetailMap({GraphicsLayer,Graphic,registerLayer:(k,l)=>layers.push(l),setLayerEligibility(){},focusGeometry(){},getView:()=>view});
   map.set([pipe]);assert.equal(layers[0].graphics[0].symbol.type,'cim');view.type='3d';map.sync();
   assert(layers[0].graphics.every(g=>g.symbol.type!=='cim'&&g.attributes.drainageDetailKey===pipe.key));assert(layers[0].graphics.some(g=>g.geometry.type==='polygon'));
   map.clear();assert(layers.every(l=>l.graphics.length===0));
