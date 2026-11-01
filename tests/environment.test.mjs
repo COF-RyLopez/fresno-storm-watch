@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { realNumber,sourceTime,radarFrames,qpfCycle,qpfPlanningTime,cdecSeries,reservoirMetricState,validateReservoirSnapshot,QPF_PERIODS } from '../site/lib/environment-model.js';
+import { realNumber,sourceTime,radarFrames,qpfCycle,qpfPlanningTime,cdecSeries,reservoirMetricState,validateReservoirSnapshot,upstreamStorage,QPF_PERIODS } from '../site/lib/environment-model.js';
 import { fetchQpfCycle,fetchRadarFrames } from '../site/lib/environment-data.js';
-import { collectReservoirs } from '../scripts/collect-reservoirs.mjs';
+import { collectReservoirs,collectUpstream } from '../scripts/collect-reservoirs.mjs';
 
 const now=Date.parse('2026-10-17T21:00:00Z');
 const metric={key:'outflow',label:'Outflow',sensor:23,duration:'H',units:'CFS',maxAgeHours:3};
@@ -55,10 +55,33 @@ test('rainfall preview cannot choose an expired, stale, malformed or unavailable
   const forecast=qpfCycle({features:[feature(cycle())]},72,now);
   for(const bad of [null,{...forecast,end:now},{...forecast,issue:now-48*3600000},{...forecast,issue:NaN},{...forecast,issue:now+3600000},{...forecast,start:forecast.end}])assert.equal(qpfPlanningTime(bad,now,now,24*3600000),null);
 });
-test('CDEC values retain source identity and units; missing newest record is explicit',()=>{
+test('CDEC values retain source identity and units; an hourly posting delay is normal, a real gap or flag is explicit',()=>{
   const result=cdecSeries([row(),row({obsDate:'2026-10-17 13:00',value:-9999}),row({stationId:'MIL',value:999})],'PNF',metric,now);
   assert.equal(result.lastValid.value,252);assert.equal(result.latest.value,null);assert.equal(result.input,2);
-  assert.match(reservoirMetricState(result,metric,now).label,/Newer record missing/);
+  // One blank hour after the last reading: CDEC has not posted it yet.
+  assert.deepEqual([reservoirMetricState(result,metric,now).tone,reservoirMetricState(result,metric,now).label],['normal','Recent hourly report · newest hour not posted yet']);
+  const wide={...metric,maxAgeHours:6},late=cdecSeries([row({obsDate:'2026-10-17 08:30'}),row({obsDate:'2026-10-17 12:00',value:-9999})],'PNF',wide,now);
+  assert.match(reservoirMetricState(late,wide,now).label,/Newer record missing/,'blank for more than 3 h is a gap');
+  const flagged=cdecSeries([row(),row({obsDate:'2026-10-17 13:00',value:260,dataFlag:'r'})],'PNF',metric,now);
+  assert.match(reservoirMetricState(flagged,metric,now).label,/Newer record missing or flagged/,'a flagged newer value stays a warning');
+  const daily={...metric,duration:'D',maxAgeHours:72},dayRow=(date,value)=>row({durCode:'D',obsDate:`${date} 00:00`,value});
+  assert.equal(reservoirMetricState(cdecSeries([dayRow('2026-10-15',252),dayRow('2026-10-16',-9999)],'PNF',daily,now),daily,now).label,'Daily report · newest day not posted yet');
+  const slow={...daily,maxAgeHours:120};assert.match(reservoirMetricState(cdecSeries([dayRow('2026-10-14',252),dayRow('2026-10-16',-9999)],'PNF',slow,now),slow,now).label,/Newer record missing/,'two days behind is a gap');
+});
+
+const up={basin:'San Joaquin above Millerton',maxAgeDays:4,metric:{key:'storage',sensor:15,duration:'D',units:'AF'},stations:[{id:'SHV',name:'Shaver Lake'},{id:'MPL',name:'Mammoth Pool'}]};
+const day=(id,date,value)=>({stationId:id,durCode:'D',SENSOR_NUM:15,obsDate:`${date} 00:00`,date:`${date} 00:00`,value,units:'AF',dataFlag:' '});
+test('upstream storage: one CDEC request, 1- and 7-day change, totals only when every reservoir reports',async()=>{
+  const rows=[...['2026-10-09','2026-10-15','2026-10-16'].map((d,i)=>day('SHV',d,[60000,67000,67500][i])),day('MPL','2026-10-15',25000),day('MPL','2026-10-16',25800),day('MPL','2026-10-17',-9999)];
+  let asked;const block=await collectUpstream({upstream:up,old:null,now,start:'2026-10-09',fetchImpl:async u=>{asked=String(u);return new Response(JSON.stringify(rows));}});
+  assert.match(asked,/Stations=SHV%2CMPL&SensorNums=15&dur_code=D/);assert.equal(block.error,null);
+  const s=upstreamStorage({upstream:block},up,now),[shv,mpl]=s.rows;
+  assert.deepEqual([shv.value,shv.change1d,shv.change7d,shv.old],[67500,500,7500,false]);
+  assert.deepEqual([mpl.value,mpl.change1d,mpl.change7d],[25800,800,null]);
+  assert.deepEqual(s.total,{value:93300,change1d:1300,change7d:null});
+  const failed=await collectUpstream({upstream:up,old:block,now,start:'2026-10-09',fetchImpl:async()=>new Response('[{"stationId":"XXX"}]')});
+  assert.match(failed.error,/Unexpected station/);assert.deepEqual(failed.series,block.series,'previous values retained');
+  assert.equal(upstreamStorage(null,up,now).rows.every(r=>r.value===null&&r.old),true);
 });
 test('zero release is a measured zero; negative inflow is allowed only for an inflow contract',()=>{
   assert.equal(cdecSeries([row({value:0})],'PNF',metric,now).lastValid.value,0);

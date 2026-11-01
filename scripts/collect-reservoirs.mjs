@@ -24,6 +24,21 @@ export async function collectScheduledReleases({station,now,old,fetchImpl}){
   return result;
 }
 
+/** Daily storage above Millerton in one request; a failure keeps the previous series with the error recorded. */
+export async function collectUpstream({upstream,old,now,start,fetchImpl}){
+  const ids=upstream.stations.map(s=>s.id),metric=upstream.metric;
+  const url=new URL(CDEC_URL);url.search=new URLSearchParams({Stations:ids.join(','),SensorNums:String(metric.sensor),dur_code:metric.duration,Start:start,End:pstDate(now-DAY)});
+  const result={lastAttempt:new Date(now).toISOString(),lastSuccess:old?.lastSuccess||null,error:null,request:url.href,series:old?.series||{}};
+  try{
+    const response=await fetchImpl(url,{signal:AbortSignal.timeout(25_000),headers:{Accept:'application/json'}});
+    if(!response.ok)throw new Error(`CDEC HTTP ${response.status}`);
+    const rows=await response.json();
+    if(!Array.isArray(rows)||rows.some(r=>!ids.includes(r.stationId)||r.durCode!==metric.duration||Number(r.SENSOR_NUM)!==metric.sensor))throw new Error('Unexpected station, duration or sensor in CDEC response.');
+    result.series=Object.fromEntries(ids.map(id=>[id,cdecSeries(rows,id,metric,now)]));result.lastSuccess=new Date(now).toISOString();
+  }catch(error){result.error=error.name==='TimeoutError'?'CDEC request timed out':String(error.message||'CDEC request failed').slice(0,180);}
+  return result;
+}
+
 /** @param {object} options @returns {Promise<object>} Bounded requests; retain explicitly dated previous data on a station failure. */
 export async function collectReservoirs({fetchImpl=fetch,now=Date.now(),previous=null,selection}={}) {
   selection??=JSON.parse(await readFile(selectionUrl,'utf8'));
@@ -50,7 +65,8 @@ export async function collectReservoirs({fetchImpl=fetch,now=Date.now(),previous
     result.scheduled=await collectScheduledReleases({station:station.id,now,old:old?.scheduled,fetchImpl});
     stations.push(result);
   }
-  return {schemaVersion:1,generatedAt:new Date(now).toISOString(),collector:'CDEC public JSON · 15-minute target, not guaranteed',sourceTimeZone:'PST (UTC-08:00) year-round',stations};
+  const upstream=selection.upstream?await collectUpstream({upstream:selection.upstream,old:previous?.upstream,now,start:pstDate(now-10*DAY),fetchImpl}):undefined;
+  return {schemaVersion:1,generatedAt:new Date(now).toISOString(),collector:'CDEC public JSON · 15-minute target, not guaranteed',sourceTimeZone:'PST (UTC-08:00) year-round',stations,...(upstream?{upstream}:{})};
 }
 
 /** @returns {Promise<void>} Atomic same-directory write; never claim a failed source check succeeded. */

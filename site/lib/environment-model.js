@@ -92,6 +92,7 @@ export function cdecSeries(rows,station,metric,now=Date.now(),{through=now+120_0
   return {sensor:metric.sensor,duration:metric.duration,units:metric.units,latest,lastValid,samples,input:matching.length,accepted:samples.length,rejected,duplicates,conflicts,invalidTimes};
 }
 
+export const POSTING_LAG_MS=Object.freeze({H:3*3_600_000,D:86_400_000});
 /** @param {object|null} series @param {object} metric @param {number} now @returns {object} Age and gaps are independent of collector/browser fetch success. */
 export function reservoirMetricState(series,metric,now=Date.now()) {
   const value=series?.lastValid;
@@ -100,7 +101,11 @@ export function reservoirMetricState(series,metric,now=Date.now()) {
   if(value.time>now+120_000)return {tone:'gap',label:'Source time is in the future',sample:null};
   const age=now-value.time;
   if(age>metric.maxAgeHours*3_600_000)return {tone:'gap',label:'Old reading',sample:value};
-  if(series.latest?.time>value.time)return {tone:'gap',label:'Newer record missing or flagged · last valid',sample:value};
+  // CDEC creates blank slots before readings are posted: hourly values arrive an hour or two late, and some daily
+  // sensors (flood-control space) a day after the others. An unflagged blank within the lag is posting delay, not a gap.
+  const latest=series.latest,lag=POSTING_LAG_MS[metric.duration];
+  if(latest?.time>value.time&&!(lag&&latest.value===null&&!latest.flag&&latest.time-value.time<=lag))return {tone:'gap',label:'Newer record missing or flagged · last valid',sample:value};
+  if(latest?.time>value.time)return {tone:'normal',label:metric.duration==='D'?'Daily report · newest day not posted yet':'Recent hourly report · newest hour not posted yet',sample:value};
   return {tone:'normal',label:metric.duration==='D'?'Daily report':'Recent hourly report',sample:value};
 }
 
@@ -109,4 +114,19 @@ export function validateReservoirSnapshot(snapshot) {
   if(snapshot?.schemaVersion!==1||!Number.isFinite(Date.parse(snapshot.generatedAt))||!Array.isArray(snapshot.stations))throw new Error('Reservoir snapshot format is invalid.');
   if(snapshot.stations.length!==2||new Set(snapshot.stations.map(s=>s.id)).size!==2||snapshot.stations.some(s=>!['MIL','PNF'].includes(s.id)||typeof s.metrics!=='object'||!s.metrics))throw new Error('Reservoir snapshot is missing expected stations.');
   return snapshot;
+}
+
+/** @param {object|null} snapshot @param {object|null} upstream reservoir-watchlist "upstream" block @param {number} now
+ * @returns {object} Daily storage at reservoirs above Millerton with 1- and 7-day change. Storage only: releases, spills and
+ * travel time to Millerton are not published here, so a change is context, not a forecast of Millerton inflow. */
+export function upstreamStorage(snapshot,upstream,now=Date.now()){
+  const block=snapshot?.upstream??null,DAY=86_400_000;
+  const rows=(upstream?.stations||[]).map(s=>{
+    const samples=(block?.series?.[s.id]?.samples||[]).filter(p=>p.value!==null&&Number.isFinite(p.time)&&p.time<=now+120_000);
+    const last=samples.at(-1)??null,at=d=>last&&samples.find(p=>p.time===last.time-d*DAY)?.value;
+    const change=d=>{const v=at(d);return last&&Number.isFinite(v)?last.value-v:null;};
+    return {...s,value:last?.value??null,reportDate:last?.reportDate??null,time:last?.time??null,change1d:change(1),change7d:change(7),old:!last||now-last.time>upstream.maxAgeDays*DAY};
+  });
+  const sum=k=>{const v=rows.map(r=>r[k]);return v.every(Number.isFinite)?v.reduce((a,b)=>a+b,0):null;};
+  return {rows,total:{value:sum('value'),change1d:sum('change1d'),change7d:sum('change7d')},error:block?.error??null,checked:block?.lastSuccess?Date.parse(block.lastSuccess):null};
 }
