@@ -1,4 +1,4 @@
-import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
+import {mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {readCareCollection} from '../site/lib/care-data.js';
@@ -8,6 +8,7 @@ import {readAcsMetadata} from '../site/lib/acs-data.js';
 import {countyGeometry} from '../site/lib/model.js';
 import {POPULATION_SOURCES} from '../site/lib/population-model.js';
 import {CARE_SOURCES} from '../site/lib/care-model.js';
+import {fresnoCounty,writeAtomic} from './lib/snapshot-io.mjs';
 
 export const fingerprint=rows=>createHash('sha256').update(JSON.stringify([...rows].sort((a,b)=>(a.key||a.id).localeCompare(b.key||b.id)))).digest('hex');
 export const acsChanged=(a,b)=>['period','modified','edited'].some(k=>a[k]!==b[k]);
@@ -16,7 +17,7 @@ const folder=new URL('../work/zone-population/',import.meta.url);
 /** Public county inputs only. Reconcile source IDs and preserve complete raw geometry. */
 export async function acquire(){
   await mkdir(folder,{recursive:true});
-  const county=JSON.parse(await readFile(new URL('../site/data/counties.geojson',import.meta.url),'utf8')).features.find(c=>c.properties.GEOID==='06019');
+  const county=await fresnoCounty();
   const geometry=countyGeometry(county.geometry);let requests=0;
   const fetcher=async(...args)=>{const r=await fetch(...args);if(++requests%25===0)console.log(`${requests} public requests completed`);return r;};
   const started=Date.now();
@@ -29,7 +30,7 @@ export async function acquire(){
   if(fingerprint(zones.rows)!==fingerprint(afterZones.rows))throw Error('County evacuation zones changed during acquisition; rerun.');
   if(acsChanged(tracts.metadata,afterAcs))throw Error('ACS source changed during acquisition; rerun.');
   const data={schema:1,started,acquired:Date.now(),county,zones,tracts,blocks,sources:{zones:CARE_SOURCES.zoneItem,acs:POPULATION_SOURCES.acsItem,blocks:POPULATION_SOURCES.blocksItem},fingerprints:{zones:fingerprint(zones.rows),tracts:fingerprint(tracts.rows),blocks:fingerprint(blocks.rows)}};
-  const temporary=new URL('inputs.json.tmp',folder),target=new URL('inputs.json',folder);await writeFile(temporary,JSON.stringify(data),'utf8');await rename(temporary,target);
+  const target=new URL('inputs.json',folder);await writeAtomic(target,JSON.stringify(data));
   console.log(JSON.stringify({status:'complete',zones:zones.rows.length,tracts:tracts.rows.length,blocks:blocks.rows.length,seconds:(Date.now()-started)/1000,file:fileURLToPath(target)}));return data;
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])await acquire();

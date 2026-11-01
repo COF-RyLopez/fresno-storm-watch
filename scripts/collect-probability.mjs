@@ -3,11 +3,10 @@ import {writeFile,mkdir,readdir,unlink} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {writeAtomic} from './lib/snapshot-io.mjs';
+import {writeAtomic,bounded as boundedBody} from './lib/snapshot-io.mjs';
 import {PROBABILITY_BASE,PROBABILITY_SOURCE,PROBABILITY_BOUNDS,PROBABILITY_LEGEND,parseProbabilityCycle,probabilityPeriods,probabilityImageUrl,validateProbabilitySnapshot} from '../site/lib/precip-probability-model.js';
 const DATA=new URL('../site/data/',import.meta.url);
-/** Bound streamed files even when the server omits Content-Length. */
-async function bounded(response,max){if(!response.ok)throw new Error(`WPC HTTP ${response.status}`);let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>max)throw new Error('WPC response exceeds size limit.');chunks.push(chunk);}return Buffer.concat(chunks);}
+const bounded=(response,max)=>boundedBody(response,max,'WPC','WPC response exceeds size limit.');
 /** Reject HTML, truncated PNGs and unexpected pixel dimensions. */
 export function probabilityPng(bytes){
   if(bytes.length<100||bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||bytes.subarray(12,16).toString()!=='IHDR'||bytes.subarray(-8).toString('hex')!=='49454e44ae426082')throw new Error('WPC image is not a complete PNG.');

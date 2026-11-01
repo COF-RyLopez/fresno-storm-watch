@@ -64,8 +64,7 @@ def collect(output: Path = OUTPUT) -> dict:
         if meta["cube:variables"][key]["unit"] != "m s-1":
             raise ValueError(f"HRRR {key} units changed")
     ds = dynamical_catalog.open(PRODUCT, chunks=None)
-    for key in VARIABLES[:2]:
-        expected = "x_wind" if key == VARIABLES[0] else "y_wind"
+    for key, expected in zip(VARIABLES, ("x_wind", "y_wind")):
         if ds[key].attrs.get("standard_name") != expected:
             raise ValueError("Native HRRR wind convention changed")
     crs = CRS.from_wkt(ds.spatial_ref.attrs["crs_wkt"])
@@ -82,12 +81,8 @@ def collect(output: Path = OUTPUT) -> dict:
     ys = np.arange(BOUNDS[3], BOUNDS[1] - STEP/2, -STEP)
     lon, lat = np.meshgrid(xs, ys)
     target_x, target_y = forward.transform(lon, lat)
-    candidates = []
-    for index in (-1, -2, -3):
-        stamp = ds.init_time.values[index]
-        age = (np.datetime64(now.replace(tzinfo=None), "ns")-stamp)/np.timedelta64(1, "h")
-        if 0 <= age <= 18:
-            candidates.append(index)
+    candidates = [index for index in (-1, -2, -3)
+                  if 0 <= (np.datetime64(now.replace(tzinfo=None), "ns")-ds.init_time.values[index])/np.timedelta64(1, "h") <= 18]
     output.mkdir(parents=True, exist_ok=True)
     for index in candidates:
         run = region.isel(init_time=index)

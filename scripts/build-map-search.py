@@ -10,9 +10,9 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
-import importlib.util
 import json
 import logging
+import runpy
 from pathlib import Path
 from typing import Any
 
@@ -35,16 +35,14 @@ def main() -> None:
     from shapely.geometry import LineString, MultiLineString, shape
     from shapely.ops import transform
 
-    spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
-    helper = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(helper)
+    helper = runpy.run_path(str(ROOT / 'scripts' / 'export-waterways.py'))
 
     def request(params: dict[str, Any]) -> dict[str, Any]:
         """Query public streets with verified TLS and a bounded request timeout."""
-        return helper.request_json(STREETS + '/query', params, error='County street query failed', headers={'Accept-Encoding': 'gzip'})
+        return helper['request_json'](STREETS + '/query', params, error='County street query failed', headers={'Accept-Encoding': 'gzip'})
 
     boundary = ROOT / 'site/data/counties.geojson'
-    county, spatial = helper.county_filter(boundary)
+    county, spatial = helper['county_filter'](boundary)
     started = datetime.now(timezone.utc)
     parameters = {'where': '1=1', 'geometry': json.dumps(spatial), 'geometryType': 'esriGeometryPolygon',
                   'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
@@ -60,18 +58,16 @@ def main() -> None:
 
     def batch(chunk: list[int]) -> list[dict[str, Any]]:
         """Resume exact ID batches and reject truncated, mismatched or wrong-CRS responses."""
-        path = cache / (str(chunk[0]) + '.json')
-        data = json.loads(path.read_text(encoding='utf-8')) if path.exists() else request({
+        def check(data: dict[str, Any]) -> list[dict[str, Any]]:
+            features = data.get('features', [])
+            if data.get('exceededTransferLimit') or len(features) != len(chunk) or {f['attributes']['OBJECTID'] for f in features} != set(chunk):
+                raise RuntimeError('Street batch object-ID accounting mismatch')
+            if data.get('spatialReference', {}).get('wkid') != 4326:
+                raise RuntimeError('Street query returned an unexpected CRS')
+            return features
+        return helper['cached_json'](cache / (str(chunk[0]) + '.json'), lambda: request({
             'objectIds': ','.join(map(str, chunk)), 'outFields': ','.join(FIELDS),
-            'returnGeometry': 'true', 'outSR': 4326, 'returnZ': 'false', 'returnM': 'false'})
-        features = data.get('features', [])
-        if data.get('exceededTransferLimit') or len(features) != len(chunk) or {f['attributes']['OBJECTID'] for f in features} != set(chunk):
-            raise RuntimeError('Street batch object-ID accounting mismatch')
-        if data.get('spatialReference', {}).get('wkid') != 4326:
-            raise RuntimeError('Street query returned an unexpected CRS')
-        if not path.exists():
-            path.write_text(json.dumps(data), encoding='utf-8')
-        return features
+            'returnGeometry': 'true', 'outSR': 4326, 'returnZ': 'false', 'returnM': 'false'}), check)
 
     streets = []
     with ThreadPoolExecutor(max_workers=4) as pool:

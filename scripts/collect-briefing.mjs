@@ -3,12 +3,11 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {writeAtomic} from './lib/snapshot-io.mjs';
+import {writeAtomic,bounded as boundedBody} from './lib/snapshot-io.mjs';
 import {HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF,parseBriefingDate,validateBriefingSnapshot} from '../site/lib/briefing-model.js';
 const DATA=new URL('../site/data/',import.meta.url),PUBLISHED='https://cof-rylopez.github.io/fresno-storm-watch/data/';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-/** @param {Response} response @param {number} max @returns {Promise<Buffer>} Bound streamed responses, including missing content lengths. */
-async function bounded(response,max){if(!response.ok)throw new Error(`NWS source HTTP ${response.status}`);let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>max)throw new Error('NWS source exceeds the collection size limit.');chunks.push(chunk);}return Buffer.concat(chunks);}
+const bounded=(response,max)=>boundedBody(response,max,'NWS source','NWS source exceeds the collection size limit.');
 /** @param {Buffer} bytes @returns {boolean} Reject HTML error pages and truncated PDF payloads. */
 const isPdf=bytes=>bytes.length>=100&&bytes.subarray(0,5).toString()==='%PDF-'&&bytes.subarray(-2048).includes(Buffer.from('%%EOF'));
 /** @param {object} options @returns {Promise<object>} Keep a failed check separate from the last verified file and publication time. */

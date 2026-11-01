@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -70,6 +70,18 @@ def write_snapshot(output: Path, rows: list[dict[str, Any]], manifest: dict[str,
         temporary = (output / name).with_suffix('.tmp')
         temporary.write_text(json.dumps(data, **layout), encoding='utf-8')
         temporary.replace(output / name)
+
+
+def cached_json(path: Path, fetch: Callable[[], dict[str, Any]], check: Callable[[dict[str, Any]], Any]) -> Any:
+    """Return check() of a cached work/ batch or a fresh fetch; only a checked fetch is cached, via temp + rename."""
+    cached = path.exists()
+    data = json.loads(path.read_text(encoding='utf-8')) if cached else fetch()
+    result = check(data)
+    if not cached:
+        temporary = path.with_suffix('.tmp')
+        temporary.write_text(json.dumps(data, separators=(',', ':')), encoding='utf-8')
+        temporary.replace(path)
+    return result
 
 
 def county_filter(path: Path) -> tuple[Any, dict[str, Any]]:
