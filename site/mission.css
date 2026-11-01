@@ -4,3 +4,16 @@
 @media(min-width:901px) and (max-width:1400px){#tools-shell{--calcite-shell-panel-width:290px}#evidence-shell{--calcite-shell-panel-width:330px}}
 @media(min-width:901px) and (max-width:1199px){#storm-shell:has(#evidence-shell:not([hidden])) #tools-shell{display:none}}
 .mission-content{min-width:0;overflow-wrap:anywhere}.mission-content calcite-button{min-width:0;max-width:100%}.mission-content .mission-actions{min-width:0}
+/* Storm now: wider list on EOC screens; controls stay visible in content-top. */
+@media(min-width:901px){#storm-shell[data-workspace="storm"][data-destination="watch"] #tools-shell{--calcite-shell-panel-width:clamp(400px,24vw,480px)}}
+.storm-controls{display:grid;gap:var(--calcite-space-sm);padding:var(--calcite-space-sm) var(--calcite-space-md)}
+.storm-controls calcite-label{--calcite-label-margin-bottom:0}
+.storm-layers{display:grid;grid-template-columns:1fr 1fr;gap:var(--calcite-space-2xs) var(--calcite-space-md);border:0;margin:0;padding:0;min-width:0}
+.storm-layers legend{padding:0;margin-block-end:var(--calcite-space-2xs);font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-1)}
+.storm-layer-group{grid-column:1/-1;font-size:var(--calcite-font-size-xs);color:var(--calcite-color-text-3);text-transform:uppercase;letter-spacing:.04em}
+.storm-list-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--calcite-space-sm);padding:var(--calcite-space-sm) var(--calcite-space-md) var(--calcite-space-2xs)}
+.storm-list-head h3{margin:0;font-size:var(--calcite-font-size-md)}
+#storm-count{font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
+.storm-meta{display:flex;flex-wrap:wrap;gap:var(--calcite-space-2xs);align-items:center;padding:0 var(--calcite-space-md) var(--calcite-space-sm);font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
+.storm-empty{margin:0;padding:var(--calcite-space-md)}
+.storm-rules{width:100%}.storm-rules ol{margin:0;padding-inline-start:var(--calcite-space-xl)}.storm-rules li,.storm-rules p{font-size:var(--calcite-font-size-sm);line-height:1.45}

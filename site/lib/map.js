@@ -2,7 +2,7 @@ import {createNetworkMap} from './power-network-map.js';
 import {createPowerBuildingsMap} from './power-buildings-map.js';
 import {createDrainageDetailMap} from './drainage-nearby-map.js';
 import {fmfcdInventorySymbol} from './fmfcd-symbology.js';
-import {drainageDetailExtent} from './drainage-nearby-model.js';
+import {drainageDetailExtent,FMFCD_DETAIL_URL} from './drainage-nearby-model.js';
 import {powerFocusExtent} from './power-focus.js';
 import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
@@ -92,6 +92,12 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=(!scenarioMode||['waterways','buildings'].includes(key))&&layerVisible(currentState(),key,eligible);};
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   for(const [key,layer]of Object.entries(drainageLayers))registerLayer(key,layer,false,1);
+  // Public FMFCD "Drainage Boundaries" (master-planned drainage areas): live reference read from the publisher, never copied.
+  registerLayer('drainageAreas',new FeatureLayer({url:FMFCD_DETAIL_URL+'/0',title:LAYER_LABELS.drainageAreas,outFields:['DRAINAGE','Acres'],opacity:.9,minScale:0,maxScale:0,// publisher hides above 1:50,000; 303 polygons draw fine at metro scale
+elevationInfo:{mode:'on-the-ground'},
+    renderer:{type:'simple',symbol:{type:'simple-fill',color:[167,162,195,.08],outline:{color:DRAINAGE_COLORS.catchment,width:1}}},
+    popupTemplate:{title:'FMFCD drainage area {DRAINAGE}',content:[{type:'text',text:'Master-planned drainage area published by FMFCD. Reference only: not current flooding, capacity or pump status.'},{type:'fields',fieldInfos:[{fieldName:'DRAINAGE',label:'Drainage area'},{fieldName:'Acres',label:'Acres'}]}]}}),true,1);
+  const usgsGauges=new GraphicsLayer({title:'USGS stream gauges',elevationInfo:{mode:'relative-to-ground'}});registerLayer('gauges',usgsGauges);
   const syncVisibility=()=>{
     for(const [layer,r]of registry)layer.visible=(!scenarioMode||['waterways','buildings'].includes(r.key))&&layerVisible(currentState(),r.key,r.eligible);
     const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways||basemapKey==='waterways')visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
@@ -252,7 +258,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
         if(view!==targetView||version!==workspaceVersion||pick!==mapPick)return;
         const emit=(name,detail)=>window.dispatchEvent(new CustomEvent(name,{detail}));
         // Priority order: the first graphic attribute found wins.
-        for(const[attr,select]of[['countySandbagKey',onSandbagSelect],['populationZoneKey',key=>emit('frogPopulationZoneSelect',{key})],['areaId',onAreaSelect],['drainageKey',onDrainageSelect],['drainageDetailKey',key=>emit('frogDrainageNearbySelect',{key})],['roadKey',onRoadSelect],['cameraId',onCameraSelect],['gaugeId',onGaugeSelect],['facilityKey',onFacilitySelect],['building_id',id=>emit('frogPowerBuildingSelect',{id})],['powerKey',onPowerSelect],['careKey',onCareSelect],['networkKey',onNetworkSelect],['alertKey',onSelect]]){
+        for(const[attr,select]of[['usgsSite',id=>emit('frogUsgsSelect',{id})],['countySandbagKey',onSandbagSelect],['populationZoneKey',key=>emit('frogPopulationZoneSelect',{key})],['areaId',onAreaSelect],['drainageKey',onDrainageSelect],['drainageDetailKey',key=>emit('frogDrainageNearbySelect',{key})],['roadKey',onRoadSelect],['cameraId',onCameraSelect],['gaugeId',onGaugeSelect],['facilityKey',onFacilitySelect],['building_id',id=>emit('frogPowerBuildingSelect',{id})],['powerKey',onPowerSelect],['careKey',onCareSelect],['networkKey',onNetworkSelect],['alertKey',onSelect]]){
           const value=hit.results.find(r=>r.graphic?.attributes?.[attr])?.graphic.attributes[attr];if(value){select(value);return;}
         }
         const acsHit=hit.results.find(r=>r.graphic?.layer?.id==='frog-acs-population'||r.graphic?.attributes?.acsTractId);if(acsHit){window.dispatchEvent(new CustomEvent('frogAcsTractSelect',{detail:{id:acsHit.graphic.attributes.acsTractId||acsHit.graphic.attributes.GEOID}}));return;}
@@ -507,6 +513,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
     clearEnvironmentPopup:()=>{view.closePopup();onFeatureSelect(null);},
     focusEnvironment:(longitude,latitude)=>focusLocation(longitude,latitude,45000,'reservoirs'),
     focusWind:(longitude,latitude)=>focusLocation(longitude,latitude,90000,'wind'),
+    fitExtent:bounds=>{followRegion=false;return focusNavigate(geographicTarget(bounds));},
+    setUsgsGauges:rows=>{usgsGauges.removeAll();for(const r of rows)if(validLocation(r))usgsGauges.add(new Graphic({geometry:{type:'point',longitude:r.longitude,latitude:r.latitude,spatialReference:{wkid:4326}},attributes:{usgsSite:r.site},symbol:{type:'simple-marker',style:'circle',size:11,color:r.reading?.stage?'#8bd6e8':'#a5a9ad',outline:{color:darkMode()?'#202427':'#ffffff',width:1.5}}}));},
     fitEnvironment:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
     fitHrrr:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.265,ymin:35.735,xmax:-118.235,ymax:38.135}));},
     focusPlanningPoints:points=>{setLayerPreference('areas',true);return focusPoints(points);},

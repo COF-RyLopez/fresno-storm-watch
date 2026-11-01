@@ -14,6 +14,7 @@ import {createForecastComparison} from './lib/forecast-comparison-ui.js';
 import {createMapSearch} from './lib/map-search-ui.js';
 import {createIrrigationReference} from './lib/irrigation-ui.js';
 import {createEvidencePane} from './lib/evidence-ui.js';
+import {createStormNow} from './lib/storm-ui.js';
 import { CONFIG } from './config.js';
 import { CATEGORIES, initialState, acceptSnapshot, rejectSnapshot, clearNotice, bannerState, formatTime, normalizeAlerts } from './lib/model.js';
 import { loadCounties, fetchRegionalAlerts } from './lib/nws.js';
@@ -66,6 +67,9 @@ let networkFacilities=null,networkReadiness=null;
 let planningExerciseEntries=null;
 const evidence=createEvidencePane({timeZone:CONFIG.timeZone,onChange:open=>{if(open)workspace.showMap();else workspace.refreshLayout();cameras?.setSuspended(open);}});
 const workspace=createWorkspace({evidence,onActivate:id=>{mapSearch?.clear();if(id==='drainage')environment?.selectRainfall();},onCameraChange:open=>cameras?.setOpen(open)});
+const storm=createStormNow({exercise,timeZone:CONFIG.timeZone,onCameras:open=>cameras?.setOpen(open),
+  onRain:kind=>kind==='qpf'?environment?.selectRainfall(9,{selectValidTime:true}):environment?.selectOverlay(kind),
+  onOpen:({kind,id})=>{if(kind==='alert')selectAlert(id);else if(kind==='area')mission.inspectArea(id);else if(kind==='drainage')drainageReviews.inspect(id);else if(kind==='signin')$('sign-in').click();else if(kind==='drainage-load')workspace.showPanel('drainage');else if(kind==='roads')openRoads();}});
 
 const dwrSupplyPlanning=createDwrSupplyPlanning({exercise,timeZone:CONFIG.timeZone,onLoad:options=>dwrFloodFight.loadInventory(options),onArea:id=>{openPlanning();planning?.selectArea(id);},onRoad:key=>roads?.select(key,{keepWorkspace:true}),onSource:()=>dwrFloodFight.open(),onMap:()=>workspace.showMap()});
 const dwrFloodFight=createDwrFloodFight({exercise,onMap:()=>workspace.showMap(),onSupplies:data=>dwrSupplyPlanning.setSupplies(data)});
@@ -78,7 +82,7 @@ function openPlanning(){workspace.showPanel('watch');}
 function openRoads(){workspace.showPanel('roads');}
 function openPower(){workspace.showPanel('power');}
 const mission=createMission({workspace,exercise,onSelectArea:id=>{openPlanning();planning?.selectArea(id);},onGauge:id=>rivers?.select(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key,{keepWorkspace:true}),onBriefing:(...args)=>briefings.open(...args),onTopic:topic=>workspace.showPanel(topic),onCare:key=>care.select(key),onDrainage:(id,pump)=>drainageReviews.inspect(id,pump),onPower:key=>power?.select(key,{keepWorkspace:true}),onPopulation:()=>population.open(),onQueueRoad:key=>roads?.select(key,{keepWorkspace:true})});
-const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
+const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone,onIssues:storm.setIssues});
 const population=createPopulationWatch({exercise,onMap:workspace.showMap,onOpenWatch:()=>workspace.showPanel('watch',{history:false})});
 const care=createCareWatch({exercise,onZone:key=>population.selectZone(key),onMap:workspace.showMap,onCapture:item=>mission.addEvidence(item),onClearPrivate:()=>mission.clearCareEvidence(),exerciseNow:exerciseClock,onReviews:value=>mission.setCare(value),onSummary:n=>strip.care(n),onPower:key=>power?.select(key),onRoad:key=>roads?.select(key)});
 const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBriefing:(...args)=>briefings.open(...args),onArea:id=>planning?.selectArea(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onConnect:()=>{openPower();document.querySelector('.facility-section calcite-accordion-item').expanded=true;},onMap:workspace.showMap,onData:data=>mission.setContext(data)});
@@ -88,21 +92,21 @@ for(const id of ['drainage-evidence','drainage-review-evidence'])$(id).addEventL
 mapSearch=createMapSearch({showMap:workspace.showMap,onInspect:row=>{if(row.kind==='gauge')rivers?.select(row.key.slice(6));else if(row.kind==='road-record')roads?.select(row.key);else if(row.kind==='asset')facilities.select(row.key);else if(row.kind==='sandbag')void countySandbags.select(row.key);}});
 const countySandbags=createCountySandbags({exercise,timeZone:CONFIG.timeZone,onMap:workspace.showMap,onArea:id=>{openPlanning();planning?.selectArea(id);},onRoad:key=>roads?.select(key,{keepWorkspace:true}),onData:data=>mapSearch.setSandbags(data)});
 if(new URLSearchParams(location.search).get('sandbags')==='1'&&workspace.section==='watch'&&workspace.mission==='watch')workspace.showPanel('watch',{history:false});
-const drainageReviews=createDrainageReviews({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,exerciseData:drainageExercise,onReviews:value=>mission.setDrainage(value),onSummary:(n,pumps,readiness,tasks)=>strip.drainage(n,pumps,readiness,tasks),onConnect:()=>drainage?.load(),onFacilities:()=>facilities.loadDefault(),onMap:workspace.showMap,onRecord:key=>drainage.select(key),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onPower:key=>power.select(key),onRainfall:()=>environment?.selectRainfall(9,{selectValidTime:true}),onCapture:item=>mission.addEvidence(item),onAssign:(...args)=>mission.assignEvidence(...args),onClear:()=>mission.clearDrainageEvidence(),onReadiness:(...args)=>pumpReadiness.open(...args),onPumpTask:(...args)=>pumpReadiness.openTask(...args),renderReadiness:(...args)=>pumpReadiness.renderSummary(...args),renderNearby:(...args)=>drainageNearby.renderInto(...args)});
+const drainageReviews=createDrainageReviews({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,exerciseData:drainageExercise,onReviews:value=>{mission.setDrainage(value);storm.set({drainage:value});},onSummary:(n,pumps,readiness,tasks)=>strip.drainage(n,pumps,readiness,tasks),onConnect:()=>drainage?.load(),onFacilities:()=>facilities.loadDefault(),onMap:workspace.showMap,onRecord:key=>drainage.select(key),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key),onPower:key=>power.select(key),onRainfall:()=>environment?.selectRainfall(9,{selectValidTime:true}),onCapture:item=>mission.addEvidence(item),onAssign:(...args)=>mission.assignEvidence(...args),onClear:()=>mission.clearDrainageEvidence(),onReadiness:(...args)=>pumpReadiness.open(...args),onPumpTask:(...args)=>pumpReadiness.openTask(...args),renderReadiness:(...args)=>pumpReadiness.renderSummary(...args),renderNearby:(...args)=>drainageNearby.renderInto(...args)});
 pumpReadiness=createPumpReadiness({exercise,exerciseData:drainageExercise,timeZone:CONFIG.timeZone,onData:value=>{networkReadiness=value;power?.setReadiness(value);drainageReviews.setReadiness(value);},onSaved:()=>{drainageReviews.refreshSelected();$('drainage-review-feedback').textContent=exercise?'Fictional pump update saved in this tab; no AGOL write. Area Watch and the banner use the new version.':'Pump update saved in private exercise storage. Area Watch and the banner use the latest version; capture fresh evidence for your briefing.';}});
 const facilities=createFacilityWatch({timeZone:CONFIG.timeZone,exercise,onOpen:openPower,onMap:workspace.showMap,onData:data=>{networkFacilities=data;power?.setFacilities(data);context.setFacilities(data);mission.setFacilities(data);mapSearch.setFacilities(data);drainage?.setFacilities(data);drainageReviews.setFacilities(data);}});
 drainage=createDrainageWatch({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onRainfall:id=>environment?.selectRainfall(id,{selectValidTime:true}),onFacilities:async()=>{map?.setLayerPreference('facilities',true);return facilities.loadDefault();},onRoad:openRoads,onData:data=>{drainageReviews.setSnapshot(data);drainageNearby.setInventory(data);},renderNearby:(...args)=>drainageNearby.renderInto(...args)});
 power=createPowerWatch({timeZone:CONFIG.timeZone,exercise,exerciseNow:exerciseClock,exerciseData:drainageExercise,onLoadFacilities:()=>facilities.loadDefault({refreshLoaded:true}),onOpen:openPower,onMap:workspace.showMap,onData:(rows,feeds,health)=>{facilities.setPower(rows,feeds);strip.power(rows.filter(r=>!['restored','cancelled'].includes(r.status)).length);latestPlanningPower={rows,feeds,...health};mission.setPower(latestPlanningPower);care.setPower(latestPlanningPower);planning?.setPowerData(latestPlanningPower);drainageReviews.setPower(latestPlanningPower);}});
 power.setFacilities(networkFacilities);power.setReadiness(networkReadiness);
-roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:workspace.showMap,onData:data=>{context.setRoads(data);mission.setRoads(data);mapSearch.setRoads({...data,exercise});drainage.setRoads(data);drainageReviews.setRoads(data);care.setRoads(data);dwrSupplyPlanning.setRoads(data);countySandbags.setRoads(data);}});
+roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:workspace.showMap,onData:data=>{storm.set({roads:data});context.setRoads(data);mission.setRoads(data);mapSearch.setRoads({...data,exercise});drainage.setRoads(data);drainageReviews.setRoads(data);care.setRoads(data);dwrSupplyPlanning.setRoads(data);countySandbags.setRoads(data);}});
 createIrrigationReference({onLocate:id=>{workspace.showMap();if(!map)return false;if(id==='SJMC1')map.focusGauge(id);else environment?.focusReservoir(id);return true;}});
 const forecastReview=createForecastReview({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onData:data=>{latestForecastReviews=data;planning?.setForecastDifferences(data);},onCompare:(id,point)=>forecastComparison.open(id,point),onArea:id=>{openPlanning();planning?.selectArea(id);}});
 const forecastComparison=createForecastComparison({getSnapshot:forecastReview.getPoint,onPointUpdate:forecastReview.updatePoint,timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onLocate:p=>map?.focusWind(p.longitude,p.latitude)});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onLocate:(id,gauge)=>{workspace.showMap();if(gauge)map?.focusGauge(gauge);else environment?.focusReservoir(id);}});
-planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:data=>{context.setPlanning(data);mission.setPlanning(data);dwrSupplyPlanning.setPlanning(data);countySandbags.setPlanning(data);},onAreaSelected:id=>{dwrSupplyPlanning.selectArea(id);countySandbags.selectArea(id);},onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onCompare:id=>forecastComparison.open(id),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
+planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:data=>{storm.set({areas:data.rows});context.setPlanning(data);mission.setPlanning(data);dwrSupplyPlanning.setPlanning(data);countySandbags.setPlanning(data);},onAreaSelected:id=>{dwrSupplyPlanning.selectArea(id);countySandbags.selectArea(id);},onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onCompare:id=>forecastComparison.open(id),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
 if(latestForecastReviews)planning.setForecastDifferences(latestForecastReviews);
-environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onOverlayChange:()=>{briefings.setFollow(false);briefingLayers?.stop(false);},onTrends:id=>{openReservoirs();releaseTrends.open(id);},onReservoirData:data=>{mapSearch.setReservoirs(data);planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data),onWeatherData:data=>drainage.setWeather(data)});
+environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onOverlayChange:kind=>{storm.setOverlay(kind);briefings.setFollow(false);briefingLayers?.stop(false);},onTrends:id=>{openReservoirs();releaseTrends.open(id);},onReservoirData:data=>{mapSearch.setReservoirs(data);planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data),onWeatherData:data=>drainage.setWeather(data)});
 if(workspace.section==='drainage')environment.selectRainfall();
 briefingLayers=createBriefingLayers({timeZone:CONFIG.timeZone,exercise,onOpen:openEnvironment,onMap:workspace.showMap,onStart:()=>environment.selectOverlay('off',false),onStop:()=>environment.selectOverlay('radar',false),onBriefing:(...args)=>briefings.open(...args),onManual:()=>briefings.setFollow(false)});
 
@@ -112,7 +116,7 @@ void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,
 /** @returns {void} Render health separately from hazard counts. */
 function renderBanner() {
   const banner = bannerState(state, Date.now(), CONFIG.staleMs);
-  strip.alerts(state.lastSuccess===null?null:state.alerts.length);mission.setAlerts(state.alerts,{checked:state.lastSuccess,error:state.error});
+  strip.alerts(state.lastSuccess===null?null:state.alerts.length);storm.set({alerts:state.alerts,alertCheck:{checked:state.lastSuccess,error:state.error}});mission.setAlerts(state.alerts,{checked:state.lastSuccess,error:state.error});
   if(!exercise)reportHealth('nws-region','NWS regional alerts',{checked:state.lastSuccess,error:state.error,maxAgeMs:CONFIG.staleMs});
   $('banner').dataset.tone = banner.tone;
   $('banner').setAttribute('kind', ['failure', 'warning'].includes(banner.tone) ? 'danger' : banner.tone === 'watch' ? 'warning' : 'info');
@@ -272,7 +276,7 @@ if (exercise) {
     void refresh();
   }));
 }
-void setupAuth(CONFIG.arcgis, exercise,session=>{power.setSession(session);pumpReadiness.setSession(session);facilities.setSession(session);mission.setSession(session);drainageNearby.setSession(session);drainage.setSession(session);care.setSession(session);});
+void setupAuth(CONFIG.arcgis, exercise,session=>{storm.set({signedIn:!!session});power.setSession(session);pumpReadiness.setSession(session);facilities.setSession(session);mission.setSession(session);drainageNearby.setSession(session);drainage.setSession(session);care.setSession(session);});
 setupSceneCompanion(CONFIG.arcgis, () => map?.sceneViewpoint(), exercise);
 renderBanner(); renderList(); renderDetail();
 try {
@@ -283,7 +287,7 @@ try {
   for(const c of[power,facilities,care,population])c.setCounty(fresno);
   createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key),key=>void countySandbags.select(key)).then(controller => {
     map = controller;
-    for(const c of[workspace,mission])c.setMap(map);
+    for(const c of[workspace,mission,storm])c.setMap(map);
     dwrFloodFight.setMap(map,fresno);
     for(const c of[dwrSupplyPlanning,countySandbags,population,mapSearch])void c.setMap(map);
     for(const c of[rivers,cameras])c?.setMap(map);
