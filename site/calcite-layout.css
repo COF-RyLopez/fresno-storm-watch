@@ -193,9 +193,8 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .release-trend-chart svg:focus-visible { outline: 2px solid var(--app-link); outline-offset: 3px; }
 .release-trend-chart figcaption { font-size: 12px; color: var(--app-muted); line-height: 1.5; margin: 8px 0; }
 .trend-readout { min-height: 54px; padding: 8px 0; font-size: 13px; line-height: 1.5; font-variant-numeric: tabular-nums; }
-.trend-table-scroll { max-height: 260px; overflow: auto; margin-top: 10px; }
-.trend-table-scroll table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.trend-table-scroll td, .trend-table-scroll th { border-bottom: 1px solid var(--app-border); padding: 8px 5px; text-align: left; }
+.trend-table-scroll { margin-top: 10px; }
+.trend-table-scroll calcite-table { max-height: 260px; overflow: auto; }
 .trend-notice-section { border-top: 1px solid var(--app-border); margin-top: 18px; padding-top: 8px; }
 .trend-notice-section li { font-size: 13px; line-height: 1.6; margin-bottom: 8px; }
 .trend-empty { padding: 16px; border-left: 3px solid var(--caution-text); background: var(--caution-surface); }
@@ -436,9 +435,10 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 
 .waterbody-swatch{display:inline-block;width:1rem;height:.65rem;margin-inline-end:.35rem;background:#294d60;border:1px solid #6997aa}
 
-.comparison-table{width:100%;border-collapse:collapse;font-size:var(--calcite-font-size--2,12px)}
-.comparison-table th,.comparison-table td{padding:0.4rem;text-align:left;border-bottom:1px solid var(--calcite-color-border-3);overflow-wrap:anywhere}
-.comparison-table caption{text-align:left;padding:0.4rem 0;font-weight:600}
+.data-table{margin-block:var(--calcite-space-sm)}
+.data-table calcite-table{font-variant-numeric:tabular-nums;overflow-wrap:normal}
+.data-table-num{white-space:nowrap}
+.data-table-caption{margin-block-end:var(--calcite-space-xs);color:var(--calcite-color-text-2);font-size:var(--calcite-font-size-sm)}
 #forecast-comparison .comparison-controls{padding:0.75rem}
 #comparison-results calcite-block{margin-block:0.75rem}
 

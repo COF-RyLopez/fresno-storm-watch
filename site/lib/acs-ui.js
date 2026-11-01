@@ -2,14 +2,11 @@ import {loadSdk} from './map.js';
 import {ACS_SOURCES,ACS_LIMIT,ACS_DENSITY_EXPRESSION,PIO_GUIDANCE,acsFields,formatAcsMeasure} from './acs-model.js';
 import {readAcsMetadata,readAcsTracts,readPioContext} from './acs-data.js';
 import {reportHealth} from './source-health.js';
-import {node,nodeLink as link,disclosure,onExpand} from './dom.js';
+import {node,nodeLink as link,disclosure,onExpand,dataTable} from './dom.js';
 const $=id=>document.getElementById(id);
 const colors=[[0,100,'#e4f1f5'],[100,500,'#b4d5e6'],[500,2000,'#74a9cf'],[2000,5000,'#3685b5'],[5000,1e12,'#145a87']];
 const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short',timeZoneName:undefined}).format(t)+' Pacific';
-function table(rows,caption){
-  const t=node('table');t.append(node('caption',caption));const body=node('tbody');
-  for(const r of rows){const tr=node('tr'),th=node('th',r.label);th.scope='row';tr.append(th,node('td',formatAcsMeasure(r)));body.append(tr);}t.append(body);return t;
-}
+const table=(rows,caption)=>dataTable(caption,[],rows.map(r=>[r.label,formatAcsMeasure(r)]),{rowHeader:true,end:[1]});
 
 /** Public aggregate context only. Selection, outlines and results live in memory. */
 export function createAcsContext({exercise=false,onMap=()=>{},onOpenWatch=()=>{}}={}){
