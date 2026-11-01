@@ -12,14 +12,13 @@ import gzip
 import json
 import logging
 import math
+import runpy
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 from overturemaps.core import record_batch_reader
 from shapely import STRtree, from_wkb
-from shapely.geometry import shape
-from shapely.geometry.polygon import orient
 
 LOG = logging.getLogger(__name__)
 CELL = 0.05
@@ -73,8 +72,8 @@ def acquire(kind: str, release: str, bbox: tuple[float, ...], cache: Path,
 
 def build(root: Path, release: str) -> None:
     """Filter exact county geometry, join public addresses and write indexed chunks."""
-    county_geo = next(f["geometry"] for f in json.loads((root / "site/data/counties.geojson").read_text(encoding="utf-8"))["features"] if str(f["properties"]["GEOID"]) == "06019")
-    county = shape(county_geo)
+    helper = runpy.run_path(str(root / "scripts/export-waterways.py"))
+    county = helper["county_filter"](root / "site/data/counties.geojson")[0]
     cache = root / "work" / ("power-buildings-" + release)
     cache.mkdir(parents=True, exist_ok=True)
     buildings, seen, invalid = [], set(), 0
@@ -99,11 +98,6 @@ def build(root: Path, release: str) -> None:
     stats["other_address_sources_excluded"] = len(addresses) - len(county_addresses)
     tiles = defaultdict(list)
     for b in sorted(buildings, key=lambda b: b["id"]):
-        polys = list(b["geom"].geoms) if b["geom"].geom_type == "MultiPolygon" else [b["geom"]]
-        rings = []
-        for p in polys:
-            p = orient(p, sign=-1)  # Esri exterior CW, holes CCW; XY unchanged.
-            rings.extend([list(p.exterior.coords), *[list(r.coords) for r in p.interiors]])
         height = b.get("height")
         height = height if isinstance(height, (int, float)) and not isinstance(height, bool) and math.isfinite(height) and 0 < height <= 850 else None
         center = b["geom"].representative_point()
@@ -111,7 +105,7 @@ def build(root: Path, release: str) -> None:
         sources = sorted({s.get("dataset", "Unknown") for s in b.get("sources") or []})
         tiles[key].append({"id": b["id"], "version": b["version"], "height": height,
                            "addresses": sorted(b.get("addresses", [])), "sources": sources,
-                           "geometry": {"rings": rings, "spatialReference": {"wkid": 4326}}})
+                           "geometry": {"rings": helper["esri_rings"](b["geom"]), "spatialReference": {"wkid": 4326}}})
     output = root / "site/data/power-buildings" / release
     output.mkdir(parents=True, exist_ok=True)
     index = []

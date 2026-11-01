@@ -10,7 +10,6 @@
  */
 import {readFile,writeFile,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {fileURLToPath} from 'node:url';
 
 const SITE=new URL('../site/',import.meta.url);
 const SPECIFIER=/(?:\bfrom\s*|\bimport\s*\(?\s*)(['"])(\.{1,2}\/[^'"?]+)(\?[^'"]*)?\1/g;
@@ -73,7 +72,7 @@ export async function keyedSpecifiers({write=false}={}){
   return keyed;
 }
 
-if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1]){
+if(import.meta.main){
   const stripped=(await keyedSpecifiers({write:true})).length;let written=0;
   for(const p of await pages())if(p.current!==p.expected){await writeFile(p.file,p.expected);written++;}
   console.log(JSON.stringify({specifierFilesStripped:stripped,pagesUpdated:written}));

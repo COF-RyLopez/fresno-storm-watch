@@ -15,7 +15,6 @@ import runpy
 from pathlib import Path
 
 from shapely import from_wkb
-from shapely.geometry import shape
 
 LOG = logging.getLogger(__name__)
 
@@ -24,8 +23,7 @@ def build(root: Path, release: str) -> None:
     """Stream a county bbox, retain exact county points and account for every row."""
     if not re.fullmatch(r'\d{4}-\d{2}-\d{2}\.\d+', release):
         raise ValueError('Expected a pinned Overture release identifier.')
-    boundary = json.loads((root / 'site/data/counties.geojson').read_text(encoding='utf-8'))
-    county = shape(next(f['geometry'] for f in boundary['features'] if f['properties']['GEOID'] == '06019'))
+    county = runpy.run_path(str(root / 'scripts' / 'export-waterways.py'))['county_filter'](root / 'site/data/counties.geojson')[0]
     cache = root / 'work' / ('care-places-' + release)
     cache.mkdir(parents=True, exist_ok=True)
     overture = runpy.run_path(str(root / 'scripts' / 'build-power-buildings.py'))

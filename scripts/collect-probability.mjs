@@ -1,8 +1,6 @@
 /** Public WPC map images only; scheduled Pages collection bridges publisher CORS restrictions. */
 import {writeFile,mkdir,readdir,unlink} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
 import {writeAtomic,bounded as boundedBody} from './lib/snapshot-io.mjs';
 import {PROBABILITY_BASE,PROBABILITY_SOURCE,PROBABILITY_BOUNDS,PROBABILITY_LEGEND,parseProbabilityCycle,probabilityPeriods,probabilityImageUrl,validateProbabilitySnapshot} from '../site/lib/precip-probability-model.js';
 const DATA=new URL('../site/data/',import.meta.url);
@@ -50,4 +48,4 @@ async function main(){
   console.log(JSON.stringify({event:'wpc-probability-collection',checkedAt:snapshot.checkedAt,cycle:snapshot.cycle,images:images.size,bytes:[...images.values()].reduce((n,b)=>n+b.length,0),durationMs:Date.now()-start,error:snapshot.error}));
   if(snapshot.error)console.warn('Probability overlay withheld; official portal remains available.');
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();
+if(import.meta.main)await main();

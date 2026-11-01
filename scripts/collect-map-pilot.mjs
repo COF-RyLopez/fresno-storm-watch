@@ -1,5 +1,5 @@
 /** Public-only comparison bundle: same collectors and models as the main app. */
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {arcgisToGeoJSON} from '@terraformer/arcgis';
 import {CONFIG} from '../site/config.js';
@@ -11,16 +11,15 @@ import {validatePowerSnapshot} from '../site/lib/power-model.js';
 import {validateWindSnapshot} from '../site/lib/weather-model.js';
 import {validateReservoirSnapshot} from '../site/lib/environment-model.js';
 import {chartWindow} from '../site/lib/pilot-data.js';
-import {writeAtomic} from './lib/snapshot-io.mjs';
+import {siteJson,writeAtomic} from './lib/snapshot-io.mjs';
 
 const ROOT=new URL('../site/data/',import.meta.url);
-const read=async name=>JSON.parse(await readFile(new URL(name+'.json',ROOT),'utf8'));
 
 const started=Date.now(),output=new URL('map-pilot-latest.json',ROOT);
 // Snapshot source times remain original; collection time is not observation time.
 try{
   const now=Date.now(),published=process.argv.includes('--published');
-  const source=async name=>{if(!published||!name.endsWith('-latest'))return read(name);const r=await fetch('https://cof-rylopez.github.io/fresno-storm-watch/data/'+name+'.json',{signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('Published '+name+' unavailable');return r.json();};
+  const source=async name=>{if(!published||!name.endsWith('-latest'))return siteJson(name+'.json');const r=await fetch('https://cof-rylopez.github.io/fresno-storm-watch/data/'+name+'.json',{signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('Published '+name+' unavailable');return r.json();};
   const [areas,gauges,reservoirSettings,associations,windSettings,power,wind,reservoirs,comparisons]=await Promise.all(['river-areas','river-watchlist','reservoir-watchlist','area-concerns','wind-watchlist','power-latest','wind-latest','reservoir-latest','comparison-latest'].map(source));
   validateAreaConcerns(associations,areas.areas,windSettings.sites);validatePowerSnapshot(power);validateWindSnapshot(wind);validateReservoirSnapshot(reservoirs);
   const points=planningPoints(areas,gauges.stations,reservoirSettings.stations);
