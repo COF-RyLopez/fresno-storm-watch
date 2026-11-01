@@ -113,4 +113,3 @@ await refresh();
 const first=surgeSources({areas,usgs,net,now:Date.now()})[0],fp=first&&net.points.get(first.id);
 if(fp)view.when(()=>view.goTo({target:[fp.longitude,fp.latitude],zoom:11,heading:210,tilt:45})).catch(()=>{});
 setInterval(()=>{if(!document.hidden)void refresh();},300_000);
-globalThis.__dbg={view,pulses,base,net};
