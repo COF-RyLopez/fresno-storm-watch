@@ -4,7 +4,7 @@ import {createHrrrWeather} from './hrrr-ui.js';
 import {loadSdk} from './map.js';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
-import {elClass as el} from './dom.js';
+import {elClass as el,classLink} from './dom.js';
 
 const $=id=>document.getElementById(id);
 const value=n=>Number.isFinite(n)?Math.round(n).toLocaleString('en-US'):'Unknown';
@@ -53,7 +53,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
       if(s.reason||(s.speed===null&&s.gust===null))continue;
       const geometry={type:'point',longitude:site.longitude,latitude:site.latitude,spatialReference:{wkid:4326}};
       const text=`${site.name}\n${value(s.speed)} · G ${value(s.gust)} mph`;
-      const popup=()=>{const n=el('div');n.append(el('p',`Forecast at a sampled NWS grid cell · 10-meter winds. Sustained ${value(s.speed)} mph; gust ${value(s.gust)} mph; from ${windCompass(s.direction)}.`),el('p',`Selected ${time(target())}; forecast updated ${time(site.forecast.issued)}.`));for(const [k,label] of [['windSpeed','Sustained'],['windGust','Gust'],['windDirection','Direction']]){const sample=s.samples[k];n.append(el('p',`${label} interval: ${sample?`${time(sample.start)} → ${time(sample.end)}`:'Unknown'}`));}const a=el('a','Official NWS point forecast');a.href=sourceLink(site);a.target='_blank';a.rel='noopener noreferrer';n.append(a);return n;};
+      const popup=()=>{const n=el('div');n.append(el('p',`Forecast at a sampled NWS grid cell · 10-meter winds. Sustained ${value(s.speed)} mph; gust ${value(s.gust)} mph; from ${windCompass(s.direction)}.`),el('p',`Selected ${time(target())}; forecast updated ${time(site.forecast.issued)}.`));for(const [k,label] of [['windSpeed','Sustained'],['windGust','Gust'],['windDirection','Direction']]){const sample=s.samples[k];n.append(el('p',`${label} interval: ${sample?`${time(sample.start)} → ${time(sample.end)}`:'Unknown'}`));}n.append(classLink('Official NWS point forecast',sourceLink(site)));return n;};
       layers.wind.add(new layers.Graphic({geometry,attributes:{weatherSiteId:site.id},symbol:{type:'simple-marker',style:'diamond',size:12,color:'#6fcbd9',outline:{color:'#172c35',width:1.5}},popupTemplate:{title:site.name,content:popup}}));
       layers.windLabels.add(new layers.Graphic({geometry,symbol:{type:'text',text,color:'#e7f5f8',haloColor:'#172c35',haloSize:1.5,yoffset:18,font:{family:'Arial',size:9}},popupEnabled:false}));
     }

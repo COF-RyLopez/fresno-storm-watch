@@ -5,7 +5,7 @@ import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
 import {probabilityRecord,PROBABILITY_MAX_CHECK_AGE} from './precip-probability-model.js';
 import {slideMapping,chooseSlideLayer} from './briefing-follow-model.js';
-import {el} from './dom.js';
+import {el,elAttrs} from './dom.js';
 const $=id=>document.getElementById(id);
 const cycleQuery=s=>{const q=new URL(`${s.service}/${s.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(s.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});return q;};
 /** Public live services only. Tour state, source revisions and features stay in page memory. */
@@ -16,7 +16,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
   const layers=new Map(),failed=new Set(),step=()=>BRIEFING_LAYERS[index],time=t=>formatTime(t,timeZone);
   const compactTime=t=>new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(t);
   const picker=$('briefing-layer-select');
-  for(const s of BRIEFING_LAYERS){const o=el('calcite-option',s.label);o.value=s.id;picker.append(o);}
+  for(const s of BRIEFING_LAYERS)picker.append(elAttrs('calcite-option',s.label,{value:s.id}));
   function watchLayer(layer,id){layer.on('layerview-create-error',e=>{failed.add(`${id}:${e.view.type}`);render();});layer.on('layerview-create',e=>{failed.delete(`${id}:${e.view.type}`);render();});}
   function disableLayers(){for(const l of layers.values())map?.setLayerEligibility(l,false);}
   function render(){

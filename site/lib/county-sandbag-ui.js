@@ -1,15 +1,15 @@
 import {loadSdk} from './map.js';
 import {SANDBAG_APP,SANDBAG_SOURCE,SANDBAG_GUIDANCE,SANDBAG_STATES,SANDBAG_MAX_AGE,validateSandbagSnapshot,sandbagContext,sandbagHealth,sandbagHours} from './county-sandbag-model.js';
 import {reportHealth} from './source-health.js';
-import {roadGraphic,fillAreaSelect,selectAreaOption} from './dwr-supply-planning-ui.js';
+import {roadGraphic,fillAreaSelect,selectAreaOption,distance as km} from './dwr-supply-planning-ui.js';
+import {formatDateTime} from './model.js';
 import {node,nodeButton as button,nodeLink as external,disclosure,onExpand} from './dom.js';
 const KEY='countySandbags';
-const km=m=>(m/1000).toFixed(1)+' km';
 
 /** Public pickup references, separate from DWR stock inspection inventories and private operating records. */
 export function createCountySandbags({exercise=false,timeZone='America/Los_Angeles',onMap=()=>{},onArea=()=>{},onRoad=()=>{},onData=()=>{}}={}){
-  const $=id=>document.getElementById(id),root=$('county-sandbag-watch'),pane=$('county-sandbag-evidence'),formatter=new Intl.DateTimeFormat('en-US',{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone});
-  const time=value=>{const ms=typeof value==='string'?Date.parse(value):value;return Number.isFinite(ms)?formatter.format(ms):'Unknown';};
+  const $=id=>document.getElementById(id),root=$('county-sandbag-watch'),pane=$('county-sandbag-evidence');
+  const time=value=>{const ms=typeof value==='string'?Date.parse(value):value;return Number.isFinite(ms)?formatDateTime(ms,timeZone):'Unknown';};
   let snapshot=null,error=null,planning=null,roads=null,map=null,base=null,context=null,Graphic=null,busy=false,selected=null,view=null,listSignature='',detailSignature='',optionsSignature='';
   function calculate(){return sandbagContext(snapshot,planning,roads,{filter:$('county-sandbag-status').value,query:$('county-sandbag-query').value,areaId:$('county-sandbag-area').value});}
   function selection(){const r=selected&&pane.hasAttribute('open')?snapshot?.rows.find(r=>r.key===selected):undefined;return [r,r?.geometry?sandbagContext({...snapshot,rows:[r]},planning,roads,{filter:'all'}).rows[0]:null];}

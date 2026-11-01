@@ -8,7 +8,7 @@ import {reportHealth} from './source-health.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {ROAD_MAP} from './roads.js';
 import {POWER_STATES,POWER_LINKS} from './power-model.js';
-import {button,el,disclosure} from './dom.js';
+import {button,el,link,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 
 /** Private inventory and correlation results live in this tab only, including during asynchronous joins. */
@@ -80,7 +80,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
         host.append(el('p',`Utility updated ${stamp(utility.updated)} · source retrieved ${time(Date.parse(match.sourceRetrieved))}. Start ${stamp(utility.start)} · end ${stamp(utility.end)} · estimated restoration ${stamp(utility.restoration)}. An estimate does not confirm restored pump power.`));
         if(match.problem)host.append(el('p','Verification needed: '+match.problem));
         if(match.followup)host.append(el('p','A previous overlap changed or disappeared. Keep the power follow-up open until the pump owner verifies conditions.'));
-        const source=el('a','Official '+utility.utility+' power source');source.href=Object.values(POWER_LINKS).includes(utility.official)?utility.official:POWER_LINKS[utility.utility==='PG&E'?'pge':'sce'];source.target='_blank';source.rel='noopener noreferrer';host.append(source);
+        host.append(link('Official '+utility.utility+' power source',Object.values(POWER_LINKS).includes(utility.official)?utility.official:POWER_LINKS[utility.utility==='PG&E'?'pge':'sce']));
       }
     }
     const gaps=[...new Set(row.pumpPower.flatMap(p=>p.evidence.gaps))],pointOnly=Math.max(...row.pumpPower.map(p=>p.evidence.pointOnly));
@@ -92,7 +92,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
     const row=model.find(r=>r.id===id);if(!row)return;selected=id;selectedPump=pumpKey;const epoch=generation,powerVersion=powerEpoch,readinessVersion=readinessEpoch,host=$('drainage-review-detail');host.replaceChildren();$('drainage-review-evidence').heading=(exercise?'EXERCISE · ':'')+row.name;if(pumpKey)$('drainage-review-evidence').heading=(exercise?'EXERCISE - ':'')+(row.pumpPower.find(p=>p.key===pumpKey)?.name||row.name);$('drainage-review-evidence').description='Private planning review · no deployment decision';
     host.append(el('p',`Evidence captured ${time(Date.now())}. Reopen this group after sources refresh.`),el('p',row.change));renderPumpPower(host,row,pumpKey);host.append(el('h3','Rainfall timing'),el('p',`WPC Days 1–3 · issued ${time(row.cycle?.issue)} · valid ${time(row.cycle?.start)} → ${time(row.cycle?.end)} · checked ${time(row.checked)}`),el('p',row.maximum===null?'Intersecting rainfall amount unknown.':`Highest intersecting WPC polygon label: ${row.maximum.toFixed(2)} inches liquid equivalent${row.rainCurrent?'':' · stale / unavailable'}.`),el('p','This is a 72-hour accumulation window, not storm onset or peak timing. Polygon labels are not basin averages, runoff, water level or flood depth.'),sourceButton('Show this rainfall window',()=>{onRainfall();map?.setLayerPreference('weather',true);}));
     host.append(el('h3','FMFCD inventory'),el('p',`Retrieved ${time(row.inventoryChecked)}. Source maintenance age, pump operation and available basin storage remain unconfirmed. Shared source codes do not establish hydraulic connectivity.`));
-    for(const [label,href]of [['WPC forecast source','https://www.wpc.ncep.noaa.gov/#page=qpf'],['NWS Hanford','https://www.weather.gov/hnx/'],['County road map',ROAD_MAP],['FMFCD source inventory',DRAINAGE_URL]]){const a=el('a',label);a.href=href;a.target='_blank';a.rel='noopener noreferrer';host.append(a);}
+    for(const [label,href]of [['WPC forecast source','https://www.wpc.ncep.noaa.gov/#page=qpf'],['NWS Hanford','https://www.weather.gov/hnx/'],['County road map',ROAD_MAP],['FMFCD source inventory',DRAINAGE_URL]])host.append(link(label,href));
     const focusRecord=row.records.find(r=>r.key===pumpKey)||row.records.find(r=>r.kind==='basin')||row.records[0];
     if(focusRecord){host.append(el('p','Nearby drainage is centered on '+focusRecord.name+'. Select another inventory record below to change the focus.'));renderNearby(host,focusRecord);}
     for(const record of row.records)host.append(sourceButton(record.name,()=>onRecord(record.key)),el('small',`${record.status} · modified ${time(record.updated)}`));

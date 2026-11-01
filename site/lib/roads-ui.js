@@ -1,6 +1,6 @@
 import {reportHealth} from './source-health.js';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
-import {el} from './dom.js';
+import {el,link} from './dom.js';
 export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {
   let snapshot=null,error=null,map=null,busy=false,selected=null;
   const host=document.getElementById('road-list'),status=document.getElementById('road-health');
@@ -29,7 +29,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=
     selected=row.key;const d=document.getElementById('road-detail');d.replaceChildren();
     for(const [label,value] of [['Status',row.status],['Location',row.location],['Reason',row.reason||'Not supplied'],['Comment',row.comment||'Not supplied'],['Alternate route',row.alternateRoute||'Not supplied'],['Active flag',row.active||'Not supplied'],['Start',time(row.start)],['End',time(row.end)],['Source update',time(row.sourceTime)],['Editor timestamp',time(row.edited)],['GlobalID',row.id]])d.append(el('strong',label),el('p',value));
     for(const issue of row.issues)d.append(el('p',issue));
-    const link=el('a','County official road map');link.href=ROAD_MAP;link.target='_blank';link.rel='noopener noreferrer';d.append(link);
+    d.append(link('County official road map',ROAD_MAP));
     document.getElementById('road-dialog').setAttribute('heading',`${row.kind} · ${row.name}`);document.getElementById('road-dialog').setAttribute('open','');onMap();map?.focusRoad(row.key);
   }
   async function refresh(){if(busy||exercise)return;busy=true;document.getElementById('roads-refresh').setAttribute('loading','');try{snapshot=await fetchRoads();error=null;}catch(cause){error=cause;}finally{busy=false;document.getElementById('roads-refresh').removeAttribute('loading');render();}}

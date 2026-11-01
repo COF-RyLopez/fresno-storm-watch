@@ -1,6 +1,7 @@
 import {sandbagSearchEntries} from './county-sandbag-model.js';
 import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js';
-import {elIfText as el,disclosure} from './dom.js';
+import {elIfText as el,link,disclosure} from './dom.js';
+import {formatDateTime} from './model.js';
 const $=id=>document.getElementById(id);
 const BASE=new URL('../data/search/v0.31.0/',import.meta.url),WATERBODY_BASE=new URL('../data/search/waterbodies-v0.34.0/',import.meta.url);
 const KIND={sandbag:'County sandbag site',waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point'};
@@ -11,7 +12,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
   const groups=new Map(),groupSignatures=new Map(),shards=new Map(),panel=$('map-search-evidence'),input=$('map-search-input'),results=$('map-search-results'),status=$('map-search-status');
   const nearbyHost=$('map-search-nearby'),nearbyList=$('map-search-nearby-list'),nearbyStatus=$('map-search-nearby-status'),nearbyDetail=$('map-search-nearby-detail'),quick=$('map-search-quick'),sourceNotes={gauges:'Gauge sources loading / not available',roads:'Road source loading / not available',assets:'No authorized assets loaded'};
   const all=()=>[...(publicIndex?.entries??[]),...(waterbodyIndex?.entries??[]),...[...groups.values()].flat()];
-  const date=value=>{const timestamp=Number.isFinite(value)?value:typeof value==='string'?Date.parse(value):NaN;return Number.isFinite(timestamp)?new Intl.DateTimeFormat('en-US',{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',timeZone:'America/Los_Angeles'}).format(timestamp):'Not supplied';};
+  const date=value=>{const timestamp=Number.isFinite(value)?value:typeof value==='string'?Date.parse(value):NaN;return Number.isFinite(timestamp)?formatDateTime(timestamp):'Not supplied';};
   function clearSelection(message='Search highlight cleared.'){
     nearbyRevision++;selectedShape=null;nearbyHost.hidden=true;nearbyList.replaceChildren();nearbyDetail.replaceChildren();nearbyStatus.textContent='';map?.setSearchContext?.([]);generation++;selected=null;selectionBusy=false;map?.clearSearchSelection();$('map-search-selection').replaceChildren();$('map-search-clear').disabled=true;$('search-selection-note').hidden=true;$('search-selection-label').textContent='';
     if(message)status.textContent=message;
@@ -74,7 +75,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
       detail.replaceChildren(el('h3',row.name),el('p',`${KIND[row.kind]} · ${row.detail??`${row.segments} source segments with this name`}`),reference);
       if(row.kind==='waterbody'){const fit=el('calcite-button','Fit full lake outline');fit.setAttribute('scale','s');fit.addEventListener('click',()=>void select(row.key));detail.append(fit);if(outline)reference.append(el('p','Showing the complete lake outline associated with the selected reservoir reporting site.'));}
       if(row.kind==='reservoir')detail.append(el('p','Full lake outline unavailable. This result is a reporting point only; reopen search to retry the lake index.'));
-      if(row.sourceUrl||source?.url){const a=el('a','Official source');a.href=row.sourceUrl||source.url;a.target='_blank';a.rel='noopener noreferrer';reference.append(a);}
+      if(row.sourceUrl||source?.url)reference.append(link('Official source',row.sourceUrl||source.url));
       $('map-search-clear').disabled=false;$('search-selection-note').hidden=false;$('search-selection-label').textContent=`Search selection: ${row.name} · reference only`;
       status.textContent='Selection highlighted in magenta with a white outline. Use Clear highlight to remove it.';void renderNearby();
     }catch(error){if(revision===generation)clearSelection(`Could not locate this result: ${error.message}. Select another result or retry.`);}
@@ -103,7 +104,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
           const inspect=()=>{if(!current())return;nearbyDetail.replaceChildren(el('h4',row.name),el('p',row.detail),el('p',`Source observation / update: ${date(row.sourceTime)}`),el('p',row.reference));
             if(row.kind==='road-record')nearbyDetail.append(el('p',`Source active flag: ${row.active||'Not supplied'} · Start: ${date(row.start)} · End: ${date(row.end)}. An elapsed end date does not confirm reopening.`));
             const locate=el('calcite-button','Locate nearby reference');locate.setAttribute('scale','s');locate.addEventListener('click',()=>{if(current())void map.focusSearchContext(row.key).then(ok=>{if(current()&&!ok)nearbyDetail.append(el('p','Map navigation was interrupted; select Locate to retry.'));});});nearbyDetail.append(locate);
-            if(row.sourceUrl){const link=el('a','Official source / evidence');link.href=row.sourceUrl;link.target='_blank';link.rel='noopener noreferrer';nearbyDetail.append(el('p'),link);}
+            if(row.sourceUrl)nearbyDetail.append(el('p'),link('Official source / evidence',row.sourceUrl));
             const open=el('calcite-button','Open full workspace evidence');open.setAttribute('appearance','outline');open.setAttribute('scale','s');open.addEventListener('click',()=>{if(current())onInspect(row);});nearbyDetail.append(el('p'),open);
           };
           item.addEventListener('click',inspect);item.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();inspect();}});list.append(item);

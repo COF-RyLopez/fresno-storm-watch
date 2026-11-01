@@ -1,14 +1,15 @@
 import {validateBriefingContext,correlateBriefingContext,LOOKUP_KM} from './briefing-context-model.js';
 import {POWER_STATES} from './power-model.js';
-import {button,el} from './dom.js';
+import {button,el,elAttrs} from './dom.js';
+import {formatDateTime} from './model.js';
 /** @param {object} options @returns {object} Private asset data stays in this controller's memory and is cleared with its source session. */
 export function createBriefingContextView({timeZone,exercise=false,onBriefing,onArea,onRoad,onFacility,onConnect,onMap,onData=()=>{}}){
   const host=document.getElementById('briefing-context-list'),status=document.getElementById('briefing-context-status'),block=document.getElementById('briefing-context-block');
   let associations=null,briefing={rows:[]},planning=null,roads=null,facilities=null,radiusKm=5,history=false,error=null,map=null,selected=null,signature='',model=null;
-  const expanded=new Set(),limits=new Map(),dateFormat=new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}),time=value=>Number.isFinite(value)?dateFormat.format(value):'Not supplied';
+  const expanded=new Set(),limits=new Map(),time=value=>Number.isFinite(value)?formatDateTime(value,timeZone):'Not supplied';
   const distance=i=>`≈ ${(i.meters/1000).toFixed(1)} km from ${i.pointId} · straight line to source geometry`;
   const controls=document.getElementById('briefing-context-radius');
-  for(const km of LOOKUP_KM){const o=el('calcite-option',`${km} km`);o.value=String(km);o.selected=km===radiusKm;controls.append(o);}
+  for(const km of LOOKUP_KM)controls.append(elAttrs('calcite-option',`${km} km`,{value:km,selected:km===radiusKm}));
   function updateMap(){if(!map||!selected)return;const g=model?.groups.find(g=>g.id===selected);map.setBriefingContext(g?{id:g.id,points:g.points,roads:g.roads.map(i=>i.row),facilities:g.facilities.map(i=>i.row)}:{points:[],roads:[],facilities:[]});}
   function render(){
     model=correlateBriefingContext({associations,briefing,planning,roads,facilities,radiusKm,history});

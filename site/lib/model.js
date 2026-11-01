@@ -146,6 +146,11 @@ export function bannerState(state, now, staleMs) {
     detail: state.pending.size ? 'New since this page opened or since you cleared the notification. Select an alert for details.' : 'Clearing the notification does not end a hazard or record a team acknowledgement.' };
 }
 
+/** @param {number} time @param {string} zone @returns {string} Dated to the minute with zone abbreviation, e.g. "Nov 1, 2026, 3:04 PM PST". */
+export const formatDateTime = (time, zone = 'America/Los_Angeles') => new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zone, timeZoneName: 'short' }).format(time);
+/** @param {number} time @returns {string} Medium date and short time in Pacific, suffixed " Pacific". */
+export const formatPacific = time => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Los_Angeles' }).format(time) + ' Pacific';
+
 /** @param {number|null} time @param {string} zone @returns {string} Explicit Pacific zone, including DST. */
 export function formatTime(time, zone = 'America/Los_Angeles') {
   return time === null ? 'Not available' : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', timeZone: zone, timeZoneName: 'short' }).format(time);

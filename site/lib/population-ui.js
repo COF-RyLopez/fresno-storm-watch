@@ -11,7 +11,7 @@ import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT,approximatePopulation,populationZoneRows} from './population-model.js';
 import {readPopulationBlocks,calculateZonePopulation} from './population-data.js';
 import {reportHealth} from './source-health.js';
-import {node,nodeLink as link,disclosure,onExpand,dataTable} from './dom.js';
+import {node,nodeLink as link,nodeButton,disclosure,onExpand,dataTable} from './dom.js';
 const $=id=>document.getElementById(id);
 const number=v=>new Intl.NumberFormat('en-US').format(v);
 
@@ -69,7 +69,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
       host.append(node('p',`Census polygons queried ${result.accounting.queried} / retained ${result.accounting.retained} · checked ${time(result.checked)}.`));
       const methods=disclosure('Estimate method, uncertainty & sources');methods.append(node('p',POPULATION_METHOD),node('p','Only Fresno County blocks are counted, including for shared-border zone records. The boundary-crossing row counts all residents of those entire census blocks. It is context for allocation uncertainty, not additional residents to add to the estimate. Block counts are distinct from ACS tract estimates.'),node('p',POPULATION_LIMIT),link('County 2020 Census population viewer',POPULATION_SOURCES.countyMap),node('br'),link('2020 block source',POPULATION_SOURCES.blocks),node('br'),link('Living Atlas ACS population source',POPULATION_SOURCES.acsItem));host.append(methods,populationSourceGuide());
     }
-    const context=disclosure('Newer ACS & PIO context · whole tracts');context.append(node('p','Age counts, 90% margins of error and outreach context describe whole census tracts, not this zone. They are not combined with the 2020 estimate.'));const explore=node('calcite-button','Explore intersecting ACS tracts');explore.scale='s';explore.appearance='outline';explore.addEventListener('click',()=>void acs.open({geometry:selected.geometry,zone:selected.name}));context.append(explore);host.append(context);
+    const context=disclosure('Newer ACS & PIO context · whole tracts');context.append(node('p','Age counts, 90% margins of error and outreach context describe whole census tracts, not this zone. They are not combined with the 2020 estimate.'));context.append(nodeButton('Explore intersecting ACS tracts',()=>void acs.open({geometry:selected.geometry,zone:selected.name})));host.append(context);
     // One element per zone so re-renders during the calculation keep it open and loaded.
     const signature=JSON.stringify(selected.geometry);
     if(afn?.key!==selected.key||afn.signature!==signature){

@@ -15,7 +15,7 @@ export const acsChanged=(a,b)=>['period','modified','edited'].some(k=>a[k]!==b[k
 const folder=new URL('../work/zone-population/',import.meta.url);
 
 /** Public county inputs only. Reconcile source IDs and preserve complete raw geometry. */
-export async function acquire(){
+async function acquire(){
   await mkdir(folder,{recursive:true});
   const county=await fresnoCounty();
   const geometry=countyGeometry(county.geometry);let requests=0;
@@ -33,4 +33,4 @@ export async function acquire(){
   const target=new URL('inputs.json',folder);await writeAtomic(target,JSON.stringify(data));
   console.log(JSON.stringify({status:'complete',zones:zones.rows.length,tracts:tracts.rows.length,blocks:blocks.rows.length,seconds:(Date.now()-started)/1000,file:fileURLToPath(target)}));return data;
 }
-if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])await acquire();
+if(import.meta.main)await acquire();

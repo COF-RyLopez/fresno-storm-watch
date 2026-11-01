@@ -1,8 +1,6 @@
 /** Collect only the public NWS Hanford product. County email is never a collector input. */
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
 import {writeAtomic,bounded as boundedBody} from './lib/snapshot-io.mjs';
 import {HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF,parseBriefingDate,validateBriefingSnapshot} from '../site/lib/briefing-model.js';
 const DATA=new URL('../site/data/',import.meta.url),PUBLISHED='https://cof-rylopez.github.io/fresno-storm-watch/data/';
@@ -41,4 +39,4 @@ async function main(){
   await writeAtomic(new URL('hanford-briefing.json',DATA),JSON.stringify(snapshot,null,2)+'\n');
   console.log(JSON.stringify({event:'hanford-briefing-collection',checkedAt:snapshot.checkedAt,durationMs:Date.now()-start,sourceUpdatedAt:snapshot.document?.sourceUpdatedAt,revision:snapshot.document?.sha256,bytes:snapshot.document?.bytes,error:snapshot.error}));if(snapshot.error)console.warn('Briefing collection failed; retained evidence remains explicitly marked.');
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();
+if(import.meta.main)await main();

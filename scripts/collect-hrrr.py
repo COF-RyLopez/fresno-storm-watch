@@ -5,7 +5,6 @@ Native grid vectors are rotated to true east/north before bilinear resampling.
 """
 from __future__ import annotations
 
-import argparse
 import json
 import logging
 import time
@@ -137,23 +136,20 @@ def collect(output: Path = OUTPUT) -> dict:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=OUTPUT)
-    args = parser.parse_args()
     try:
-        collect(args.output)
+        collect()
     except Exception as error:
         # CLI boundary: log the actual exception and publish explicit unavailability.
         # Optional feed failure must not block closures/alerts and other collectors.
         LOG.exception("HRRR collection failed")
         # Preserve previous files, but explicitly fail closed in the browser.
-        previous = args.output / "latest.json"
+        previous = OUTPUT / "latest.json"
         if previous.exists():
             manifest = json.loads(previous.read_text(encoding="utf-8"))
             manifest["error"] = f"Collection failed: {type(error).__name__}"
             previous.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
         else:
-            args.output.mkdir(parents=True, exist_ok=True)
+            OUTPUT.mkdir(parents=True, exist_ok=True)
             previous.write_text(json.dumps({"schemaVersion": 1, "error": f"HRRR collection failed: {type(error).__name__}",
                                 "generatedAt": datetime.now(timezone.utc).isoformat()}), encoding="utf-8")
         print(f"::warning title=HRRR feed unavailable::{type(error).__name__}; the app will hide the unavailable HRRR field")
