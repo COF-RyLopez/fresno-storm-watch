@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {WORKSPACES,workspaceRoute,workspaceDefaults,workspaceMemory,layerVisible} from '../site/lib/workspace-model.js';
 
 test('focused defaults and private drainage never start with an unrelated operational stack',()=>{
-  assert.deepEqual(Object.keys(WORKSPACES),['watch','rivers','weather','reservoirs','alerts','power','drainage','roads']);
+  assert.deepEqual(Object.keys(WORKSPACES),['storm','watch','rivers','weather','reservoirs','alerts','power','drainage','roads']);
   assert.deepEqual(Object.entries(workspaceDefaults('roads').layers).filter(([,v])=>v).map(([k])=>k),['roads']);
   assert.equal(workspaceDefaults('weather').layers.wind,true);assert.equal(workspaceDefaults('weather').layers.weather,true);assert.equal(workspaceDefaults('weather').layers.power,false);
   for(const id of Object.keys(WORKSPACES)){const s=workspaceDefaults(id);assert.equal(s.mode,id==='power'?'3d':'2d');assert.equal(s.imagery,false);assert.equal(s.cameras,false);assert.equal(s.layers.fema,false);assert.equal(s.layers.buildings,false);}
@@ -33,13 +33,19 @@ test('eligibility refreshes cannot expose another topic and cannot override a fa
   weather.layers.roads=false;assert.equal(layerVisible(weather,'roads',true),false);assert.equal(layerVisible(workspaceDefaults('roads'),'roads',true),true);
 });
 test('legacy conditions and release links, initial landing and canonical tab links resolve safely',()=>{
-  assert.equal(workspaceRoute('/'),'watch');assert.equal(workspaceRoute('/?view=conditions&overlay=satellite'),'weather');assert.equal(workspaceRoute('/?view=environment'),'weather');
+  assert.equal(workspaceRoute('/'),'storm');assert.equal(workspaceRoute('/?exercise=1'),'storm');
+  for(const key of ['sandbags','dwrSupplies','care'])assert.equal(workspaceRoute(`/?${key}=1`),'watch','County Watch deep links keep their workspace');
+  assert.equal(workspaceRoute('/?view=watch&sandbags=1'),'watch');assert.equal(workspaceRoute('/?mission=briefing'),'watch');assert.equal(workspaceRoute('/?mission=scenarios'),'watch');assert.equal(workspaceRoute('/?mission=other'),'storm');assert.equal(workspaceRoute('/?view=rivers&care=1'),'rivers');assert.equal(workspaceRoute('/?view=conditions&overlay=satellite'),'weather');assert.equal(workspaceRoute('/?view=environment'),'weather');
   for(const id of Object.keys(WORKSPACES))assert.equal(workspaceRoute('/?view='+id),id);
-  assert.equal(workspaceRoute('/?view=conditions&trends=MIL'),'reservoirs');assert.equal(workspaceRoute('/?trends=PNF'),'reservoirs');assert.equal(workspaceRoute('/?trends=INVALID&view=roads'),'roads');assert.equal(workspaceRoute('/?view=INVALID'),'watch');
+  assert.equal(workspaceRoute('/?view=conditions&trends=MIL'),'reservoirs');assert.equal(workspaceRoute('/?trends=PNF'),'reservoirs');assert.equal(workspaceRoute('/?trends=INVALID&view=roads'),'roads');assert.equal(workspaceRoute('/?view=INVALID'),'storm');
 });
 test('Calcite shell retains unique live control ids and one pinned runtime after the split',async()=>{
   const html=await readFile(new URL('../site/index.html',import.meta.url),'utf8');const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,'DOM ids must remain unique');
   for(const id of Object.keys(WORKSPACES)){assert(ids.includes('tab-'+id));assert(ids.includes(WORKSPACES[id].panel));}
   for(const id of ['context-menu','map-tools-menu','camera-sheet','source-health-dialog','notify-areas','notify-alerts','notify-power','notify-health'])assert(ids.includes(id));
   assert.equal((html.match(/type="module" src="https:\/\/js.arcgis.com\/5.1\/"/g)||[]).length,1);assert(!html.includes('cdn.jsdelivr.net/npm/@esri/calcite'));
+});
+test('Storm now starts with public drainage areas and private drainage, without unrelated stacks',()=>{
+  assert.deepEqual(Object.entries(workspaceDefaults('storm').layers).filter(([,v])=>v).map(([k])=>k).sort(),['alerts','areas','drainage','drainageAreas','gauges','roads','weather']);
+  for(const id of Object.keys(WORKSPACES))if(id!=='storm')assert.equal(workspaceDefaults(id).layers.drainageAreas,false);
 });

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "checked": "2026-11-01",
+  "note": "USGS stream gauges read by Storm now (instantaneous values: gage height 00065, discharge 00060). The USGS site service was NOT reachable from the build sandbox, so this list is unverified: confirm each site number and coordinate at https://waterservices.usgs.gov/nwis/site/?format=rdb&countyCd=06019&siteType=ST&siteStatus=active&hasDataTypeCd=iv before relying on it, and add active foothill-creek sites (Big Dry, Dry, Fancher, Dog, Redbank) when found. A site whose 'creek' equals an ungauged creek name replaces that creek's 'No live gauge' row. floodStageFt stays null unless a published flood stage is confirmed; without it only rate of rise is used.",
+  "sites": [
+    {"site": "11251000", "name": "San Joaquin River below Friant (USGS)", "creek": "San Joaquin River", "latitude": 36.9842, "longitude": -119.7236, "floodStageFt": null, "verified": false}
+  ]
+}

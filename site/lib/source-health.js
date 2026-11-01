@@ -3,10 +3,10 @@ import {disclosure} from './dom.js';
 /** Source status events carry public diagnostics, never feature payloads or credentials. */
 export function reportHealth(key,label,{checked=null,error=null,maxAgeMs=420000,detail='',state=null}={}){window.dispatchEvent(new CustomEvent('storm-source-health',{detail:{key,label,checked,error,maxAgeMs,detail,state}}));}
 /** Countywide counts remain independent of workspace presentation. */
-export function createCountyStrip({onOpen,exercise=false,timeZone}){
+export function createCountyStrip({onOpen,exercise=false,timeZone,onIssues=()=>{}}){
   const $=id=>document.getElementById(id),checks=new Map();let careCount=null,areaCount=null,drainageCount=null,pumpPowerCount=null,readinessCount=null,taskCounts=null,powerCount=null,alertCount=null,dialogSignature=null,briefingUpdated=false,incidentFollowups=null;
   const time=t=>Number.isFinite(t)?new Intl.DateTimeFormat('en-US',{timeZone,dateStyle:'short',timeStyle:'long'}).format(t):'No successful check';
-  function render(){const health=sourceHealthSummary(checks),issues=health.review;
+  function render(){const health=sourceHealthSummary(checks),issues=health.review;onIssues(exercise||!checks.size?null:issues);
     $('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage${pumpPowerCount?` · ${pumpPowerCount} pump power`:""}${readinessCount?` · ${readinessCount} pump readiness`:""}${taskCounts?` · ${taskCounts.active} assigned / ${taskCounts.overdue} overdue${taskCounts.unmatched?' · '+taskCounts.unmatched+' task rematches':''}${taskCounts.review>taskCounts.overdue?' · '+taskCounts.review+' task reviews':''}`:''}`}`;$('notify-alerts').textContent=`Weather alerts · ${alertCount??'checking'}${briefingUpdated?' · briefing updated':''}`;$('notify-power').textContent=`Power / PSPS · ${powerCount??'checking'}`;$('notify-health').textContent=exercise?'Source health · exercise':`Source health · ${checks.size?issues+' review':'checking'}`;
     $('notify-areas').textContent+=careCount===null?' · care checking':` · ${careCount} care`;
     $('notify-areas').setAttribute('aria-label',$('notify-areas').textContent+(incidentFollowups?.assessed?` · Selected incident follow-ups: ${incidentFollowups.active} active / ${incidentFollowups.overdue} overdue`:''));
