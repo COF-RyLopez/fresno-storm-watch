@@ -194,10 +194,6 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
   const applyMapTheme = () => {
     updateContextSymbols();
     drawGauges();
-    alertLayer.graphics.forEach(graphic => {
-      const symbol = graphic.symbol.clone(), shade = color(`--${graphic.attributes.category}`);
-      symbol.color = `${shade}38`; symbol.outline.color = shade; graphic.symbol = symbol;
-    });
     selectedLayer.graphics.forEach(graphic => {
       const symbol = graphic.symbol.clone(); symbol.outline.color = color('--map-selection'); graphic.symbol = symbol;
     });
@@ -521,7 +517,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, init
       selectedLayer.removeAll();
       // Lower-priority products draw first. Counts never come from the current view extent.
       for (const alert of [...alerts].reverse()) for (const geometry of alert.geometries) {
-        const shade = color(`--${alert.category}`) || CATEGORIES[alert.category].color;
+        const shade = CATEGORIES[alert.category].color; // Alert colors are theme-independent.
         alertLayer.add(new Graphic({ geometry: new Polygon(geometry), attributes: { alertKey: alert.key, category: alert.category },
           symbol: { type: 'simple-fill', color: `${shade}38`, outline: { color: shade, width: 1.5 } } }));
       }
