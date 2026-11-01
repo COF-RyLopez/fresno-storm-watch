@@ -25,6 +25,7 @@
     "build:waterbody-basemap": "node scripts/build-waterbody-basemap.mjs",
     "collect:map-pilot": "node --use-system-ca scripts/collect-map-pilot.mjs",
     "collect:sandbags": "node --use-system-ca scripts/collect-sandbags.mjs",
+    "collect:waze": "node --use-system-ca scripts/collect-waze.mjs",
     "collect:pio-languages": "node --use-system-ca scripts/collect-pio-languages.mjs",
     "collect:zone-population": "node --use-system-ca scripts/acquire-zone-population.mjs",
     "build:zone-population": "node --use-system-ca scripts/build-zone-population.mjs",

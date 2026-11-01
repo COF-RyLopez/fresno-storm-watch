@@ -55,6 +55,12 @@ jobs:
       - name: Collect public NWS wind and gust forecasts
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:wind -- --published
+      - name: Collect county Waze partner reports (skips without the secret; publishes only when WAZE_PUBLISH is 'true')
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          WAZE_FEED_URL: ${{ secrets.WAZE_FEED_URL }}
+          WAZE_PUBLISH: ${{ vars.WAZE_PUBLISH }}
+        run: npm run collect:waze -- --published
       - name: Prepare regional public HRRR winds and gusts
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         timeout-minutes: 8
