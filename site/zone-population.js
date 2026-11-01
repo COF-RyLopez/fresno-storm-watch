@@ -18,18 +18,10 @@ $('fit-county').onclick=()=>{history.pushState(null,'',location.pathname);clearS
 
 function clearSelection(){selected=null;highlight?.remove();highlight=null;$('selected-zone').hidden=true;renderList();void view?.goTo(layer.fullExtent.expand(1.05)).catch(mapError);}
 function mapError(e){if(e.name!=='AbortError')$('map-status').textContent='Map navigation unavailable. Zone figures and downloads remain available.';}
-// Rows are built once and reused: re-creating ~400 calcite-table rows per keystroke costs several times more than the native rows did.
-const rowCache=new Map();
-function zoneRow(f){
-  const p=f.properties;let tr=rowCache.get(p.oid);if(tr)return tr;
-  tr=el('calcite-table-row');const name=el('calcite-table-cell'),b=el('button',p.name);b.type='button';b.setAttribute('aria-label',p.name+' · '+(p.population===null?'estimate unavailable':estimatedResidents(p.population)+' estimated residents'));b.onclick=()=>void select(f,true);name.append(b);
-  const count=el('calcite-table-cell',p.population===null?'Needs review':estimatedResidents(p.population));count.alignment='end';if(p.population===null)count.className='unknown';tr.append(name,count);rowCache.set(p.oid,tr);return tr;
-}
 function renderList(){
-  if(!product)return;const rows=zoneRows(product.data.features,$('zones-search').value,$('only-unknown').checked),host=$('zones-table'),body=[];
+  if(!product)return;const rows=zoneRows(product.data.features,$('zones-search').value,$('only-unknown').checked),host=$('zone-rows');host.replaceChildren();
   $('zone-counts').textContent=`${product.meta.counts.zones} zones · ${product.meta.counts.estimated} estimated · ${product.meta.counts.unknown} need review${rows.length!==product.data.features.length?' · '+rows.length+' shown':''}. No county total is calculated.`;
-  for(const f of rows){const p=f.properties,tr=zoneRow(f),current=selected?.properties.oid===p.oid;tr.querySelector('button').setAttribute('aria-current',String(current));tr.className=current?'selected':'';body.push(tr);}
-  host.replaceChildren(host.querySelector('[slot=table-header]'),...body);
+  for(const f of rows){const p=f.properties,tr=el('tr'),name=el('td'),b=el('button',p.name);b.type='button';b.setAttribute('aria-label',p.name+' · '+(p.population===null?'estimate unavailable':estimatedResidents(p.population)+' estimated residents'));b.setAttribute('aria-current',String(selected?.properties.oid===p.oid));b.onclick=()=>void select(f,true);name.append(b);tr.className=selected?.properties.oid===p.oid?'selected':'';const count=el('td',p.population===null?'Needs review':estimatedResidents(p.population));if(p.population===null)count.className='unknown';tr.append(name,count);host.append(tr);}
   $('list-empty').hidden=!!rows.length;
 }
 async function select(feature,updateUrl=false){
