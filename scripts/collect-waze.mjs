@@ -56,6 +56,8 @@ export function filterWazeAlerts(alerts,rings){
 }
 
 /** @returns {Promise<object>} Validated snapshot; on any failure the previous alerts are kept and the redacted error recorded. */
+// Every feed alert's TYPE:SUBTYPE (no location or text), so the owner can tune the storm allowlist from the run log.
+const byType=alerts=>{const t={};for(const a of alerts){let k=`${a.type}:${a.subtype||'NO_SUBTYPE'}`;if(!/^[A-Z_]{1,40}:[A-Z_]{1,60}$/.test(k))k='OTHER';t[k]=(t[k]||0)+1;}return t;};
 export async function collectWaze({url,county,previous=null,fetchImpl=fetch,now=Date.now()}){
   const at=new Date(now).toISOString(),empty={alerts:0,kept:0,notStormRelevant:0,outsideCounty:0,duplicates:0,jams:0,irregularities:0,byCategory:Object.fromEntries(WAZE_CATEGORIES.map(c=>[c,0]))};
   const snapshot={schemaVersion:1,source:WAZE_SOURCE,note:WAZE_NOTE,generatedAt:at,checkedAt:previous?.checkedAt||null,error:null,feed:previous?.feed||{startTime:null,endTime:null},possiblyTruncated:previous?.possiblyTruncated||false,counts:previous?.counts||empty,alerts:previous?.alerts||[]};
@@ -64,7 +66,7 @@ export async function collectWaze({url,county,previous=null,fetchImpl=fetch,now=
     const feed=validateWazeFeed(JSON.parse(await bounded(response,MAX_BYTES,'Waze feed','Waze feed response too large')));
     const {kept,...dropped}=filterWazeAlerts(feed.alerts,countyGeometry(county.geometry).rings);
     Object.assign(snapshot,{checkedAt:at,feed:{startTime:feed.startTime,endTime:feed.endTime},possiblyTruncated:feed.alerts.length+feed.jams+feed.irregularities>=WAZE_EVENT_LIMIT,
-      counts:{alerts:feed.alerts.length,kept:kept.length,...dropped,jams:feed.jams,irregularities:feed.irregularities,byCategory:wazeCounts(kept)},alerts:kept});
+      counts:{alerts:feed.alerts.length,kept:kept.length,...dropped,jams:feed.jams,irregularities:feed.irregularities,byCategory:wazeCounts(kept),byType:byType(feed.alerts)},alerts:kept});
   }catch(error){snapshot.error=redact(error?.message||'Waze collection unavailable',url);}
   return validateWazeSnapshot(snapshot,now);
 }
