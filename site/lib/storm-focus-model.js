@@ -20,9 +20,9 @@ export const STORM_CONFIG=Object.freeze({
   },
   // Layer presets applied by the Focus control (keys from LAYER_LABELS). Cameras keep the operator's choice.
   presets:{
-    all:{drainage:true,drainageAreas:true,roads:true,gauges:true,areas:true,waterways:false,reservoirs:false,alerts:true},
-    metro:{drainage:true,drainageAreas:true,roads:true,gauges:false,areas:false,waterways:false,reservoirs:false,alerts:true},
-    creeks:{drainage:false,drainageAreas:false,roads:false,gauges:true,areas:true,waterways:true,reservoirs:true,alerts:true}
+    all:{drainage:true,drainageAreas:true,roads:true,gauges:true,areas:true,waterways:false,reservoirs:false,alerts:true,riverNetwork:true},
+    metro:{drainage:true,drainageAreas:true,roads:true,gauges:false,areas:false,waterways:false,reservoirs:false,alerts:true,riverNetwork:false},
+    creeks:{drainage:false,drainageAreas:false,roads:false,gauges:true,areas:true,waterways:true,reservoirs:true,alerts:true,riverNetwork:true}
   },
   // Foothill creeks without a live gauge in this app. Big Dry, Fancher and Redbank match
   // data/flood-scenarios/index.json; Dry Creek and Dog Creek are owner-named (no scenario there).

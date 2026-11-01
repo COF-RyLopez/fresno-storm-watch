@@ -1,4 +1,5 @@
 import {createNetworkMap} from './power-network-map.js';
+import {createRiverNetworkMap} from './river-network-map.js';
 import {createPowerBuildingsMap} from './power-buildings-map.js';
 import {createDrainageDetailMap} from './drainage-nearby-map.js';
 import {fmfcdInventorySymbol} from './fmfcd-symbology.js';
@@ -372,6 +373,7 @@ elevationInfo:{mode:'on-the-ground'},
     return {target:[longitude,latitude],scale,...(type==='3d'?{tilt:55,heading:0}:{})};
   });
   const focusGeometry=(geometry,scale=null,options)=>selectionFocus.focus(type=>geometry?{target:geometry,...(scale?{scale}:{}),...(type==='3d'?{tilt:45,heading:0}:{})}:null,options);
+  const riverNetwork=createRiverNetworkMap({GraphicsLayer,Graphic,registerLayer});
   const utilityNetwork=createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer,setLayerEligibility,focusGeometry,onSelect:onNetworkSelect});
   const powerBuildings=createPowerBuildingsMap({FeatureLayer,Graphic,Extent,registerLayer,removeLayer:layer=>{registry.delete(layer);map.remove(layer);},getView:()=>view,focusGeometry});
   const drainageDetail=createDrainageDetailMap({GraphicsLayer,Graphic,registerLayer,setLayerEligibility,focusGeometry,getView:()=>view,isDark:()=>basemapKey!=='light'});
@@ -493,7 +495,7 @@ elevationInfo:{mode:'on-the-ground'},
     fitDrainage(){if(drainageRows.length)return focusPoints(drainagePoints(drainageRows),.015);return Promise.resolve(false);},
     focusFacility:key=>selectionFocus.focus(type=>{const g=facilities.graphics.find(g=>g.attributes.facilityKey===key);if(!g)return null;setLayerPreference('facilities',true);return {target:g.geometry,scale:14000,...(type==='3d'?{tilt:45,heading:0}:{})};}),
     setDrainagePowerKeys(keys,pumpKeys=[]){const signature=JSON.stringify([keys.slice().sort(),pumpKeys.slice().sort()]);if(signature===drainagePowerSignature)return;drainagePowerSignature=signature;drainagePowerKeys=new Set(keys);drainagePowerPumps=new Set(pumpKeys);drawPower();drawDrainagePower();},
-    setPowerNetwork:data=>utilityNetwork.setSnapshot(data),setPowerNetworkSelection:keys=>utilityNetwork.setReference(keys),focusPowerNearby:(shape,category)=>utilityNetwork.showNearby(shape,category),clearPowerNearby:()=>utilityNetwork.clearNearby(),setPowerNetworkMatch:match=>utilityNetwork.setMatch(match),clearPowerNetworkMatch:()=>utilityNetwork.clearMatch(),focusPowerNetwork:keys=>utilityNetwork.focus(keys),
+    setPowerNetwork:data=>utilityNetwork.setSnapshot(data),setRiverNetwork:net=>riverNetwork.setNetwork(net),setRiverSurges:frames=>riverNetwork.setFrames(frames),setPowerNetworkSelection:keys=>utilityNetwork.setReference(keys),focusPowerNearby:(shape,category)=>utilityNetwork.showNearby(shape,category),clearPowerNearby:()=>utilityNetwork.clearNearby(),setPowerNetworkMatch:match=>utilityNetwork.setMatch(match),clearPowerNetworkMatch:()=>utilityNetwork.clearMatch(),focusPowerNetwork:keys=>utilityNetwork.focus(keys),
     capturePowerBuildingFocus:()=>{const pick=mapPick,scope=workspaceVersion;return ()=>pick===mapPick&&scope===workspaceVersion;},focusPowerBuildings:options=>powerBuildings.focusAll(options),
     setPowerBuildings:rows=>powerBuildings.set(rows),clearPowerBuildings:()=>powerBuildings.clear(),setPowerBuildingLabels:value=>powerBuildings.setLabels(value),focusPowerBuilding:id=>powerBuildings.focus(id),powerBuildingsViewport:()=>{const extent=view.extent;if(!extent)return null;const geo=extent.spatialReference.isGeographic?extent:webMercatorUtils.webMercatorToGeographic(extent);return {rings:[[[geo.xmin,geo.ymin],[geo.xmin,geo.ymax],[geo.xmax,geo.ymax],[geo.xmax,geo.ymin],[geo.xmin,geo.ymin]]],spatialReference:{wkid:4326}};},
     setPower:rows=>{powerRows=rows;drawPower();},
