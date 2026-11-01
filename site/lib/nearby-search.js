@@ -2,10 +2,12 @@
 export const METERS_PER_MILE=1609.344;
 const KINDS=['gauge','road-record','asset'];
 
+export const geometryType=shape=>shape.paths?'polyline':shape.rings?'polygon':'point';
+
 /** Reject missing/ambiguous CRS and malformed coordinates instead of assigning a location. */
 export function searchGeometry(shape){
   if(shape?.spatialReference?.wkid!==4326)return null;
-  const type=shape.paths?'polyline':shape.rings?'polygon':'point';
+  const type=geometryType(shape);
   const parts=type==='point'?[[[shape.x,shape.y]]]:shape.paths??shape.rings;
   if(!Array.isArray(parts)||!parts.length)return null;
   const bounds=[Infinity,Infinity,-Infinity,-Infinity];

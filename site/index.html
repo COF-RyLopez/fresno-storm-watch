@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-IJWwewdCJR1YLc1+3Pi/LKE2VSLMJuZFQzEBQJd6zOc='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-4aa56dz8M4/jC1OaPheOeSYY2ZwTXgglr5f4HuBokHs='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=4b84efeeb1"><link rel="stylesheet" href="./mission.css?v=1b48183aea"><link rel="stylesheet" href="./command.css?v=2893bc5b11"><link rel="stylesheet" href="./drainage.css?v=142d8d5ab3"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
 {"imports":{
-"./app.js":"./app.js?v=78d1efc8f5",
+"./app.js":"./app.js?v=3a849890b2",
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=722d46192c",
@@ -29,7 +29,7 @@
 "./lib/briefing-impact-model.js":"./lib/briefing-impact-model.js?v=a5777fde37",
 "./lib/briefing-impact-ui.js":"./lib/briefing-impact-ui.js?v=27d3892131",
 "./lib/briefing-layer-model.js":"./lib/briefing-layer-model.js?v=49f7d02f66",
-"./lib/briefing-layer-ui.js":"./lib/briefing-layer-ui.js?v=cf6442edd6",
+"./lib/briefing-layer-ui.js":"./lib/briefing-layer-ui.js?v=7f8d4e081c",
 "./lib/briefing-model.js":"./lib/briefing-model.js?v=184da7bc28",
 "./lib/briefing-ui.js":"./lib/briefing-ui.js?v=b3b4c00710",
 "./lib/camera-model.js":"./lib/camera-model.js?v=c875986838",
@@ -69,7 +69,7 @@
 "./lib/eoc-forms.js":"./lib/eoc-forms.js?v=39ada755f2",
 "./lib/eoc-model.js":"./lib/eoc-model.js?v=97ebee8586",
 "./lib/eoc-store.js":"./lib/eoc-store.js?v=f222ebd168",
-"./lib/evidence-ui.js":"./lib/evidence-ui.js?v=6dc1f16a25",
+"./lib/evidence-ui.js":"./lib/evidence-ui.js?v=9c2d241b81",
 "./lib/exercise.js":"./lib/exercise.js?v=260c2b702c",
 "./lib/facility-data.js":"./lib/facility-data.js?v=266716ec5b",
 "./lib/facility-model.js":"./lib/facility-model.js?v=558e4542ad",
@@ -88,17 +88,17 @@
 "./lib/hrrr-ui.js":"./lib/hrrr-ui.js?v=f8e59e1812",
 "./lib/irrigation-ui.js":"./lib/irrigation-ui.js?v=3eebbddc33",
 "./lib/library-status-model.js":"./lib/library-status-model.js?v=c185555b35",
-"./lib/map-context.js":"./lib/map-context.js?v=463ac96a94",
+"./lib/map-context.js":"./lib/map-context.js?v=d5b1a97dfa",
 "./lib/map-events.js":"./lib/map-events.js?v=47c9f9b76f",
 "./lib/map-search-model.js":"./lib/map-search-model.js?v=15c71c913e",
 "./lib/map-search-ui.js":"./lib/map-search-ui.js?v=c7a997585f",
-"./lib/map.js":"./lib/map.js?v=494d885f56",
+"./lib/map.js":"./lib/map.js?v=c7dd7e511e",
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=1e95ec3c73",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
 "./lib/mission-model.js":"./lib/mission-model.js?v=799eb5fd65",
 "./lib/mission-ui.js":"./lib/mission-ui.js?v=72670c4187",
 "./lib/model.js":"./lib/model.js?v=e44a6607f5",
-"./lib/nearby-search.js":"./lib/nearby-search.js?v=5a1eac60a0",
+"./lib/nearby-search.js":"./lib/nearby-search.js?v=dde765ae58",
 "./lib/nwps.js":"./lib/nwps.js?v=ded9874d2f",
 "./lib/nws.js":"./lib/nws.js?v=3813d5f1c3",
 "./lib/pio-model.js":"./lib/pio-model.js?v=904686f830",
@@ -171,6 +171,7 @@
 "./lib/weather-data.js":"./lib/weather-data.js?v=cc5e07a04c",
 "./lib/weather-model.js":"./lib/weather-model.js?v=1bd1a127dc",
 "./lib/weather-ui.js":"./lib/weather-ui.js?v=261e3f7c4f",
+"./lib/with-timeout.js":"./lib/with-timeout.js?v=1ddcc38435",
 "./lib/workspace-model.js":"./lib/workspace-model.js?v=7e5d37f483",
 "./lib/workspace-ui.js":"./lib/workspace-ui.js?v=db3648741b",
 "./lib/zone-acs-data.js":"./lib/zone-acs-data.js?v=ac066b36b5",
@@ -180,7 +181,7 @@
 "./scenario-config.js":"./scenario-config.js?v=f315e16c00"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=78d1efc8f5"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=3a849890b2"></script>
 </head><body>
 <a class="skip-link" href="#planning-workspace">Skip to mission map</a>
 <calcite-shell id="storm-shell">
