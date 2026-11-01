@@ -2,6 +2,7 @@ import {countyGeometry} from './model.js';
 import {pointInRings} from './power-geometry.js';
 import {prepareWatchGeometry} from './watch-proximity.js';
 import {correlateDwrSupplies} from './dwr-supply-planning-model.js';
+import {fresh} from './source-health-model.js';
 
 export const SANDBAG_SOURCE='https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Sandbag_Locations/FeatureServer/0';
 export const SANDBAG_APP='https://gisportal.co.fresno.ca.us/portal/apps/webappviewer/index.html?id=ab6bf09e95cb4a23b4aa2e97ed61a843';
@@ -39,7 +40,7 @@ export function validateSandbagSnapshot(d,now=Date.now()){
 }
 
 export function sandbagHealth(snapshot,now=Date.now()){
-  const checked=Date.parse(snapshot?.lastSuccess);return {checked:Number.isFinite(checked)?checked:null,current:!!snapshot&&!snapshot.error&&Number.isFinite(checked)&&now-checked<=SANDBAG_MAX_AGE&&checked<=now+120000,error:snapshot?.error||null};
+  const checked=Date.parse(snapshot?.lastSuccess);return {checked:Number.isFinite(checked)?checked:null,current:!!snapshot&&!snapshot.error&&fresh(checked,SANDBAG_MAX_AGE,now),error:snapshot?.error||null};
 }
 
 /** Reuse the bounded watchpoint/road proximity rules, keeping address-only sites out of spatial matches. */

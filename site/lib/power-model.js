@@ -15,7 +15,7 @@ export const POWER_FEEDS=[
 ];
 export const POWER_STATES={consideration:'PSPS under consideration',warning:'PSPS warning',psps:'PSPS power shut off',outage:'Reported outage',restored:'Utility reports restored',cancelled:'Utility reports cancelled',unknown:'Status needs verification'};
 export const POWER_COLORS={consideration:'#edc86b',warning:'#f5a45d',psps:'#db9df1',outage:'#fa929c',restored:'#8fced2',cancelled:'#b5bec8',unknown:'#c3c9d0'};
-export const POWER_MAX_AGE=45*60_000;
+const POWER_MAX_AGE=45*60_000;
 const text=v=>v==null?'':String(v).trim().slice(0,1000);
 const required=v=>{const s=text(v);if(!s)throw new Error('Power source identity is missing');return s;};
 const count=v=>(typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&Number.isFinite(Number(v))&&Number(v)>=0?Number(v):null;

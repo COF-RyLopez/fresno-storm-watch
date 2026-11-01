@@ -1,5 +1,7 @@
+/** Retrieval age within maxAge and not beyond allowed clock skew into the future (boundaries inclusive). */
+export const fresh=(checked,maxAge,now,skew=120000)=>Number.isFinite(checked)&&checked<=now+skew&&now-checked<=maxAge;
 /** Presentation of source checks, separate from hazard severity and source coverage. */
-export const HEALTH_GROUPS=Object.freeze([
+const HEALTH_GROUPS=Object.freeze([
   ['failed','Failed checks'],['stale','Stale / overdue'],['coverage','Coverage gaps'],
   ['unknown','Time unverified'],['checking','Awaiting first check'],
   ['unassessed','Not assessed'],['current','Checks current']

@@ -3,10 +3,10 @@ import {DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {FACILITY_MAX_AGE} from './facility-model.js';
 import {assessDrainagePumpPower,freezeDrainagePumpPower} from './drainage-power-model.js';
 import {pumpTasks,freezePumpTasks} from './pump-task-model.js';
-export const DRAINAGE_REVIEW_MILES=1;
-export const DRAINAGE_REVIEW_LIMIT=1000;
+import {fresh} from './source-health-model.js';
+const DRAINAGE_REVIEW_MILES=1;
+const DRAINAGE_REVIEW_LIMIT=1000;
 export const DRAINAGE_RAIN_BOUNDS=Object.freeze([-120.95,35.88,-118.3,37.65]);
-const fresh=(checked,age,now)=>Number.isFinite(checked)&&checked<=now+120000&&now-checked<=age;
 
 /** Group existing inventory by exact normalized source code, never by inferred hydraulic connectivity. */
 export function drainageReviewGroups(rows){

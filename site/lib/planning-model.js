@@ -32,7 +32,7 @@ export function qpfPointValue(payload,cycle,now=Date.now()){
 }
 
 /** @param {object} state @param {object} area @param {object[]} points @param {object} config @param {number} now @returns {object} A fresh cycle does not imply every point returned a value. */
-export function rainfallEvidence(state,area,points,config,now){
+function rainfallEvidence(state,area,points,config,now){
   const cycle=state?.cycle;
   const usable=!state?.error&&cycle&&Number.isFinite(state.checked)&&now-state.checked<=config.weatherCheckMaxAgeMs&&now>=state.checked-120_000&&now-cycle.issue<=config.qpfMaxAgeMs&&cycle.issue<=now+300_000&&cycle.end>now&&cycle.hours===72;
   const samples=area.rainPoints.map(id=>{

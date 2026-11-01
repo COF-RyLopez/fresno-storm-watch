@@ -1,9 +1,10 @@
 import {prepareWatchGeometry,nearbyWatchpoints} from './watch-proximity.js';
+import {fresh} from './source-health-model.js';
 
 export const SUPPLY_CONTEXT_KM=Object.freeze([10,25,50]);
-export const ROAD_CONTEXT_METERS=5000;
+const ROAD_CONTEXT_METERS=5000;
 const MAX_CHECK_AGE=420000,DAY=86400000;
-export const current=(checked,error,now)=>!error&&Number.isFinite(checked)&&checked<=now+120000&&now-checked<=MAX_CHECK_AGE;
+export const current=(checked,error,now)=>!error&&fresh(checked,MAX_CHECK_AGE,now);
 
 /** Public source records only; require stable location IDs, Fresno attribution and WGS84 point geometry. */
 export function normalizeSupplyFeatures(features) {

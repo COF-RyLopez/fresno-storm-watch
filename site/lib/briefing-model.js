@@ -2,7 +2,9 @@
 export const HNX_BRIEFING_PAGE='https://www.weather.gov/hnx/briefing';
 export const HNX_BRIEFING_PDF='https://www.weather.gov/media/hnx/smokeImages/partneremail.pdf';
 export const BRIEFING_CHECK_MAX_AGE=45*60_000;
-export const BRIEFING_REVIEW_AGE=36*60*60_000;
+const BRIEFING_REVIEW_AGE=36*60*60_000;
+/** Strict YYYY-MM-DD calendar day (rejects rollover such as 2026-02-30). */
+export const isoDay=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v;
 /** @param {string} text @returns {number} Parse the explicit publisher PST/PDT offset, never the browser's local zone. */
 export function parseBriefingDate(text){
   const m=/^(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) ([A-Z][a-z]{2}) (\d{1,2}) (\d{2}):(\d{2}):(\d{2}) (PST|PDT) (\d{4})$/.exec(text.trim());

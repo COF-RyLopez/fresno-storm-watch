@@ -1,5 +1,6 @@
 /** WGS84 intersection predicates. Preserve the county boundary; never use its envelope as the final scope. */
 export const bounds=points=>points.reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
+export const validPoint=p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
 export const overlaps=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
 const cross=(a,b,p)=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
 const onSegment=(p,a,b)=>Math.abs(cross(a,b,p))<1e-12&&overlaps(bounds([p]),bounds([a,b]));
@@ -16,9 +17,8 @@ export function pointInRings(p,rings){
 export function powerGeometry(geometry){
   const wkid=geometry?.spatialReference?.latestWkid||geometry?.spatialReference?.wkid;
   if(wkid&&wkid!==4326)throw new Error('Power geometry is not WGS84');
-  const valid=p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
-  if(Number.isFinite(geometry?.x)&&valid([geometry.x,geometry.y]))return {x:geometry.x,y:geometry.y,spatialReference:{wkid:4326}};
-  if(!geometry?.rings?.length||geometry.rings.some(r=>r.length<4||r.some(p=>!valid(p))||r[0][0]!==r.at(-1)[0]||r[0][1]!==r.at(-1)[1]))throw new Error('Power source geometry missing or invalid');
+  if(Number.isFinite(geometry?.x)&&validPoint([geometry.x,geometry.y]))return {x:geometry.x,y:geometry.y,spatialReference:{wkid:4326}};
+  if(!geometry?.rings?.length||geometry.rings.some(r=>r.length<4||r.some(p=>!validPoint(p))||r[0][0]!==r.at(-1)[0]||r[0][1]!==r.at(-1)[1]))throw new Error('Power source geometry missing or invalid');
   return {rings:geometry.rings.map(r=>r.map(p=>p.slice(0,2))),spatialReference:{wkid:4326}};
 }
 /** @param {object} county @returns {object} Precompute edge envelopes once; typical small outage features avoid most edge comparisons. */

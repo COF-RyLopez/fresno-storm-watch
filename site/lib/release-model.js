@@ -4,7 +4,7 @@ import {cdecSeries} from './environment-model.js';
 const HOUR=3_600_000,DAY=24*HOUR;
 export const RELEASE_LOOKBACK_DAYS=31;
 export const RELEASE_HORIZON_DAYS=7;
-export const RELEASE_SENSOR=Object.freeze({sensor:7,duration:'E',units:'CFS'});
+const RELEASE_SENSOR=Object.freeze({sensor:7,duration:'E',units:'CFS'});
 
 /** @param {string} station @returns {string} Official human-readable notices. */
 export function releaseSource(station){
