@@ -1,8 +1,52 @@
 {
   "version": 1,
   "checked": "2026-11-01",
-  "note": "USGS stream gauges read by Storm now (instantaneous values: gage height 00065, discharge 00060). The USGS site service was NOT reachable from the build sandbox, so this list is unverified: confirm each site number and coordinate at https://waterservices.usgs.gov/nwis/site/?format=rdb&countyCd=06019&siteType=ST&siteStatus=active&hasDataTypeCd=iv before relying on it, and add active foothill-creek sites (Big Dry, Dry, Fancher, Dog, Redbank) when found. A site whose 'creek' equals an ungauged creek name replaces that creek's 'No live gauge' row. floodStageFt stays null unless a published flood stage is confirmed; without it only rate of rise is used.",
+  "note": "USGS stream gauges read by Storm now (instantaneous values: gage height 00065, discharge 00060). Verified 2026-11-01 against https://waterservices.usgs.gov/nwis/site/?format=rdb&countyCd=06019&siteType=ST&siteStatus=active&hasDataTypeCd=iv: these are all active Fresno County stream gauges with recent values. 11254000 San Joaquin R near Mendota is active but returned no stage or flow in the last 7 days, so it is left out. No active USGS gauge exists on Big Dry, Dry, Fancher, Dog or Redbank Creek; those stay in the ungauged-creeks row. A site whose 'creek' equals an ungauged creek name replaces it there. floodStageFt stays null unless a published flood stage is confirmed; without it only rate of rise is used.",
   "sites": [
-    {"site": "11251000", "name": "San Joaquin River below Friant (USGS)", "creek": "San Joaquin River", "latitude": 36.9842, "longitude": -119.7236, "floodStageFt": null, "verified": false}
+    {
+      "site": "11251000",
+      "name": "San Joaquin River below Friant (USGS)",
+      "creek": "San Joaquin River",
+      "latitude": 36.9844,
+      "longitude": -119.7243,
+      "floodStageFt": null,
+      "verified": true
+    },
+    {
+      "site": "11224500",
+      "name": "Los Gatos Creek above Nunez Canyon near Coalinga (USGS)",
+      "creek": "Los Gatos Creek",
+      "latitude": 36.2147,
+      "longitude": -120.4707,
+      "floodStageFt": null,
+      "verified": true
+    },
+    {
+      "site": "11253310",
+      "name": "Cantua Creek near Cantua Creek (USGS)",
+      "creek": "Cantua Creek",
+      "latitude": 36.4022,
+      "longitude": -120.4335,
+      "floodStageFt": null,
+      "verified": true
+    },
+    {
+      "site": "11255400",
+      "name": "Silver Creek at Panoche Rd near Panoche (USGS)",
+      "creek": "Silver Creek",
+      "latitude": 36.5946,
+      "longitude": -120.6846,
+      "floodStageFt": null,
+      "verified": true
+    },
+    {
+      "site": "11255575",
+      "name": "Panoche Creek at I-5 near Silver Creek (USGS)",
+      "creek": "Panoche Creek",
+      "latitude": 36.6525,
+      "longitude": -120.6321,
+      "floodStageFt": null,
+      "verified": true
+    }
   ]
 }
