@@ -7,7 +7,7 @@ import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
 import {createWeatherTimeline} from './weather-ui.js';
 import {observationAt} from './weather-model.js';
-import {classLink as link,elClass as el,disclosure} from './dom.js';
+import {classLink as link,elClass as el,elAttrs,disclosure} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
@@ -78,12 +78,12 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
 
   function updateFramePicker(){
     const picker=$('radar-frame');picker.replaceChildren();
-    const latest=el('calcite-option','Latest available');latest.setAttribute('value','latest');latest.toggleAttribute('selected',frameChoice==='latest');picker.append(latest);
+    picker.append(elAttrs('calcite-option','Latest available',{value:'latest',selected:frameChoice==='latest'}));
     for(const f of radar.filter((_,i)=>i%3===0).slice(0,16)){
-      const o=el('calcite-option',time(f.time));o.setAttribute('value',String(f.id));o.toggleAttribute('selected',frameChoice===String(f.id));picker.append(o);
+      picker.append(elAttrs('calcite-option',time(f.time),{value:f.id,selected:frameChoice===String(f.id)}));
     }
     if(frameChoice!=='latest'&&![...picker.children].some(o=>o.getAttribute('value')===frameChoice)){
-      const o=el('calcite-option',currentFrame()?time(currentFrame().time):'Selected historical frame expired · choose Latest');o.setAttribute('value',frameChoice);o.setAttribute('selected','');picker.append(o);
+      picker.append(elAttrs('calcite-option',currentFrame()?time(currentFrame().time):'Selected historical frame expired · choose Latest',{value:frameChoice,selected:true}));
     }
   }
 
@@ -149,9 +149,10 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   function selectOverlay(kind,notify=true){if(!['off','radar','qpf','satellite'].includes(kind))return;if(kind!=='qpf')rainfallTimeRequest=null;map?.clearEnvironmentPopup();overlay=kind;if(notify)onOverlayChange(kind);renderWeather();}
   for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>selectOverlay(kind));
   $('radar-frame').addEventListener('calciteSelectChange',e=>{const frame=radar.find(f=>String(f.id)===e.target.value);if(e.target.value==='latest')weather.selectTime(null);else if(frame)weather.selectTime(frame.time);});
+  const setPeriod=p=>{period=p;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;};
   $('qpf-period').addEventListener('calciteSelectChange',e=>{
     const requested=QPF_PERIODS.find(p=>String(p.id)===e.target.value);if(!requested||requested.id===period.id)return;
-    rainfallTimeRequest=null;map?.clearEnvironmentPopup();period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;renderWeather();void refreshWeather();
+    rainfallTimeRequest=null;map?.clearEnvironmentPopup();setPeriod(requested);renderWeather();void refreshWeather();
   });
   $('environment-refresh').addEventListener('click',()=>void refreshWeather());
   $('reservoir-refresh').addEventListener('click',()=>void refreshReservoirs());
@@ -164,7 +165,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   setInterval(tick,30_000);document.addEventListener('visibilitychange',tick);
   window.addEventListener('online',()=>{nextWeather=0;nextReservoir=0;tick();});
   window.addEventListener('offline',()=>{radarError='Browser offline';qpfError='Browser offline';snapshotError='Browser offline';renderWeather();renderReservoirs();});
-  return {selectRainfall(id,{selectValidTime=false}={}){const requested=QPF_PERIODS.find(p=>p.id===id);if(requested&&requested.id!==period.id){period=requested;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;$('qpf-period').value=String(period.id);void refreshWeather();}rainfallTimeRequest=selectValidTime?period.id:null;selectOverlay('qpf');alignRainfallTime();},selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
+  return {selectRainfall(id,{selectValidTime=false}={}){const requested=QPF_PERIODS.find(p=>p.id===id);if(requested&&requested.id!==period.id){setPeriod(requested);$('qpf-period').value=String(period.id);void refreshWeather();}rainfallTimeRequest=selectValidTime?period.id:null;selectOverlay('qpf');alignRainfallTime();},selectOverlay,focusReservoir:id=>{const station=selection?.stations.find(s=>s.id===id);if(station){onMap();map?.focusEnvironment(station.longitude,station.latitude);}},async setMap(controller){
     map=controller;reservoirRenderKey='';renderReservoirs();
     void weather.setMap(controller);
     try{

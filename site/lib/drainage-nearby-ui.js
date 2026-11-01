@@ -4,7 +4,7 @@ import {openDrainageDetail} from './drainage-nearby-data.js';
 import {FMFCD_DETAIL_URL,FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js';
 import {DETAIL_KEYS} from './drainage-nearby-map.js';
 import {drainageConnections,CONNECTION_GROUPS} from './drainage-connections.js';
-import {button,el,link,disclosure} from './dom.js';
+import {button,el,elAttrs,link,disclosure} from './dom.js';
 
 /** One private supporting-evidence selection. No server copy, export, persistent cache or county-token forwarding. */
 export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},config=EOC_CONFIG,open=openDrainageDetail}={}){
@@ -37,7 +37,7 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
     if(exercise){host.append(el('p','Exercise inventory · live FMFCD detail queries are disabled for fictional locations.'));return;}
     const controls=el('div');controls.className='drainage-actions';
     const label=el('calcite-label','Distance from full basin outline / pump'),picker=el('calcite-select');picker.label='Nearby drainage distance';picker.scale='s';
-    for(const value of [250,500,1000]){const o=el('calcite-option',value.toLocaleString()+' m');o.value=String(value);o.selected=radius===value;picker.append(o);}picker.value=String(radius);
+    for(const value of [250,500,1000])picker.append(elAttrs('calcite-option',value.toLocaleString()+' m',{value,selected:radius===value}));picker.value=String(radius);
     picker.addEventListener('calciteSelectChange',()=>{radius=Number(picker.value);void load();});label.append(picker);
     controls.append(label,button('Refresh drainage detail',()=>void load()),button('Fit nearby area',()=>{onMap();void map?.fitDrainageNearby(record,radius);}));host.append(controls);
     for(const [text,checked,change]of [
@@ -81,7 +81,7 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
     if(!trace)return;
     const section=el('section');section.className='drainage-connections';section.append(el('h3','Connections · unverified'));
     const label=el('calcite-label','Connection map view'),picker=el('calcite-select');picker.label='Connection map view';picker.scale='s';
-    for(const [value,text]of [['connections','All candidate connections'],['upstream','Upstream candidates'],['downstream','Downstream candidates'],['unresolved','Uncertain direction / loops'],['nearby','Nearby assets · source symbols']]){const o=el('calcite-option',text);o.value=value;o.selected=value===connectionMode;picker.append(o);}picker.value=connectionMode;
+    for(const [value,text]of [['connections','All candidate connections'],['upstream','Upstream candidates'],['downstream','Downstream candidates'],['unresolved','Uncertain direction / loops'],['nearby','Nearby assets · source symbols']])picker.append(elAttrs('calcite-option',text,{value,selected:value===connectionMode}));picker.value=connectionMode;
     picker.addEventListener('calciteSelectChange',()=>{connectionMode=picker.value;draw();});label.append(picker);section.append(label);
     const message=trace.error||(!trace.seedCount?'No pipe starting vertex coincides with this pump or lies inside this basin outline. Nearby does not mean connected.':`${trace.items.filter(i=>i.row.kind==='pipe').length} candidate pipes · ${trace.items.filter(i=>i.row.kind==='inlet').length} inlets · ${trace.items.filter(i=>i.row.kind==='outfall').length} outfalls. No verified hydraulic links supplied.`);
     const status=el('p',message);status.setAttribute('role','status');section.append(status);

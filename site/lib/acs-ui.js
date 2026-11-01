@@ -2,10 +2,10 @@ import {loadSdk} from './map.js';
 import {ACS_SOURCES,ACS_LIMIT,ACS_DENSITY_EXPRESSION,PIO_GUIDANCE,acsFields,formatAcsMeasure} from './acs-model.js';
 import {readAcsMetadata,readAcsTracts,readPioContext} from './acs-data.js';
 import {reportHealth} from './source-health.js';
-import {node,nodeLink as link,disclosure,onExpand,dataTable} from './dom.js';
+import {node,nodeLink as link,elAttrs,disclosure,onExpand,dataTable} from './dom.js';
+import {formatPacific as time} from './model.js';
 const $=id=>document.getElementById(id);
 const colors=[[0,100,'#e4f1f5'],[100,500,'#b4d5e6'],[500,2000,'#74a9cf'],[2000,5000,'#3685b5'],[5000,1e12,'#145a87']];
-const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short',timeZoneName:undefined}).format(t)+' Pacific';
 const table=(rows,caption)=>dataTable(caption,[],rows.map(r=>[r.label,formatAcsMeasure(r)]),{rowHeader:true,end:[1]});
 
 /** Public aggregate context only. Selection, outlines and results live in memory. */
@@ -80,7 +80,7 @@ export function createAcsContext({exercise=false,onMap=()=>{},onOpenWatch=()=>{}
     $('acs-status').textContent=zone?`Finding ACS tracts intersecting zone ${zone}…`:'Checking Fresno County ACS tracts…';
     try{const data=await readAcsTracts({geometry,signal:abort.signal});if(generation!==epoch||!isWatch())return;meta=data.metadata;
       $('acs-status').textContent=`${data.rows.length} ${zone?'tracts intersecting zone '+zone:'Fresno County tracts'} · ACS ${meta.period}. Whole-tract context only; tract totals are never added as zone population.`;
-      const empty=node('calcite-option','Choose a census tract…');empty.value='';empty.selected=true;picker.append(empty);for(const r of data.rows){const option=node('calcite-option',r.name+' · '+r.id);option.value=r.id;picker.append(option);}picker.value='';picker.disabled=!data.rows.length;legend();void showContext();
+      picker.append(elAttrs('calcite-option','Choose a census tract…',{value:'',selected:true}),...data.rows.map(r=>elAttrs('calcite-option',r.name+' · '+r.id,{value:r.id})));picker.value='';picker.disabled=!data.rows.length;legend();void showContext();
       if(id&&data.rows.some(r=>r.id===id))await select(id);else if(data.rows.length===1)await select(data.rows[0].id);else $('acs-detail').append(node('p','Choose a tract for age counts, margins of error and PIO planning context. The separate 2020 block estimate remains in evacuation-zone evidence.'));
     }catch(e){if(generation!==epoch||e.name==='AbortError')return;$('acs-status').textContent='ACS context unavailable: '+e.message;$('acs-detail').append(link('Publisher source',ACS_SOURCES.population.item));}
   }

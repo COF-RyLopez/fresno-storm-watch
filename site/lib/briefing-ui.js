@@ -4,7 +4,7 @@ import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
 import {PARTNER_BRIEFING} from './briefing-impact-model.js';
 import {createBriefingImpactView} from './briefing-impact-ui.js';
-import {el} from './dom.js';
+import {el,link,button} from './dom.js';
 const $=id=>document.getElementById(id);
 const ARCHIVE=PARTNER_BRIEFING;
 /** @param {object} options @returns {object} Public documents only; update markers live in memory and are not team acknowledgements. */
@@ -18,10 +18,10 @@ export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},o
   function cardView(host){
     if(cardViews.has(host))return cardViews.get(host);
     const status=el('p'),date=el('p'),reason=el('p'),actions=el('div');status.className='briefing-status';actions.className='environment-actions';
-    const open=el('calcite-button','Read public briefing');open.scale='s';open.appearance='outline';open.iconStart='file-text';open.onclick=()=>void show('latest');
+    const open=button('Read public briefing',()=>void show('latest'));open.iconStart='file-text';
     const archive=el('calcite-button','Oct 19 partner slides');archive.scale='s';archive.appearance='transparent';archive.disabled=exercise;archive.onclick=()=>void show('archive');
-    const tour=el('calcite-button','Explore live briefing layers');tour.scale='s';tour.appearance='outline';tour.iconStart='map';tour.disabled=exercise;tour.onclick=()=>onMapTour('ero-day-3');actions.append(open,archive,tour);
-    const source=el('a','NWS Hanford briefing page ↗');source.href=HNX_BRIEFING_PAGE;source.target='_blank';source.rel='noopener noreferrer';
+    const tour=button('Explore live briefing layers',()=>onMapTour('ero-day-3'));tour.iconStart='map';tour.disabled=exercise;actions.append(open,archive,tour);
+    const source=link('NWS Hanford briefing page ↗',HNX_BRIEFING_PAGE);
     const check=el('calcite-button','Check briefing');check.scale='s';check.appearance='transparent';check.onclick=()=>void refresh();
     host.append(status,date,reason,actions,source,check,el('small','Office-wide context may include areas outside Fresno County. Public summaries and partner slides are separate products; neither changes warning counts or deployment decisions.'));
     const result={status,date,reason,open,check};cardViews.set(host,result);return result;

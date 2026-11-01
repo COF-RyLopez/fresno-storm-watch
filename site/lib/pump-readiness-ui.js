@@ -5,8 +5,8 @@ import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION
 import {pumpReadiness} from './pump-readiness-model.js';
 import {openPumpTask,renderPumpTasks} from './pump-task-ui.js';
 import {reportHealth} from './source-health.js';
-import {el,disclosure} from './dom.js';
-const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
+import {el,button,disclosure} from './dom.js';
+import {localDateValue as local} from './eoc-forms.js';
 
 /** Private append-only confirmations in the existing restricted checklist views. No browser persistence. */
 export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,scope=PUMP_READINESS_SCOPE,onData=()=>{},onSaved=()=>{},onClosed=()=>{}}){
@@ -62,7 +62,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     const identityLabel=el('label'),identity=el('input');identity.type='checkbox';identity.required=true;identityLabel.className='pump-readiness-identity';identityLabel.append(identity,document.createTextNode('I checked the selected map location and pump identity, and reviewed all prior versions shown above.'));form.append(identityLabel);
     const feedback=el('p');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
     const save=el('calcite-button',exercise?'Save fictional readiness':'Save private exercise readiness');save.scale='s';save.type='button';
-    const cancel=el('calcite-button','Close form');cancel.scale='s';cancel.appearance='outline';cancel.onclick=()=>{if(activeForm===host){clearForm();onClosed();}};
+    const cancel=button('Close form',()=>{if(activeForm===host){clearForm();onClosed();}});
     const actions=el('div');actions.className='drainage-actions';actions.append(save,cancel);form.append(feedback,actions,el('small',exercise?'Fictional rehearsal only. Saved in this tab; no AGOL write.':'EXERCISE dataset. Updates are visible to authorized EOC viewers. AGOL records the signed-in author and server submission time. Each correction keeps the earlier record.'));
     fields.backup.onchange=()=>{if(fields.backup.value!=='Available')fields.connection.value='Unknown';};
     let pending=null,saving=false;

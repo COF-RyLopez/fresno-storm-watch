@@ -12,7 +12,7 @@ import {combineAreaConcerns,validateAreaConcerns} from './area-concern-model.js'
 import {windCompass} from './weather-model.js';
 import {POWER_STATES} from './power-model.js';
 import {areaConcernExercise} from './area-concern-exercise.js';
-import {classLink as link,elClass as el} from './dom.js';
+import {classLink as link,elClass as el,onExpand} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
@@ -127,7 +127,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
       card.append(actions);
       const evidence=el('calcite-block','','area-watch-evidence');evidence.id=`evidence-${r.area.id}`;
       evidence.setAttribute('heading','Source evidence');evidence.setAttribute('heading-level','4');evidence.setAttribute('description',`${r.gaps.length} evidence gap${r.gaps.length===1?'':'s'} · values, times and sources`);evidence.setAttribute('collapsible','');evidence.toggleAttribute('expanded',expanded.has(r.area.id));
-      evidence.addEventListener('calciteBlockExpand',()=>expanded.add(r.area.id));evidence.addEventListener('calciteBlockCollapse',()=>expanded.delete(r.area.id));
+      onExpand(evidence,open=>open?expanded.add(r.area.id):expanded.delete(r.area.id));
       renderEvidence(r,evidence);card.append(evidence);
       host.append(card);
     }
