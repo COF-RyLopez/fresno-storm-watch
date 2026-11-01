@@ -8,9 +8,12 @@ const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',da
 let product=null,view=null,layer=null,layerView=null,selected=null,highlight=null,epoch=0,graphics=new Map(),blobUrl=null;
 
 function notice(title,detail,kind='warning'){$('notice-title').textContent=title;$('notice-detail').textContent=detail;$('source-notice').kind=kind;$('source-notice').hidden=false;$('source-notice').open=true;}
-function mobile(mode){document.querySelector('main').dataset.mobile=mode;$('show-list').setAttribute('aria-pressed',String(mode==='list'));$('show-map').setAttribute('aria-pressed',String(mode==='map'));}
-$('show-list').onclick=()=>mobile('list');$('show-map').onclick=()=>mobile('map');$('print-map').onclick=()=>{mobile('map');requestAnimationFrame(()=>window.print());};
-$('zones-search').oninput=renderList;$('only-unknown').onchange=renderList;$('map-labels').onchange=()=>{if(layer)layer.labelsVisible=$('map-labels').checked;};
+function mobile(mode){document.querySelector('main').dataset.mobile=mode;$('mobile-switch').value=mode==='list'?'Zones & details':'Map';}
+// Calcite 5.1.1 uses each segmented item's value as its accessible name, so values are the visible labels.
+$('mobile-switch').addEventListener('calciteSegmentedControlChange',()=>mobile($('mobile-switch').value==='Map'?'map':'list'));$('print-map').onclick=()=>{mobile('map');requestAnimationFrame(()=>window.print());};
+$('zones-search').addEventListener('calciteInputInput',renderList);$('only-unknown').addEventListener('calciteCheckboxChange',renderList);$('map-labels').addEventListener('calciteSwitchChange',()=>{if(layer)layer.labelsVisible=$('map-labels').checked;});
+// Fragment navigation does not focus inside calcite-input's shadow root, so the skip link focuses it explicitly.
+document.querySelector('.skip-link').addEventListener('click',e=>{e.preventDefault();void $('zones-search').setFocus();});
 $('fit-county').onclick=()=>{history.pushState(null,'',location.pathname);clearSelection();};
 
 function clearSelection(){selected=null;highlight?.remove();highlight=null;$('selected-zone').hidden=true;renderList();void view?.goTo(layer.fullExtent.expand(1.05)).catch(mapError);}
