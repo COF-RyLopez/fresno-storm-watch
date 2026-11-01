@@ -15,6 +15,7 @@
 .storm-list-head h3{margin:0;font-size:var(--calcite-font-size-md)}
 #storm-count{font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
 .storm-meta{display:flex;flex-wrap:wrap;gap:var(--calcite-space-2xs);align-items:center;padding:0 var(--calcite-space-md) var(--calcite-space-sm);font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
+.storm-surge{display:grid;gap:var(--calcite-space-xs);margin-top:var(--calcite-space-sm)}.storm-surge-actions{display:flex;gap:var(--calcite-space-xs);flex-wrap:wrap}.storm-surge calcite-slider{display:block}.storm-surge-status{margin:0;font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
 .storm-credit{margin:var(--calcite-space-sm) var(--calcite-space-md);font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
 .waze-cameras figure{margin:0 0 var(--calcite-space-xs)}.waze-cameras img{display:block;width:100%;height:auto;border-radius:var(--calcite-corner-radius-sm)}.waze-cameras figcaption{font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
 .storm-empty{margin:0;padding:var(--calcite-space-md)}

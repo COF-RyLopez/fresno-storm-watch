@@ -1,0 +1,72 @@
+/** River network (data/river-network.json) and illustrative surge travel. Planning aid only: no hydraulic routing.
+ * Every point on the network has D = km to the network terminal; D is shared across confluences, so a pulse moving
+ * downstream is just D falling at an assumed speed, following each path's downstream link. */
+const R=6371.0088,rad=Math.PI/180,HOUR=3_600_000;
+const km=(a,b)=>{const dLat=(b[1]-a[1])*rad,dLon=(b[0]-a[0])*rad,h=Math.sin(dLat/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
+
+/** Owner-adjustable. ponytail: one assumed speed for every channel; per-reach celerity needs a hydraulic model or measured lags. */
+export const SURGE_CONFIG=Object.freeze({
+  speedKmh:4,          // assumed flood-wave travel speed (~2.5 mph); illustrative, not measured
+  tailKm:6,            // drawn length of each pulse
+  riseFtPerHour:0.2,   // a gauge rising at least this fast (same as Storm now "Next") starts a pulse
+  backHours:6,aheadHours:12,stepMinutes:15
+});
+
+/** @param {object} doc river-network.json @returns {object} Indexed network; throws on a malformed file. */
+export function indexNetwork(doc){
+  if(doc?.version!==1||!Array.isArray(doc.paths)||!Array.isArray(doc.points))throw new Error('River network file is invalid.');
+  const paths=new Map();
+  for(const p of doc.paths){
+    if(typeof p.id!=='string'||!Array.isArray(p.parts)||!p.parts.length)throw new Error('River network path is invalid.');
+    const parts=p.parts.map(part=>{
+      if(!Array.isArray(part.c)||part.c.length<2||!Number.isFinite(part.end))throw new Error('River network part is invalid.');
+      const cum=[0];for(let i=1;i<part.c.length;i++)cum.push(cum[i-1]+km(part.c[i-1],part.c[i]));
+      return {c:part.c,end:part.end,len:cum.at(-1),cum};
+    }).sort((a,b)=>b.end-a.end); // upstream part first
+    paths.set(p.id,{...p,parts});
+  }
+  return {paths,points:new Map(doc.points.map(pt=>[pt.id,pt])),doc};
+}
+
+/** Sub-line of a part between distances-from-upstream a<b. */
+function cut(part,a,b){
+  const at=s=>{let i=1;while(i<part.cum.length-1&&part.cum[i]<s)i++;const s0=part.cum[i-1],s1=part.cum[i],t=s1>s0?(s-s0)/(s1-s0):0,p=part.c[i-1],q=part.c[i];return {i,pt:[p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1])]};};
+  const A=at(a),B=at(b);return [A.pt,...part.c.slice(A.i,B.i),B.pt];
+}
+/** @returns {number[][][]} Polylines covering distances-to-terminal hi→lo, starting on pathId and following downstream links. */
+export function routeSlice(net,pathId,hi,lo){
+  const out=[],seen=new Set();let id=pathId;
+  while(id&&!seen.has(id)&&hi>lo){
+    seen.add(id);const p=net.paths.get(id);if(!p)break;
+    for(const part of p.parts){
+      const top=part.end+part.len,from=Math.min(hi,top),to=Math.max(lo,part.end);
+      if(from>to)out.push(cut(part,top-from,top-to));
+    }
+    hi=Math.min(hi,p.parts.at(-1).end);id=p.dn;
+  }
+  return out;
+}
+
+/** @param {object} input {areas, usgs, net, now} @returns {object[]} Pulse sources at snapped gauges: observed rises and published forecast crests. */
+export function surgeSources({areas=[],usgs=null,net,now=Date.now()}){
+  const out=[],cfg=SURGE_CONFIG;
+  const add=(id,kind,t0,label)=>{const pt=net.points.get(id);if(pt?.path&&Number.isFinite(pt.km)&&Number.isFinite(t0))out.push({key:`${kind}:${id}`,id,kind,t0,label,name:pt.name,path:pt.path,km:pt.km});};
+  const seen=new Set();
+  for(const r of areas)for(const g of r.gauges||[]){
+    const a=g.assessment;if(!a||seen.has(g.id))continue;seen.add(g.id);
+    const rate=a.trend&&a.trend.hours>0&&g.gauge?.observed?.units==='ft'?a.trend.delta/a.trend.hours:null;
+    if(rate!==null&&rate>=cfg.riseFtPerHour)add(g.id,'observed',a.observed?.time,`Rising ${rate.toFixed(2)} ft/h`);
+    if(a.forecastUsable&&a.peak&&a.peak.time>now&&a.delta>0)add(g.id,'forecast',a.peak.time,`Forecast crest ${a.peak.value} ${g.gauge?.forecast?.units||''}`.trim());
+  }
+  for(const [site,r] of usgs?.readings||[])if(r?.rise&&r.rise.rate>=cfg.riseFtPerHour&&r.stage)add(site,'observed',r.stage.time,`Rising ${r.rise.rate.toFixed(2)} ft/h`);
+  return out;
+}
+
+/** @param {object} net @param {object[]} sources @param {number} t timeline time @returns {object[]} Where each pulse is at t (none before it starts). */
+export function surgeFrames(net,sources,t,cfg=SURGE_CONFIG){
+  return sources.filter(s=>t>=s.t0).map(s=>{
+    const front=s.km-cfg.speedKmh*(t-s.t0)/HOUR;
+    const lines=routeSlice(net,s.path,Math.min(s.km,front+cfg.tailKm),front);
+    return {...s,front,lines,left:!lines.length&&front<s.km};
+  });
+}
