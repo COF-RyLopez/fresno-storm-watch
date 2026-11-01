@@ -11,6 +11,7 @@
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",
     "check:briefing-layers": "node --use-system-ca scripts/check-briefing-layers.mjs",
+    "probe:nws": "node --use-system-ca scripts/probe-nws.mjs",
     "check:roads": "node --use-system-ca scripts/check-roads.mjs",
     "collect:reservoirs": "node --use-system-ca scripts/collect-reservoirs.mjs",
     "watch:reservoirs": "node --use-system-ca scripts/collect-reservoirs.mjs --watch",

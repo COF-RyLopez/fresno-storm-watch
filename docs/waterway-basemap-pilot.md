@@ -165,7 +165,8 @@ are claimed there. Esri background context continues outside the pilot.
 ## Rebuild (explicit reference-data maintenance)
 
 1. Use Python with `scripts/requirements-waterways.txt` installed in a local
-   environment. Run `python scripts/acquire-waterway-pilot.py` from the repository.
+   environment. The pilot acquisition script was removed after the countywide
+   release; recover it from git history (`git log -- scripts/acquire-waterway-pilot.py`).
    Review counts/rejections and the retrieval manifest before proceeding.
 2. Run `npm ci --ignore-scripts`, then `npm run build:waterway-basemap`.
    Dependencies are pinned in the lockfile. The builder reads the validated

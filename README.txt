@@ -246,6 +246,8 @@ No local action thresholds, inundation prediction or staging recommendation is
 generated. This is a candidate watchlist, not complete river/channel coverage.
 For a read-only publisher spot check: node --use-system-ca scripts/probe-rivers.mjs
 This command reports station and FEMA failures independently; it does not publish.
+Read-only NWS alert contract check: npm run probe:nws
+Read-only briefing layer source check: npm run check:briefing-layers
 
 Use Inspect FEMA vicinity to see selected NFHL flood zones intersecting Fresno
 County at local zoom levels. This display filter retains whole source polygons;
