@@ -38,9 +38,9 @@ test('NWS precipitation uses interval amounts, not rain probability, and preserv
   const f=nwsSeries({properties:p},{office:'HNX',x:1,y:2},point,now);assert.equal(f.rain[0].value,1);assert.equal(f.wind[0].end-f.wind[0].start,6*H);
   p.quantitativePrecipitation.uom='wmoUnit:percent';assert.throws(()=>nwsSeries({properties:p},{office:'HNX',x:1,y:2},point,now));
 });
-test('six river groups retain explicit samples; Redinger uses its existing gauge, not Shaver',async()=>{
+test('seven river groups retain explicit samples; Redinger uses its existing gauge, not Shaver',async()=>{
   const [a,c,w,g]=await Promise.all(['river-areas.json','area-concerns.json','wind-watchlist.json','river-watchlist.json'].map(siteJson));
-  const areas=comparisonAreas(a.areas,c.areas,w.sites,g.stations);assert.equal(areas.length,6);assert.equal(areas.find(a=>a.id==='san-joaquin-upper').points[0].id,'RJQC1');assert.equal(areas[0].points.length,3);
+  const areas=comparisonAreas(a.areas,c.areas,w.sites,g.stations);assert.equal(areas.length,7);assert.equal(areas.find(a=>a.id==='san-joaquin-upper').points[0].id,'RJQC1');assert.equal(areas[0].points.length,3);
 });
 test('publisher failures are independent, credentials omitted and queries stay bounded',async()=>{
   const calls=[];

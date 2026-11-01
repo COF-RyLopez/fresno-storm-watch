@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "checked": "2026-10-17",
+  "checked": "2026-11-01",
   "publisher": "NOAA National Water Prediction Service",
-  "scope": "Nine candidate watchpoints for river reaches within Fresno County and its San Joaquin boundary river; not a complete channel or gauge inventory",
+  "scope": "Ten candidate watchpoints for river reaches within Fresno County and its San Joaquin boundary river; not a complete channel or gauge inventory",
   "selection": "Fresno County focus requested by the user. Retain Fresno San Joaquin boundary reaches, Little Dry Creek, James Bypass and Kings River sites. Source county labels are preserved; boundary stations are not excluded solely because NWS labels the station Madera.",
   "coordinateReference": "EPSG:4326 longitude, latitude; source coordinates preserved",
   "catalogUrl": "https://api.water.noaa.gov/nwps/v1/gauges?bbox.xmin=-121&bbox.ymin=35.7&bbox.xmax=-118.3&bbox.ymax=38&srid=EPSG_4326",
@@ -96,6 +96,16 @@
       "latitude": 36.993888888889,
       "note": "Upstream Kings River context. This is not the release below Pine Flat Dam.",
       "scopeRole": "Fresno County river reach"
+    },
+    {
+      "id": "MLPC1",
+      "name": "Mill Creek near Piedra",
+      "basin": "Kings",
+      "county": "Fresno",
+      "longitude": -119.3409,
+      "latitude": 36.819,
+      "note": "Eastern foothill creek watchpoint; no USGS gauge (NWPS observed series HGIRG, checked 2026-11-01). Joins the Kings below Pine Flat Dam; not a Kings River gauge and not substituted for one. No flood stage published.",
+      "scopeRole": "Fresno County foothill creek"
     }
   ],
   "focusCountyGeoid": "06019",

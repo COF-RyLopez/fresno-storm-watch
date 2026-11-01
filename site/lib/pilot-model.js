@@ -14,7 +14,7 @@ export const collection=features=>({type:'FeatureCollection',features});
 export function validatePilot(s,now=Date.now()){
  if(s?.error)throw Error(s.error);
  const i=s?.input;
- if(s?.schemaVersion!==1||!/^[a-f0-9]{64}$/.test(s.dataId)||!Number.isFinite(Date.parse(s.generatedAt))||Date.parse(s.generatedAt)>now+120000||i?.areas?.areas?.length!==6||i.gauges?.stations?.length!==9||i.entries?.length!==9||new Set(i.entries.map(e=>e.id)).size!==9||i.entries.some(e=>!i.gauges.stations.some(p=>p.id===e.id))||!Array.isArray(i.utilityFeatures))throw Error('Public pilot bundle is incomplete or changed.');
+ if(s?.schemaVersion!==1||!/^[a-f0-9]{64}$/.test(s.dataId)||!Number.isFinite(Date.parse(s.generatedAt))||Date.parse(s.generatedAt)>now+120000||i?.areas?.areas?.length!==7||i.gauges?.stations?.length!==10||i.entries?.length!==10||new Set(i.entries.map(e=>e.id)).size!==10||i.entries.some(e=>!i.gauges.stations.some(p=>p.id===e.id))||!Array.isArray(i.utilityFeatures))throw Error('Public pilot bundle is incomplete or changed.');
  return s;
 }
 /** Share current operational logic; no map engine or display filter enters evaluation. */

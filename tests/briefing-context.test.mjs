@@ -34,7 +34,7 @@ test('coarse proximity pruning agrees with full distances around Fresno, includi
   }
 });
 test('regional associations bind to reviewed revisions; high Sierra stays headwater context',()=>{
-  validateBriefingContext(associations);const result=correlateBriefingContext(input,now);assert.equal(result.groups.length,6);assert(lower(result).contextReview);
+  validateBriefingContext(associations);const result=correlateBriefingContext(input,now);assert.equal(result.groups.length,7);assert(lower(result).contextReview);
   const snow=result.groups.find(g=>g.id==='kings-upper').impacts.find(i=>i.id==='fresno-high-sierra-snow');assert.equal(snow.association.relation,'headwater-context');assert.match(snow.association.note,/not assumed above/);
   const changed=structuredClone(input);changed.briefing.rows.forEach(i=>i.document.sha256='a'.repeat(64));const r=correlateBriefingContext(changed,now);assert(r.groups.every(g=>g.impacts.length===0));assert(r.unassociated>0);
 });

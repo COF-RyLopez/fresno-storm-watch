@@ -34,8 +34,8 @@ for (const file of (await readdir(new URL('site/', root))).filter(name => name.e
   for (const match of page.matchAll(/(?:href|src)="(\.\/[^"?#]+)"/g)) await readFile(new URL(match[1], new URL('site/', root)));
 }
 const watch=await siteJson('river-watchlist.json');
-assert.equal(watch.stations.length,9);
-assert.equal(new Set(watch.stations.map(s=>s.id)).size,9);
+assert.equal(watch.stations.length,10);
+assert.equal(new Set(watch.stations.map(s=>s.id)).size,10);
 for(const s of watch.stations)assert(/^[A-Z0-9]{5}$/.test(s.id)&&s.longitude>=-125&&s.longitude<=-114&&s.latitude>=32&&s.latitude<=43&&s.note,'Invalid watchpoint metadata');
 const cameras=await siteJson('camera-watchlist.json');
 assert.equal(cameras.cameras.length,8);assert.equal(new Set(cameras.cameras.map(c=>c.id)).size,8);
@@ -49,14 +49,14 @@ validateWindSnapshot(await siteJson('wind-latest.json'));
 // Optional partner snapshot: absent unless WAZE_PUBLISH is 'true' in the Pages run.
 try{validateWazeSnapshot(await siteJson('waze-latest.json'));}catch(error){if(error.code!=='ENOENT')throw error;}
 const areaSettings=await siteJson('river-areas.json');
-assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,11);
+assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,12);
 const areaConcerns=await siteJson('area-concerns.json'),windSettings=await siteJson('wind-watchlist.json');
 validateAreaConcerns(areaConcerns,areaSettings.areas,windSettings.sites);
 const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
 const pilotRuntime=JSON.parse(await readFile(new URL('docs/map-pilot-runtime.json',root),'utf8'));
 for(const entry of pilotRuntime.files)assert.equal(createHash('sha256').update(await readFile(new URL(entry.file,root))).digest('hex'),entry.sha256,'Pinned MapLibre runtime changed: '+entry.file);
 assert.equal(createHash('sha256').update(player).digest('hex'),'0c4f60fc126ef62dc18e8e5e7b1984cf77628aa2a230688dcf5bea7f3966e052','Pinned HLS library changed');
-console.log('Syntax, county geometry, nine river watchpoints, eight cameras, two reservoir contracts/snapshot, pinned player integrity, page links and public config checks passed.');
+console.log('Syntax, county geometry, ten river watchpoints, eight cameras, two reservoir contracts/snapshot, pinned player integrity, page links and public config checks passed.');
 
 const comparisonSites=uniqueComparisonPoints(comparisonAreas(areaSettings.areas,areaConcerns.areas,windSettings.sites,watch.stations));
 assert.equal(comparisonSites.length,7);
