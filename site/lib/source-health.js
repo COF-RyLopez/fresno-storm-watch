@@ -5,13 +5,11 @@ export function reportHealth(key,label,{checked=null,error=null,maxAgeMs=420000,
 /** Countywide counts remain independent of workspace presentation. */
 export function createCountyStrip({onOpen,exercise=false,timeZone}){
   const $=id=>document.getElementById(id),checks=new Map();let careCount=null,areaCount=null,drainageCount=null,pumpPowerCount=null,readinessCount=null,taskCounts=null,powerCount=null,alertCount=null,dialogSignature=null,briefingUpdated=false,incidentFollowups=null;
-  const compact=matchMedia('(max-width:600px)'),pumpCounts=document.createElement('small');pumpCounts.className='county-pump-counts';$('notify-areas').parentElement.append(pumpCounts);
   const time=t=>Number.isFinite(t)?new Intl.DateTimeFormat('en-US',{timeZone,dateStyle:'short',timeStyle:'long'}).format(t):'No successful check';
   function render(){const health=sourceHealthSummary(checks),issues=health.review;
     $('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage${pumpPowerCount?` · ${pumpPowerCount} pump power`:""}${readinessCount?` · ${readinessCount} pump readiness`:""}${taskCounts?` · ${taskCounts.active} assigned / ${taskCounts.overdue} overdue${taskCounts.unmatched?' · '+taskCounts.unmatched+' task rematches':''}${taskCounts.review>taskCounts.overdue?' · '+taskCounts.review+' task reviews':''}`:''}`}`;$('notify-alerts').textContent=`Weather alerts · ${alertCount??'checking'}${briefingUpdated?' · briefing updated':''}`;$('notify-power').textContent=`Power / PSPS · ${powerCount??'checking'}`;$('notify-health').textContent=exercise?'Source health · exercise':`Source health · ${checks.size?issues+' review':'checking'}`;
     $('notify-areas').textContent+=careCount===null?' · care checking':` · ${careCount} care`;
     $('notify-areas').setAttribute('aria-label',$('notify-areas').textContent+(incidentFollowups?.assessed?` · Selected incident follow-ups: ${incidentFollowups.active} active / ${incidentFollowups.overdue} overdue`:''));
-    pumpCounts.hidden=!compact.matches||!(pumpPowerCount||readinessCount||taskCounts?.active||taskCounts?.review);pumpCounts.textContent=`Pump power · ${pumpPowerCount??'unassessed'} / Pump readiness follow-ups · ${readinessCount??'unassessed'}${taskCounts?` / Assigned · ${taskCounts.active} / Overdue · ${taskCounts.overdue} / Task reviews · ${taskCounts.review}`:''}`;
     const areaDetail=$('notify-areas').getAttribute('aria-label');$('notify-areas').title=areaDetail;
     $('notify-areas').textContent=`Area reviews · ${areaCount===null||careCount===null?'checking':areaCount+careCount+(drainageCount??0)}${incidentFollowups?.overdue?' · '+incidentFollowups.overdue+' '+(incidentFollowups.overdue===1?'incident task overdue':'incident tasks overdue'):''}`;
     const pio=$('notify-pio');pio.hidden=!incidentFollowups?.assessed;pio.textContent=incidentFollowups?.pioBusy?'PIO · checking':`PIO · ${incidentFollowups?.pioReview??0} source ${incidentFollowups?.pioReview===1?'review':'reviews'}${incidentFollowups?.pioFailures?' · '+incidentFollowups.pioFailures+' unavailable':''}${incidentFollowups?.pioError?' · check interrupted':''}`;pio.setAttribute('aria-label',pio.textContent+' · private selected incident');
@@ -30,6 +28,5 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
   $('notify-health').onclick=()=>{$('source-health-dialog').setAttribute('open','');render();};
   $('notify-pio').onclick=()=>{onOpen('watch');const section=$('mission-followups');section.setAttribute('expanded','');$('mission-pio-reviews').scrollIntoView({block:'nearest'});};
   setInterval(()=>{if(!document.hidden)render();},30000);render();
-  compact.addEventListener('change',render);
   return {care:n=>{careCount=n;render();},drainage:(n,pumps=null,readiness=null,tasks=null)=>{drainageCount=n;pumpPowerCount=n===null?null:pumps;readinessCount=n===null?null:readiness;taskCounts=n===null?null:tasks;render();},briefing:n=>{briefingUpdated=!!n;render();},areas:n=>{areaCount=n;render();},alerts:n=>{alertCount=n;render();},power:n=>{powerCount=n;render();}};
 }

@@ -71,6 +71,10 @@ export const classRenderer = (depth, defaultOutline = 0.6) => ({
   classBreakInfos: CLASSES.map(([minValue, maxValue, color, size]) => ({ minValue, maxValue, symbol: marker(color, size) }))
 });
 
+/** Arcade setting d for a ramp scenario at hour q: dry until arrive_hr, then rises from Min(1, depth_max) to depth_max at peak_hr. */
+export const rampDepth = q => `var a = $feature.arrive_hr; var pk = $feature.peak_hr; var m = $feature.depth_max; var t = ${q}; var f = Min(1, m);
+  var d = IIf(IsEmpty(a) || t < a, 0, IIf(t >= pk || pk <= a, m, f + (m - f) * (t - a) / (pk - a)));`;
+
 /** Flood-front outlines from front.geojson, filtered to the hour shown; extra adds layer properties (elevationInfo in 3D). */
 export const frontLayer = (GeoJSONLayer, DATA, extra) => new GeoJSONLayer({
   url: DATA + 'front.geojson', title: 'Flood front', definitionExpression: 'hour = -1', ...extra,

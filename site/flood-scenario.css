@@ -1,5 +1,5 @@
 /* Shared by flood-scenario.html and flood-scenario-3d.html. */
-html, body { margin: 0; height: 100%; background: var(--app-canvas); color: var(--app-text); }
+html, body { margin: 0; height: 100%; }
 .stage { position: relative; height: 100%; }
 #view { position: absolute; inset: 0; background: var(--app-map-background); }
 .fs-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 8px 16px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }

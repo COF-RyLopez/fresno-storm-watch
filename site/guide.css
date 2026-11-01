@@ -1,6 +1,6 @@
 :root { font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; font-size: 16px; }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--app-canvas); color: var(--app-text); }
+body { margin: 0; }
 a { color: var(--app-link); text-underline-offset: 3px; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--app-link); outline-offset: 4px; }
 .app-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px max(20px, calc((100vw - 1040px) / 2)); background: var(--app-surface); border-bottom: 1px solid var(--app-border); }

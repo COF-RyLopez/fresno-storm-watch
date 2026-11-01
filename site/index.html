@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-4aa56dz8M4/jC1OaPheOeSYY2ZwTXgglr5f4HuBokHs='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-QNO4OkAUZhmpld31cEJ3gv+OZYX2DCPj32aUDQ+Emag='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
-<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=4b84efeeb1"><link rel="stylesheet" href="./mission.css?v=1b48183aea"><link rel="stylesheet" href="./command.css?v=2893bc5b11"><link rel="stylesheet" href="./drainage.css?v=142d8d5ab3"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=fd31396915"><link rel="stylesheet" href="./mission.css?v=1b48183aea"><link rel="stylesheet" href="./command.css?v=1913738312"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
 {"imports":{
-"./app.js":"./app.js?v=3a849890b2",
+"./app.js":"./app.js?v=f4ae79bba0",
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=722d46192c",
@@ -164,7 +164,7 @@
 "./lib/scene-companion.js":"./lib/scene-companion.js?v=b9d56c0620",
 "./lib/selection-focus.js":"./lib/selection-focus.js?v=c1c3a8d19c",
 "./lib/source-health-model.js":"./lib/source-health-model.js?v=f00f2f4063",
-"./lib/source-health.js":"./lib/source-health.js?v=993a6aedd9",
+"./lib/source-health.js":"./lib/source-health.js?v=84b1c22a16",
 "./lib/watch-proximity.js":"./lib/watch-proximity.js?v=9c81ff8698",
 "./lib/waterway-basemap.js":"./lib/waterway-basemap.js?v=c81195703c",
 "./lib/waterway-labels.js":"./lib/waterway-labels.js?v=f72288a0a3",
@@ -178,10 +178,10 @@
 "./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
 "./lib/zone-population-product.js":"./lib/zone-population-product.js?v=47199f3b6f",
 "./pump-inventory-config.js":"./pump-inventory-config.js?v=3d682b65cb",
-"./scenario-config.js":"./scenario-config.js?v=f315e16c00"
+"./scenario-config.js":"./scenario-config.js?v=3da6a248c8"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=3a849890b2"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=f4ae79bba0"></script>
 </head><body>
 <a class="skip-link" href="#planning-workspace">Skip to mission map</a>
 <calcite-shell id="storm-shell">

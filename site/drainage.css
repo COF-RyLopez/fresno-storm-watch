@@ -50,7 +50,6 @@
 :is(.pump-readiness-form,.pump-task-form) input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--calcite-color-brand); }
 :is(.pump-readiness-form,.pump-task-form) small { color: var(--calcite-color-text-2); line-height: 1.5; }
 .readiness-rehearsal { max-width: 780px; margin-inline: auto; padding: 24px 16px; }
-.county-pump-counts { flex-basis: 100%; padding: 4px 8px; font-size: 12px; line-height: 1.5; color: var(--calcite-color-text-1); }
 .pump-summary { padding-block: 12px 20px; border-block-end: 1px solid var(--calcite-color-border-2); margin-block: 8px 16px; }
 .pump-summary h4 { margin: 8px 0 12px; font-size: 1rem; position: sticky; top: 0; z-index: 1; padding-block: 6px; background: var(--calcite-color-foreground-1); }
 .pump-summary>p { margin-block: 6px; font-size: 13px; line-height: 1.5; }
