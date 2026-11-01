@@ -103,8 +103,10 @@ test('unusual traffic: kept inside the county, minimised, line capped at 25 poin
   assert.match(t.id,/^[0-9a-f]{16}$/);for(const leak of ['7001','driversCount','startNode','W Shaw Ave','causeType'])assert(!text.includes(leak),leak);
   const rings=countyGeometry(county.geometry).rings,base=feed().irregularities[0];
   const long={...base,id:1,line:Array.from({length:60},(_,i)=>({x:-119.78+i*1e-4,y:36.75}))};
-  const kept=filterWazeTraffic([long,{...base,id:2,line:[{x:-121.9,y:37.3}]},{...base,id:3,line:[]},{...base,id:4,detectionDateMillis:'x'},{...base,id:null},{...long}],rings);
+  const kept=filterWazeTraffic([long,{...base,id:2,line:[{x:-121.9,y:37.3}]},{...base,id:3,line:[]},{...base,id:4,detectionDateMillis:'x',detectionDate:undefined},{...base,id:null},{...long}],rings);
   assert.equal(kept.length,1);assert.equal(kept[0].line.length,25);assert.deepEqual(kept.drops,{outsideCounty:1,noLine:1,noTime:1,noId:1,duplicate:1});assert.deepEqual(kept[0].line.at(-1),[-119.7741,36.75]);
+  const asText=filterWazeTraffic([{...base,detectionDateMillis:String(base.detectionDateMillis),updateDateMillis:String(base.updateDateMillis)},{...base,id:9,detectionDateMillis:undefined,updateDateMillis:undefined}],rings);
+  assert.deepEqual(asText.map(k=>k.detectedAt),['2026-11-01T17:48:00.000Z','2026-11-01T17:48:00.000Z'],'digit strings (live feed) and the detectionDate text both count');
   const odd=filterWazeTraffic([{...base,type:'weird',trend:7,delaySeconds:-5,street:42}],rings)[0];
   assert.deepEqual([odd.size,odd.trend,odd.delaySeconds,odd.street],[null,null,null,null]);
   assert.throws(()=>validateWazeSnapshot({...s,irregularities:[{...t,driversCount:3}]},now),/identity invalid/);

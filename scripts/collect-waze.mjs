@@ -56,14 +56,16 @@ export function filterWazeAlerts(alerts,rings,now=Date.now()){
 }
 
 const SIZES=new Map(WAZE_TRAFFIC_SIZES.map(v=>[v.toUpperCase(),v]));
-const num=v=>Number.isFinite(v)&&v>=0?Math.round(v*10)/10:null,millis=v=>Number.isFinite(v)&&v>0?new Date(v).toISOString():null;
+const num=v=>Number.isFinite(v)&&v>=0?Math.round(v*10)/10:null;
+/** Epoch ms as a number or a digit string (the live feed sends strings), else a parseable date text; null otherwise. */
+const millis=(v,text)=>{const n=typeof v==='string'&&/^\d{10,14}$/.test(v)?Number(v):v,t=Number.isFinite(n)&&n>0?n:typeof text==='string'?Date.parse(text):NaN;return Number.isFinite(t)&&t>0?new Date(t).toISOString():null;};
 /** Unusual traffic inside the county, minimised: hashed id, rounded line of at most 25 points, no driver or node fields.
  * The spec is looser here than for alerts, so a malformed record is skipped (and visible as total minus kept), not fatal. */
 export function filterWazeTraffic(items,rings){
   const kept=[],seen=new Set(),drops={};
   for(const t of items){
     const id=t?.id===undefined||t?.id===null?'':String(t.id),pts=Array.isArray(t?.line)?t.line.map(p=>[p?.x,p?.y]).filter(validPoint):[];
-    const detectedAt=millis(t?.detectionDateMillis),updatedAt=millis(t?.updateDateMillis)||detectedAt;
+    const detectedAt=millis(t?.detectionDateMillis,t?.detectionDate),updatedAt=millis(t?.updateDateMillis,t?.updateDate)||detectedAt;
     const why=!id?'noId':seen.has(id)?'duplicate':!pts.length?'noLine':!detectedAt?'noTime':!pts.some(p=>pointInRings(p,rings))?'outsideCounty':null;
     if(why){drops[why]=(drops[why]||0)+1;continue;}seen.add(id);
     const step=Math.max(1,(pts.length-1)/24),line=[...new Set([...Array(Math.min(25,pts.length)).keys()].map(i=>Math.round(i*step)))].map(i=>pts[Math.min(i,pts.length-1)].map(round));
