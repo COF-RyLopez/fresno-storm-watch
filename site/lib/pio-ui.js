@@ -7,7 +7,7 @@ import {freezePopulationEvidence,populationEvidenceSummary,populationEvidenceLin
 import {captureAfnEvidence} from './afn-snapshot-data.js';
 import {AFN_TOPIC_KEYS,freezeAfnEvidence,afnEvidenceSummary,afnEvidenceLines} from './afn-snapshot-model.js';
 import {readCareCollection} from './care-data.js';
-import {ZONE_STATUS} from './care-model.js';
+import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {loadCounties} from './nws.js';
 import {localDateValue} from './eoc-forms.js';
 import {populationSourceGuide} from './population-guide.js';
