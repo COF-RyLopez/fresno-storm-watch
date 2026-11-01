@@ -35,6 +35,8 @@ If a name is not here or in reference.md, look it up before using it.
 - **Docs describe 5.2** (get-started snippet `calcite-components/5.2`, `@esri/calcite-design-tokens` 4.2).
   5.2-only props must not be used on SDK (5.1.1) pages yet: block `expandable`, action-bar `expandToggleDisabled`/`overflowMode`,
   input/-text/-number `inlineEdit*`, table `stickyHeader`, switch `required`, slider `label` (in 5.1.1 name a single-handle slider with `min-label`; verified in Chromium), `calcite-text`. See reference.md.
+  The 5.1.1 slider handle exposes no `aria-valuetext` (`labelFormatter` only changes the visible label), so keep a native
+  `<input type=range>` when the spoken value must be text, e.g. `weather-time`, whose value is an index into forecast times.
 - CSP (`script-src`) allows only self + js.arcgis.com, and the import map is generated: after editing
   site JS/CSS run `npm run build:import-map`, then `npm test` (tests read page HTML and fail on stale maps).
 - No bundler, no npm Calcite package. Version bumps touch every page's script tag, theme.js's theme URL and the CSP hash; do them on purpose, never in passing.
