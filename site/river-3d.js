@@ -7,6 +7,7 @@ import {fetchUsgs,parseUsgsIv,usgsReading} from './lib/usgs-gauges.js';
 import {indexNetwork,surgeSources,surgeFrames,SURGE_CONFIG} from './lib/river-network-model.js';
 import {SURGE_COLORS} from './lib/river-network-map.js';
 import {formatTime} from './lib/model.js';
+import {glbCopyright,createCredits} from './lib/google-tiles.js';
 
 const $=id=>document.getElementById(id);
 const exercise=new URLSearchParams(location.search).get('exercise')==='1';
@@ -14,8 +15,8 @@ const json=url=>fetch(url,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(
 const time=t=>formatTime(t,CONFIG.timeZone);
 
 const sdk=await import('https://js.arcgis.com/5.1/').then(()=>globalThis.$arcgis);
-const [ArcMap,SceneView,Basemap,TileLayer,GraphicsLayer,Graphic,IntegratedMesh3DTilesLayer]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/SceneView.js',
-  '@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/IntegratedMesh3DTilesLayer.js']);
+const [ArcMap,SceneView,Basemap,TileLayer,GraphicsLayer,Graphic,IntegratedMesh3DTilesLayer,esriConfig]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/SceneView.js',
+  '@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/IntegratedMesh3DTilesLayer.js','@arcgis/core/config.js']);
 const [doc,watch,usgsWatch,tiles]=await Promise.all([json('./data/river-network.json'),json('./data/river-watchlist.json'),json('./data/usgs-watchlist.json'),
   // Written at deploy time from the GOOGLE_MAP_TILES_KEY repo variable; absent locally and until the key exists.
   fetch('./data/google-tiles.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)]);
@@ -23,6 +24,11 @@ const net=indexNetwork(doc);
 
 // Google tiles are a full textured mesh (terrain included), so graphics sit on the scene, not the hidden ground.
 const google=typeof tiles?.key==='string'&&tiles.key?new IntegratedMesh3DTilesLayer({url:'https://tile.googleapis.com/v1/3dtiles/root.json',customParameters:{key:tiles.key},title:'Google Photorealistic 3D Tiles'}):null;
+// Google attribution (Map Tiles API policy): Google Maps logo plus the data providers named in loaded tiles.
+const credits=createCredits(),creditBox=document.createElement('div'),logo=document.createElement('img');
+creditBox.className='google-credits';logo.className='google-logo';logo.src='./assets/google-maps-logo.svg';logo.alt='Google Maps';
+if(google)esriConfig.request.interceptors.push({urls:/^https:\/\/tile\.googleapis\.com\//,after(response){
+  const data=response?.data;if(data instanceof ArrayBuffer&&credits.add(glbCopyright(data)))creditBox.textContent=credits.line();}});
 const elevationInfo=()=>google?.visible?{mode:'relative-to-scene',offset:4}:{mode:'on-the-ground'};
 const base=new GraphicsLayer({title:'River network · USGS 3DHP',elevationInfo:elevationInfo()}),pulses=new GraphicsLayer({title:'Illustrative surge travel',elevationInfo:elevationInfo()});
 const map=new ArcMap({basemap:new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})]}),ground:'world-elevation',layers:[...(google?[google]:[]),base,pulses]});
@@ -74,7 +80,8 @@ $('surge-play').addEventListener('click',()=>{if(playTimer)return stop();$('surg
   playTimer=setInterval(()=>set(offset+SURGE_CONFIG.stepMinutes>SURGE_CONFIG.aheadHours*60?-SURGE_CONFIG.backHours*60:offset+SURGE_CONFIG.stepMinutes),400);});
 $('google-switch').toggleAttribute('disabled',!google);$('google-switch').toggleAttribute('checked',!!google);
 $('google-note').textContent=google?'3D tiles © Google. Map Tiles API; visualization only.':'Google 3D tiles are off: no browser key is configured for this site. Showing Esri World Imagery on world terrain.';
-$('google-switch').addEventListener('calciteSwitchChange',e=>{if(!google)return;google.visible=e.target.checked;base.elevationInfo=pulses.elevationInfo=elevationInfo();});
+if(google){view.ui.add(logo,'bottom-left');view.ui.add(creditBox,'bottom-right');}
+$('google-switch').addEventListener('calciteSwitchChange',e=>{if(!google)return;google.visible=e.target.checked;logo.hidden=creditBox.hidden=!e.target.checked;base.elevationInfo=pulses.elevationInfo=elevationInfo();});
 if(exercise)$('notice').hidden=false;
 await refresh();
 // Open on the first pulse source when there is one, looking downstream.
