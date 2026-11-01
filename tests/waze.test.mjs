@@ -20,7 +20,7 @@ test('keeps only allowlisted storm alerts inside Fresno County and counts what i
   const s=await collect(feed());
   assert.equal(s.error,null);assert.equal(s.checkedAt,new Date(now).toISOString());
   assert.deepEqual(s.alerts.map(a=>a.subtype).sort(),['','HAZARD_ON_ROAD_OBJECT','HAZARD_WEATHER_FLOOD','HAZARD_WEATHER_FOG','HAZARD_WEATHER_HEAVY_RAIN','ROAD_CLOSED_HAZARD']);
-  assert.deepEqual(s.counts,{alerts:12,kept:6,notStormRelevant:4,outsideCounty:2,duplicates:0,jams:2,irregularities:1,irregularitiesKept:1,byCategory:{Flooding:1,'Road closed':2,'Hazard on road':3},
+  assert.deepEqual(s.counts,{alerts:12,kept:6,notStormRelevant:4,outsideCounty:2,duplicates:0,jams:2,irregularities:1,irregularitiesKept:1,irregularityDrops:{},irregularityFields:['alertsCount','causeType','city','country','delaySeconds','detectionDate','detectionDateMillis','driversCount','endNode','highway','id','jamLevel','length','line','nComments','nImages','nThumbsUp','regularSpeed','seconds','severity','speed','startNode','street','trend','type','updateDateMillis'],byCategory:{Flooding:1,'Road closed':2,'Hazard on road':3},
     byType:{'ACCIDENT:ACCIDENT_MINOR':1,'JAM:JAM_HEAVY_TRAFFIC':1,'ROAD_CLOSED:NO_SUBTYPE':1,'ROAD_CLOSED:ROAD_CLOSED_CONSTRUCTION':1,'ROAD_CLOSED:ROAD_CLOSED_HAZARD':2,'WEATHERHAZARD:HAZARD_ON_ROAD_OBJECT':1,'WEATHERHAZARD:HAZARD_ON_ROAD_POT_HOLE':1,'WEATHERHAZARD:HAZARD_WEATHER_FLOOD':2,'WEATHERHAZARD:HAZARD_WEATHER_FOG':1,'WEATHERHAZARD:HAZARD_WEATHER_HEAVY_RAIN':1}});
   assert.deepEqual(s.feed,{startTime:'2026-11-01T17:58:00.000Z',endTime:'2026-11-01T17:59:00.000Z'});
   assert.equal(s.possiblyTruncated,false);
@@ -104,7 +104,7 @@ test('unusual traffic: kept inside the county, minimised, line capped at 25 poin
   const rings=countyGeometry(county.geometry).rings,base=feed().irregularities[0];
   const long={...base,id:1,line:Array.from({length:60},(_,i)=>({x:-119.78+i*1e-4,y:36.75}))};
   const kept=filterWazeTraffic([long,{...base,id:2,line:[{x:-121.9,y:37.3}]},{...base,id:3,line:[]},{...base,id:4,detectionDateMillis:'x'},{...base,id:null},{...long}],rings);
-  assert.equal(kept.length,1);assert.equal(kept[0].line.length,25);assert.deepEqual(kept[0].line.at(-1),[-119.7741,36.75]);
+  assert.equal(kept.length,1);assert.equal(kept[0].line.length,25);assert.deepEqual(kept.drops,{outsideCounty:1,noLine:1,noTime:1,noId:1,duplicate:1});assert.deepEqual(kept[0].line.at(-1),[-119.7741,36.75]);
   const odd=filterWazeTraffic([{...base,type:'weird',trend:7,delaySeconds:-5,street:42}],rings)[0];
   assert.deepEqual([odd.size,odd.trend,odd.delaySeconds,odd.street],[null,null,null,null]);
   assert.throws(()=>validateWazeSnapshot({...s,irregularities:[{...t,driversCount:3}]},now),/identity invalid/);

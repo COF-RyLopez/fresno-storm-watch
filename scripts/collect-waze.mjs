@@ -60,17 +60,20 @@ const num=v=>Number.isFinite(v)&&v>=0?Math.round(v*10)/10:null,millis=v=>Number.
 /** Unusual traffic inside the county, minimised: hashed id, rounded line of at most 25 points, no driver or node fields.
  * The spec is looser here than for alerts, so a malformed record is skipped (and visible as total minus kept), not fatal. */
 export function filterWazeTraffic(items,rings){
-  const kept=[],seen=new Set();
+  const kept=[],seen=new Set(),drops={};
   for(const t of items){
     const id=t?.id===undefined||t?.id===null?'':String(t.id),pts=Array.isArray(t?.line)?t.line.map(p=>[p?.x,p?.y]).filter(validPoint):[];
     const detectedAt=millis(t?.detectionDateMillis),updatedAt=millis(t?.updateDateMillis)||detectedAt;
-    if(!id||seen.has(id)||!pts.length||!detectedAt||!pts.some(p=>pointInRings(p,rings)))continue;seen.add(id);
+    const why=!id?'noId':seen.has(id)?'duplicate':!pts.length?'noLine':!detectedAt?'noTime':!pts.some(p=>pointInRings(p,rings))?'outsideCounty':null;
+    if(why){drops[why]=(drops[why]||0)+1;continue;}seen.add(id);
     const step=Math.max(1,(pts.length-1)/24),line=[...new Set([...Array(Math.min(25,pts.length)).keys()].map(i=>Math.round(i*step)))].map(i=>pts[Math.min(i,pts.length-1)].map(round));
     kept.push({id:createHash('sha256').update('irregularity:'+id).digest('hex').slice(0,16),size:SIZES.get(String(t.type??'').toUpperCase())??null,lengthM:num(t.length),delaySeconds:num(t.delaySeconds),
       speedKmh:num(t.speed),regularSpeedKmh:num(t.regularSpeed),trend:[-1,0,1].includes(t.trend)?t.trend:null,street:text(typeof t.street==='string'?t.street:null),city:text(typeof t.city==='string'?t.city:null),detectedAt,updatedAt,line});
   }
-  return kept;
+  return Object.assign(kept,{drops});
 }
+/** Field names seen on feed irregularities (names only, no values), so a schema mismatch shows in the run log. */
+const fieldNames=items=>[...new Set(items.flatMap(t=>t&&typeof t==='object'?Object.keys(t):[]))].filter(k=>/^[A-Za-z_]{1,40}$/.test(k)).sort();
 
 /** @returns {Promise<object>} Validated snapshot; on any failure the previous alerts are kept and the redacted error recorded. */
 // Every feed alert's TYPE:SUBTYPE (no location or text), so the owner can tune the storm allowlist from the run log.
@@ -83,7 +86,7 @@ export async function collectWaze({url,county,previous=null,fetchImpl=fetch,now=
     const feed=validateWazeFeed(JSON.parse(await bounded(response,MAX_BYTES,'Waze feed','Waze feed response too large')));
     const rings=countyGeometry(county.geometry).rings,{kept,...dropped}=filterWazeAlerts(feed.alerts,rings,now),traffic=filterWazeTraffic(feed.irregularities,rings);
     Object.assign(snapshot,{checkedAt:at,feed:{startTime:feed.startTime,endTime:feed.endTime},possiblyTruncated:feed.alerts.length+feed.jams+feed.irregularities.length>=WAZE_EVENT_LIMIT,
-      counts:{alerts:feed.alerts.length,kept:kept.length,...dropped,jams:feed.jams,irregularities:feed.irregularities.length,irregularitiesKept:traffic.length,byCategory:wazeCounts(kept),byType:byType(feed.alerts)},alerts:kept,irregularities:traffic});
+      counts:{alerts:feed.alerts.length,kept:kept.length,...dropped,jams:feed.jams,irregularities:feed.irregularities.length,irregularitiesKept:traffic.length,irregularityDrops:traffic.drops,irregularityFields:fieldNames(feed.irregularities),byCategory:wazeCounts(kept),byType:byType(feed.alerts)},alerts:kept,irregularities:traffic});
   }catch(error){snapshot.error=redact(error?.message||'Waze collection unavailable',url);}
   return validateWazeSnapshot(snapshot,now);
 }
