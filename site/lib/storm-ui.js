@@ -3,19 +3,23 @@ import {fetchUsgs,parseUsgsIv,usgsReading} from './usgs-gauges.js';
 import {reportHealth} from './source-health.js';
 import {el,elAttrs,link} from './dom.js';
 import {indexNetwork,surgeSources,surgeFrames,SURGE_CONFIG} from './river-network-model.js';
+import {wazeReports,wazeTraffic,WAZE_NOTE,WAZE_MAX_AGE} from './waze-model.js';
+import {CAMERA_FEED,nearbyCameras} from './camera-model.js';
 
 const $=id=>document.getElementById(id);
 const RAIN=Object.freeze({'Off':'off','Radar':'radar','72-h forecast':'qpf'});
 /** Storm now panel: renders stormFocus() rows and its visible controls. Rows open existing evidence through onOpen. */
 export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=>{},onCameras=()=>{}}={}){
   const inputs={alerts:[],alertCheck:null,areas:[],drainage:null,signedIn:false,roads:null,usgs:null,watchlist:[]};
+  let wazeSnap=null,wazeError=null,catalog=null,wazeOpen=0;
   let focus='all',map=null,signature='',rows=[];
   let net=null,netError=null,surgeOffset=0,playTimer=null;
   const clock=new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
   const time=t=>t===null?'source time unavailable':clock.format(t);
   function render(){
     drawSurges();
-    rows=stormFocus({...inputs,focus},Date.now());
+    rows=stormFocus({...inputs,waze:wazeInput(),focus},Date.now());
+    $('storm-waze-credit').hidden=!rows.some(r=>r.key.startsWith('waze:'));
     const next=JSON.stringify([focus,rows.map(r=>[r.key,r.tier,r.why,r.time,r.stale,r.tag,Math.floor((r.age??0)/60_000)])]);
     if(next===signature)return;signature=next;
     const list=$('storm-list');list.replaceChildren();
@@ -35,6 +39,7 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   function open(key){
     const r=rows.find(r=>r.key===key);if(!r)return;
     if(r.open.kind==='usgs'||r.open.kind==='creek')return showGauge(r.open.id);
+    if(r.open.kind==='waze')return showWaze(r.open.id);
     onOpen(r.open);
   }
   function showGauge(id){
@@ -72,6 +77,58 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   });
   void fetch(new URL('../data/river-network.json',import.meta.url)).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();})
     .then(doc=>{net=indexNetwork(doc);map?.setRiverNetwork(net);drawSurges();}).catch(e=>{netError=e.message;drawSurges();});
+  // A 404 means the county feed is not published (WAZE_PUBLISH off): no rows, no error.
+  function wazeInput(){
+    if(wazeError)return {checkedAt:null,error:wazeError,reports:[],traffic:[]};
+    if(!wazeSnap)return null;
+    try{return {checkedAt:wazeSnap.checkedAt,error:wazeSnap.error,reports:wazeReports(wazeSnap),traffic:wazeTraffic(wazeSnap)};}
+    catch(e){return {checkedAt:null,error:e.message,reports:[],traffic:[]};}
+  }
+  async function refreshWaze(){
+    try{const r=await fetch(new URL('../data/waze-latest.json',import.meta.url),{cache:'no-store'});
+      if(r.status===404){wazeSnap=null;wazeError=null;}else if(!r.ok)throw new Error(`HTTP ${r.status}`);else{wazeSnap=await r.json();wazeError=null;}}
+    catch(e){wazeError='Waze snapshot unavailable: '+e.message;}
+    const w=wazeInput();if(w)reportHealth('waze','Waze partner feed',{checked:Date.parse(w.checkedAt??'')||null,error:w.error,maxAgeMs:WAZE_MAX_AGE,detail:'Unverified crowd reports.'});
+    render();
+  }
+  function showWaze(id){
+    const w=wazeInput(),host=$('waze-detail'),pane=$('waze-evidence'),token=++wazeOpen;host.replaceChildren();
+    const credit=()=>{const p=el('p','Data provided by ');p.append(link('Waze App','https://www.waze.com'),'. Learn more at ',link('Waze.com','https://www.waze.com'),'.');return p;};
+    const facts=list=>{const dl=el('dl');for(const [k,v]of list)if(v!==null&&v!==undefined&&v!=='')dl.append(el('dt',k),el('dd',String(v)));return dl;};
+    const when=t=>`${time(Date.parse(t))} · ${ageLabel(Date.now()-Date.parse(t))}`;
+    if(id==='summary'){
+      pane.heading='Waze closures & road hazards';
+      const other=(w?.reports||[]).filter(r=>r.category!=='Flooding'),ul=el('ul');
+      for(const r of other.slice(0,50))ul.append(el('li',`${r.label}${r.city?' · '+r.city:''} · ${ageLabel(Date.now()-Date.parse(r.reportedAt))}`));
+      host.append(el('p',w?.error?`Last check problem: ${w.error}`:`Feed checked ${w?.checkedAt?when(w.checkedAt):'never'}.`),other.length?ul:el('p','No closure or hazard reports in the last snapshot.'));
+      if(other.length>50)host.append(el('p',`Showing the newest 50 of ${other.length}.`));
+      host.append(el('p','The same closure may also be in the county road records; do not count it twice.'),el('p',WAZE_NOTE),credit());
+      pane.setAttribute('open','');return;
+    }
+    const r=w?.reports.find(x=>x.id===id),t=w?.traffic.find(x=>x.id===id);
+    if(!r&&!t){pane.heading='Waze report';host.append(el('p','This report is no longer in the latest Waze snapshot. That does not mean the road is clear.'),credit());pane.setAttribute('open','');return;}
+    const line=r?[[r.lon,r.lat]]:t.line,mid=line[Math.floor(line.length/2)];
+    pane.heading=(r||t).label;
+    host.append(r?facts([['Type',r.category],['City',r.city],['Reported',when(r.reportedAt)],['Reliability',r.reliability===null?null:`${r.reliability}/10`],['Confidence',r.confidence],['Thumbs up',r.thumbsUp]])
+      :facts([['Size',t.size],['Delay',t.delaySeconds===null?null:`${Math.round(t.delaySeconds/60)} min`],['Speed now',t.speedMph===null?null:`${t.speedMph} mph`],['Usual speed',t.regularMph===null?null:`${t.regularMph} mph`],['Length',t.lengthM===null?null:`${(t.lengthM/1609.344).toFixed(1)} mi`],['Trend',{'1':'Getting worse','0':'Steady','-1':'Improving'}[t.trend]],['Detected',when(t.detectedAt)],['Updated',when(t.updatedAt)]]));
+    if(t)host.append(el('p','Waze flags traffic that is slower than usual for this road and time. It does not say why; check a camera or field report.'));
+    const cams=el('div');cams.className='waze-cameras';cams.append(el('h3','Nearby Caltrans cameras'),el('p','Checking Caltrans cameras…'));
+    host.append(cams,el('p',WAZE_NOTE),credit());pane.setAttribute('open','');
+    map?.focusReferenceGeometry({x:mid[0],y:mid[1],spatialReference:{wkid:4326}},20000);
+    if(exercise){cams.lastChild.textContent='Cameras are not loaded in the exercise.';return;}
+    void (async()=>{
+      try{
+        if(!catalog||Date.now()-catalog.at>300_000){const res=await fetch(CAMERA_FEED,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(20_000)});if(!res.ok)throw new Error(`Caltrans HTTP ${res.status}`);catalog={at:Date.now(),data:await res.json()};}
+        const near=nearbyCameras(catalog.data,line,{maxKm:2,limit:2});if(token!==wazeOpen)return;
+        cams.lastChild.remove();
+        if(!near.length)cams.append(el('p','No in-service Caltrans camera within 1.2 mi. Caltrans cameras are mostly on state highways.'));
+        for(const c of near){const f=el('figure'),img=elAttrs('img','',{src:c.imageUrl,alt:`Caltrans camera ${c.name}. Check the time printed on the image.`,loading:'lazy',decoding:'async'});
+          f.append(img,el('figcaption',`${c.name}${c.route?' · '+c.route:''}${c.direction?' · faces '+c.direction:''} · ${(c.km/1.609344).toFixed(1)} mi away`));
+          cams.append(f,link(`Open current ${c.name} image (opens new tab) ↗`,c.imageUrl));}
+        cams.append(el('p','Distance only: the camera may not show this spot. Use the time printed on the image, not this page, for when it was taken.'));
+      }catch(e){if(token===wazeOpen)cams.lastChild.textContent='Caltrans camera list unavailable: '+(e.name==='TimeoutError'?'timed out':e.message);}
+    })();
+  }
   async function refreshUsgs(){
     if(!inputs.watchlist.length)return;
     try{
@@ -99,6 +156,8 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   const short=matchMedia('(max-width:900px),(max-height:760px)'),place=()=>{$('storm-controls').slot=short.matches?'':'content-top';};short.addEventListener('change',place);place();
   setInterval(()=>{if(!document.hidden)render();},60_000);
   setInterval(()=>{if(!document.hidden)void refreshUsgs();},300_000);
+  // ponytail: the collector runs every 15 min; polling the static file every 2 min is cheap and catches each deploy.
+  if(!exercise){void refreshWaze();setInterval(()=>{if(!document.hidden)void refreshWaze();},120_000);}
   void fetch(new URL('../data/usgs-watchlist.json',import.meta.url)).then(r=>r.json()).then(w=>{inputs.watchlist=w.sites;render();return refreshUsgs();}).catch(e=>{inputs.usgs={readings:new Map(),checked:null,error:'Watchlist unavailable: '+e.message};render();});
   render();
   return {

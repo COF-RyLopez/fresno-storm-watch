@@ -84,3 +84,18 @@ test('within a tier: faster rise, then earliest peak, then name, then key; empty
   assert.deepEqual(stormFocus(quiet,NOW),[]);
   assert.equal(ageLabel(null),'age unknown');assert.equal(ageLabel(61*60_000),'1 h 1 min old');
 });
+
+test('Waze: flooding and unusual traffic get rows (never above Next), closures collapse to one summary, overdue feed shows',()=>{
+  const checkedAt=new Date(NOW-60_000).toISOString(),rep=(id,category,extra={})=>({id,category,label:category+' · '+id,city:'Fresno',thumbsUp:2,reportedAt:checkedAt,stale:false,...extra});
+  const traffic=(id,size,trend,extra={})=>({id,size,trend,label:'Unusual traffic · '+id,delaySeconds:300,speedMph:10,regularMph:35,rising:trend===1,major:['Medium','Large','Huge'].includes(size),updatedAt:checkedAt,stale:false,...extra});
+  const waze={checkedAt,error:null,reports:[rep('f1','Flooding'),rep('c1','Road closed'),rep('c2','Road closed'),rep('h1','Hazard on road')],traffic:[traffic('t1','Small',0),traffic('t2','Large',0),traffic('t3','Small',1)]};
+  const rows=stormFocus({...quiet,waze},NOW),by=k=>rows.find(r=>r.key==='waze:'+k);
+  assert.equal(by('f1').tier,3);assert.match(by('f1').why,/flooding report · Fresno · 2 thumbs up/);
+  assert.deepEqual(['t1','t2','t3'].map(k=>by(k).tier),[4,3,3]);assert.equal(by('t2').why,'Large · 5 min delay · 10 mph vs usual 35');
+  assert.equal(by('summary').why,'2 road-closed · 1 hazard reports · compare with county closures');assert.equal(by('c1'),undefined);
+  assert(rows.every(r=>!r.key.startsWith('waze:')||r.tier>=3));
+  assert.deepEqual(stormFocus({...quiet,waze:{...waze,reports:[],traffic:[]}},NOW),stormFocus(quiet,NOW),'a current, empty feed adds nothing');
+  const old=stormFocus({...quiet,waze:{...waze,checkedAt:new Date(NOW-3*H).toISOString(),reports:[rep('f1','Flooding',{stale:true})],traffic:[]}},NOW);
+  assert.equal(old.find(r=>r.key==='waze:f1').tier,4);assert.match(old.find(r=>r.key==='waze:summary').why,/overdue/);
+  assert.match(stormFocus({...quiet,waze:{checkedAt:null,error:'boom',reports:[],traffic:[]}},NOW).find(r=>r.key==='waze:summary').why,/check failed/);
+});

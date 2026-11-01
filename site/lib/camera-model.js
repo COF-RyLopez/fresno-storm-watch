@@ -68,3 +68,26 @@ export function cameraImageFreshness(image, now = Date.now(), maxAgeMs = 300_000
   if (now-image.modified > maxAgeMs) return { tone:'gap', label:'Image file is old · do not assume current conditions' };
   return { tone:'current', label:'Recent image file · capture time unverified' };
 }
+
+/** Distance in km from [lon,lat] to the nearest point of a polyline; equirectangular, fine at county scale. */
+function kmToLine(p,line){
+  const k=Math.cos(p[1]*Math.PI/180),xy=([lon,lat])=>[(lon-p[0])*111.32*k,(lat-p[1])*110.57];
+  let best=Infinity;const pts=line.map(xy);
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i],b=pts[i+1]||a,dx=b[0]-a[0],dy=b[1]-a[1],t=dx||dy?Math.max(0,Math.min(1,-(a[0]*dx+a[1]*dy)/(dx*dx+dy*dy))):0;
+    best=Math.min(best,Math.hypot(a[0]+t*dx,a[1]+t*dy));
+  }
+  return best;
+}
+/** @param {object} payload Caltrans D6 catalog @param {number[][]} line [[lon,lat],...] @returns {object[]} In-service cameras with an approved image within maxKm, nearest first. Distance only: view direction is the publisher's road direction, not a verified view of the spot. */
+export function nearbyCameras(payload,line,{maxKm=2,limit=2}={}){
+  if(!Array.isArray(payload?.data))throw new Error('Caltrans camera catalog has an unexpected format.');
+  const out=[];
+  for(const item of payload.data){
+    const c=item?.cctv,lon=numeric(c?.location?.longitude),lat=numeric(c?.location?.latitude),imageUrl=cameraMediaUrl(c?.imageData?.static?.currentImageURL,'image');
+    if(String(c?.location?.district)!=='6'||!(c?.inService===true||c?.inService==='true')||lon===null||lat===null||!imageUrl)continue;
+    const km=kmToLine([lon,lat],line);
+    if(km<=maxKm)out.push({index:String(c.index),name:String(c.location.locationName||'').trim(),route:c.location.route||null,direction:c.location.direction||null,km,imageUrl,longitude:lon,latitude:lat});
+  }
+  return out.sort((a,b)=>a.km-b.km||a.index.localeCompare(b.index)).slice(0,limit);
+}

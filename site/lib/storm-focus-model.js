@@ -1,6 +1,7 @@
 /** Storm now: simple, explainable "where to look next" rules. A planning aid, never an alert service or risk score. */
 import {fresh} from './source-health-model.js';
 import {roadInCurrentView} from './roads.js';
+import {WAZE_MAX_AGE} from './waze-model.js';
 
 const HOUR=3_600_000;
 /** Owner-adjustable settings. Extents are WGS84 bounds used by the Focus control. */
@@ -46,7 +47,7 @@ const order=(a,b)=>a.tier-b.tier||(a.key===UNGAUGED_KEY)-(b.key===UNGAUGED_KEY)|
 export const ageLabel=ms=>ms===null?'age unknown':ms<60_000?'under 1 min old':ms<HOUR?`${Math.floor(ms/60_000)} min old`:`${Math.floor(ms/HOUR)} h ${Math.floor(ms%HOUR/60_000)} min old`;
 
 /** @param {object} inputs @param {number} now @returns {object[]} Rows for the requested focus, ranked. */
-export function stormFocus({alerts=[],alertCheck=null,areas=[],drainage=null,signedIn=false,roads=null,usgs=null,watchlist=[],focus='all'}={},now=Date.now()){
+export function stormFocus({alerts=[],alertCheck=null,areas=[],drainage=null,signedIn=false,roads=null,usgs=null,watchlist=[],waze=null,focus='all'}={},now=Date.now()){
   const rows=[],c=STORM_CONFIG;
   const nwsOverdue=!alertCheck||!!alertCheck.error||!fresh(alertCheck.checked,c.nwsStaleMs,now);
   for(const a of alerts)if(a.category==='Warning'&&/flood/i.test(a.type)&&a.counties.includes('Fresno'))
@@ -83,6 +84,17 @@ export function stormFocus({alerts=[],alertCheck=null,areas=[],drainage=null,sig
     const tier=flood||rate>=c.usgsNowFtPerHour?2:rate>=c.usgsNextFtPerHour?3:stale?4:0;
     if(!tier)continue;
     rows.push(item('usgs:'+s.site,{...base,tier,why:(flood?`At/above flood stage ${s.floodStageFt} ft · `:'')+(r.rise?`${ft(r.rise.delta,r.rise.hours)} (${rate.toFixed(2)} ft/h)`:'Rise unknown'),time:r.stage.time,stale,rise:rate},now));
+  }
+  // Waze: unverified crowd reports, so never above Next. Flooding and unusual traffic get rows; closures/hazards collapse to one.
+  if(waze){
+    const W='Waze users · unverified',checked=Date.parse(waze.checkedAt??'');
+    for(const r of waze.reports.filter(r=>r.category==='Flooding'))
+      rows.push(item('waze:'+r.id,{tier:3,place:r.label,why:`Waze flooding report${r.city?' · '+r.city:''}${r.thumbsUp?` · ${r.thumbsUp} thumbs up`:''}`,source:W,time:Date.parse(r.reportedAt),stale:r.stale,focus:'both',open:{kind:'waze',id:r.id}},now));
+    for(const t of waze.traffic)
+      rows.push(item('waze:'+t.id,{tier:t.major||t.rising?3:4,place:t.label,why:[t.size&&t.size!=='None'?t.size:null,t.delaySeconds!==null?`${Math.round(t.delaySeconds/60)} min delay`:null,t.speedMph!==null&&t.regularMph!==null?`${t.speedMph} mph vs usual ${t.regularMph}`:null,t.rising?'getting worse':t.trend===-1?'improving':null].filter(Boolean).join(' · ')||'Slower than usual for this time',source:'Waze traffic · unverified',time:Date.parse(t.updatedAt),stale:t.stale,focus:'both',open:{kind:'waze',id:t.id}},now));
+    const other=waze.reports.filter(r=>r.category!=='Flooding'),closed=other.filter(r=>r.category==='Road closed').length;
+    const overdue=!Number.isFinite(checked)||!fresh(checked,WAZE_MAX_AGE,now);
+    if(other.length||overdue)rows.push(item('waze:summary',{tier:4,place:'Waze closures & road hazards',why:overdue?(waze.error?'Waze feed check failed; reports may be old':'Waze feed check overdue; reports may be old'):`${closed} road-closed · ${other.length-closed} hazard reports · compare with county closures`,source:W,time:Number.isFinite(checked)?checked:null,stale:overdue,focus:'both',open:{kind:'waze',id:'summary'}},now));
   }
   // One standing reminder, not one row per creek: a permanent gap must not crowd out live signals.
   const ungauged=c.ungaugedCreeks.filter(creek=>!watchlist.some(s=>s.creek===creek));
