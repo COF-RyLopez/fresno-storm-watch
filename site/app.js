@@ -325,7 +325,8 @@ async function setupInundation(map){
   let player=null,chosen='',t=0,playing=false,last=0;
   const render=next=>{
     t=Math.min(Math.max(next,player.hours[0]),player.hours.at(-1));player.setTime(t);$('inundation-clock').textContent=clockLabel(t);
-    if(Math.abs(Number($('inundation-time').value)-t)>0.01)$('inundation-time').value=Number(t.toFixed(2));
+    const slider=$('inundation-time');slider.setAttribute('aria-valuetext',clockLabel(t));
+    if(Math.abs(Number(slider.value)-t)>0.01)slider.value=t.toFixed(2);
   };
   const tick=now=>{
     if(!playing)return;if(last)render(t+((now-last)/1000)*(Number($('inundation-speed').value)||1));last=now;
@@ -336,7 +337,7 @@ async function setupInundation(map){
     if(playing){if(t>=player.hours.at(-1))render(player.hours[0]);requestAnimationFrame(tick);}
   };
   $('inundation-play').addEventListener('click',()=>setPlaying(!playing));
-  $('inundation-time').addEventListener('calciteSliderInput',e=>{setPlaying(false);if(player)render(Number(e.target.value));});
+  $('inundation-time').addEventListener('input',e=>{setPlaying(false);if(player)render(Number(e.target.value));});
   $('inundation-menu').addEventListener('calciteDropdownSelect',async e=>{
     const id=e.target.selectedItems[0]?.dataset.scenario||'',link=$('inundation-playback');chosen=id;
     setPlaying(false);player=null;$('inundation-player').hidden=true;

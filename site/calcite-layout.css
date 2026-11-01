@@ -388,7 +388,8 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 .inundation-player{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:1;width:min(640px,calc(100% - 32px));display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:8px 12px;border-radius:6px;background:var(--calcite-color-foreground-1);border:1px solid var(--calcite-color-border-2);box-shadow:0 4px 18px #0005;}
 .inundation-title{flex-basis:100%;font-size:12px;color:var(--calcite-color-text-2);}
 .inundation-clock{font-variant-numeric:tabular-nums;font-weight:600;min-width:112px;}
-.inundation-player calcite-slider{flex:1;min-width:140px;}
+#inundation-time{flex:1;min-width:140px;min-height:32px;accent-color:var(--app-link);cursor:pointer;}
+#inundation-time:focus-visible{outline:2px solid var(--app-link);outline-offset:3px;}
 .inundation-player calcite-select{width:84px;}
 
 /* Supporting evidence occupies layout space; it never dims or floats over the map. */
