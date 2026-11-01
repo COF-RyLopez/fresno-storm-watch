@@ -83,13 +83,13 @@ export function createAcsContext({exercise=false,onMap=()=>{},onOpenWatch=()=>{}
     $('acs-status').textContent=zone?`Finding ACS tracts intersecting zone ${zone}…`:'Checking Fresno County ACS tracts…';
     try{const data=await readAcsTracts({geometry,signal:abort.signal});if(generation!==epoch||!isWatch())return;meta=data.metadata;
       $('acs-status').textContent=`${data.rows.length} ${zone?'tracts intersecting zone '+zone:'Fresno County tracts'} · ACS ${meta.period}. Whole-tract context only; tract totals are never added as zone population.`;
-      const empty=node('option','Choose a census tract…');empty.value='';picker.append(empty);for(const r of data.rows){const option=node('option',r.name+' · '+r.id);option.value=r.id;picker.append(option);}picker.disabled=!data.rows.length;legend();void showContext();
+      const empty=node('calcite-option','Choose a census tract…');empty.value='';empty.selected=true;picker.append(empty);for(const r of data.rows){const option=node('calcite-option',r.name+' · '+r.id);option.value=r.id;picker.append(option);}picker.value='';picker.disabled=!data.rows.length;legend();void showContext();
       if(id&&data.rows.some(r=>r.id===id))await select(id);else if(data.rows.length===1)await select(data.rows[0].id);else $('acs-detail').append(node('p','Choose a tract for age counts, margins of error and PIO planning context. The separate 2020 block estimate remains in evacuation-zone evidence.'));
     }catch(e){if(generation!==epoch||e.name==='AbortError')return;$('acs-status').textContent='ACS context unavailable: '+e.message;$('acs-detail').append(link('Publisher source',ACS_SOURCES.population.item));}
   }
-  picker.addEventListener('change',()=>{if(picker.value)void select(picker.value);else{epoch++;abort?.abort();pioAbort?.abort();highlight?.removeAll();$('acs-detail').replaceChildren();selected=null;selectedRow=null;loadingPio=false;}});
+  picker.addEventListener('calciteSelectChange',()=>{if(picker.value)void select(picker.value);else{epoch++;abort?.abort();pioAbort?.abort();highlight?.removeAll();$('acs-detail').replaceChildren();selected=null;selectedRow=null;loadingPio=false;}});
   $('acs-open').addEventListener('click',()=>void open());$('acs-retry').addEventListener('click',()=>{if(selected)void select(selected);else void open(scope);});
-  checkbox.addEventListener('change',()=>{legend();void showContext();});document.addEventListener('frogLayerPreference',e=>{if(e.detail?.key==='populationDensity'){checkbox.checked=e.detail.wanted;legend();}});
+  checkbox.addEventListener('calciteCheckboxChange',()=>{legend();void showContext();});document.addEventListener('frogLayerPreference',e=>{if(e.detail?.key==='populationDensity'){checkbox.checked=e.detail.wanted;legend();}});
   window.addEventListener('frogAcsTractSelect',e=>{if(/^06019\d{6}$/.test(e.detail?.id||''))void open({id:e.detail.id});});
   pane.addEventListener('stormEvidenceClose',()=>{epoch++;abort?.abort();pioAbort?.abort();loadingPio=false;});
   window.addEventListener('pagehide',()=>{epoch++;abort?.abort();pioAbort?.abort();highlight?.removeAll();});

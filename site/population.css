@@ -1,9 +1,7 @@
 #population-watch{border-block:1px solid var(--calcite-color-border-3);padding-block:.75rem;margin-block:.75rem}
 #population-watch>summary{font-weight:600;cursor:pointer}
 .population-controls{display:grid;gap:.65rem;margin-block:.75rem}
-.population-controls label{display:grid;gap:.3rem;color:var(--calcite-color-text-1)}
-.population-controls input,.population-controls select{box-sizing:border-box;width:100%;min-height:2.5rem;background:var(--calcite-color-foreground-1);color:var(--calcite-color-text-1);border:1px solid var(--calcite-color-border-input);padding:.45rem;font:inherit}
-.population-controls :focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:2px}
+.population-controls calcite-label{--calcite-label-margin-bottom:0}
 #population-details,.acs-context{padding:1rem;overflow-wrap:anywhere}
 #population-details h3{margin:1.25rem 0 .5rem}#population-details p{line-height:1.5}
 #population-details table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
