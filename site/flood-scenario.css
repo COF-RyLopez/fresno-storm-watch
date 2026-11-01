@@ -3,7 +3,7 @@ html, body { margin: 0; height: 100%; background: var(--app-canvas); color: var(
 .stage { position: relative; height: 100%; }
 #view { position: absolute; inset: 0; background: var(--app-map-background); }
 .fs-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 8px 16px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }
-.fs-header .brand { display: flex; align-items: center; gap: 10px; } .fs-header img { width: 40px; height: 40px; }
+.fs-header .brand { display: flex; align-items: center; gap: 10px; }
 .fs-header h1 { margin: 0; font-size: 1.05rem; } .eyebrow { font-size: .7rem; letter-spacing: .08em; color: var(--app-muted); }
 .fs-header nav calcite-select { width: 240px; }
 .fs-header nav { flex-wrap: wrap; display: flex; gap: 8px; align-items: center; } .fs-header a { color: var(--app-link); }

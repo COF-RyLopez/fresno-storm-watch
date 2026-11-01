@@ -2,9 +2,8 @@ import {loadSdk} from './map.js';
 import {SANDBAG_APP,SANDBAG_SOURCE,SANDBAG_GUIDANCE,SANDBAG_STATES,SANDBAG_MAX_AGE,validateSandbagSnapshot,sandbagContext,sandbagHealth,sandbagHours} from './county-sandbag-model.js';
 import {reportHealth} from './source-health.js';
 import {roadGraphic,fillAreaSelect,selectAreaOption} from './dwr-supply-planning-ui.js';
-const KEY='countySandbags',node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-const button=(text,fn)=>{const b=node('calcite-button',text);b.scale='s';b.appearance='outline';b.addEventListener('click',fn);return b;};
-const external=(label,url)=>{const a=node('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+import {node,nodeButton as button,nodeLink as external} from './dom.js';
+const KEY='countySandbags';
 const km=m=>(m/1000).toFixed(1)+' km';
 
 /** Public pickup references, separate from DWR stock inspection inventories and private operating records. */

@@ -5,10 +5,9 @@ import { assessGauge, riverValue, formatRiverTime } from './river-model.js';
 import { riverChart } from './river-chart.js';
 import { exerciseRivers } from './river-exercise.js';
 import { TREND_REACHES } from './release-trend-model.js';
+import {elAttrs as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-/** @param {string} tag @param {string} text @param {object} attributes @returns {HTMLElement} */
-function el(tag,text='',attributes={}) { const n=document.createElement(tag);n.textContent=text;for(const[k,v]of Object.entries(attributes))if(v!==false&&v!==null)n.setAttribute(k,v===true?'':String(v));return n; }
 /** @param {object} options @returns {Promise<object>} River feed is independent from the weather-alert feed and map. */
 export async function createRiverWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onTrends=()=>{},onData=()=>{}}) {
   let stations=[], entries=new Map(), busy=false, map=null, selected=null, timer, next=null, lastAttempt=null, scenario='baseline', horizon=config.defaultHorizonHours, basin='All';

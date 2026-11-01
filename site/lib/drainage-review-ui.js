@@ -8,8 +8,8 @@ import {reportHealth} from './source-health.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {ROAD_MAP} from './roads.js';
 import {POWER_STATES,POWER_LINKS} from './power-model.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
+import {button,el} from './dom.js';
+const $=id=>document.getElementById(id);
 
 /** Private inventory and correlation results live in this tab only, including during asynchronous joins. */
 export function createDrainageReviews({config,timeZone,exercise=false,exerciseData=null,onSummary=()=>{},onReviews=()=>{},onConnect=()=>{},onFacilities=()=>{},onMap=()=>{},onRecord=()=>{},onRoad=()=>{},onFacility=()=>{},onPower=()=>{},onRainfall=()=>{},onCapture=()=>{},onAssign=()=>{},onClear=()=>{},onReadiness=()=>{},onPumpTask=()=>{},renderReadiness=()=>{},renderNearby=()=>{}}){

@@ -2,10 +2,9 @@ import {reportHealth} from './source-health.js';
 import { CAMERA_FEED, normalizeCameras, cameraAvailability, cameraImageFreshness } from './camera-model.js';
 import { createCameraVideo } from './camera-video.js';
 import { formatTime } from './model.js';
+import {elAttrs as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-/** @param {string} tag @param {string} text @param {object} attrs @returns {HTMLElement} */
-function el(tag,text='',attrs={}) {const n=document.createElement(tag);n.textContent=text;for(const[k,v]of Object.entries(attrs))if(v!==false&&v!==null)n.setAttribute(k,v===true?'':String(v));return n;}
 
 /** @param {object} options @returns {Promise<object>} Camera failure never blocks gauges or map. */
 export async function createCameraWatch({config,timeZone,exercise,onGauge,initialOpen=true,onOpenChange=()=>{},onMap=()=>{}}) {

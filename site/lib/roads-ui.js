@@ -1,6 +1,6 @@
 import {reportHealth} from './source-health.js';
 import {fetchRoads,roadHealth,roadInCurrentView,roadConflictBacklog,ROAD_MAP,EVAC_MAP} from './roads.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './dom.js';
 export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}) {
   let snapshot=null,error=null,map=null,busy=false,selected=null;
   const host=document.getElementById('road-list'),status=document.getElementById('road-health');

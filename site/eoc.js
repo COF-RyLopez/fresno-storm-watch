@@ -9,8 +9,9 @@ import {createPrivateStore,createExerciseStore} from './lib/eoc-store.js';
 import {createEocSources,exerciseSources} from './lib/eoc-sources.js';
 import {FORMS,localDateValue} from './lib/eoc-forms.js';
 import {emptyRecords,heads,current,verificationFor,reportStatus,makeEvent,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,canonical,PLAN_URL,CHECKS} from './lib/eoc-model.js';
+import {classLink as link,elClass as el} from './lib/dom.js';
 
-const $=id=>document.getElementById(id),el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;},link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+const $=id=>document.getElementById(id);
 const exercise=new URLSearchParams(location.search).get('exercise')==='1';
 let zoneRequest=null,zoneRequestError=null;try{zoneRequest=readPioZoneRequest(location.search);}catch(error){zoneRequestError=error.message;}
 const team=EOC_CONFIG.teamLabel||'F.R.O.G. EOC exercise team';

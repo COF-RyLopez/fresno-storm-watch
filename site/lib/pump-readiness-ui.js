@@ -5,7 +5,7 @@ import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION
 import {pumpReadiness} from './pump-readiness-model.js';
 import {openPumpTask,renderPumpTasks} from './pump-task-ui.js';
 import {reportHealth} from './source-health.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './dom.js';
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 
 /** Private append-only confirmations in the existing restricted checklist views. No browser persistence. */

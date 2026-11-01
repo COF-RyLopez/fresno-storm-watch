@@ -2,8 +2,8 @@ import {loadSdk} from './map.js';
 import {ACS_SOURCES,ACS_LIMIT,ACS_DENSITY_EXPRESSION,PIO_GUIDANCE,acsFields,formatAcsMeasure} from './acs-model.js';
 import {readAcsMetadata,readAcsTracts,readPioContext} from './acs-data.js';
 import {reportHealth} from './source-health.js';
-const $=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+import {node,nodeLink as link} from './dom.js';
+const $=id=>document.getElementById(id);
 const colors=[[0,100,'#e4f1f5'],[100,500,'#b4d5e6'],[500,2000,'#74a9cf'],[2000,5000,'#3685b5'],[5000,1e12,'#145a87']];
 const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short',timeZoneName:undefined}).format(t)+' Pacific';
 function table(rows,caption){

@@ -1,6 +1,6 @@
 import {validateBriefingImpacts,briefingImpacts} from './briefing-impact-model.js';
 import {HNX_BRIEFING_PAGE} from './briefing-model.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './dom.js';
 /** @param {object} options @returns {object} Read-only planning context; never mutates attention counts, assignments or private records. */
 export function createBriefingImpactView({exercise=false,onOpen,onData=()=>{}}){
   const host=document.getElementById('briefing-impacts'),block=document.getElementById('briefing-impact-block');

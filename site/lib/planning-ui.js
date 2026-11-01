@@ -12,12 +12,9 @@ import {combineAreaConcerns,validateAreaConcerns} from './area-concern-model.js'
 import {windCompass} from './weather-model.js';
 import {POWER_STATES} from './power-model.js';
 import {areaConcernExercise} from './area-concern-exercise.js';
+import {classLink as link,elClass as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-/** @param {string} tag @param {string} text @param {string} css @returns {HTMLElement} */
-function el(tag,text='',css=''){const n=document.createElement(tag);n.textContent=text;n.className=css;return n;}
-/** @param {string} text @param {string} href @returns {HTMLElement} */
-function link(text,href){const n=el('a',text);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Fixed-area review banner; separate from official NWS alerts and team acknowledgements. */
 export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{},onGauge,onConditions,onPower=()=>{},onSummary=()=>{},onCompare=()=>{},onTrends=()=>{},onExercise=()=>{},onData=()=>{},onAreaSelected=()=>{}}){

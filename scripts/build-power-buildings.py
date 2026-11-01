@@ -123,9 +123,8 @@ def build(root: Path, release: str) -> None:
         (output / (key + ".json.gz")).write_bytes(compressed)
         index.append({"key": key, "bbox": bbox, "count": len(rows), "bytes": len(compressed), "decodedBytes": len(payload), "sha256": hashlib.sha256(compressed).hexdigest()})
     manifest = {"schemaVersion": 1, "release": release, "scope": "Fresno County 06019; whole intersecting building footprints", "crs": "EPSG:4326", "heightUnit": "metres", "addressMethod": "unique point-in-footprint; no nearest-address inference",
-                "source": f"https://stac.overturemaps.org/{release}/catalog.json", "attribution": "© OpenStreetMap contributors, Overture Maps Foundation; Microsoft, Esri and upstream contributors. Addresses: OpenAddresses contributors via Overture.", "license": "https://docs.overturemaps.org/attribution/", "buildings": len(buildings), "withHeight": sum(bool(b.get("height") and 0 < b["height"] <= 850) for b in buildings), "withAddress": sum(bool(b.get("addresses")) for b in buildings), "invalidGeometryExcluded": invalid, "addressRecords": len(addresses), "addressAccounting": stats, "tiles": index}
-    manifest["compression"] = "gzip"
-    manifest["addressSources"] = ["us/ca/fresno via OpenAddresses / Overture"]
+                "source": f"https://stac.overturemaps.org/{release}/catalog.json", "attribution": "© OpenStreetMap contributors, Overture Maps Foundation; Microsoft, Esri and upstream contributors. Addresses: OpenAddresses contributors via Overture.", "license": "https://docs.overturemaps.org/attribution/", "buildings": len(buildings), "withHeight": sum(bool(b.get("height") and 0 < b["height"] <= 850) for b in buildings), "withAddress": sum(bool(b.get("addresses")) for b in buildings), "invalidGeometryExcluded": invalid, "addressRecords": len(addresses), "addressAccounting": stats, "tiles": index,
+                "compression": "gzip", "addressSources": ["us/ca/fresno via OpenAddresses / Overture"]}
     (root / "site/data/power-buildings/index.json").write_text(json.dumps(manifest, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
     LOG.info("Built %d county footprints (%d with address) in %d chunks; %s", len(buildings), manifest["withAddress"], len(tiles), stats)
 

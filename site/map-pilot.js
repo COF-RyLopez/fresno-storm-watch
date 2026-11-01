@@ -4,10 +4,10 @@ import {riverChart} from './lib/river-chart.js';
 import {riverValue} from './lib/river-model.js';
 import {POWER_STATES,POWER_COLORS} from './lib/power-model.js';
 import {refreshPilotSnapshot} from './lib/pilot-data.js';
+import {node as el} from './lib/dom.js';
 
 const $=id=>document.getElementById(id),zone='America/Los_Angeles';
 const time=value=>Number.isFinite(typeof value==='number'?value:Date.parse(value))?new Intl.DateTimeFormat('en-US',{timeZone:zone,dateStyle:'short',timeStyle:'short'}).format(new Date(value))+' Pacific':'Unknown';
-const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const link=(text,url)=>{const n=el('a',text);const u=new URL(url,location.href);if(u.protocol!=='https:'&&u.origin!==location.origin)throw Error('Invalid source link');n.href=u.href;n.target='_blank';n.rel='noopener noreferrer';return n;};
 let snapshot,county,assessment,features,adapter,view='watch',engine='maplibre',busy=false,running=false,pendingRoute=false,serial=Promise.resolve(),epoch=0,dataLoadMs=0,currentRun=null,metricsOpen=false;
 const runs=[],seenEngines=new Set(),faults=new Set();

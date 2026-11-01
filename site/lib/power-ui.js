@@ -6,11 +6,9 @@ import {collectPower} from './power-data.js';
 import {formatTime} from './model.js';
 import {powerExercise} from './power-exercise.js';
 import {powerMarkerUrl,renderPowerLegend} from './power-symbols.js';
+import {classButton as button,classLink as link,elClass as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-const el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
-const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.onclick=fn;return b;};
-const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** @param {object} options @returns {object} Fixed county power status, independent of the map extent and selected workspace. */
 export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now(),exerciseData,onLoadFacilities,onOpen=()=>{},onMap=()=>{},onData=()=>{}}={}){

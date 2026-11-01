@@ -4,8 +4,7 @@ import {openPumpCopy} from './pump-copy-data.js';
 import {PUMP_INVENTORY_CONFIG} from '../pump-inventory-config.js';
 import {EOC_CONFIG} from '../eoc-config.js';
 import {pumpReadiness} from './pump-readiness-model.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const button=(text,click)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=click;return n;};
+import {button,el} from './dom.js';
 
 /** Session-only evidence beside a selected network reference. Proximity never becomes electrical connectivity. */
 export function createPowerNearby({timeZone,exercise=false,exerciseData,onMap=()=>{},onLoadFacilities=()=>{},onSignIn=()=>{}}){

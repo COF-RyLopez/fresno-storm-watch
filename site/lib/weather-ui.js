@@ -4,9 +4,9 @@ import {createHrrrWeather} from './hrrr-ui.js';
 import {loadSdk} from './map.js';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
+import {elClass as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-const el=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;n.className=className;return n;};
 const value=n=>Number.isFinite(n)?Math.round(n).toLocaleString('en-US'):'Unknown';
 
 /** @param {object} options @returns {object} One selected time, with explicit per-source availability. */

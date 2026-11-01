@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 import hashlib
-import importlib.util
 import json
 import logging
 from pathlib import Path
+import runpy
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,11 +77,9 @@ def build_groups(features: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], 
 
 def main() -> None:
     """Check exact raw-source hash and identity inventory before generating public shards."""
-    spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts/export-waterways.py')
-    helper = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(helper)
+    helper = runpy.run_path(str(ROOT / 'scripts/export-waterways.py'))
     boundary = ROOT / 'site/data/counties.geojson'
-    _, spatial = helper.county_filter(boundary)
+    _, spatial = helper['county_filter'](boundary)
     manifest = json.loads((ROOT / 'work/waterbodies-county/manifest.json').read_text(encoding='utf-8'))
     if hashlib.sha256(boundary.read_bytes()).hexdigest() != manifest['boundarySha256']:
         raise RuntimeError('County boundary changed; reacquire waterbodies first')

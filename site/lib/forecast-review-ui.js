@@ -3,7 +3,8 @@ import {currentComparisonSnapshot} from './forecast-review-data.js';
 import {areaDifferences,rankDifferences,REVIEW_MAX_AGE} from './forecast-review-model.js';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './dom.js';
+const $=id=>document.getElementById(id);
 const short={nws:'NWS','noaa-hrrr-forecast-48-hour':'HRRR','noaa-gfs-forecast':'GFS'};
 export const differenceText=a=>!a?'Forecast comparisons are being checked.':`Precipitation spread ${a.rain?`${a.rain.rainSpread.toFixed(2)} in at ${a.rain.point.name}`:'unknown'} · wettest-period separation ${a.rainTiming?`${a.rainTiming.rainTiming.hours} h at ${a.rainTiming.point.name}`:'unknown / no positive peak'} · wind peak-period separation ${a.wind?`${a.wind.windTiming.hours} h at ${a.wind.point.name}`:'unknown / no positive peak'}${a.complete?'':' · comparison coverage incomplete'}.`;
 

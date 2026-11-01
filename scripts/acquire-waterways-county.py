@@ -7,10 +7,11 @@ county envelope so boundary-crossing channel segments remain available.
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import json
 import logging
 import math
+import runpy
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,7 +37,7 @@ def present(value: Any) -> bool:
 def network_audit(features: list[dict[str, Any]]) -> dict[str, Any]:
     """Count populated reference attributes; presence is not proof of topology."""
     audit = {field: {'nonNull': 0, 'nonBlankNonZero': 0} for field in NETWORK_FIELDS}
-    directions: dict[str, int] = {}
+    directions = dict(Counter(str(feature['attributes'].get('flowdirection')) for feature in features))
     by_type: dict[str, dict[str, int]] = {}
     for feature in features:
         attrs = feature['attributes']
@@ -44,8 +45,6 @@ def network_audit(features: list[dict[str, Any]]) -> dict[str, Any]:
             value = attrs.get(field)
             audit[field]['nonNull'] += value is not None
             audit[field]['nonBlankNonZero'] += present(value)
-        direction = str(attrs.get('flowdirection'))
-        directions[direction] = directions.get(direction, 0) + 1
         row = by_type.setdefault(str(attrs.get('featuretype')), {'records': 0, 'hydrosequencePopulated': 0,
             'downstreamPointerPopulated': 0, 'unknownMappedDirection': 0})
         row['records'] += 1
@@ -63,32 +62,30 @@ def acquire() -> None:
     from shapely import from_wkb
     from shapely.geometry import box, mapping
 
-    spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
-    source = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(source)
+    source = runpy.run_path(str(ROOT / 'scripts' / 'export-waterways.py'))
     output = ROOT / 'work' / 'waterways-county'
     output.mkdir(parents=True, exist_ok=True)
     cache = output / 'batches'
     cache.mkdir(exist_ok=True)
     boundary_path = ROOT / 'site' / 'data' / 'counties.geojson'
-    county, geometry = source.county_filter(boundary_path)
+    county, geometry = source['county_filter'](boundary_path)
     started = datetime.now(timezone.utc).isoformat()
 
     def request(url: str, params: dict[str, Any]) -> dict[str, Any]:
         """Retry bounded transient transport errors, never bypass TLS checks."""
         try:
-            return source.request_json(url, params, retries=3)
+            return source['request_json'](url, params, retries=3)
         except (HTTPError, URLError, TimeoutError, ConnectionError) as error:
             raise RuntimeError('USGS download incomplete; rerun to resume validated batches.') from error
 
-    metadata = request(source.SOURCE, {})
+    metadata = request(source['SOURCE'], {})
     oid = next(field['name'] for field in metadata['fields'] if field['type'] == 'esriFieldTypeOID')
-    fields = [oid, *source.FIELDS, *NETWORK_FIELDS]
+    fields = [oid, *source['FIELDS'], *NETWORK_FIELDS]
     if not set(fields).issubset({f['name'] for f in metadata['fields']}):
         raise RuntimeError('Publisher schema changed; inspect before acquiring.')
     params = {'where': '1=1', 'geometry': json.dumps(geometry), 'geometryType': 'esriGeometryPolygon',
               'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
-    ids = sorted(request(source.SOURCE + '/query', params).get('objectIds') or [])
+    ids = sorted(request(source['SOURCE'] + '/query', params).get('objectIds') or [])
     if not ids or len(ids) != len(set(ids)) or len(ids) > 500_000:
         raise RuntimeError('Unexpected or duplicated county inventory; do not publish.')
     inventory_hash = hashlib.sha256(json.dumps(ids).encode()).hexdigest()
@@ -99,21 +96,15 @@ def acquire() -> None:
 
     def fetch(batch: list[int]) -> list[dict[str, Any]]:
         """Reuse only an exact validated ID batch from this retrieval inventory."""
-        target = cache / f'{cache_key}-{batch[0]}.json'
-        if target.exists():
-            result = json.loads(target.read_text(encoding='utf-8'))
-        else:
-            result = request(source.SOURCE + '/query', {'objectIds': ','.join(map(str, batch)),
-                'outFields': ','.join(fields), 'outSR': 4326, 'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'})
-        features = result.get('features', [])
-        if (result.get('exceededTransferLimit') or result.get('spatialReference', {}).get('wkid') != 4326
-                or sorted(f['attributes'][oid] for f in features) != batch):
-            raise RuntimeError(f'Incomplete batch {batch[0]}; prior public output retained.')
-        if not target.exists():
-            temp = target.with_suffix('.tmp')
-            temp.write_text(json.dumps(result, separators=(',', ':')), encoding='utf-8')
-            temp.replace(target)
-        return features
+        def check(result: dict[str, Any]) -> list[dict[str, Any]]:
+            features = result.get('features', [])
+            if (result.get('exceededTransferLimit') or result.get('spatialReference', {}).get('wkid') != 4326
+                    or sorted(f['attributes'][oid] for f in features) != batch):
+                raise RuntimeError(f'Incomplete batch {batch[0]}; prior public output retained.')
+            return features
+        return source['cached_json'](cache / f'{cache_key}-{batch[0]}.json', lambda: request(source['SOURCE'] + '/query', {
+            'objectIds': ','.join(map(str, batch)), 'outFields': ','.join(fields), 'outSR': 4326,
+            'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'}), check)
 
     downloaded = []
     with ThreadPoolExecutor(max_workers=3) as pool:
@@ -121,28 +112,26 @@ def acquire() -> None:
             downloaded.extend(batch)
             if index % 15 == 0:
                 LOG.info('Downloaded / reused %s of %s records', len(downloaded), len(ids))
-    if sorted(request(source.SOURCE + '/query', params).get('objectIds') or []) != ids:
+    if sorted(request(source['SOURCE'] + '/query', params).get('objectIds') or []) != ids:
         raise RuntimeError('County source inventory changed during acquisition; review before publishing.')
     raw_hash = hashlib.sha256()
     for feature in downloaded:
         raw_hash.update(json.dumps(feature, sort_keys=True, separators=(',', ':')).encode())
-    rows, rejected = source.convert(downloaded, county, oid)
+    rows, rejected = source['convert'](downloaded, county, oid)
     (output / 'rejected.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
     if rejected or len(rows) != len(ids):
         raise RuntimeError('County validation failed; inspect rejected.json. No geometry is silently discarded.')
     scope = box(*county.bounds)
-    rendered, types = [], {}
+    rendered, types = [], dict(Counter(str(row['featuretype']) for row in rows))
     for row in rows:
         clipped = from_wkb(row['geometry']).intersection(scope)
         if clipped.is_empty or clipped.geom_type not in ('LineString', 'MultiLineString'):
             raise RuntimeError(f"Unexpected clipped geometry: {row['id3dhp']}")
-        kind = str(row['featuretype'])
-        types[kind] = types.get(kind, 0) + 1
         rendered.append({'type': 'Feature', 'id': row['ObjectID'],
             'properties': {'source_id': row['id3dhp'], 'name': ' '.join((row['gnisidlabel'] or '').split()), 'kind': row['featuretype']},
             'geometry': mapping(clipped)})
     audit = network_audit(downloaded)
-    manifest = {'source': source.SOURCE, 'publisher': 'USGS 3D Hydrography Program',
+    manifest = {'source': source['SOURCE'], 'publisher': 'USGS 3D Hydrography Program',
         'retrievalStartedAt': started, 'retrievedAt': datetime.now(timezone.utc).isoformat(), 'crs': 'OGC:CRS84',
         'bounds': list(county.bounds), 'countyGeoid': '06019', 'boundarySha256': hashlib.sha256(boundary_path.read_bytes()).hexdigest(),
         'sourceSha256': raw_hash.hexdigest(), 'inventorySha256': inventory_hash,
@@ -153,7 +142,7 @@ def acquire() -> None:
         'dimensionPolicy': 'Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.',
         'limitations': 'Countywide USGS reference coverage, not a complete verified irrigation-district ditch inventory. Not live flow, gate state, hydraulic routing or predicted inundation.',
         'networkAudit': audit, 'license': 'USGS public-domain federal reference data; Esri background attribution retained separately.'}
-    source.write_snapshot(output, rendered, manifest)
+    source['write_snapshot'](output, rendered, manifest)
     LOG.info('Validated %s county features, zero rejected; %s named / %s unnamed', len(rows), manifest['namedSegments'], manifest['unnamedSegments'])
     print(json.dumps({'accepted': len(rows), 'types': types, 'networkAudit': audit}, indent=2))
 

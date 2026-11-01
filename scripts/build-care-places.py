@@ -8,10 +8,10 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
-import importlib.util
 import json
 import logging
 import re
+import runpy
 from pathlib import Path
 
 from shapely import from_wkb
@@ -28,10 +28,8 @@ def build(root: Path, release: str) -> None:
     county = shape(next(f['geometry'] for f in boundary['features'] if f['properties']['GEOID'] == '06019'))
     cache = root / 'work' / ('care-places-' + release)
     cache.mkdir(parents=True, exist_ok=True)
-    spec = importlib.util.spec_from_file_location('power_buildings', root / 'scripts' / 'build-power-buildings.py')
-    overture = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(overture)
-    records = overture.acquire('place', release, county.bounds, cache, path=cache / 'places.parquet', error='Overture Places stream is unavailable.',
+    overture = runpy.run_path(str(root / 'scripts' / 'build-power-buildings.py'))
+    records = overture['acquire']('place', release, county.bounds, cache, path=cache / 'places.parquet', error='Overture Places stream is unavailable.',
                                columns=('id', 'version', 'geometry', 'names', 'addresses', 'operating_status', 'confidence', 'basic_category', 'categories', 'taxonomy', 'sources'))
     rows, seen = [], set()
     accounting = dict(read=0, outside=0, invalid=0, retained=0)

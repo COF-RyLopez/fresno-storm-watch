@@ -3,9 +3,8 @@ import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';
 import {reportHealth} from './source-health.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
-const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+import {button,el,link} from './dom.js';
+const $=id=>document.getElementById(id);
 
 /** One countywide assessment, independent of map extent and display filters. */
 export function createCareReviews({exercise=false,exerciseNow=Date.now(),onSelect=()=>{},onChange=()=>{},onSummary=()=>{},onRoad=()=>{},onPower=()=>{}}={}){
