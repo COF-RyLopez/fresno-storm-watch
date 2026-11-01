@@ -5,8 +5,8 @@ import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
 import {probabilityRecord,PROBABILITY_MAX_CHECK_AGE} from './precip-probability-model.js';
 import {slideMapping,chooseSlideLayer} from './briefing-follow-model.js';
+import {el} from './dom.js';
 const $=id=>document.getElementById(id);
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const cycleQuery=s=>{const q=new URL(`${s.service}/${s.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(s.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});return q;};
 /** Public live services only. Tour state, source revisions and features stay in page memory. */
 export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onStart=()=>{},onStop=()=>{},onBriefing=()=>{},onManual=()=>{}}){

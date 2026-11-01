@@ -1,7 +1,6 @@
 import {validateBriefingContext,correlateBriefingContext,LOOKUP_KM} from './briefing-context-model.js';
 import {POWER_STATES} from './power-model.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const button=(text,action)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=action;return n;};
+import {button,el} from './dom.js';
 /** @param {object} options @returns {object} Private asset data stays in this controller's memory and is cleared with its source session. */
 export function createBriefingContextView({timeZone,exercise=false,onBriefing,onArea,onRoad,onFacility,onConnect,onMap,onData=()=>{}}){
   const host=document.getElementById('briefing-context-list'),status=document.getElementById('briefing-context-status'),block=document.getElementById('briefing-context-block');

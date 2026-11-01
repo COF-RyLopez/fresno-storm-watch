@@ -1,9 +1,8 @@
 import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js';
 import {createPowerNearby} from './power-nearby-ui.js';
 import {reportHealth} from './source-health.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const link=(text,url)=>{const n=el('a',text);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
-const button=(text,action)=>{const n=el('calcite-button',text);n.scale='s';n.appearance='outline';n.onclick=action;return n;};
+import {button,el,link} from './dom.js';
+const $=id=>document.getElementById(id);
 /** Both network keys use the same symbols as the map, including light mode and the station badge. */
 function renderNetworkKeys(){
   const dark=document.querySelector('#map')?.dataset.basemap!=='light';

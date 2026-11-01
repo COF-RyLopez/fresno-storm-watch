@@ -1,6 +1,6 @@
 import {pumpReadinessSummary,filterPumpSummary} from './pump-summary-model.js';
+import {el} from './dom.js';
 const PAGE_SIZE=3;
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** No private records persist outside this tab. Counts always use the full loaded inventory. */
 export function createPumpSummary({host,timeZone,onInspect=()=>{},exercise=false}){
   let groups=[],connected=false,busy=false,error=null,unmatched=0,readinessState=null,summary=pumpReadinessSummary(),page=0,signature='';

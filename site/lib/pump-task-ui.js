@@ -3,7 +3,7 @@ import {pumpBinding,bindingKey} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
 import {pumpTasks} from './pump-task-model.js';
 import {PUMP_TASK_TYPES,PUMP_TASK_STATUSES} from './pump-task-contract.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './dom.js';
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 export function renderPumpTasks(host,pump,stamp){
   const tasks=pump.tasks;host.append(el('h4','Assigned follow-ups'));

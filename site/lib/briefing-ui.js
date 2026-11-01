@@ -4,10 +4,9 @@ import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
 import {PARTNER_BRIEFING} from './briefing-impact-model.js';
 import {createBriefingImpactView} from './briefing-impact-ui.js';
+import {el} from './dom.js';
 const $=id=>document.getElementById(id);
 const ARCHIVE=PARTNER_BRIEFING;
-/** @param {string} tag @param {string} text @returns {HTMLElement} All source metadata is displayed as text. */
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 /** @param {object} options @returns {object} Public documents only; update markers live in memory and are not team acknowledgements. */
 export function createHanfordBriefing({timeZone,exercise=false,onUpdate=()=>{},onImpacts=()=>{},onMapTour=()=>{},onSlide=()=>{}}){
   let snapshot=null,error=null,busy=false,baseline=null,updated=false,pdfBlob=null,generation=0,initialLinkHandled=false,pages=[],pageIndex=0,pdfController=null;

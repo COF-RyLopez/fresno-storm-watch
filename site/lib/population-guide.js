@@ -2,8 +2,7 @@ import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT} from './populatio
 import {CARE_SOURCES} from './care-model.js';
 import {PIO_GUIDANCE} from './acs-model.js';
 import {ZONE_ACS_METHOD,ZONE_ACS_ERROR,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+import {el,link} from './dom.js';
 export function populationSourceGuide(){
   const box=el('details');box.id='pio-source-guide';box.append(el('summary','Where the zone population information comes from'));
   box.append(el('p','The county Population Map and its Population Density Map are published under the ArcGIS account COF_EOC_PROD (item ownership checked October 28, 2026). This identifies the publishing account; an individual analyst is not identified in those item descriptions.'),link('Original county Population Map',POPULATION_SOURCES.countyMap),el('br'),link('County Population Density Map · source layers',POPULATION_SOURCES.countyWebMap));

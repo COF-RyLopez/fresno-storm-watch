@@ -1,13 +1,11 @@
 import {loadSdk} from './map.js';
 import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js';
 import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js';
+import {node,nodeButton as button,nodeLink as external} from './dom.js';
 
 const KEY='dwrSupplyContext';
 const mapSignature=row=>JSON.stringify([row.site.key,row.points,row.roads.map(r=>[r.row.key,r.row.revision])]);
-const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const distance=meters=>(meters/1000).toFixed(1)+' km';
-const button=(text,action)=>{const b=node('calcite-button',text);b.scale='s';b.appearance='outline';b.addEventListener('click',action);return b;};
-const external=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 const hasOption=(select,value)=>[...select.options].some(o=>o.value===value);
 /** Retain the existing county road palette, geometry and click-through identity. */
 export const roadGraphic=(Graphic,r)=>{const shade=r.layer===2?'#65cad1':'#f6a777';return new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline'},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2?'dash':'solid'}});};

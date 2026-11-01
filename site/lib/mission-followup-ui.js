@@ -6,7 +6,8 @@ import {pioStates} from './pio-model.js';
 import {createPioSourceMonitor} from './pio-source-data.js';
 import {pioReviewCount,pendingPioSourceReviews} from './pio-source-review.js';
 import {reportHealth} from './source-health.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './dom.js';
+const $=id=>document.getElementById(id);
 /** Named-account, read-only incident follow-ups. No persistence and no automatic dispatch. */
 export function createMissionFollowups({openStore=createPrivateStore,sourceMonitor=createPioSourceMonitor()}={}){
   let session=null,store=null,epoch=0,incident='',choices=new Map(),records=[],checked=null,error=null,busy=false,requested=false;

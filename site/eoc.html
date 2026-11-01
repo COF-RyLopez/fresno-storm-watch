@@ -1,11 +1,11 @@
 <!doctype html><html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin"><meta name="robots" content="noindex">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-VPfxvnX6TGjBpZUDsl7kEBVDcqUK02FGrePl5byHadw='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-5q/oR2NRLz0WyTuQdnd480IXFskq7dAESJZ9OqhXZkI='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.arcgis.com;">
 <title>F.R.O.G. · EOC workspace</title><link rel="icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./eoc.css?v=365e39b2ee"><script src="./theme.js?v=8a60674390"></script><script type="importmap">
 {"imports":{
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
-"./eoc.js":"./eoc.js?v=ee9258856e",
+"./eoc.js":"./eoc.js?v=65adb698d3",
 "./lib/acs-data.js":"./lib/acs-data.js?v=8fbcd18fb3",
 "./lib/acs-model.js":"./lib/acs-model.js?v=f7f8d10a79",
 "./lib/afn-data.js":"./lib/afn-data.js?v=2d74660dd5",
@@ -17,6 +17,7 @@
 "./lib/basemap-gallery-ui.js":"./lib/basemap-gallery-ui.js?v=2d2e451f3b",
 "./lib/care-data.js":"./lib/care-data.js?v=80c5b96c44",
 "./lib/care-model.js":"./lib/care-model.js?v=4af36b3643",
+"./lib/dom.js":"./lib/dom.js?v=517ea31a14",
 "./lib/drainage-connections.js":"./lib/drainage-connections.js?v=0e7fae95f2",
 "./lib/drainage-model.js":"./lib/drainage-model.js?v=8eede1bed0",
 "./lib/drainage-nearby-map.js":"./lib/drainage-nearby-map.js?v=7704858ac5",
@@ -44,13 +45,13 @@
 "./lib/pio-model.js":"./lib/pio-model.js?v=904686f830",
 "./lib/pio-source-data.js":"./lib/pio-source-data.js?v=8d25804ecb",
 "./lib/pio-source-review.js":"./lib/pio-source-review.js?v=fe90afa7bc",
-"./lib/pio-ui.js":"./lib/pio-ui.js?v=3bc76f8601",
+"./lib/pio-ui.js":"./lib/pio-ui.js?v=e763960ebb",
 "./lib/pio-zone-context.js":"./lib/pio-zone-context.js?v=a1277ae572",
 "./lib/planning-data.js":"./lib/planning-data.js?v=ad49639585",
 "./lib/planning-model.js":"./lib/planning-model.js?v=87e721d934",
 "./lib/pool.js":"./lib/pool.js?v=20e07862c1",
 "./lib/population-data.js":"./lib/population-data.js?v=967f2139d5",
-"./lib/population-guide.js":"./lib/population-guide.js?v=ba57d269e0",
+"./lib/population-guide.js":"./lib/population-guide.js?v=f2560b748c",
 "./lib/population-model.js":"./lib/population-model.js?v=dd56053986",
 "./lib/population-snapshot-data.js":"./lib/population-snapshot-data.js?v=4d59c17f6f",
 "./lib/population-snapshot-model.js":"./lib/population-snapshot-model.js?v=e1cbf529d7",
@@ -79,7 +80,7 @@
 "./lib/zone-population-product.js":"./lib/zone-population-product.js?v=47199f3b6f"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./eoc.js?v=ee9258856e"></script></head>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./eoc.js?v=65adb698d3"></script></head>
 <body><a class="skip-link" href="#eoc-main">Skip to workspace</a>
 <header class="eoc-top"><a class="brand" href="./?view=watch"><img src="./assets/frog-logo.png" width="64" height="64" alt="F.R.O.G. — Flood Response Operations Group"><div><span class="eyebrow">FRESNO COUNTY · 2026–27</span><h1>EOC workspace</h1></div></a><nav aria-label="Workspace links"><calcite-button href="./?view=watch" appearance="transparent" kind="neutral" icon-start="map" scale="s">Storm map</calcite-button><calcite-button href="./eoc-guide.html" appearance="transparent" kind="neutral" scale="s">Plan &amp; setup</calcite-button><calcite-action id="theme-toggle" text="Light mode" icon="brightness"></calcite-action><calcite-action id="sign-in" text="ArcGIS sign-in setup" icon="user" text-enabled></calcite-action></nav></header>
 <div class="mode-line"><strong id="mode-label">PRIVATE EXERCISE PILOT</strong><span id="identity-status">Sign-in required for operational records</span></div>

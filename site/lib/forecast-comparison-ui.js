@@ -2,10 +2,9 @@ import {comparisonWindow,compareForecasts} from './forecast-comparison-model.js'
 import {fetchComparison,loadComparisonAreas} from './forecast-comparison-data.js';
 import {formatTime} from './model.js';
 import {REVIEW_MAX_AGE as MAX_AGE,pointDifferences} from './forecast-review-model.js';
+import {el,link} from './dom.js';
 const $=id=>document.getElementById(id);
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
 const num=(v,unit)=>Number.isFinite(v)?`${v.toFixed(unit==='in'?2:1)} ${unit}`:'Unknown';
-const link=(label,url)=>{const n=el('a',label);n.href=url;n.target='_blank';n.rel='noopener noreferrer';return n;};
 
 /** Public point forecasts in tab memory only; no private assets or action thresholds. */
 export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocate=()=>{},getSnapshot=()=>null,onPointUpdate=()=>{}}){
