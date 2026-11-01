@@ -2,7 +2,7 @@ import {stormFocus,ageLabel,TIERS,FOCUS,STORM_CONFIG} from './storm-focus-model.
 import {fetchUsgs,parseUsgsIv,usgsReading} from './usgs-gauges.js';
 import {reportHealth} from './source-health.js';
 import {el,elAttrs,link} from './dom.js';
-import {indexNetwork,surgeSources,surgeFrames,SURGE_CONFIG} from './river-network-model.js';
+import {indexNetwork,surgeSources,surgeFrames,timelineRange,SURGE_CONFIG} from './river-network-model.js';
 import {wazeReports,wazeTraffic,WAZE_NOTE,WAZE_MAX_AGE} from './waze-model.js';
 import {CAMERA_FEED,nearbyCameras} from './camera-model.js';
 
@@ -13,7 +13,7 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   const inputs={alerts:[],alertCheck:null,areas:[],drainage:null,signedIn:false,roads:null,usgs:null,watchlist:[]};
   let wazeSnap=null,wazeError=null,catalog=null,wazeOpen=0;
   let focus='all',map=null,signature='',rows=[];
-  let net=null,netError=null,surgeOffset=0,playTimer=null;
+  let net=null,netError=null,surgeOffset=0,playTimer=null,surgeRange=timelineRange([]);
   const clock=new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
   const time=t=>t===null?'source time unavailable':clock.format(t);
   function render(){
@@ -60,10 +60,11 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
     $('storm-surge-time').textContent=surgeOffset===0?'now':`${surgeOffset>0?'+':'−'}${Math.floor(Math.abs(surgeOffset)/60)} h ${Math.abs(surgeOffset)%60} min · ${time(t)}`;
     if(!net){status.textContent=netError?`River network unavailable: ${netError}`:'Loading river network…';return;}
     const sources=surgeSources({areas:inputs.areas,usgs:inputs.usgs,net,now:Date.now()}),frames=surgeFrames(net,sources,t);
+    surgeRange=timelineRange(sources);$('storm-surge-slider').min=surgeRange.min;$('storm-surge-slider').max=surgeRange.max;
     map?.setRiverSurges(frames);
     const moving=frames.filter(f=>f.lines.length).length,mph=(SURGE_CONFIG.speedKmh*0.621371).toFixed(1);
     status.textContent=!sources.length?'No gauge is rising 0.2 ft/h or more and no forecast crest is ahead: nothing to trace. Not an all-clear.'
-      :`${moving} of ${sources.length} pulses on the map at this time (${sources.map(s=>`${s.name}: ${s.label}`).join('; ')}). Assumed ${mph} mph travel, illustrative, not a forecast.`;
+      :`${moving?`${moving} of ${sources.length} pulses moving at this time`:`Nothing moving yet; drag the timeline or press Play`} (${sources.map(s=>`${s.name}: ${s.label}, starts ${time(s.t0)}`).join('; ')}). Assumed ${mph} mph travel, illustrative, not a forecast.`;
   }
   function stopPlay(){clearInterval(playTimer);playTimer=null;$('storm-surge-play').textContent='Play';$('storm-surge-play').setAttribute('icon-start','play');}
   function setOffset(v){surgeOffset=v;$('storm-surge-slider').value=v;drawSurges();}
@@ -72,8 +73,7 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   $('storm-surge-play').addEventListener('click',()=>{
     if(playTimer)return stopPlay();
     $('storm-surge-play').textContent='Pause';$('storm-surge-play').setAttribute('icon-start','pause');
-    const max=SURGE_CONFIG.aheadHours*60,min=-SURGE_CONFIG.backHours*60;
-    playTimer=setInterval(()=>setOffset(surgeOffset+SURGE_CONFIG.stepMinutes>max?min:surgeOffset+SURGE_CONFIG.stepMinutes),500);
+    playTimer=setInterval(()=>setOffset(surgeOffset+SURGE_CONFIG.stepMinutes>surgeRange.max?surgeRange.min:surgeOffset+SURGE_CONFIG.stepMinutes),500);
   });
   void fetch(new URL('../data/river-network.json',import.meta.url)).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();})
     .then(doc=>{net=indexNetwork(doc);map?.setRiverNetwork(net);drawSurges();}).catch(e=>{netError=e.message;drawSurges();});
