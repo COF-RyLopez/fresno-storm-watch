@@ -3,14 +3,14 @@ import {pumpBinding,bindingKey} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
 import {pumpTasks} from './pump-task-model.js';
 import {PUMP_TASK_TYPES,PUMP_TASK_STATUSES} from './pump-task-contract.js';
-import {el} from './dom.js';
+import {el,disclosure} from './dom.js';
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 export function renderPumpTasks(host,pump,stamp){
   const tasks=pump.tasks;host.append(el('h4','Assigned follow-ups'));
   if(!tasks?.current){host.append(el('p','Assignments unavailable / overdue. Recheck county AGOL; no task status is assumed.'));return;}
   if(!tasks.rows.length)host.append(el('p','No saved pump assignment returned. Confirm who will follow up.'));
   for(const t of tasks.rows){host.append(el('p',`${t.type} · ${t.status}${t.overdue?' · OVERDUE':''} · ${t.assigneeType}: ${t.owner} · due ${stamp(t.due)}`));if(t.changed)host.append(el('p','Readiness has a different version from this task’s basis. Review the task and explicitly reopen or update it; completion has not confirmed the new report.'));host.append(el('small',`Saved by ${t.event.author} at ${stamp(t.event.created)} · ${t.event.payload.nextReview}`));}
-  const history=el('details');history.append(el('summary',`Assignment history · ${tasks.history.length} saved version(s)`));for(const e of [...tasks.history].sort((a,b)=>b.created-a.created))history.append(el('p',`${e.payload.pumpTask.type} · ${e.payload.status} · ${e.payload.owner} · due ${stamp(e.payload.due)} · ${e.author}, ${stamp(e.created)} · ${e.payload.evidence}`));host.append(history);
+  const history=disclosure(`Assignment history · ${tasks.history.length} saved version(s)`);for(const e of [...tasks.history].sort((a,b)=>b.created-a.created))history.append(el('p',`${e.payload.pumpTask.type} · ${e.payload.status} · ${e.payload.owner} · due ${stamp(e.payload.due)} · ${e.author}, ${stamp(e.created)} · ${e.payload.evidence}`));host.append(history);
 }
 /** Uses the same private coordination views and append receipts as the EOC workspace. */
 export async function openPumpTask({host,record,current,access,refresh,scope,exercise,onSaved}){

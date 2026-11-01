@@ -1,7 +1,7 @@
 #care-panel { --calcite-panel-space: 1rem; }
 #care-panel p, #care-panel small { overflow-wrap: anywhere; }
 #care-panel h3 { margin-block: 1.5rem .5rem; }
-#care-panel details { margin-block: 1rem; }
+#care-panel calcite-block { margin-block: 1rem; }
 .care-list { display: grid; gap: .35rem; max-height: 15rem; overflow-y: auto; padding: .5rem .2rem; }
 .care-list calcite-button { --calcite-button-text-color: var(--calcite-color-text-1); text-align: start; }
 .care-record { border-top: 1px solid var(--calcite-color-border-2); padding-block: .8rem; }
@@ -13,7 +13,7 @@
 .care-review-row { padding-block: .8rem; border-bottom: 1px solid var(--calcite-color-border-3); }
 .care-review-row p { margin-block: .4rem; }
 #care-area-watch { margin-block: 1.2rem; }
-#care-area-watch details { margin-block: .8rem; }
+#care-area-watch calcite-block { margin-block: .8rem; }
 #care-area-watch small { color: var(--calcite-color-text-2); }
 #care-details h4 { margin-block: 1.3rem .4rem; }
 #care-details a { display: inline-block; margin: .25rem .5rem .25rem 0; }

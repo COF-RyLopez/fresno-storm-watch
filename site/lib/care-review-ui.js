@@ -3,7 +3,7 @@ import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
 import {POWER_STATES} from './power-model.js';
 import {ROAD_MAP} from './roads.js';
 import {reportHealth} from './source-health.js';
-import {button,el,link} from './dom.js';
+import {button,el,link,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 
 /** One countywide assessment, independent of map extent and display filters. */
@@ -37,7 +37,7 @@ export function createCareReviews({exercise=false,exerciseNow=Date.now(),onSelec
   for(const reason of row.reasons)host.append(el('p',reason));
   if(!row.review)host.append(el('p','No current spatial review cue returned; site conditions remain unverified.'));
   host.append(el('p',row.nextReview),el('p','Backup power, fuel/runtime, responsible facility contact and current occupancy are not supplied by these layers. Confirm them with the facility liaison.'));
-  const gaps=el('details');gaps.append(el('summary',`Source coverage checks · ${row.gaps.length} unresolved`));for(const gap of row.gaps)gaps.append(el('p',gap));if(vicinityError)gaps.append(el('p',vicinityError));host.append(gaps);
+  const gaps=disclosure(`Source coverage checks · ${row.gaps.length} unresolved`);for(const gap of row.gaps)gaps.append(el('p',gap));if(vicinityError)gaps.append(el('p',vicinityError));host.append(gaps);
   host.append(el('h4','County evacuation context'),el('p',`County source checked ${time(row.zonesChecked)}${row.zoneCurrent?'':' · failed / overdue'}. Individual issue times are not supplied; confirm current direction with the county.`));
   for(const zone of row.zones)host.append(el('p',`${zone.name} · ${ZONE_STATUS[zone.status]||`Status unverified: ${zone.rawStatus??'not supplied'}`}`));
   if(!row.zones.length)host.append(el('p','No polygon returned at this CDPH point. This does not establish safety or absence of an order.'));
@@ -52,7 +52,7 @@ export function createCareReviews({exercise=false,exerciseNow=Date.now(),onSelec
   for(const r of row.roads.slice(0,10)){const b=button(`${r.record.kind} · ${r.record.name}`,()=>onRoad(r.key));b.disabled=exercise;host.append(b,el('p',`${r.record.status} · ${(r.distanceMeters/1609.344).toFixed(2)} mi${r.verification?' · verification required':''}`),el('p',`Start ${time(r.record.start)} · end ${time(r.record.end)} · updated ${time(r.record.sourceTime)} · edited ${time(r.record.edited)}.`));}
   if(row.roads.length>10)host.append(el('p',`${row.roads.length-10} more nearby road records; open Roads to inspect.`));
   for(const r of row.roadFollowups)host.append(el('p',`${r.record.name}: prior nearby road record changed / disappeared; verify current disposition and access. Last retained status: ${r.record.status}, end ${time(r.record.end)}.`));
-  if(row.backlog.length){const old=el('details');old.append(el('summary',`${row.backlog.length} historical road date contradictions · excluded from current review counts`));for(const r of row.backlog.slice(0,10))old.append(el('p',`${r.record.name} · end ${time(r.record.end)} · still flagged active in source; verify disposition.`));host.append(old);}
+  if(row.backlog.length){const old=disclosure(`${row.backlog.length} historical road date contradictions · excluded from current review counts`);for(const r of row.backlog.slice(0,10))old.append(el('p',`${r.record.name} · end ${time(r.record.end)} · still flagged active in source; verify disposition.`));host.append(old);}
   host.append(link('Official county road map',ROAD_MAP));
  }
  $('care-review-filter').addEventListener('calciteSelectChange',render);

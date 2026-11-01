@@ -1,4 +1,4 @@
-import {elIfText as element} from './dom.js';
+import {elIfText as element,disclosure} from './dom.js';
 /** Public documentary references only. No inferred geometry, routing or private records. */
 export function createIrrigationReference({onLocate=()=>{},fetchImpl=fetch}={}){
   const panel=document.getElementById('irrigation-evidence'),host=document.getElementById('irrigation-reference-content');
@@ -25,10 +25,10 @@ export function createIrrigationReference({onLocate=()=>{},fetchImpl=fetch}={}){
           routes.append(item);
         }
         host.append(routes);
-        const inventory=element('details');inventory.append(element('summary','Available maps, GIS and remaining gaps'));
+        const inventory=disclosure('Available maps, GIS and remaining gaps');
         for(const source of data.sources){const section=element('section');section.append(element('h3',source.title),paragraph(`${source.publisher} · ${source.kind}`),paragraph(source.dateLabel),paragraph(source.status),paragraph(source.coverage),paragraph(source.limitation),link('Open publisher source',source.url));inventory.append(section);}
         host.append(inventory);
-        const request=element('details');request.append(element('summary','District coordination and data request'));
+        const request=disclosure('District coordination and data request');
         request.append(paragraph('Start with FID, Consolidated, Alta and Laguna for Kings/Friant links; coordinate western and border systems with James, Tranquillity, CCID, Firebaugh, Westlands and their river/conveyance operators.'));
         const fields=element('ul');for(const field of data.request.fields)fields.append(element('li',field));request.append(fields,paragraph(data.request.format),paragraph(data.request.review),link('Download request text',new URL('../irrigation-data-request.txt',import.meta.url).href));host.append(request);
         loaded=true;

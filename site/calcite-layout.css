@@ -111,7 +111,6 @@ calcite-panel {
 #map-status[data-failed=true] { background: var(--failure-surface); color: var(--failure-text); }
 .scene-controls { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; z-index: 1; }
 .legend-stack, .reference-legend-body { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-.reference-legend summary { font-size: 13px; cursor: pointer; }
 .reference-legend-body { padding: 12px 0 4px; }
 .map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 12px; }
 .map-legend strong { width: 100%; }
@@ -137,7 +136,6 @@ calcite-panel {
 .environment-times dd { margin: 0; }
 .environment-health, .environment-note, .environment-details { font-size: 12px; line-height: 1.65; margin: 10px 0; color: var(--calcite-color-text-2, #4a4a4a); }
 .environment-health[data-tone=gap] { padding: 10px; color: var(--caution-text); background: var(--caution-surface); border-left: 3px solid var(--watch); }
-.environment-details summary { cursor: pointer; }
 .environment-details p { margin: 10px 0; }
 .reservoir-card { margin-top: 16px; --calcite-block-content-space: 0; }
 .reservoir-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; margin: 16px 0; }
@@ -165,7 +163,6 @@ calcite-panel {
 .camera-quality[data-tone=unknown] { color: var(--caution-text); }
 .camera-times { display: grid; grid-template-columns: 110px 1fr; font-size: 12px; gap: 8px; line-height: 1.5; }
 .camera-times dd { margin: 0; }
-.camera-more summary { cursor: pointer; }
 .camera-more p { margin: 10px 0; }
 .camera-selection { --calcite-block-content-space: 0; }
 #camera-coverage-note { padding: 0 16px; }
@@ -196,7 +193,6 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .release-trend-chart svg:focus-visible { outline: 2px solid var(--app-link); outline-offset: 3px; }
 .release-trend-chart figcaption { font-size: 12px; color: var(--app-muted); line-height: 1.5; margin: 8px 0; }
 .trend-readout { min-height: 54px; padding: 8px 0; font-size: 13px; line-height: 1.5; font-variant-numeric: tabular-nums; }
-.trend-sample-data summary { cursor: pointer; color: var(--app-link); font-size: 13px; }
 .trend-table-scroll { max-height: 260px; overflow: auto; margin-top: 10px; }
 .trend-table-scroll table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .trend-table-scroll td, .trend-table-scroll th { border-bottom: 1px solid var(--app-border); padding: 8px 5px; text-align: left; }
@@ -406,7 +402,6 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 #basemap-gallery-host arcgis-basemap-gallery{display:block;width:100%;}
 #basemap-gallery-status{font-size:12px;line-height:1.5;}
 .briefing-document-details{margin-block:12px;font-size:13px;line-height:1.6;}
-.briefing-document-details>summary{cursor:pointer;color:var(--calcite-color-text-link);margin-block-end:12px;}
 #map-feature-content{min-width:0;overflow-wrap:anywhere;}
 @container(max-width:520px){#scope-note{display:none;}}
 @media(max-width:900px){

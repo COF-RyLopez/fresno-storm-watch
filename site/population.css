@@ -1,5 +1,3 @@
-#population-watch{border-block:1px solid var(--calcite-color-border-3);padding-block:.75rem;margin-block:.75rem}
-#population-watch>summary{font-weight:600;cursor:pointer}
 .population-controls{display:grid;gap:.65rem;margin-block:.75rem}
 .population-controls calcite-label{--calcite-label-margin-bottom:0}
 #population-details,.acs-context{padding:1rem;overflow-wrap:anywhere}
@@ -23,10 +21,9 @@
 .acs-context th,.acs-context td{padding:.65rem .2rem;border-bottom:1px solid var(--calcite-color-border-3);vertical-align:top}
 .acs-context th{text-align:left;font-weight:400;padding-inline-end:.75rem}
 .acs-context td{text-align:right;white-space:nowrap;overflow-wrap:normal;font-weight:600}
-.acs-context details{margin-block:1rem}
-.acs-context summary{cursor:pointer;font-weight:600}
+.acs-context calcite-block{margin-block:1rem}
 .acs-context a,#population-details a{text-underline-offset:.2em}
-.acs-context a:focus-visible,.acs-context summary:focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:3px}
+.acs-context a:focus-visible{outline:2px solid var(--calcite-color-brand);outline-offset:3px}
 .acs-context ul{padding-inline-start:1.2rem}.acs-context li+li{margin-top:.65rem}
 @media(max-width:600px){.acs-context{padding:.75rem}}
 #population-details :is(.zone-acs-allocation,.afn-table){table-layout:fixed;font-size:.75rem}

@@ -15,15 +15,10 @@
 
 .power-nearby-controls {display:flex;align-items:end;flex-wrap:wrap;gap:12px;}
 .power-nearby-controls calcite-label {min-width:150px;margin:0;}
-.power-nearby-row {padding:12px 0;border-top:1px solid var(--app-border);}
-
-.power-nearby-row summary {cursor:pointer;font-weight:600;line-height:1.5;}
-.power-nearby-row summary span {display:block;font-weight:400;font-size:.875rem;color:var(--app-muted);margin-top:4px;}
 .power-buildings {overflow-wrap:anywhere;}
 .power-buildings .power-nearby-controls {margin:12px 0;}
-.power-buildings details p {font-size:.875rem;line-height:1.55;}
-.power-detail-disclosure {border-top:1px solid var(--app-border);margin-top:16px;padding-top:12px;}
-.power-detail-disclosure>summary {cursor:pointer;font-weight:600;line-height:1.5;}
+.power-buildings calcite-block p {font-size:.875rem;line-height:1.55;}
+.power-detail-disclosure {margin-top:16px;}
 #power-detail .power-utility-fields {margin:0 0 16px;}
 #power-detail .power-utility-fields dt {font-size:.8rem;font-weight:500;color:var(--app-muted);margin-top:12px;}
 #power-detail .power-utility-fields dd {margin:2px 0 10px;}

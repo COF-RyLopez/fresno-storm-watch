@@ -4,7 +4,7 @@ import {openDrainageDetail} from './drainage-nearby-data.js';
 import {FMFCD_DETAIL_URL,FMFCD_DETAIL_CATEGORIES} from './drainage-nearby-model.js';
 import {DETAIL_KEYS} from './drainage-nearby-map.js';
 import {drainageConnections,CONNECTION_GROUPS} from './drainage-connections.js';
-import {button,el,link} from './dom.js';
+import {button,el,link,disclosure} from './dom.js';
 
 /** One private supporting-evidence selection. No server copy, export, persistent cache or county-token forwarding. */
 export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},config=EOC_CONFIG,open=openDrainageDetail}={}){
@@ -54,17 +54,16 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
       const edited=result.layers.map(l=>l.sourceEdited).filter(Number.isFinite);
       host.append(el('p',`Latest publisher dataset edit ${edited.length?time(Math.max(...edited)):'not supplied'} · inventory context, not live telemetry.`));
       host.append(el('p',`${counts.mapped} mapped · ${counts.unknown} classification unconfirmed · ${planned?counts.planned+' proposed / design':'proposed / design hidden'}${failures.length?' · incomplete source coverage':''}`));
-      const legend=el('details');legend.className='fmfcd-map-key';legend.append(el('summary','FMFCD map symbols'));
+      const legend=disclosure('FMFCD map symbols');legend.className='fmfcd-map-key';
       for(const [kind,label]of [['pipe','Blue arrowed pipes / blue square inlets'],['master','Red: master-plan references'],['design','Light blue: design references'],['unknown','Dashed / hollow / gray: classification unconfirmed']]){const entry=el('div'),sample=el('span');entry.className='fmfcd-key-row';sample.className='fmfcd-key-swatch '+kind;sample.setAttribute('aria-hidden','true');entry.append(sample,el('span',label));legend.append(entry);}
       legend.append(el('p','Outfalls use FMFCD’s subtype symbols when supplied. Unclassified outfalls stay hollow gray. Light outlines improve dark-map visibility.'));host.append(legend);
       host.append(el('p','Blue arrows follow the mapped line orientation. Connection highlights are unverified candidates, not measured flow or a hydraulic simulation.'));
       if(result.styleError){const note=el('p',result.styleError);note.setAttribute('role','status');host.append(note);}
       for(const [kind,title]of [['pipe','Pipes'],['inlet','Inlets'],['outfall','Outfalls']]){
-        const group=rows.filter(r=>r.kind===kind),block=el('details');block.open=group.some(r=>r.key===selectedKey);block.append(el('summary',`${title} · ${group.length} shown`));
+        const group=rows.filter(r=>r.kind===kind),block=disclosure(`${title} · ${group.length} shown`,group.some(r=>r.key===selectedKey));
         const ordered=selectedKey?[...group.filter(r=>r.key===selectedKey),...group.filter(r=>r.key!==selectedKey)]:group;
         for(const row of ordered.slice(0,20)){
-          const item=el('details');item.className='drainage-nearby-row';item.dataset.detailKey=row.key;item.open=row.key===selectedKey;
-          item.append(el('summary',`${row.name} · ${FMFCD_DETAIL_CATEGORIES[row.category].label}`));
+          const item=disclosure(`${row.name} · ${FMFCD_DETAIL_CATEGORIES[row.category].label}`,row.key===selectedKey);item.className='drainage-nearby-row';item.dataset.detailKey=row.key;
           const connection=trace?.items.find(i=>i.row.key===row.key);item.append(el('p',connection?`${CONNECTION_GROUPS[connection.group].label} · unverified. ${connection.evidence}`:'No shared-vertex path found in the loaded records. This does not prove disconnection.'));
           const dl=el('dl');for(const [name,value]of Object.entries(row.attributes))dl.append(el('dt',name),el('dd',value===null?'Not supplied':String(value)));item.append(dl);
           item.append(el('p','Dimensions / elevation values are shown as published. Units and vertical datum require FMFCD confirmation.'),button('Locate drainage feature',()=>{selectedKey=row.key;onMap();void map?.focusDrainageNearby(row.key);}),link('FMFCD source layer',row.source));block.append(item);
@@ -73,7 +72,7 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
         host.append(block);
       }
       if(!rows.length)host.append(el('p','No features returned in this scope and display filter. This does not establish that drainage infrastructure is absent.'));
-      const dates=el('details');dates.append(el('summary','Publisher dates and source'));
+      const dates=disclosure('Publisher dates and source');
       for(const layer of result.layers)dates.append(el('p',`${layer.spec.name} · publisher dataset edited ${time(layer.sourceEdited)} · retrieved ${time(layer.checked)}${layer.error?' · failed':''}`));
       dates.append(el('p','A live query is not telemetry. Source pipe documentation describes general drawn flow direction; actual hydraulic direction, valves, capacity and connectivity still require FMFCD confirmation.'),link('Pipe direction documentation',FMFCD_DETAIL_URL+'/6'),link('Original FMFCD web map','https://www.arcgis.com/home/item.html?id=10e99caf452e482e9e471571f9969930'),link('FMFCD service',FMFCD_DETAIL_URL));host.append(dates);
     }
@@ -97,7 +96,7 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
       for(const [id,group]of Object.entries(CONNECTION_GROUPS)){
         const summary=el('div'),sample=el('span');sample.className='connection-swatch';sample.style.color=group.color;sample.setAttribute('aria-hidden','true');summary.append(sample,el('span',`${group.label} · ${trace.counts[id]}`));key.append(summary);
       }section.append(key,el('p',`Review is limited to records loaded within ${radius.toLocaleString()} m; pipes can continue beyond this scope. Shared mapped vertices support candidates, not confirmed connections. Upstream/downstream uses FMFCD’s general-flow drawing convention when documented.`));
-      const list=el('details');list.append(el('summary','Candidate records and connection evidence'));
+      const list=disclosure('Candidate records and connection evidence');
       for(const item of trace.items.slice(0,30)){
         const row=el('div');row.className='connection-row';row.append(el('strong',item.row.name),el('span',`${CONNECTION_GROUPS[item.group].label} · unverified · ${FMFCD_DETAIL_CATEGORIES[item.row.category].label}`),el('small',item.evidence),button('Locate candidate '+item.row.name,()=>{selectedKey=item.row.key;onMap();void map?.focusDrainageNearby(item.row.key);render();}));list.append(row);
       }
@@ -105,7 +104,7 @@ export function createDrainageNearby({timeZone,exercise=false,onMap=()=>{},confi
     }
     section.append(el('p',`${trace.error?'Connection counts are unassessed.':trace.unlinked+' other loaded records have no traced shared-vertex path.'} Proposed/design assets never participate. Crossing lines without a shared vertex stay unconnected; missing records do not establish safe capacity or disconnection.`));host.append(section);
   }
-  window.addEventListener('frogDrainageNearbySelect',event=>{if(shownRows().some(r=>r.key===event.detail.key)){selectedKey=event.detail.key;render();host.querySelector('.drainage-nearby-row[open]')?.scrollIntoView({block:'nearest'});}});
+  window.addEventListener('frogDrainageNearbySelect',event=>{if(shownRows().some(r=>r.key===event.detail.key)){selectedKey=event.detail.key;render();host.querySelector('.drainage-nearby-row[expanded]')?.scrollIntoView({block:'nearest'});}});
   window.addEventListener('stormWorkspaceChange',clear);
   window.addEventListener('pagehide',()=>{session=null;clear();});
   setInterval(()=>{if(!document.hidden&&host?.isConnected&&!busy)void load();},300000);

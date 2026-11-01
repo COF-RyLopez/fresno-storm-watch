@@ -2,7 +2,7 @@ import {comparisonWindow,compareForecasts} from './forecast-comparison-model.js'
 import {fetchComparison,loadComparisonAreas} from './forecast-comparison-data.js';
 import {formatTime} from './model.js';
 import {REVIEW_MAX_AGE as MAX_AGE,pointDifferences} from './forecast-review-model.js';
-import {el,link} from './dom.js';
+import {el,link,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 const num=(v,unit)=>Number.isFinite(v)?`${v.toFixed(unit==='in'?2:1)} ${unit}`:'Unknown';
 
@@ -50,7 +50,7 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
       const table=el('table');table.className='comparison-table';table.append(el('caption','Six-hour timing · precipitation / maximum wind'));
       const head=el('tr');for(const title of ['Valid period','Precip.','Wind'])head.append(el('th',title));const thead=el('thead');thead.append(head);table.append(thead);
       const body=el('tbody');for(const p of row.periods){const tr=el('tr');tr.append(el('th',`${time(p.start)} → ${time(p.end)}`),el('td',num(p.rain.value,'in')),el('td',num(p.wind.value,'mph')));body.append(tr);}table.append(body);block.append(table);
-      const details=el('details');details.append(el('summary','Grid, method & source'));
+      const details=disclosure('Grid, method & source');
       details.append(el('p',row.windMeaning),el('p',row.id==='nws'?`Requested point ${snapshot.point.latitude.toFixed(4)}, ${snapshot.point.longitude.toFixed(4)} · NWS grid ${row.grid.office} ${row.grid.x},${row.grid.y}. NWS and numerical models use different grids.`:`Nearest model cell ${row.selected.latitude.toFixed(4)}, ${row.selected.longitude.toFixed(4)}; requested ${snapshot.point.latitude.toFixed(4)}, ${snapshot.point.longitude.toFixed(4)}. Snapshot ${row.snapshotId||'not supplied'}.`));
       details.append(link('Source forecast data',row.source));if(row.catalog)details.append(el('p',row.attribution),link('Dataset metadata & license',row.catalog));block.append(details);host.append(block);
     }

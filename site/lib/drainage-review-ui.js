@@ -8,7 +8,7 @@ import {reportHealth} from './source-health.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE} from './drainage-model.js';
 import {ROAD_MAP} from './roads.js';
 import {POWER_STATES,POWER_LINKS} from './power-model.js';
-import {button,el} from './dom.js';
+import {button,el,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 
 /** Private inventory and correlation results live in this tab only, including during asynchronous joins. */
@@ -84,7 +84,7 @@ export function createDrainageReviews({config,timeZone,exercise=false,exerciseDa
       }
     }
     const gaps=[...new Set(row.pumpPower.flatMap(p=>p.evidence.gaps))],pointOnly=Math.max(...row.pumpPower.map(p=>p.evidence.pointOnly));
-    if(gaps.length){const details=el('details');details.append(el('summary',`Utility coverage checks · ${gaps.length} unresolved`));for(const gap of gaps)details.append(el('p',gap));host.append(details);}
+    if(gaps.length){const details=disclosure(`Utility coverage checks · ${gaps.length} unresolved`);for(const gap of gaps)details.append(el('p',gap));host.append(details);}
     if(pointOnly)host.append(el('p',`${pointOnly} active point-only utility record(s) in the county feed cannot establish pump coverage; no distance buffer is inferred.`));
     host.append(el('p','Review resource lead time against the full rainfall accumulation window with NWS. The window start is not a predicted rain arrival time. Nearby generator or fuel records do not confirm backup supply to a pump.'));
   }

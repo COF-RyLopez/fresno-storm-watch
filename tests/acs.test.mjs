@@ -73,6 +73,6 @@ test('ACS HTTP and cancellation errors do not fabricate a zero result',async()=>
 test('ACS and PIO evidence remains read-only, progressive and distinct from block allocation',async()=>{
   const ui=await readFile(new URL('../site/lib/acs-ui.js',import.meta.url),'utf8'),zone=await readFile(new URL('../site/lib/population-ui.js',import.meta.url),'utf8');
   assert(!/localStorage|sessionStorage|applyEdits|addFeatures|updateFeatures|accessToken|clientSecret/.test(ui));
-  assert(ui.includes('generation!==epoch'));assert(ui.includes('disclosure.open'));assert(ui.includes('Cal OES accessible emergency communications'));
+  assert(ui.includes('generation!==epoch'));assert(ui.includes('onExpand(pio,open=>{if(open)void loadPio('));assert(ui.includes('Cal OES accessible emergency communications'));
   assert(zone.includes('Explore intersecting ACS tracts'));assert(zone.includes('calculateZonePopulation'));
 });

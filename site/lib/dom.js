@@ -16,3 +16,8 @@ export const classButton=(text,fn)=>{const b=elClass('calcite-button',text);b.se
 export const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 export const nodeLink=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 export const classLink=(text,url)=>{const a=elClass('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+
+/** Collapsible calcite-block in place of <details>. Open state is the reflected `expanded` attribute: write it with toggleAttribute and read it with hasAttribute, which stay correct before Calcite hydrates the tag (the property does not). */
+export const disclosure=(heading,expanded=false)=>elAttrs('calcite-block','',{heading,collapsible:true,expanded,scale:'s'});
+/** fn(open) after this block (not a nested one: Calcite events bubble) expands or collapses. Like native `toggle` it also fires for code changes, but only once Calcite has hydrated the block, so code that opens a block runs its own follow-up directly. */
+export const onExpand=(block,fn)=>{for(const type of ['calciteBlockExpand','calciteBlockCollapse'])block.addEventListener(type,e=>e.target===block?fn(type==='calciteBlockExpand'):undefined);};

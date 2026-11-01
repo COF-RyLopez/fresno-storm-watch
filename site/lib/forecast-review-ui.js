@@ -3,7 +3,7 @@ import {currentComparisonSnapshot} from './forecast-review-data.js';
 import {areaDifferences,rankDifferences,REVIEW_MAX_AGE} from './forecast-review-model.js';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
-import {el} from './dom.js';
+import {el,disclosure,onExpand} from './dom.js';
 const $=id=>document.getElementById(id);
 const short={nws:'NWS','noaa-hrrr-forecast-48-hour':'HRRR','noaa-gfs-forecast':'GFS'};
 export const differenceText=a=>!a?'Forecast comparisons are being checked.':`Precipitation spread ${a.rain?`${a.rain.rainSpread.toFixed(2)} in at ${a.rain.point.name}`:'unknown'} · wettest-period separation ${a.rainTiming?`${a.rainTiming.rainTiming.hours} h at ${a.rainTiming.point.name}`:'unknown / no positive peak'} · wind peak-period separation ${a.wind?`${a.wind.windTiming.hours} h at ${a.wind.point.name}`:'unknown / no positive peak'}${a.complete?'':' · comparison coverage incomplete'}.`;
@@ -37,7 +37,7 @@ export function createForecastReview({timeZone,exercise,onData=()=>{},onCompare=
       const selected=metric==='wind'?a.wind:metric==='rainTiming'?a.rainTiming:a.rain;
       card.append(button('Review comparison evidence',()=>onCompare(a.id,selected?.point.id||a.samples[0]?.point.id)),button('Map river watchpoints',()=>onArea(a.id)));
       for(const p of a.samples){
-        const d=el('details'),key=a.id+':'+p.point.id;d.open=expanded.has(key);d.addEventListener('toggle',()=>{if(d.isConnected){if(d.open)expanded.add(key);else expanded.delete(key);}});d.append(el('summary',p.point.name));
+        const key=a.id+':'+p.point.id,d=disclosure(p.point.name,expanded.has(key));onExpand(d,open=>{if(d.isConnected){if(open)expanded.add(key);else expanded.delete(key);}});
         d.append(el('p',`Checked ${time(p.checked)} · same valid window ${time(p.window.start)} → ${time(p.window.end)}`));
         d.append(el('p',`Complete source coverage: precipitation ${p.rainSources}/3; sustained wind ${p.windSources}/3. NWS plus at least one model is required for a difference cue.`));
         for(const r of p.rows)d.append(el('p',r.error?`${short[r.id]}: ${r.error}`:`${short[r.id]} · ${r.id==='nws'?'updated':'initialized'} ${time(r.issued)} · 24h precipitation ${r.summary.rain.value===null?'unknown':r.summary.rain.value.toFixed(2)+' in'} · wind maximum ${r.summary.wind.value===null?'unknown':r.summary.wind.value.toFixed(1)+' mph'}`));

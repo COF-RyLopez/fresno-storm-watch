@@ -1,7 +1,7 @@
 import {loadSdk} from './map.js';
 import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js';
 import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js';
-import {node,nodeButton as button,nodeLink as external} from './dom.js';
+import {node,nodeButton as button,nodeLink as external,disclosure,onExpand} from './dom.js';
 
 const KEY='dwrSupplyContext';
 const mapSignature=row=>JSON.stringify([row.site.key,row.points,row.roads.map(r=>[r.row.key,r.row.revision])]);
@@ -41,7 +41,7 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
     pane.heading=row.site.name+' · supply planning';
     host.append(node('p',row.site.address));inspection(host,row);
     host.append(node('p','Current stock, allocation and pickup arrangements are unverified. Confirm with DWR before committing resources.'));
-    const stock=node('details');stock.append(node('summary','Reported inspection inventory'));
+    const stock=disclosure('Reported inspection inventory');
     const dl=node('dl');for(const [key,label]of [['burlap','Burlap sandbags (each)'],['plasticBags','Plastic sandbags (each)'],['plasticRolls','Plastic (rolls)'],['containers','Containers']])dl.append(node('dt',label),node('dd',inventoryQuantity(row.site.inventory[key])));stock.append(dl);host.append(stock);
     host.append(node('h3','River watchpoint context'));areas(host,row,true);
     host.append(node('h3','Nearby road records'));
@@ -55,7 +55,7 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
       for(const issue of r.row.issues||[])section.append(node('p',issue));
       section.append(node('p',`Source update ${time(r.row.sourceTime||r.row.edited)} · starts ${time(r.row.start)} · ends ${time(r.row.end)}. An elapsed end date is not a reopening confirmation.`),button('Inspect road record',()=>onRoad(r.row.key)));host.append(section);
     }
-    const notes=node('details');notes.append(node('summary','Sources, map key & coverage'));notes.append(node('p',`Supply feed checked ${time(result.supplyChecked)} · ${result.supplyCurrent?'query current; inspection inventory is historical':'feed not current / unavailable'}.`));notes.append(node('p',`County road feed checked ${time(result.roadChecked)} · ${result.roadCurrent?'source query current':'unavailable or overdue; road status needs verification'}${result.roadError?' · '+result.roadError:''}.`));if(result.roadRejected||result.roadConflicts)notes.append(node('p',`${result.roadRejected} road records have unusable geometry / identity; ${result.roadConflicts} conflicting duplicate records excluded. Nearby coverage is incomplete.`));
+    const notes=disclosure('Sources, map key & coverage');notes.append(node('p',`Supply feed checked ${time(result.supplyChecked)} · ${result.supplyCurrent?'query current; inspection inventory is historical':'feed not current / unavailable'}.`));notes.append(node('p',`County road feed checked ${time(result.roadChecked)} · ${result.roadCurrent?'source query current':'unavailable or overdue; road status needs verification'}${result.roadError?' · '+result.roadError:''}.`));if(result.roadRejected||result.roadConflicts)notes.append(node('p',`${result.roadRejected} road records have unusable geometry / identity; ${result.roadConflicts} conflicting duplicate records excluded. Nearby coverage is incomplete.`));
     notes.append(node('p',`Watchpoints within ${result.radiusKm} km of the supply site are linked by proximity only. They are not DWR service areas, resource commitments or verified access. White hollow circle: selected supply; cyan hollow circles: associated watchpoints. No route is drawn. County road symbols retain their source-status meanings.`));
     notes.append(external('DWR flood-fight dashboard','https://www.arcgis.com/apps/dashboards/e2ef0f8a2100424b8fb6ab0e9bd7faf6'));
     if(supplies?.source)notes.append(node('p',''),external('Publisher supply layer',supplies.source));host.append(notes);
@@ -81,7 +81,7 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
   function inspect(key){selected=key;onMap();pane.setAttribute('open','');renderDetail();const row=result.rows.find(r=>r.site.key===key);if(row){$('dwr-supply-map-status').textContent='White ring: supply · cyan rings: watchpoints · orange: road block / closure records · dashed teal: detours. Road dates and status require review; no route is drawn.';void draw(row,true);}}
   function render(){
     result=calculate();const host=$('dwr-supply-cards');
-    $('dwr-supply-summary').textContent=exercise?'DWR supply planning · live inventory disabled':`DWR supply planning · ${result.loaded&&!result.supplyError?result.total+' sites · historical inspections':result.supplyError?'source unavailable':'checking source'}`;
+    root.setAttribute('heading',exercise?'DWR supply planning · live inventory disabled':`DWR supply planning · ${result.loaded&&!result.supplyError?result.total+' sites · historical inspections':result.supplyError?'source unavailable':'checking source'}`);
     $('dwr-supply-health').textContent=exercise?'Open the live workspace for DWR resources.':result.supplyError?'Supply inventory unavailable · '+result.supplyError:!result.loaded?'Loading public DWR inventory…':`${result.rows.length} of ${result.total} sites in selected context · ${result.supplyCurrent?'feed query current':'feed check overdue'} · stock availability unverified.`;
     const signature=JSON.stringify([result.rows,result.planningReady,result.roadCurrent,result.loaded,result.supplyError,result.radiusKm]);
     if(signature!==cardSignature){cardSignature=signature;host.replaceChildren();
@@ -98,7 +98,7 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
     try{await onLoad(options);}catch(error){supplies={loaded:true,rows:[],checked:null,error:error.message||'Inventory unavailable'};render();}
     finally{busy=false;refresh.loading=false;refresh.disabled=false;}
   }
-  root.addEventListener('toggle',()=>{if(root.open&&!requested)request();});
+  onExpand(root,open=>{if(open&&!requested)request();});
   $('dwr-supply-refresh').addEventListener('click',()=>void request({refresh:true}));
   $('dwr-supply-source').addEventListener('click',onSource);
   for(const km of SUPPLY_CONTEXT_KM){const option=node('calcite-option',km+' km');option.value=String(km);option.selected=km===25;$('dwr-supply-radius').append(option);}
@@ -107,6 +107,6 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
   pane.addEventListener('stormEvidenceClose',()=>{selected=null;drawGeneration++;drawSignature='';layer?.removeAll();});
   setInterval(()=>{if(requested&&!document.hidden)render();},30000);
   render();
-  const deepLink=new URLSearchParams(location.search).get('dwrSupplies')==='1';if(deepLink)root.open=true;
-  return {setMap(map){controller=map;if(!exercise&&(root.open||new URLSearchParams(location.search).get('view')==='watch'||!new URLSearchParams(location.search).has('view')))request();},setSupplies(data){supplies=data;render();},setPlanning(data){planning=data;const signature=JSON.stringify(data.rows.map(r=>({id:r.area.id,name:r.area.name})));if(signature!==optionsSignature){optionsSignature=signature;fillAreaSelect($('dwr-supply-area'),data.rows);}render();},setRoads(data){roads=data;render();},selectArea(id){if(selectAreaOption($('dwr-supply-area'),id))render();}};
+  const deepLink=new URLSearchParams(location.search).get('dwrSupplies')==='1';if(deepLink){root.setAttribute('expanded','');setTimeout(()=>{if(!requested)request();});} // the block may not be hydrated yet, so no calciteBlockExpand: request as the native toggle event did
+  return {setMap(map){controller=map;if(!exercise&&(root.hasAttribute('expanded')||new URLSearchParams(location.search).get('view')==='watch'||!new URLSearchParams(location.search).has('view')))request();},setSupplies(data){supplies=data;render();},setPlanning(data){planning=data;const signature=JSON.stringify(data.rows.map(r=>({id:r.area.id,name:r.area.name})));if(signature!==optionsSignature){optionsSignature=signature;fillAreaSelect($('dwr-supply-area'),data.rows);}render();},setRoads(data){roads=data;render();},selectArea(id){if(selectAreaOption($('dwr-supply-area'),id))render();}};
 }

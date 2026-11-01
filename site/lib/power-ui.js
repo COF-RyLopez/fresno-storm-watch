@@ -6,7 +6,7 @@ import {collectPower} from './power-data.js';
 import {formatTime} from './model.js';
 import {powerExercise} from './power-exercise.js';
 import {powerMarkerUrl,renderPowerLegend} from './power-symbols.js';
-import {classButton as button,classLink as link,elClass as el} from './dom.js';
+import {classButton as button,classLink as link,elClass as el,disclosure,onExpand} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
@@ -41,7 +41,7 @@ export function createPowerWatch({timeZone,exercise=false,exerciseNow=Date.now()
     const issues=powerRowIssues(row),health=powerHealth(feed),urgent=issues.filter(s=>/passed|ended|24 hours|future|conflict|Unrecognized|differ/i.test(s));
     for(const issue of [...new Set([health,...urgent].filter(Boolean))])root.append(el('p',issue,'power-gap'));
     const actions=el('div','','power-nearby-controls');actions.append(link(`Open ${row.utility} outage map`,row.official),button('Locate outage',()=>{onMap();map?.focusPower(row.key);}));root.append(actions,buildingHost);
-    const fold=(label,content)=>{const details=el('details');details.className='power-detail-disclosure';details.open=disclosures.has(label);details.append(el('summary',label),content);details.addEventListener('toggle',()=>{if(details.isConnected){if(details.open)disclosures.add(label);else disclosures.delete(label);}});root.append(details);return details;};
+    const fold=(label,content)=>{const details=disclosure(label,disclosures.has(label));details.className='power-detail-disclosure';details.append(content);onExpand(details,open=>{if(details.isConnected){if(open)disclosures.add(label);else disclosures.delete(label);}});root.append(details);return details;};
     const networkHost=el('div');fold('Circuits and nearby county places',networkHost);network.select(row,networkHost);
     const checks=el('div');checks.append(el('p',`Source retrieved ${time(Date.parse(feed.lastSuccess))} · record ${row.key}`));for(const issue of issues)checks.append(el('p',issue));checks.append(el('p','Customer counts belong to this utility record and may span counties. Free-text times are preserved as published; no time zone is assumed. Utility areas and estimates are approximate. Confirm critical-site power with the utility and site owner.'));fold('Source checks',checks);
     $('power-dialog').setAttribute('heading',`${row.utility} · ${row.name}`);$('power-dialog').setAttribute('open','');if(locate)onMap();const ready=locate?map?.focusPower(row.key):undefined;buildings.select(row,buildingHost,{ready,locate});

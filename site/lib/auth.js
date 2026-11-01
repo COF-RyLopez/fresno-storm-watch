@@ -2,7 +2,7 @@ import { loadSdk } from './map.js';
 /** Shared PKCE sign-in. Private controllers clear memory before sign-out or expiry. */
 export async function setupAuth(config,exercise,onChange=()=>{}) {
   const button=document.querySelector('#sign-in'),status=document.querySelector('#identity-status');
-  const label=text=>button.setAttribute('text',text),help=()=>document.querySelector('#signin-help')?.setAttribute('open','');
+  const label=text=>button.setAttribute('text',text),help=()=>{const h=document.querySelector('#signin-help');h?.setAttribute(h.localName==='calcite-block'?'expanded':'open','');};
   if(!config.clientId||exercise){label(exercise?'Exercise only':'ArcGIS sign-in setup');button.addEventListener('click',help);onChange(null);return {check:async()=>false,invalidate:()=>onChange(null)};}
   button.setAttribute('disabled','');
   let portal=null,identity=null,checking=null,generation=0;

@@ -4,7 +4,7 @@ import {openPumpCopy} from './pump-copy-data.js';
 import {PUMP_INVENTORY_CONFIG} from '../pump-inventory-config.js';
 import {EOC_CONFIG} from '../eoc-config.js';
 import {pumpReadiness} from './pump-readiness-model.js';
-import {button,el} from './dom.js';
+import {button,el,disclosure,onExpand} from './dom.js';
 
 /** Session-only evidence beside a selected network reference. Proximity never becomes electrical connectivity. */
 export function createPowerNearby({timeZone,exercise=false,exerciseData,onMap=()=>{},onLoadFacilities=()=>{},onSignIn=()=>{}}){
@@ -48,8 +48,8 @@ export function createPowerNearby({timeZone,exercise=false,exerciseData,onMap=()
         if(all.length>shown.length)results.append(el('p',`Nearest ${shown.length} shown. Narrow the distance to inspect more closely.`));
         if(connected&&!all.length)results.append(el('p','No nearby matches in the loaded inventory. Coverage may be incomplete.'));
         for(const row of shown){
-          const item=el('details');item.className='power-nearby-row';item.open=expanded.has(row.key);item.addEventListener('toggle',()=>{if(current()&&item.isConnected){if(item.open)expanded.add(row.key);else expanded.delete(row.key);}});
-          const distance=row.distanceMeters<160.9344?'<0.1 mi':(row.distanceMeters/1609.344).toFixed(1)+' mi';const summary=el('summary',row.name+' · '+distance),quick=el('span',row.category==='pump'?pumpLabel(row.pump):(row.assessment.label||'Backup power: '+(row.site.backup||'Unknown — verify')));summary.append(quick);item.append(summary,el('p',distance+' from selected reference · electrical connection unverified'));
+          const distance=row.distanceMeters<160.9344?'<0.1 mi':(row.distanceMeters/1609.344).toFixed(1)+' mi';const item=disclosure(row.name+' · '+distance,expanded.has(row.key));item.className='power-nearby-row';item.setAttribute('description',row.category==='pump'?pumpLabel(row.pump):(row.assessment.label||'Backup power: '+(row.site.backup||'Unknown — verify')));onExpand(item,open=>{if(current()&&item.isConnected){if(open)expanded.add(row.key);else expanded.delete(row.key);}});
+          item.append(el('p',distance+' from selected reference · electrical connection unverified'));
           if(row.category==='facility'){
             const s=row.site;item.append(el('p',`${s.kind||'County asset'} · Owner: ${s.owner||'Not supplied'}`),el('p',`Backup power: ${s.backup||'Unknown — verify'}${s.runtime!==null&&s.runtime!==undefined?' · inventory runtime '+s.runtime+' hours':''}`),el('p',row.assessment.label||'Site conditions require verification'),el('p',`Source: ${s.sourceTitle||'Loaded county inventory'} · record updated ${stamp(s.updated)} · retrieved ${stamp(s.fetched)}${s.sourceError?' · source needs verification':''}.`));
           }else{
