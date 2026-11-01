@@ -1,16 +1,11 @@
-import {readArcgis} from './acs-data.js';
+import {readArcgis,readIdBatches} from './acs-data.js';
 import {POPULATION_SOURCES,normalizePopulationFeature,summarizePopulation} from './population-model.js';
 
 /** objectId inventory → 100-ID WGS84 batches → same inventory re-read; any gap or change is an error. */
 export async function readAllByIds(read,filter,{idField,outFields,limit,errors:[inventoryError,batchError,changedError],row}){
   const inventory=await read('/query',filter),ids=inventory.objectIds===null?[]:inventory.objectIds;
   if(!Array.isArray(ids)||ids.length>limit||inventory.exceededTransferLimit||new Set(ids).size!==ids.length||ids.some(i=>!Number.isSafeInteger(i)))throw Error(inventoryError);
-  const rows=[];
-  for(let i=0;i<ids.length;i+=100){
-    const batch=ids.slice(i,i+100),d=await read('/query',{objectIds:batch.join(','),outFields,returnGeometry:true,outSR:4326});
-    if((d.spatialReference?.latestWkid||d.spatialReference?.wkid)!==4326||d.exceededTransferLimit||!Array.isArray(d.features)||d.features.length!==batch.length||new Set(d.features.map(f=>f.attributes?.[idField])).size!==batch.length||d.features.some(f=>!batch.includes(f.attributes?.[idField])))throw Error(batchError);
-    for(const f of d.features)rows.push(row(f));
-  }
+  const rows=await readIdBatches(ids,100,idField,batch=>read('/query',{objectIds:batch.join(','),outFields,returnGeometry:true,outSR:4326}),batchError,row);
   const after=await read('/query',filter),afterIds=after.objectIds===null?[]:after.objectIds;
   if(!Array.isArray(afterIds)||after.exceededTransferLimit||JSON.stringify([...afterIds].sort((a,b)=>a-b))!==JSON.stringify([...ids].sort((a,b)=>a-b)))throw Error(changedError);
   return {ids,rows};

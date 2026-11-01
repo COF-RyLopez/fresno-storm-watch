@@ -7,7 +7,6 @@ This display-only simplification does not establish connectivity or road access.
 from __future__ import annotations
 
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -18,7 +17,6 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 STREETS = 'https://gisprod10.co.fresno.ca.us/server/rest/services/PublicWorks/PublicWorks_BaseLayers/MapServer/4'
-USGS = 'https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50'
 VERSION = 'v0.31.0'
 FIELDS = ['OBJECTID', 'LABEL', 'PREFIX', 'NAME', 'TYPE', 'SUFFIX', 'ALIAS', 'ALIAS_XR', 'ALIAS_HWY', 'HWY_NUM', 'HWY_NUM2']
 LOG = logging.getLogger('map-search-build')
@@ -69,14 +67,7 @@ def main() -> None:
             'objectIds': ','.join(map(str, chunk)), 'outFields': ','.join(FIELDS),
             'returnGeometry': 'true', 'outSR': 4326, 'returnZ': 'false', 'returnM': 'false'}), check)
 
-    streets = []
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        for index, features in enumerate(pool.map(batch, [ids[i:i + 500] for i in range(0, len(ids), 500)]), 1):
-            streets.extend(features)
-            if index % 20 == 0:
-                LOG.info('County street records read=%s expected=%s', len(streets), len(ids))
-    if sorted(request(parameters).get('objectIds', [])) != ids:
-        raise RuntimeError('County street inventory changed during acquisition')
+    streets = helper['read_inventory'](ids, batch, lambda: request(parameters), 'County street inventory changed during acquisition', workers=4)
     to_local = Transformer.from_crs(4326, 26944, always_xy=True).transform
     to_geo = Transformer.from_crs(26944, 4326, always_xy=True).transform
     groups: dict[tuple[str, str], dict[str, Any]] = {}
@@ -149,7 +140,7 @@ def main() -> None:
     last_retrieved = datetime.fromtimestamp(max(retrieval_times), timezone.utc).isoformat()
     result = {'version': VERSION, 'countyGeoid': '06019', 'generatedAt': datetime.now(timezone.utc).isoformat(),
               'sources': {'street': {'url': STREETS, 'publisher': 'Fresno County Public Works and Planning', 'retrievedAt': first_retrieved, 'retrievalCompletedAt': last_retrieved, 'inventoryCheckedAt': started.isoformat()},
-                          'waterway': {'url': USGS, 'publisher': 'USGS 3D Hydrography Program', 'retrievedAt': water_manifest['retrievedAt']}},
+                          'waterway': {'url': helper['SOURCE'], 'publisher': 'USGS 3D Hydrography Program', 'retrievedAt': water_manifest['retrievedAt']}},
               'geometryNote': 'Public reference snapshot, clipped to Fresno; 5 m display simplification in EPSG:26944, returned as EPSG:4326. Grouped names do not establish connection, travel direction, road access, current conditions or routing.',
               'entries': entries}
     (output / 'index.json').write_text(json.dumps(result, separators=(',', ':'), ensure_ascii=False) + '\n', encoding='utf-8')

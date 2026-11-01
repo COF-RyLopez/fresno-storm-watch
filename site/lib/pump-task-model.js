@@ -1,6 +1,7 @@
 import {heads} from './eoc-model.js';
 import {pumpBinding,bindingKey} from './pump-readiness-contract.js';
-export const tasksCurrent=(s,now=Date.now())=>!!s?.connected&&!s.error&&Number.isFinite(s.checked)&&s.checked<=now+60000&&now-s.checked<=120000;
+import {fresh} from './source-health-model.js';
+const tasksCurrent=(s,now=Date.now())=>!!s?.connected&&!s.error&&fresh(s.checked,120000,now,60000);
 /** One explicit task per pump and type; concurrent heads never become confirmed completion. */
 export function pumpTasks(record,state,readinessEvent=null,now=Date.now()){
   if(!tasksCurrent(state,now))return {current:false,history:[],rows:[]};

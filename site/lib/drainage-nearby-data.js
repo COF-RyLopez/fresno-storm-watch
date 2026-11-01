@@ -1,3 +1,4 @@
+import {readIdBatches,editedAt} from './acs-data.js';
 import {authorizeDrainage} from './drainage-model.js';
 import {FMFCD_DETAIL_URL,FMFCD_DETAIL_LIMIT,FMFCD_DETAIL_LAYERS,drainageDetailScope,drainageDetailSchema,drainageDetailRecord} from './drainage-nearby-model.js';
 import {FMFCD_WEBMAP_DATA,fmfcdRendererOverrides} from './fmfcd-symbology.js';
@@ -10,13 +11,8 @@ export async function readDrainageDetail(spec,scope,call,override=null){
   if(ids===null){const n=await call('/'+spec.id+'/query',{...scope,returnCountOnly:true});if(n.count!==0||n.exceededTransferLimit)throw Error('Empty inventory could not be verified.');ids=[];}
   if(!Array.isArray(ids)||inventory.exceededTransferLimit||new Set(ids).size!==ids.length||ids.some(id=>!Number.isSafeInteger(id)||id<0))throw Error('Publisher inventory is incomplete or duplicated.');
   if(ids.length>FMFCD_DETAIL_LIMIT)throw Error('Too many nearby records. Choose a smaller distance.');
-  const rows=[];
-  for(let i=0;i<ids.length;i+=100){
-    const batch=ids.slice(i,i+100),data=await call('/'+spec.id+'/query',{objectIds:batch.join(','),outFields:[oid,...spec.fields].join(','),returnGeometry:true,outSR:4326,returnZ:false,returnM:false});
-    if((data.spatialReference?.latestWkid||data.spatialReference?.wkid)!==4326||data.exceededTransferLimit||!Array.isArray(data.features)||data.features.length!==batch.length||new Set(data.features.map(f=>f.attributes?.[oid])).size!==batch.length||data.features.some(f=>!batch.includes(f.attributes?.[oid])))throw Error('Nearby records changed, were truncated or returned an unexpected CRS. Refresh required.');
-    rows.push(...data.features.map(f=>drainageDetailRecord(spec,f,oid)));
-  }
-  return {spec,rows,renderer:override||meta.drawingInfo?.renderer||null,directionDocumented:spec.kind==='pipe'&&/drawn in the general direction of flow/i.test(meta.description||''),sourceEdited:meta.editingInfo?.dataLastEditDate??meta.editingInfo?.lastEditDate??null,checked:Date.now(),error:null};
+  const rows=await readIdBatches(ids,100,oid,batch=>call('/'+spec.id+'/query',{objectIds:batch.join(','),outFields:[oid,...spec.fields].join(','),returnGeometry:true,outSR:4326,returnZ:false,returnM:false}),'Nearby records changed, were truncated or returned an unexpected CRS. Refresh required.',f=>drainageDetailRecord(spec,f,oid));
+  return {spec,rows,renderer:override||meta.drawingInfo?.renderer||null,directionDocumented:spec.kind==='pipe'&&/drawn in the general direction of flow/i.test(meta.description||''),sourceEdited:editedAt(meta),checked:Date.now(),error:null};
 }
 
 /** Public FMFCD reads inside the private UI. County credentials are checked locally and NEVER sent to FMFCD. */

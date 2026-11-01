@@ -35,13 +35,15 @@ function intervals(rows){
   return ordered;
 }
 
+export const modelVariables=m=>['precipitation_surface','wind_u_10m','wind_v_10m',...(m.gust?['wind_gust_surface']:[])];
+export const variableUnit=k=>k==='precipitation_surface'?'kg m-2 s-1':'m s-1';
 /** Decode a model run; precipitation is the average rate since the previous step. */
 export function modelSeries(result,model,point,now=Date.now()){
   if(result?.dataProduct?.id!==model.id||result?.point?.requested?.latitude!==point.latitude||result?.point?.requested?.longitude!==point.longitude)throw Error('Model response identity does not match the requested point.');
   const selected=result.point.selected;
   if(!Number.isFinite(selected?.latitude)||!Number.isFinite(selected?.longitude)||Math.abs(selected.latitude-point.latitude)>0.5||Math.abs(selected.longitude-point.longitude)>0.5)throw Error('Selected model grid cell is missing or too distant.');
-  const keys=['precipitation_surface','wind_u_10m','wind_v_10m',...(model.gust?['wind_gust_surface']:[])];
-  for(const k of keys)if(result.variables?.[k]?.unit!==(k==='precipitation_surface'?'kg m-2 s-1':'m s-1'))throw Error('Model variable units changed: '+k);
+  const keys=modelVariables(model);
+  for(const k of keys)if(result.variables?.[k]?.unit!==variableUnit(k))throw Error('Model variable units changed: '+k);
   if(result.forecasts?.length!==1)throw Error('Expected one resolved model run.');
   const f=result.forecasts[0],issued=stamp(f.initTime),times=f.validTimes?.map(stamp),leads=f.leadTimeHours;
   if(!Number.isFinite(issued)||issued>now+300000||now-issued>18*HOUR)throw Error('Model run is old or in the future.');

@@ -12,7 +12,6 @@ import logging
 import math
 import runpy
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -106,14 +105,8 @@ def acquire() -> None:
             'objectIds': ','.join(map(str, batch)), 'outFields': ','.join(fields), 'outSR': 4326,
             'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'}), check)
 
-    downloaded = []
-    with ThreadPoolExecutor(max_workers=3) as pool:
-        for index, batch in enumerate(pool.map(fetch, [ids[i:i+BATCH_SIZE] for i in range(0, len(ids), BATCH_SIZE)]), 1):
-            downloaded.extend(batch)
-            if index % 15 == 0:
-                LOG.info('Downloaded / reused %s of %s records', len(downloaded), len(ids))
-    if sorted(request(source['SOURCE'] + '/query', params).get('objectIds') or []) != ids:
-        raise RuntimeError('County source inventory changed during acquisition; review before publishing.')
+    downloaded = source['read_inventory'](ids, fetch, lambda: request(source['SOURCE'] + '/query', params),
+                                          'County source inventory changed during acquisition; review before publishing.', BATCH_SIZE)
     raw_hash = hashlib.sha256()
     for feature in downloaded:
         raw_hash.update(json.dumps(feature, sort_keys=True, separators=(',', ':')).encode())

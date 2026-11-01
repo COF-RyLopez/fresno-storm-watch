@@ -1,5 +1,6 @@
 import {prepareWatchGeometry,nearbyWatchpoints} from './watch-proximity.js';
 import {FACILITY_MAX_AGE} from './facility-model.js';
+import {fresh} from './source-health-model.js';
 const AREA_IDS=['san-joaquin-lower','san-joaquin-upper','little-dry','james-bypass','kings-upper','kings-lower'];
 export const LOOKUP_KM=Object.freeze([1,5,10]);
 export const pacificDate=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(t);
@@ -26,13 +27,13 @@ function prepare(rows,geometry){
 export function correlateBriefingContext({associations,briefing={rows:[]},planning=null,roads=null,facilities=null,radiusKm=5,history=false},now=Date.now()){
   if(!LOOKUP_KM.includes(radiusKm))throw new Error('Unsupported nearby-record lookup distance.');
   const roadPrepared=prepare(roads?.snapshot?.rows||[],r=>r.geometry),facilityPrepared=prepare(facilities?.connected?facilities.sites:[],r=>r.site.geometry);
-  const checked=roads?.snapshot?.checked,roadCurrent=!!checked&&!roads?.error&&now-checked<=420000&&checked<=now+120000;
+  const checked=roads?.snapshot?.checked,roadCurrent=!!checked&&!roads?.error&&fresh(checked,420000,now);
   const groups=(planning?.rows||[]).map(r=>{
     const points=planning.points.filter(p=>r.area.rainPoints.includes(p.id));
     const impacts=(briefing.rows||[]).flatMap(i=>{const a=associations?.associations.find(a=>a.impact===i.id&&a.sha256===i.document.sha256&&a.areas.includes(r.area.id));return a?[{...i,association:a}]:[];});
     const current=impacts.filter(i=>i.document.kind==='latest'&&i.period!=='past'&&!i.qualification);
     const nearRoads=roadPrepared.result.flatMap(({row,prepared})=>{const at=nearbyWatchpoints(prepared,points,radiusKm*1000);if(!at||at.meters>radiusKm*1000||row.active==='no'&&!history)return [];return [{row,...at,timing:briefingDateRelation(row.start,row.end,current),verification:!roadCurrent||row.active!=='yes'||row.issues.length>0,history:row.active==='no'}];}).sort((a,b)=>a.meters-b.meters||a.row.key.localeCompare(b.row.key));
-    const nearFacilities=facilityPrepared.result.flatMap(({row,prepared})=>{const at=nearbyWatchpoints(prepared,points,radiusKm*1000);if(!at||at.meters>radiusKm*1000)return [];const siteCurrent=!row.site.sourceError&&Number.isFinite(row.site.fetched)&&now-row.site.fetched<=FACILITY_MAX_AGE&&row.site.fetched<=now+60000;return [{row,...at,siteCurrent,power:row.active.map(m=>({row:m,timing:briefingDateRelation(m.start?.time,m.end?.time,current)}))}];}).sort((a,b)=>Number(b.power.length>0)-Number(a.power.length>0)||a.meters-b.meters||a.row.site.key.localeCompare(b.row.site.key));
+    const nearFacilities=facilityPrepared.result.flatMap(({row,prepared})=>{const at=nearbyWatchpoints(prepared,points,radiusKm*1000);if(!at||at.meters>radiusKm*1000)return [];const siteCurrent=!row.site.sourceError&&fresh(row.site.fetched,FACILITY_MAX_AGE,now,60000);return [{row,...at,siteCurrent,power:row.active.map(m=>({row:m,timing:briefingDateRelation(m.start?.time,m.end?.time,current)}))}];}).sort((a,b)=>Number(b.power.length>0)-Number(a.power.length>0)||a.meters-b.meters||a.row.site.key.localeCompare(b.row.site.key));
     const riverReview=!!r.riverReview,contextReview=current.length>0&&(riverReview||nearRoads.some(i=>!i.history)||nearFacilities.some(i=>i.power.length||i.row.followup));
     return {id:r.area.id,name:r.area.name,river:{status:r.status,gaps:r.gaps||[],threshold:!!r.threshold},points,impacts,current,roads:nearRoads,facilities:nearFacilities,riverReview,contextReview,roadCurrent};
   });

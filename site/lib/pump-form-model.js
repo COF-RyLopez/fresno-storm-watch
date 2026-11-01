@@ -1,5 +1,6 @@
 import {pumpBinding,bindingKey} from './pump-readiness-contract.js';
 import {DRAINAGE_MAX_AGE} from './drainage-model.js';
+import {fresh} from './source-health-model.js';
 /** Source identity and geometry stay in memory, never in share links or browser persistence. */
 export function pumpFormChoices(rows,query=''){
   const seen=new Map(),text=String(query).trim().toLocaleLowerCase('en-US');
@@ -12,7 +13,7 @@ export function pumpFormChoices(rows,query=''){
   return [...seen.values()].filter(r=>`${r.name} ${r.code}`.toLocaleLowerCase('en-US').includes(text)).sort((a,b)=>a.name.localeCompare(b.name)||a.key.localeCompare(b.key));
 }
 export function pumpFormCurrent(record,inventory,now=Date.now()){
-  if(!record||!inventory?.connected||inventory.error||!Number.isFinite(inventory.checked)||inventory.checked>now+60000||now-inventory.checked>DRAINAGE_MAX_AGE)return false;
+  if(!record||!inventory?.connected||inventory.error||!fresh(inventory.checked,DRAINAGE_MAX_AGE,now,60000))return false;
   if(inventory.maxSourceAgeMs!==undefined&&(!Number.isFinite(inventory.sourceChecked)||inventory.sourceChecked>now+60000||!Number.isFinite(inventory.maxSourceAgeMs)||inventory.maxSourceAgeMs<=0||now-inventory.sourceChecked>inventory.maxSourceAgeMs))return false;
   const key=bindingKey(pumpBinding(record));
   return inventory.rows.some(r=>r.kind==='pump'&&r.category==='existing'&&bindingKey(pumpBinding(r))===key);

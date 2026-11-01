@@ -12,7 +12,6 @@ import logging
 import math
 import runpy
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -75,8 +74,7 @@ def acquire() -> None:
 
     def request(params: dict[str, Any], url: str = SOURCE + '/query') -> dict[str, Any]:
         """Retry bounded public REST requests; preserve errors and verify TLS."""
-        return source['request_json'](url, params, retries=3, error='USGS waterbody service error',
-                                      headers={'User-Agent': 'FresnoStormWatch/0.33 reference-export', 'Accept-Encoding': 'gzip'})
+        return source['request_json'](url, params, retries=3, error='USGS waterbody service error')
 
     boundary = ROOT / 'site' / 'data' / 'counties.geojson'
     county, filter_geometry = source['county_filter'](boundary)
@@ -111,13 +109,7 @@ def acquire() -> None:
             'f': 'geojson', 'objectIds': ','.join(map(str, part)), 'outFields': ','.join(fields),
             'outSR': 4326, 'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'}), check)
 
-    features = []
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        for part in pool.map(batch, [ids[i:i + 500] for i in range(0, len(ids), 500)]):
-            features.extend(part)
-            LOG.info('Downloaded / reused %s / %s waterbodies', len(features), len(ids))
-    if sorted(request(params).get('objectIds') or []) != ids:
-        raise RuntimeError('Waterbody inventory changed during acquisition')
+    features = source['read_inventory'](ids, batch, lambda: request(params), 'Waterbody inventory changed during acquisition', workers=2)
     rows, rejected = convert(features, county, oid)
     (output / 'rejected.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
     if rejected or len(rows) != len(ids):

@@ -1,5 +1,6 @@
 import {heads} from './eoc-model.js';
 import {pumpBinding,bindingKey,validatePumpReadiness} from './pump-readiness-contract.js';
+import {fresh} from './source-health-model.js';
 export {pumpBinding,bindingKey};
 
 /** Never choose silently between concurrent updates, duplicate associations or changed source records. */
@@ -8,7 +9,7 @@ export function pumpReadiness(record,state,now=Date.now()){
   const history=(state?.records||[]).filter(r=>r.payload.kind==='pump-readiness'&&bindingKey(r.payload.binding)===key);
   const versions=heads(history),event=versions.length===1&&!versions[0].conflict?versions[0].record:null;
   const base={history,event:null,needsReview:true,current:false,label:'Readiness not confirmed',reasons:[]};
-  if(!state?.connected||state.error||!Number.isFinite(state.checked)||now-state.checked>120000||state.checked>now+60000)return {...base,label:'Readiness source unavailable / overdue',reasons:['Reconnect / refresh private readiness records. Cached confirmations are not treated as current.']};
+  if(!state?.connected||state.error||!fresh(state.checked,120000,now,60000))return {...base,label:'Readiness source unavailable / overdue',reasons:['Reconnect / refresh private readiness records. Cached confirmations are not treated as current.']};
   if(!versions.length)return base;
   if(!event)return {...base,label:'Conflicting readiness updates',reasons:['Review all saved versions with FMFCD before reconfirming.']};
   let p;try{p=validatePumpReadiness(event.payload,now);}catch{return {...base,label:'Readiness record needs verification',reasons:['Saved record failed validation; ask GIS / FMFCD to inspect it.']};}
