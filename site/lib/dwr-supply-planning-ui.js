@@ -6,10 +6,10 @@ import {node,nodeButton as button,nodeLink as external} from './dom.js';
 const KEY='dwrSupplyContext';
 const mapSignature=row=>JSON.stringify([row.site.key,row.points,row.roads.map(r=>[r.row.key,r.row.revision])]);
 const distance=meters=>(meters/1000).toFixed(1)+' km';
-const hasOption=(select,value)=>[...select.options].some(o=>o.value===value);
+const hasOption=(select,value)=>[...select.children].some(o=>o.value===value);
 /** Retain the existing county road palette, geometry and click-through identity. */
 export const roadGraphic=(Graphic,r)=>{const shade=r.layer===2?'#65cad1':'#f6a777';return new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline'},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2?'dash':'solid'}});};
-export function fillAreaSelect(select,rows){const value=select.value,all=node('option','All river watch areas');all.value='all';select.replaceChildren(all,...rows.map(r=>{const o=node('option',r.area.name);o.value=r.area.id;return o;}));select.value=hasOption(select,value)?value:'all';}
+export function fillAreaSelect(select,rows){const value=select.value,option=(text,id)=>{const o=node('calcite-option',text);o.value=id;return o;};select.replaceChildren(option('All river watch areas','all'),...rows.map(r=>option(r.area.name,r.area.id)));const want=hasOption(select,value)?value:'all';for(const o of select.children)o.selected=o.value===want;select.value=want;}
 export function selectAreaOption(select,id){const found=hasOption(select,id);if(found)select.value=id;return found;}
 
 /** Public, memory-only supply context. Proximity never assigns supplies or establishes a usable route. */
@@ -101,8 +101,9 @@ export function createDwrSupplyPlanning({exercise=false,timeZone='America/Los_An
   root.addEventListener('toggle',()=>{if(root.open&&!requested)request();});
   $('dwr-supply-refresh').addEventListener('click',()=>void request({refresh:true}));
   $('dwr-supply-source').addEventListener('click',onSource);
-  for(const km of SUPPLY_CONTEXT_KM){const option=node('option',km+' km');option.value=String(km);option.selected=km===25;$('dwr-supply-radius').append(option);}
-  for(const id of ['dwr-supply-area','dwr-supply-radius'])$(id).addEventListener('change',render);
+  for(const km of SUPPLY_CONTEXT_KM){const option=node('calcite-option',km+' km');option.value=String(km);option.selected=km===25;$('dwr-supply-radius').append(option);}
+  $('dwr-supply-radius').value='25'; // ponytail: calcite-select reads undefined until hydrated; render() below needs a supported distance now
+  for(const id of ['dwr-supply-area','dwr-supply-radius'])$(id).addEventListener('calciteSelectChange',render);
   pane.addEventListener('stormEvidenceClose',()=>{selected=null;drawGeneration++;drawSignature='';layer?.removeAll();});
   setInterval(()=>{if(requested&&!document.hidden)render();},30000);
   render();

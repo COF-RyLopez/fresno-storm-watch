@@ -8,7 +8,7 @@
 .drainage-nearby .drainage-actions { align-items: end; }
 .drainage-nearby calcite-label { margin: 0; }
 .drainage-nearby summary { padding-block: 9px; cursor: pointer; line-height: 1.5; overflow-wrap: anywhere; color: var(--calcite-color-text-1); }
-.drainage-nearby summary:focus-visible { outline: 2px solid var(--calcite-color-focus-color); outline-offset: 2px; }
+.drainage-nearby summary:focus-visible { outline: 2px solid var(--calcite-color-focus); outline-offset: 2px; }
 .drainage-nearby-row { border-block-start: 1px solid var(--calcite-color-border-3); padding-block-end: 8px; }
 .drainage-nearby-row dl { display: grid; grid-template-columns: minmax(0,1fr); gap: 5px; margin: 0 0 12px; }
 .drainage-nearby-row dt { margin-top: 8px; font-weight: 600; }
@@ -48,7 +48,7 @@
 :is(.pump-readiness-form,.pump-task-form) label { display: grid; gap: 6px; font-size: .9rem; line-height: 1.5; }
 :is(.pump-readiness-form,.pump-task-form) input, :is(.pump-readiness-form,.pump-task-form) select, :is(.pump-readiness-form,.pump-task-form) textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid var(--calcite-color-border-input); background: var(--calcite-color-background); color: var(--calcite-color-text-1); font: inherit; color-scheme: dark light; }
 :is(.pump-readiness-form,.pump-task-form) textarea { min-height: 88px; resize: vertical; }
-:is(.pump-readiness-form,.pump-task-form) :is(input,select,textarea):focus-visible { outline: 2px solid var(--calcite-color-focus-color); outline-offset: 2px; }
+:is(.pump-readiness-form,.pump-task-form) :is(input,select,textarea):focus-visible { outline: 2px solid var(--calcite-color-focus); outline-offset: 2px; }
 :is(.pump-readiness-form,.pump-task-form) .pump-readiness-identity { display: flex; align-items: flex-start; gap: 10px; }
 :is(.pump-readiness-form,.pump-task-form) input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--calcite-color-brand); }
 :is(.pump-readiness-form,.pump-task-form) small { color: var(--calcite-color-text-2); line-height: 1.5; }

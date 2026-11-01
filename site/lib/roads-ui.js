@@ -33,7 +33,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=
     document.getElementById('road-dialog').setAttribute('heading',`${row.kind} · ${row.name}`);document.getElementById('road-dialog').setAttribute('open','');onMap();map?.focusRoad(row.key);
   }
   async function refresh(){if(busy||exercise)return;busy=true;document.getElementById('roads-refresh').setAttribute('loading','');try{snapshot=await fetchRoads();error=null;}catch(cause){error=cause;}finally{busy=false;document.getElementById('roads-refresh').removeAttribute('loading');render();}}
-  document.getElementById('roads-refresh').onclick=()=>void refresh();document.getElementById('roads-all').addEventListener('change',render);
+  document.getElementById('roads-refresh').onclick=()=>void refresh();document.getElementById('roads-all').addEventListener('calciteCheckboxChange',render);
   for(const [id,url] of [['county-roads-link',ROAD_MAP],['county-evac-link',EVAC_MAP]])document.getElementById(id).setAttribute('href',url);
   void refresh();setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{status.textContent=exercise?'Exercise mode · live road feed disabled':roadHealth(snapshot,error);},15000);
   return {setMap(controller){map=controller;render();if(selected)map.focusRoad(selected);},select(key,{keepWorkspace=false}={}){const row=snapshot?.rows.find(r=>r.key===key);if(row){if(!roadInCurrentView(row)){document.getElementById('roads-all').checked=true;render();}if(!keepWorkspace)onOpen();map?.setRoadsVisible(true);detail(row);}},get snapshot(){return snapshot;}};
