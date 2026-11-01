@@ -19,7 +19,7 @@ If a name is not here or in reference.md, look it up before using it.
   `https://js.arcgis.com/5.1/esri/themes/{dark|light}/main.css` (Maps SDK widgets + Calcite token blocks); `theme.js` swaps it.
 - **Docs describe 5.2** (get-started snippet `calcite-components/5.2`, `@esri/calcite-design-tokens` 4.2).
   5.2-only props must not be used yet: block `expandable`, action-bar `expandToggleDisabled`/`overflowMode`,
-  input/-text/-number `inlineEdit*`, table `stickyHeader`, switch `required`, slider `label`, `calcite-text`. See reference.md.
+  input/-text/-number `inlineEdit*`, table `stickyHeader`, switch `required`, slider `label` (in 5.1.1 name a single-handle slider with `min-label`; verified in Chromium), `calcite-text`. See reference.md.
 - CSP (`script-src`) allows only self + js.arcgis.com, and the import map is generated: after editing
   site JS/CSS run `npm run build:import-map`, then `npm test` (tests read page HTML and fail on stale maps).
 - No bundler, no npm Calcite package. Version bumps touch every page's script tag, theme.js's theme URL and the CSP hash; do them on purpose, never in passing.
@@ -173,6 +173,7 @@ const title=el('span','Feed delayed');title.slot='title';title.setAttribute('rol
 notice.append(title,Object.assign(el('span','Last success 14:05'),{slot:'message'}));
 ```
 
+- Calcite controls do not fire native `change`/`input`: a `change` listener on `calcite-checkbox` never runs.
 - Events used here: `calciteSelectChange`, `calciteCheckboxChange`, `calciteInputInput`, `calciteListChange`, `calciteSliderInput`,
   `calciteSegmentedControlChange`, `calcitePanelClose`, `calciteSwitchChange`, `calciteSheetClose`, `calciteDropdownSelect`,
   `calciteBlockExpand`/`calciteBlockCollapse`. Read state from the element after the event. Don't rely on these events

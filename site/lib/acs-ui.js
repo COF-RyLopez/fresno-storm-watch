@@ -89,7 +89,7 @@ export function createAcsContext({exercise=false,onMap=()=>{},onOpenWatch=()=>{}
   }
   picker.addEventListener('change',()=>{if(picker.value)void select(picker.value);else{epoch++;abort?.abort();pioAbort?.abort();highlight?.removeAll();$('acs-detail').replaceChildren();selected=null;selectedRow=null;loadingPio=false;}});
   $('acs-open').addEventListener('click',()=>void open());$('acs-retry').addEventListener('click',()=>{if(selected)void select(selected);else void open(scope);});
-  checkbox.addEventListener('change',()=>{legend();void showContext();});document.addEventListener('frogLayerPreference',e=>{if(e.detail?.key==='populationDensity'){checkbox.checked=e.detail.wanted;legend();}});
+  checkbox.addEventListener('calciteCheckboxChange',()=>{legend();void showContext();});document.addEventListener('frogLayerPreference',e=>{if(e.detail?.key==='populationDensity'){checkbox.checked=e.detail.wanted;legend();}});
   window.addEventListener('frogAcsTractSelect',e=>{if(/^06019\d{6}$/.test(e.detail?.id||''))void open({id:e.detail.id});});
   pane.addEventListener('stormEvidenceClose',()=>{epoch++;abort?.abort();pioAbort?.abort();loadingPio=false;});
   window.addEventListener('pagehide',()=>{epoch++;abort?.abort();pioAbort?.abort();highlight?.removeAll();});

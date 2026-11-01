@@ -128,7 +128,7 @@ export function createPopulationWatch({exercise=false,onMap=()=>{},onOpenWatch=(
   $('population-query').addEventListener('input',list);$('population-filter').addEventListener('change',list);$('population-zone').addEventListener('change',()=>{if($('population-zone').value)void select($('population-zone').value);else{epoch++;abort?.abort();selected=null;result=null;collection=null;newer=null;newerProblem=null;newerPending=false;problem=null;draw();detail();list();}});
   $('population-refresh').addEventListener('click',()=>void refresh());$('population-retry').addEventListener('click',()=>{if(selected){cache.delete(selected.key);acsCache.delete(selected.key);tractBlocks.clear();void select(selected.key);}});
   $('population-inspect').addEventListener('click',()=>{if(selected)void select(selected.key);});
-  $('population-blocks').addEventListener('change',draw);
+  $('population-blocks').addEventListener('calciteCheckboxChange',draw);
   root.addEventListener('toggle',()=>{if(root.open){if(!zones)void refresh();void showContext();}});
   pane.addEventListener('stormEvidenceClose',()=>{epoch++;abort?.abort();disposeAfn();if(selected&&!result){problem='Selection closed before the calculation completed';list();}});
   window.addEventListener('frogPopulationZoneSelect',e=>{if(zones?.rows.some(r=>r.key===e.detail?.key))void select(e.detail.key);});
