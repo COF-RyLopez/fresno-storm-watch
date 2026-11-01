@@ -3,10 +3,9 @@ import {countyGeometry} from './model.js';
 import {reportHealth} from './source-health.js';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js';
 import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js';
+import {node,nodeLink as link} from './dom.js';
 
 const KEY='dwrFloodFight', REFRESH_MS=300000;
-const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** Live, public DWR reference layers. Only service queries and tab-memory scope are used; no AGOL copies or editing. */
 export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>{}}={}) {

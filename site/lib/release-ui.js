@@ -1,6 +1,6 @@
 /** Shared schedule presentation for reservoir cards and river-area evidence. */
+import {elClass as el} from './dom.js';
 const amount=value=>new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(value);
-const el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
 
 /** @param {object} notice @param {Function} time @returns {string} Show effective time, not an invented issuance or arrival time. */
 export function noticeSummary(notice,time){

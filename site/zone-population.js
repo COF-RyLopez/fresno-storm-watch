@@ -2,7 +2,8 @@ import {loadSdk} from './lib/map.js';
 import {readZoneProduct,estimatedResidents,zoneLabel,zoneRows,boundaryFingerprint} from './lib/zone-population-product.js';
 import {readCareCollection} from './lib/care-data.js';
 import {pioZoneLink} from './lib/pio-zone-context.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {el} from './lib/dom.js';
+const $=id=>document.getElementById(id);
 const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short'}).format(t)+' PT';
 let product=null,view=null,layer=null,layerView=null,selected=null,highlight=null,epoch=0,graphics=new Map(),blobUrl=null;
 

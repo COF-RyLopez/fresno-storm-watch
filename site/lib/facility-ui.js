@@ -4,10 +4,9 @@ import {openFacilitySource,queryFacilities} from './facility-data.js';
 import {loadSdk} from './map.js';
 import {formatTime} from './model.js';
 import {FACILITY_PRESETS,COUNTY_ASSET_REFERENCES} from './facility-presets.js';
+import {classButton as button,elClass as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-const el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
-const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.onclick=fn;return b;};
 const FIELD_LABELS={id:'Stable site ID (required)',name:'Site name (required)',owner:'Department / owner in source',reference:'Inventory reference ID',assetType:'Asset type in source',status:'Site status in source',backup:'Backup-power inventory status',runtime:'Reported backup runtime (hours)',load:'Critical load (kW)',updated:'Site record update time (date field)'};
 
 /** @param {object} options @returns {object} Private, read-only site review. All site records and source connections live only in this tab's memory. */

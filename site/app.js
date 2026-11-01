@@ -35,6 +35,7 @@ import {createHanfordBriefing} from './lib/briefing-ui.js';
 import {createBriefingLayers} from './lib/briefing-layer-ui.js';
 import {createBriefingContextView} from './lib/briefing-context-ui.js';
 import { createReleaseTrends } from './lib/release-trend-ui.js';
+import {elAttrs as component} from './lib/dom.js';
 
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
@@ -113,15 +114,6 @@ function element(tag, text = '', className = '') {
   const node = document.createElement(tag);
   node.textContent = text;
   if (className) node.className = className;
-  return node;
-}
-
-/** @param {string} tag @param {string} text @param {object} attributes @returns {HTMLElement} Attributes are safe before custom-element upgrade. */
-function component(tag, text, attributes = {}) {
-  const node = element(tag, text);
-  for (const [name, value] of Object.entries(attributes)) {
-    if (value !== false && value !== null) node.setAttribute(name, value === true ? '' : String(value));
-  }
   return node;
 }
 

@@ -7,12 +7,9 @@ import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
 import {createWeatherTimeline} from './weather-ui.js';
 import {observationAt} from './weather-model.js';
+import {classLink as link,elClass as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-/** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Source content is text, never executable markup. */
-function el(tag,text='',className=''){const n=document.createElement(tag);n.textContent=text;n.className=className;return n;}
-/** @param {string} label @param {string} href @returns {HTMLElement} Only trusted configured publisher links. */
-function link(label,href){const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;}
 
 /** @param {object} options @returns {object} Independent public weather/reservoir controller. */
 export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},onTrends=()=>{},onReservoirData=()=>{},onWindData=()=>{},onOverlayChange=()=>{},onWeatherData=()=>{}}){

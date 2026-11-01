@@ -1,7 +1,6 @@
 import {buildingPowerTarget} from './power-buildings-model.js';
 import {loadPowerBuildings,loadPowerBuildingsAutomatic} from './power-buildings-data.js';
-const el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
-const button=(text,fn)=>{const b=el('calcite-button',text);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
+import {button,el} from './dom.js';
 /** Session-only selected-area evidence. Refresh revisions cancel older queries, including after the pane closes. */
 export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
   let map=null,host=null,row=null,result=null,error=null,busy=false,epoch=0,labels=true,selectedId=null,detailsOpen=false;

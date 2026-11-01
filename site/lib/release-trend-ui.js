@@ -2,10 +2,9 @@ import {buildReleaseTrend,TREND_REACHES,trendSegments} from './release-trend-mod
 import {HOUR,riverValue} from './river-model.js';
 import {formatTime} from './model.js';
 import {svgNode as svg} from './river-chart.js';
+import {classLink as link,elClass as el} from './dom.js';
 
 const $=id=>document.getElementById(id);
-const el=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;n.className=className;return n;};
-const link=(label,href)=>{const n=el('a',label);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n;};
 
 /** @param {object} series @param {object} model @param {number[]} domain @param {boolean} release @param {string} zone @returns {HTMLElement} Aligned small multiples; no curve fitting, carry-forward or inferred water-arrival time. */
 export function releaseTrendChart(series,model,domain,release,zone,selectionKey=null){

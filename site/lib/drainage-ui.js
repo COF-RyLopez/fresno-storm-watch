@@ -3,12 +3,12 @@ import {loadSdk} from './map.js';
 import {formatTime} from './model.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts,unchangedDrainageSelection} from './drainage-model.js';
 import {openDrainage} from './drainage-data.js';
-const $=id=>document.getElementById(id),el=(tag,text='')=>{const n=document.createElement(tag);n.textContent=text;return n;};
+import {button,el} from './dom.js';
+const $=id=>document.getElementById(id);
 /** @param {object} options @returns {object} Private, read-only drainage context; memory cleared on sign-out, expiry, disconnect and failure. */
 export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRainfall=()=>{},onFacilities=()=>{},onRoad=()=>{},onData=()=>{},renderNearby=()=>{}}){
   let session=null,adapter=null,map=null,rows=[],checked=null,error=null,busy=false,generation=0,selected=null,weather=null,roads=null,facilities=null,listSignature='';
   const time=v=>Number.isFinite(v)?formatTime(v,timeZone):'Unknown';
-  const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=fn;return b;};
   function clear({message=null}={}){generation++;adapter?.close();adapter=null;rows=[];checked=null;selected=null;busy=false;error=message;$('drainage-detail').replaceChildren();$('drainage-search').value='';$('drainage-facility-message').textContent='';$('drainage-boundary-status').textContent='';$('drainage-catchments').checked=false;map?.setLayerPreference('drainageCatchments',false);$('drainage-evidence').removeAttribute('open');map?.clearEnvironmentPopup();map?.setDrainage([]);render();}
   function select(key,focus=true){
     const row=rows.find(r=>r.key===key);if(!row)return;selected=key;

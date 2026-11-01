@@ -1,8 +1,8 @@
+import {elIfText as element} from './dom.js';
 /** Public documentary references only. No inferred geometry, routing or private records. */
 export function createIrrigationReference({onLocate=()=>{},fetchImpl=fetch}={}){
   const panel=document.getElementById('irrigation-evidence'),host=document.getElementById('irrigation-reference-content');
   let loaded=false,pending;
-  const element=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node;};
   const link=(text,url)=>{const a=element('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
   const paragraph=text=>element('p',text);
   async function load(){

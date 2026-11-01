@@ -7,10 +7,10 @@ import {readCareCollection,readCarePlaces} from './care-data.js';
 import {loadPowerBuildings} from './power-buildings-data.js';
 import {createCareMap} from './care-map.js';
 import {loadSdk} from './map.js';
+import {classLink as link,elClass as el} from './dom.js';
 
-const $=id=>document.getElementById(id),el=(tag,text='',css='')=>{const n=document.createElement(tag);n.textContent=text;n.className=css;return n;};
+const $=id=>document.getElementById(id);
 const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.onclick=()=>void fn();return b;};
-const link=(label,href)=>{const a=el('a',label);a.href=href;a.target='_blank';a.rel='noopener noreferrer';return a;};
 
 /** Public CDPH, county-zone, Places and Overture-footprint reference comparison. */
 export function createCareWatch({exercise=false,onMap=()=>{},onZone=()=>{},onCapture=()=>{},onClearPrivate=()=>{},onSummary=()=>{},onReviews=()=>{},onPower=()=>{},onRoad=()=>{},exerciseNow=Date.now()}={}){

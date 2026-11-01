@@ -2,8 +2,7 @@ import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities
 import {formatAcsMeasure} from './acs-model.js';
 import {readAfnContext} from './afn-data.js';
 import {reportHealth} from './source-health.js';
-const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-const link=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+import {node,nodeLink as link} from './dom.js';
 const number=v=>v===null?'Unknown':new Intl.NumberFormat('en-US').format(v);
 function grid(caption,head,rows){
   const t=node('table');t.className='afn-table';const thead=node('thead'),tr=node('tr');t.append(node('caption',caption));
