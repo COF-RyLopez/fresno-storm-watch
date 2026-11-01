@@ -9,6 +9,8 @@ export const SURGE_CONFIG=Object.freeze({
   speedKmh:4,          // assumed flood-wave travel speed (~2.5 mph); illustrative, not measured
   tailKm:6,            // drawn length of each pulse
   riseFtPerHour:0.2,   // a gauge rising at least this fast (same as Storm now "Next") starts a pulse
+  forecastRiseFt:0.5,  // a published forecast crest at least this far above the current stage starts a pulse
+  maxAheadHours:72,    // the timeline stretches to reach upcoming pulses, up to this far ahead
   backHours:6,aheadHours:12,stepMinutes:15
 });
 
@@ -56,7 +58,8 @@ export function surgeSources({areas=[],usgs=null,net,now=Date.now()}){
     const a=g.assessment;if(!a||seen.has(g.id))continue;seen.add(g.id);
     const rate=a.trend&&a.trend.hours>0&&g.gauge?.observed?.units==='ft'?a.trend.delta/a.trend.hours:null;
     if(rate!==null&&rate>=cfg.riseFtPerHour)add(g.id,'observed',a.observed?.time,`Rising ${rate.toFixed(2)} ft/h`);
-    if(a.forecastUsable&&a.peak&&a.peak.time>now&&a.delta>0)add(g.id,'forecast',a.peak.time,`Forecast crest ${a.peak.value} ${g.gauge?.forecast?.units||''}`.trim());
+    // A crest only a few hundredths above today's stage is not a surge; ft only, since kcfs deltas are not comparable.
+    if(a.forecastUsable&&a.peak&&a.peak.time>now&&a.delta>=cfg.forecastRiseFt&&g.gauge?.forecast?.units==='ft')add(g.id,'forecast',a.peak.time,`Forecast crest ${a.peak.value} ft (+${a.delta.toFixed(1)} ft)`);
   }
   for(const [site,r] of usgs?.readings||[])if(r?.rise&&r.rise.rate>=cfg.riseFtPerHour&&r.stage)add(site,'observed',r.stage.time,`Rising ${r.rise.rate.toFixed(2)} ft/h`);
   return out;
@@ -70,3 +73,12 @@ export function surgeFrames(net,sources,t,cfg=SURGE_CONFIG){
     return {...s,front,lines,left:!lines.length&&front<s.km};
   });
 }
+
+/** @param {object[]} sources @param {number} now @returns {{min:number,max:number}} Timeline bounds in minutes from now: the usual
+ * window, stretched to show the latest upcoming pulse moving for a few hours (capped at maxAheadHours). */
+export function timelineRange(sources,now=Date.now(),cfg=SURGE_CONFIG){
+  const step=cfg.stepMinutes,latest=Math.max(0,...sources.map(s=>(s.t0-now)/60_000));
+  return {min:-cfg.backHours*60,max:Math.min(cfg.maxAheadHours*60,Math.max(cfg.aheadHours*60,Math.ceil((latest+360)/step)*step))};
+}
+/** @returns {number} Minutes from now to the first timeline step at or after a source's start. */
+export const startOffset=(s,now=Date.now(),cfg=SURGE_CONFIG)=>(Math.ceil((s.t0-now)/60_000/cfg.stepMinutes)*cfg.stepMinutes||0); // round up: land on or after the start

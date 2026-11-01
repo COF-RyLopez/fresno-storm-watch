@@ -79,3 +79,15 @@ test('Google 3D tile credits: read asset.copyright from a GLB, ignore anything e
   const c=createCredits(2);c.add(['Google','Airbus']);c.add(['Google','Maxar']);assert.equal(c.line(),'Google; Airbus; Maxar');
   c.add(['Maxar']);assert.equal(c.line(),'Maxar; Google','oldest tile drops out of the rolling window');assert.equal(c.add([]),false);
 });
+
+test('forecast crests start a pulse only when at least 0.5 ft above the current stage; the timeline stretches to reach them',async()=>{
+  const {timelineRange,startOffset}=await import('../site/lib/river-network-model.js');
+  const n=indexNetwork({version:1,paths:[{id:'A',order:5,dn:null,parts:[{c:[[-120.2,37],[-120.1,37]],end:0}]}],points:[{id:'G',path:'A',km:5,name:'Gravelly'},{id:'J',path:'A',km:4,name:'James'},{id:'K',path:'A',km:3,name:'Kcfs'}]});
+  const g=(id,delta,units='ft')=>({id,gauge:{observed:{units},forecast:{units}},assessment:{trend:null,observed:{time:0},peak:{time:30*H,value:7.6},delta,forecastUsable:true}});
+  const s=surgeSources({areas:[{gauges:[g('G',0.03),g('J',0.8),g('K',2,'kcfs')]}],net:n,now:0});
+  assert.deepEqual(s.map(x=>x.id),['J']);assert.equal(s[0].label,'Forecast crest 7.6 ft (+0.8 ft)');
+  assert.deepEqual(timelineRange([],0),{min:-360,max:720});
+  assert.deepEqual(timelineRange(s,0),{min:-360,max:(30+6)*60},'stretched to show the pulse moving for 6 h');
+  assert.equal(timelineRange([{t0:200*H}],0).max,72*60,'capped');
+  assert.equal(startOffset({t0:37*60_000},0),45);assert.equal(startOffset({t0:-10*60_000},0),0);
+});
