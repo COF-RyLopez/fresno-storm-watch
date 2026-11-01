@@ -89,12 +89,13 @@ jobs:
           work/briefing-render-env/bin/python scripts/render-briefing.py
           work/briefing-render-env/bin/python -m unittest discover -s tests -p 'test_briefing_renderer.py'
           node --test tests/briefing.test.mjs tests/briefing-impacts.test.mjs tests/briefing-context.test.mjs
-      - name: Write the public Google Map Tiles browser key (skipped until the GOOGLE_MAP_TILES_KEY variable exists)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.GOOGLE_MAP_TILES_KEY != ''
+      - name: Write the public Google Map Tiles browser key (skipped until GOOGLE_MAP_TILES_KEY exists as a variable or secret)
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           # A browser key is public by design; Google Cloud API and website restrictions are what protect it.
-          GOOGLE_MAP_TILES_KEY: ${{ vars.GOOGLE_MAP_TILES_KEY }}
-        run: node -e "const k=process.env.GOOGLE_MAP_TILES_KEY.trim();if(!/^[A-Za-z0-9_-]{20,100}$/.test(k))throw new Error('GOOGLE_MAP_TILES_KEY is not an API key');require('fs').writeFileSync('site/data/google-tiles.json',JSON.stringify({key:k}))"
+          # Accepted from either a repository variable or a secret; a secret only keeps it out of run logs.
+          GOOGLE_MAP_TILES_KEY: ${{ vars.GOOGLE_MAP_TILES_KEY || secrets.GOOGLE_MAP_TILES_KEY }}
+        run: node -e "const k=(process.env.GOOGLE_MAP_TILES_KEY||'').trim();if(!k){console.log('No GOOGLE_MAP_TILES_KEY; 3D page uses Esri imagery.');process.exit(0)}if(!/^[A-Za-z0-9_-]{20,100}$/.test(k))throw new Error('GOOGLE_MAP_TILES_KEY is not an API key');require('fs').writeFileSync('site/data/google-tiles.json',JSON.stringify({key:k}));console.log('Google Map Tiles key written.')"
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
