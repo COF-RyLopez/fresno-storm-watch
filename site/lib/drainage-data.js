@@ -1,3 +1,4 @@
+import {readIdBatches} from './acs-data.js';
 import {DRAINAGE_URL,DRAINAGE_LAYERS,DRAINAGE_LIMIT,authorizeDrainage,drainageSchema,drainageRecord} from './drainage-model.js';
 /** @param {object} spec @param {Function} call @returns {Promise<object[]>} Bounded POST inventory; require exact batch, CRS and ID accounting. */
 export async function readDrainageLayer(spec,call){
@@ -6,14 +7,7 @@ export async function readDrainageLayer(spec,call){
   let ids=inventory.objectIds;
   if(ids===null){const count=await call('/'+spec.id+'/query',{where:'1=1',returnCountOnly:true});if(count.count!==0)throw Error('FMFCD empty inventory is unverified.');ids=[];}
   if(!Array.isArray(ids)||ids.length>DRAINAGE_LIMIT||inventory.exceededTransferLimit||ids.some(id=>!Number.isSafeInteger(id)||id<1)||new Set(ids).size!==ids.length)throw Error('FMFCD inventory is incomplete or exceeds the bounded workspace limit.');
-  const rows=[];
-  const batchSize=spec.kind==='catchment'?20:100;
-  for(let i=0;i<ids.length;i+=batchSize){
-    const batch=ids.slice(i,i+batchSize),data=await call('/'+spec.id+'/query',{objectIds:batch.join(','),outFields:[oid,...spec.fields].join(','),returnGeometry:true,outSR:4326,...(spec.kind==='catchment'?{maxAllowableOffset:0.00002}:{})});
-    if((data.spatialReference?.latestWkid||data.spatialReference?.wkid)!==4326||data.exceededTransferLimit||!Array.isArray(data.features)||data.features.length!==batch.length||new Set(data.features.map(f=>f.attributes?.[oid])).size!==batch.length||data.features.some(f=>!batch.includes(f.attributes?.[oid])))throw Error('FMFCD batch changed, was truncated or did not return WGS84 coordinates. Refresh required.');
-    rows.push(...data.features.map(f=>drainageRecord(spec,f,oid)));
-  }
-  return rows;
+  return readIdBatches(ids,spec.kind==='catchment'?20:100,oid,batch=>call('/'+spec.id+'/query',{objectIds:batch.join(','),outFields:[oid,...spec.fields].join(','),returnGeometry:true,outSR:4326,...(spec.kind==='catchment'?{maxAllowableOffset:0.00002}:{})}),'FMFCD batch changed, was truncated or did not return WGS84 coordinates. Refresh required.',f=>drainageRecord(spec,f,oid));
 }
 /** @param {object} config @param {object} session @param {Function} loadSdk @returns {Promise<object>} Fixed county endpoint; credentials stay inside the ArcGIS SDK. */
 export async function openDrainage(config,session,loadSdk){
