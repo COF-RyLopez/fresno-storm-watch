@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-I7kbwFlePLzlLfkfPjRYQd9PDxzgBO3t4JqxTBXJ1xk='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta name="description" content="3D view of Fresno County's river network with illustrative surge travel from rising gauges. Planning aid, not a forecast.">
+<title>Storm Watch · River network 3D</title>
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69">
+<script src="./theme.js?v=8a60674390"></script>
+<script type="importmap">
+{"imports":{
+"./config.js":"./config.js?v=d82b554e1d",
+"./lib/model.js":"./lib/model.js?v=e44a6607f5",
+"./lib/nwps.js":"./lib/nwps.js?v=ded9874d2f",
+"./lib/nws.js":"./lib/nws.js?v=3813d5f1c3",
+"./lib/pool.js":"./lib/pool.js?v=20e07862c1",
+"./lib/power-geometry.js":"./lib/power-geometry.js?v=abecba4c1b",
+"./lib/river-model.js":"./lib/river-model.js?v=f4cfa150af",
+"./lib/river-network-map.js":"./lib/river-network-map.js?v=bcb0b73e47",
+"./lib/river-network-model.js":"./lib/river-network-model.js?v=89f08f8727",
+"./lib/usgs-gauges.js":"./lib/usgs-gauges.js?v=ee6db16686",
+"./river-3d.js":"./river-3d.js?v=2b2bdf7ff6"
+}}
+</script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./river-3d.js?v=2b2bdf7ff6"></script>
+<link rel="stylesheet" href="./flood-scenario.css?v=7d26f48832">
+</head><body>
+<calcite-shell>
+  <header slot="header">
+    <div class="fs-header"><div class="brand"><img src="./assets/frog-logo.png" width="40" height="40" alt="F.R.O.G. — Flood Response Operations Group"><div><div class="eyebrow">STORM WATCH · RIVER NETWORK · 3D</div><h1>How water moves through the county</h1></div></div>
+      <nav><a href="./">Return to Storm now</a><a href="./planning.html">How this works</a><calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action></nav></div>
+    <p class="demo-flag" id="notice" hidden>FICTIONAL EXERCISE · gauge values are constructed, not USGS readings</p>
+  </header>
+  <calcite-shell-panel slot="panel-end" width="m">
+    <calcite-panel heading="Surge timeline" description="Illustrative travel from rising gauges · not a forecast">
+      <div class="panel">
+        <calcite-label>Time · <span id="surge-time">now</span><calcite-slider id="surge-slider" min="-360" max="720" step="15" value="0" min-label="Surge timeline, minutes from now" scale="s"></calcite-slider></calcite-label>
+        <div><calcite-button id="surge-play" icon-start="play" scale="s" appearance="outline">Play</calcite-button> <calcite-button id="surge-now" scale="s" appearance="transparent">Back to now</calcite-button></div>
+        <p id="surge-status" class="note" role="status">Loading gauges…</p>
+        <calcite-list id="surge-list" label="Pulse sources" selection-mode="none"></calcite-list>
+        <calcite-label layout="inline"><calcite-switch id="google-switch" scale="s"></calcite-switch>Google Photorealistic 3D Tiles</calcite-label>
+        <p id="google-note" class="note"></p>
+        <p class="note">Yellow: a gauge rising 0.2 ft/h or more. Pink, dashed in 2D: a published NWS forecast crest. Each pulse moves downstream along the USGS 3DHP network at an assumed 4 km/h (about 2.5 mph). Travel times are not measured; diversions, canals and bypass operations are not modeled. Canals and small channels are drawn in the 2D waterway basemap only.</p>
+      </div>
+    </calcite-panel>
+  </calcite-shell-panel>
+  <div id="view" style="height:100%;width:100%"></div>
+</calcite-shell>
+</body></html>
