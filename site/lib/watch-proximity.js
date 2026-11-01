@@ -1,10 +1,9 @@
-import {pointInRings} from './power-geometry.js';
+import {pointInRings,validPoint as valid,bounds} from './power-geometry.js';
 // IUGG mean Earth radius. Spherical straight-line lookup, not ellipsoidal surveying or road travel.
 const R=6371008.8,rad=Math.PI/180;
 const dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),norm=a=>Math.hypot(...a),unit=a=>a.map(v=>v/norm(a));
 const angle=(a,b)=>Math.atan2(norm([a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]),dot(a,b));
 const vector=([x,y])=>[Math.cos(y*rad)*Math.cos(x*rad),Math.cos(y*rad)*Math.sin(x*rad),Math.sin(y*rad)];
-const valid=p=>Array.isArray(p)&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
 /** @param {number[]} p @param {number[]} a @param {number[]} b @returns {number} Minimum distance to the minor great-circle segment, in meters. */
 function segment(p,a,b){
   const cross=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],length=angle(a,b);
@@ -18,7 +17,7 @@ export function prepareWatchGeometry(geometry){
   if(Number.isFinite(geometry?.x)&&valid([geometry.x,geometry.y]))return {point:vector([geometry.x,geometry.y]),box:[geometry.x,geometry.y,geometry.x,geometry.y]};
   const paths=geometry?.paths||geometry?.rings;
   if(!Array.isArray(paths)||!paths.length||paths.some(p=>!Array.isArray(p)||p.length<(geometry.rings?4:2)||p.some(v=>!valid(v))||geometry.rings&&(p[0][0]!==p.at(-1)[0]||p[0][1]!==p.at(-1)[1])))throw new Error('Watch lookup geometry missing or invalid.');
-  return {paths:paths.map(p=>p.map(vector)),rings:geometry.rings||null,box:paths.flat().reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity])};
+  return {paths:paths.map(p=>p.map(vector)),rings:geometry.rings||null,box:bounds(paths.flat())};
 }
 /** @param {object} prepared @param {object[]} points @returns {object|null} Minimum geometry distance to configured gauge/dam points; O(vertices × watchpoints). */
 export function nearbyWatchpoints(prepared,points,maxMeters=Infinity){

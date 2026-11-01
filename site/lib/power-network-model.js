@@ -1,3 +1,4 @@
+import {validPoint} from './power-geometry.js';
 /** Public planning references. Identifier agreement never establishes a fault or energized state. */
 export const NETWORK_MAX_AGE=72*3600000;
 const PGE='https://services2.arcgis.com/mJaJSax0KPHoCNB6/arcgis/rest/services/DRPComplianceRelProd/FeatureServer/';
@@ -15,7 +16,6 @@ export const NETWORK_LAYER_KEYS={circuit:'powerCircuits',line:'powerLines',subst
 export const NETWORK_SCALES=Object.freeze({circuit:75000,line:250000,substation:250000});
 const text=v=>v===null||v===undefined?'':String(v).trim().slice(0,1000);
 export const networkIdentifier=v=>text(v).normalize('NFKC').replace(/\s+/g,' ').toUpperCase();
-const validPoint=p=>Array.isArray(p)&&p.length>=2&&Number.isFinite(p[0])&&Number.isFinite(p[1])&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
 /** Validate display geometry; no rounding, repair, snapping or topology inference in the browser. */
 export function networkGeometry(g){
   if((g?.spatialReference?.latestWkid||g?.spatialReference?.wkid)!==4326)throw Error('Utility network CRS must be WGS84.');

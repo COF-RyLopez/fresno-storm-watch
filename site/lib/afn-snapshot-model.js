@@ -2,9 +2,10 @@ import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,B16001,validateLanguageAreas,summarizeFa
 import {formatAcsMeasure} from './acs-model.js';
 import {CARE_SOURCES} from './care-model.js';
 import {optionalDate as stamp,date,count} from './population-snapshot-model.js';
+import {isoDay as day} from './briefing-model.js';
 
 export const AFN_TOPIC_KEYS=['languages','svi','ces','ccl'];
-export const AFN_EVIDENCE_MAX=24000;
+const AFN_EVIDENCE_MAX=24000;
 const languageSource='https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b16001.dat';
 const references={
   puma:{title:'Census PUMA analysis boundaries',url:AFN_SOURCES.puma.url,item:null,period:'2020 Census boundaries / ACS2024 service',geography:'Whole 2020 Census PUMA'},
@@ -19,7 +20,7 @@ const rank=v=>v===null||Number.isFinite(v)&&v>=0&&v<=1;
 const text=(v,max)=>typeof v==='string'&&v.trim().length>0&&v.length<=max;
 const measure=m=>!!m&&count(m.estimate)&&count(m.moe);
 const copyMeasure=m=>({estimate:m.estimate,moe:m.moe});
-const isoDay=v=>v===null||typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v;
+const isoDay=v=>v===null||day(v);
 const unique=(rows,key)=>new Set(rows.map(r=>r[key])).size===rows.length;
 
 /** Explicit public-field whitelist. No geometry, private form fields or full query responses. */

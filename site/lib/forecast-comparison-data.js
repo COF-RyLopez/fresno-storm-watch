@@ -1,4 +1,4 @@
-import {MODELS,modelSeries,nwsSeries,comparisonAreas} from './forecast-comparison-model.js';
+import {MODELS,modelSeries,nwsSeries,comparisonAreas,modelVariables,variableUnit} from './forecast-comparison-model.js';
 
 /** Public area inventory shared by the comparison and review panes; only the error text differs. */
 export const loadComparisonAreas=errorText=>Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(async name=>{const r=await fetch(new URL(`../data/${name}.json`,import.meta.url),{credentials:'omit',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error(errorText);return r.json();})).then(([a,c,w,g])=>comparisonAreas(a.areas,c.areas,w.sites,g.stations));
@@ -17,8 +17,8 @@ export async function fetchComparison(point,{fetchImpl=fetch,signal,now=Date.now
     // Resolve current metadata at runtime; no storage href or dataset version is pinned.
     const meta=await json(`https://stac.dynamical.org/${m.id}/collection.json`,fetchImpl,signal);
     if(meta.id!==m.id||meta.license!=='CC-BY-4.0'||typeof meta.attribution!=='string')throw Error('Model identity, license or attribution needs review.');
-    for(const k of ['precipitation_surface','wind_u_10m','wind_v_10m',...(m.gust?['wind_gust_surface']:[])])if(meta['cube:variables']?.[k]?.unit!==(k==='precipitation_surface'?'kg m-2 s-1':'m s-1'))throw Error('Catalog variable units changed.');
-    const response=await json('https://api.dynamical.org/v1/forecasts',fetchImpl,signal,{queries:[{dataProductId:m.id,location:{latitude:point.latitude,longitude:point.longitude},variables:['precipitation_surface','wind_u_10m','wind_v_10m',...(m.gust?['wind_gust_surface']:[])],maxLeadTimeHours:m.hours}]});
+    for(const k of modelVariables(m))if(meta['cube:variables']?.[k]?.unit!==variableUnit(k))throw Error('Catalog variable units changed.');
+    const response=await json('https://api.dynamical.org/v1/forecasts',fetchImpl,signal,{queries:[{dataProductId:m.id,location:{latitude:point.latitude,longitude:point.longitude},variables:modelVariables(m),maxLeadTimeHours:m.hours}]});
     if(response.results?.length!==1)throw Error('Expected one point forecast response.');
     return {...modelSeries(response.results[0],m,point,now),attribution:meta.attribution,license:meta.license,catalog:`https://stac.dynamical.org/${m.id}/collection.json`};
   };

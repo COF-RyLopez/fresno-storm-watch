@@ -1,5 +1,6 @@
 import {searchGeometry} from './nearby-search.js';
 import {DRAINAGE_MAX_AGE} from './drainage-model.js';
+import {fresh} from './source-health-model.js';
 
 /** Preserve every published circuit part; never substitute a centroid or its bounding box. */
 export function networkVicinityGeometry(features){
@@ -26,7 +27,7 @@ export function powerNearbyCandidates(facilities,pumps){
 export function pumpInventoryProblem(inventory,now=Date.now()){
   if(!inventory?.connected)return inventory?.error||'Private AGOL pump inventory is not loaded.';
   if(inventory.error)return inventory.error;
-  if(!Number.isFinite(inventory.checked)||inventory.checked>now+60000||now-inventory.checked>DRAINAGE_MAX_AGE)return 'Pump inventory retrieval is overdue; retained locations need verification.';
+  if(!fresh(inventory.checked,DRAINAGE_MAX_AGE,now,60000))return 'Pump inventory retrieval is overdue; retained locations need verification.';
   if(inventory.refreshState==='failed')return 'The source refresh reported a failure; retained pump locations need verification.';
   if(!Number.isFinite(inventory.sourceChecked)||inventory.sourceChecked>now+60000||!Number.isFinite(inventory.maxSourceAgeMs)||now-inventory.sourceChecked>inventory.maxSourceAgeMs)return 'Source inventory verification is overdue; retained locations need verification.';
   return null;

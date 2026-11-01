@@ -1,4 +1,5 @@
 import {searchGeometry} from './nearby-search.js';
+import {distanceMetres} from './care-model.js';
 
 export const CONNECTION_GROUPS=Object.freeze({
   upstream:{label:'Upstream candidates',color:'#47dcd2'},
@@ -7,12 +8,10 @@ export const CONNECTION_GROUPS=Object.freeze({
   unknown:{label:'Direction unconfirmed',color:'#b3bac3'},
   anchor:{label:'At selected asset',color:'#ffffff'}
 });
-const MAX_VERTICES=40000,START_RADIUS=25,EARTH_RADIUS=6371008.8;
+const MAX_VERTICES=40000,START_RADIUS=25;
 // Nine decimal degrees only absorbs coordinate serialization noise (<0.2 mm
 // here). No metre-scale snapping, pipe crossings or nearest-link inference.
 const nodeKey=p=>p.slice(0,2).map(n=>n.toFixed(9)).join(',');
-const rad=n=>n*Math.PI/180;
-const separation=(a,b)=>{const dlat=rad(b[1]-a[1]),dlon=rad(b[0]-a[0]),h=Math.sin(dlat/2)**2+Math.cos(rad(a[1]))*Math.cos(rad(b[1]))*Math.sin(dlon/2)**2;return 2*EARTH_RADIUS*Math.asin(Math.sqrt(Math.min(1,h)));};
 
 /** Even-odd containment preserves multipart polygons and holes. Boundary vertices count as candidates only. */
 function inside(p,rings){
@@ -60,7 +59,7 @@ export function drainageConnections(record,result,{includeUnknown=true,start=nul
   }else{
     const p=[record.geometry.x,record.geometry.y],id=nodeKey(p);if(nodes.has(id))seeds.add(id);
     // Candidate starts are suggestions only. Nothing automatically snaps a pump.
-    base.starts=[...nodes.values()].filter(n=>n.terminal).map(n=>({id:n.id,xy:n.xy,rowKey:[...n.rowKeys].sort()[0],meters:separation(p,n.xy)})).filter(n=>n.meters<=START_RADIUS).sort((a,b)=>a.meters-b.meters||a.id.localeCompare(b.id)).slice(0,3);
+    base.starts=[...nodes.values()].filter(n=>n.terminal).map(n=>({id:n.id,xy:n.xy,rowKey:[...n.rowKeys].sort()[0],meters:distanceMetres({x:p[0],y:p[1]},{x:n.xy[0],y:n.xy[1]})})).filter(n=>n.meters<=START_RADIUS).sort((a,b)=>a.meters-b.meters||a.id.localeCompare(b.id)).slice(0,3);
     if(!seeds.size&&start){const candidate=base.starts.find(n=>n.id===start);if(!candidate)return {...base,error:'Starting point changed or is outside the 25 m review search. Refresh and select again.'};seeds.add(start);base.manual=true;base.seedDistance=candidate.meters;base.seedLink={key:candidate.rowKey,geometry:{paths:[[p,candidate.xy]],spatialReference:{wkid:4326}}};}
   }
   base.seedCount=seeds.size;

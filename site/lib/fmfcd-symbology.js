@@ -1,6 +1,6 @@
 export const FMFCD_WEBMAP_DATA='https://www.arcgis.com/sharing/rest/content/items/10e99caf452e482e9e471571f9969930/data';
 const PREFIX='https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFCD_Layers/FeatureServer/';
-export const FMFCD_PALETTE=Object.freeze({pipe:[0,77,168,255],design:[115,178,255,255],master:[230,0,0,255],basin:[190,210,255],unknown:'#b3bac3'});
+const FMFCD_PALETTE=Object.freeze({pipe:[0,77,168,255],design:[115,178,255,255],master:[230,0,0,255],basin:[190,210,255],unknown:'#b3bac3'});
 
 /** Only symbol overrides belonging to the fixed FMFCD service; no renderer expressions or external layers execute. */
 export function fmfcdRendererOverrides(map){

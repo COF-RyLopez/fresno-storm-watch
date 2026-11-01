@@ -53,7 +53,7 @@ export function powerMapStyle(row) {
 }
 
 /** @param {string} status @returns {string} Match ArcGIS area fill and boundary conventions in the HTML legend. */
-export function powerAreaUrl(status) {
+function powerAreaUrl(status) {
   status=knownStatus(status);const s=POWER_SYMBOLS[status],c=POWER_COLORS[status];
   const pattern=s.fill==='diagonal-cross'?'<path d="M0 0 8 8M8 0 0 8"/>':'<path d="M-2 2 2-2M0 8 8 0M6 10 10 6"/>';
   const fill=s.fill==='none'?'none':s.fill==='solid'?`${c}38`:'url(#h)';

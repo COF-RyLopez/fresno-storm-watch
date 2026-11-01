@@ -1,7 +1,7 @@
 import {installWaterwayLabels} from './waterway-labels.js';
 import {viewEventData} from './map-events.js';
 /** Public reference context; no facility attributes, matching or hazard inference. */
-export const CONTEXT_SOURCES = Object.freeze({
+const CONTEXT_SOURCES = Object.freeze({
   waterways: 'https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50',
   buildings: 'c444b24b184c4523a5dc96248bfea4e1',
   waterwaysScale: 400_000,
