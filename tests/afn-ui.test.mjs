@@ -90,5 +90,5 @@ test('AFN grids render as static calcite-tables with a header row, row headers a
   assert.equal(caption.attributes.get('aria-hidden'),'true');assert.equal(caption.textContent,table.caption);
   assert.equal(table.tag,'calcite-table');assert.equal(table.interactionMode,'static');
   assert.equal(head.slot,'table-header');assert.deepEqual(head.children.map(h=>[h.tag,h.heading,h.alignment]),[['calcite-table-header','Facility type',undefined],['calcite-table-header','Status code','end'],['calcite-table-header','Records','end'],['calcite-table-header','Licensed capacity','end']]);
-  assert.deepEqual(row.children.map(c=>[c.tag,c.heading??c.textContent]),[['calcite-table-header','RESIDENTIAL-ELDERLY'],['calcite-table-cell','3'],['calcite-table-cell','1'],['calcite-table-cell','6']]);
+  assert.deepEqual(row.children.map(c=>[c.tag,c.heading??c.children[0]?.textContent,c.children[0]?.className]),[['calcite-table-header','RESIDENTIAL-ELDERLY',undefined],['calcite-table-cell','3','data-table-num'],['calcite-table-cell','1','data-table-num'],['calcite-table-cell','6','data-table-num']]);
 });

@@ -25,7 +25,7 @@ export function dataTable(caption,head,rows,{rowHeader=false,end=[]}={}){
   table.caption=caption;table.interactionMode='static';table.scale='s';
   const row=(cells,slot)=>{const r=make('calcite-table-row');if(slot)r.slot=slot;r.append(...cells);return r;};
   const header=(text,i)=>{const h=make('calcite-table-header');h.heading=text;if(end.includes(i))h.alignment='end';return h;};
-  const cell=(value,i)=>{const c=make('calcite-table-cell');if(end.includes(i))c.alignment='end';if(typeof value==='string')c.textContent=value;else c.append(value);return c;};
+  const cell=(value,i)=>{const c=make('calcite-table-cell');if(end.includes(i))c.alignment='end';if(typeof value!=='string')c.append(value);else if(end.includes(i)){const n=make('span');n.className='data-table-num';n.textContent=value;c.append(n);}else c.textContent=value;return c;};
   if(head.length)table.append(row(head.map(header),'table-header'));
   for(const cells of rows)table.append(Array.isArray(cells)?row(cells.map((v,i)=>i===0&&rowHeader?header(v,i):cell(v,i))):cells);
   wrap.append(label,table);return wrap;

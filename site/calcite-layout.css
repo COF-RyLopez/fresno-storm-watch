@@ -442,6 +442,7 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 
 .data-table{margin-block:var(--calcite-space-sm)}
 .data-table calcite-table{font-variant-numeric:tabular-nums;overflow-wrap:normal}
+.data-table-num{white-space:nowrap}
 .data-table-caption{margin-block-end:var(--calcite-space-xs);color:var(--calcite-color-text-2);font-size:var(--calcite-font-size-sm)}
 #forecast-comparison .comparison-controls{padding:0.75rem}
 #comparison-results calcite-block{margin-block:0.75rem}
