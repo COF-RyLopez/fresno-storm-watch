@@ -1,7 +1,7 @@
 import {NETWORK_SOURCES,NETWORK_LAYER_KEYS,NETWORK_MAX_AGE,networkIdentifier,networkSourceProblem,validateNetworkSnapshot,matchPowerCircuit,networkSymbol} from './power-network-model.js';
 import {createPowerNearby} from './power-nearby-ui.js';
 import {reportHealth} from './source-health.js';
-import {button,el,link} from './dom.js';
+import {button,el,link,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 /** Both network keys use the same symbols as the map, including light mode and the station badge. */
 function renderNetworkKeys(){
@@ -40,7 +40,7 @@ export function createPowerNetwork({timeZone,exercise=false,exerciseNow=Date.now
     if(m.state==='matched'){const context=el('div');context.className='power-network-association';associationHost.append(context);nearby.select(m.circuits,context);}else nearby.clear();
   }
   function showFeature(f){
-    onFeatureOpen();nearby.clear();referenceKey=f.key;selected=null;associationHost=null;map?.setPowerNetworkSelection([f.key]);const root=$('power-detail'),host=el('div'),details=el('details');details.append(el('summary','Utility reference details and sources'),host);root.replaceChildren(el('h3',f.utility+' · '+f.name),el('p','Selected reference is emphasized; surrounding network is faded. Electrical connections to nearby places remain unverified.'));
+    onFeatureOpen();nearby.clear();referenceKey=f.key;selected=null;associationHost=null;map?.setPowerNetworkSelection([f.key]);const root=$('power-detail'),host=el('div'),details=disclosure('Utility reference details and sources');details.append(host);root.replaceChildren(el('h3',f.utility+' · '+f.name),el('p','Selected reference is emphasized; surrounding network is faded. Electrical connections to nearby places remain unverified.'));
     for(const [key,value]of [['Reference type',f.kind==='circuit'?'Distribution circuit line':f.kind==='line'?'Transmission line':'Substation point'],['Published identifier',f.code||'Not supplied'],['Circuit number',f.number||'Not supplied'],['Published substation association',f.substation||'Not supplied'],['Voltage',f.voltage?f.voltage+(f.utility==='PG&E'?' kV':' (publisher value; see source)'):'Not supplied'],['Published record date',f.published&&/Z$/.test(f.published)&&Number.isFinite(Date.parse(f.published))?time(Date.parse(f.published)):f.published||'Not supplied']])host.append(el('dt',key),el('dd',value));
     const s=snapshot.sources.find(s=>s.id===f.sourceId);host.append(el('p',`Reference retrieved ${time(Date.parse(s.lastSuccess))}${s.publisherEdited?' · service edited '+time(s.publisherEdited):''}. ${networkSourceProblem(s)||''}`));
     if(f.note&&f.note!=='NA')host.append(el('p',f.note));host.append(el('p','Reference network—connection to a selected outage or facility is unverified. Live switching, energized state and fault location are not provided. Geometry may be generalized or redacted.'),link('Open utility reference service',s.url),button('Show reference on map',()=>{onMap();map?.setLayerPreference(NETWORK_LAYER_KEYS[f.kind],true);map?.focusPowerNetwork([f.key]);}));

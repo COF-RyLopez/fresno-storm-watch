@@ -19,7 +19,7 @@ test('follow-ups use exact evidence identities and retain corrections, conflicts
 /** Minimal DOM for controller privacy/lifecycle tests; no ArcGIS calls or remote writes. */
 async function withController(run){
  const keys=['document','window','setInterval'],original=new Map(keys.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)])),elements=new Map();
- class Element extends EventTarget{constructor(){super();this.value='';this.children=[];}append(...rows){this.children.push(...rows);}replaceChildren(...rows){this.children=[...rows];}}
+ class Element extends EventTarget{constructor(){super();this.value='';this.children=[];}append(...rows){this.children.push(...rows);}replaceChildren(...rows){this.children=[...rows];}setAttribute(k,v){this[k]=v;}}
  const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},win=new EventTarget();
  try{Object.defineProperty(globalThis,'document',{value:{getElementById:get,createElement:()=>new Element(),hidden:false},configurable:true});Object.defineProperty(globalThis,'window',{value:win,configurable:true});Object.defineProperty(globalThis,'setInterval',{value:()=>0,configurable:true});await run({get,win});}
  finally{for(const [key,descriptor]of original)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}

@@ -11,8 +11,7 @@ body { margin: 0; background: var(--calcite-color-background); color: var(--calc
 .pump-page p { margin-block: 10px; overflow-wrap: anywhere; }
 .pump-page .pump-intro { max-width: 65ch; margin-bottom: 20px; }
 .pump-page a { color: var(--calcite-color-text-link); text-underline-offset: 3px; }
-.pump-page details { margin-block: 16px; }
-.pump-page summary { cursor: pointer; padding-block: 6px; }
+.pump-page calcite-block { margin-block: 16px; }
 #pump-picker-controls { display: grid; gap: 8px; }
 #pump-picker-controls[hidden],#pump-selection[hidden],#pump-form-reopen[hidden] { display: none; }
 #pump-picker-controls input,#pump-picker-controls select { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px; font: inherit; padding: 10px; color: var(--calcite-color-text-1); background: var(--calcite-color-foreground-1); border: 1px solid var(--calcite-color-border-input); color-scheme: dark light; }
@@ -24,5 +23,5 @@ body { margin: 0; background: var(--calcite-color-background); color: var(--calc
 .pump-page footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--calcite-color-border-2); color: var(--calcite-color-text-2); font-size: 13px; }
 .pump-skip { position: absolute; left: -10000px; top: 12px; z-index: 100; padding: 12px; background: var(--calcite-color-foreground-1); }
 .pump-skip:focus { left: 12px; }
-.pump-page :is(a,input,select,summary):focus-visible { outline: 2px solid var(--calcite-color-focus); outline-offset: 3px; }
+.pump-page :is(a,input,select):focus-visible { outline: 2px solid var(--calcite-color-focus); outline-offset: 3px; }
 @media (max-width:600px) { .pump-page-header { padding: 10px 16px; }.pump-brand small { display: none; }.pump-brand img { width: 40px; height: 40px; }.pump-page-header nav { gap: 8px; font-size: 13px; }.pump-page { padding: 24px 16px 40px; }.pump-page-actions calcite-button { flex: 1 1 140px; } }

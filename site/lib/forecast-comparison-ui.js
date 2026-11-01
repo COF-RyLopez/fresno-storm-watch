@@ -2,7 +2,7 @@ import {comparisonWindow,compareForecasts} from './forecast-comparison-model.js'
 import {fetchComparison,loadComparisonAreas} from './forecast-comparison-data.js';
 import {formatTime} from './model.js';
 import {REVIEW_MAX_AGE as MAX_AGE,pointDifferences} from './forecast-review-model.js';
-import {el,link,dataTable} from './dom.js';
+import {el,link,disclosure,dataTable} from './dom.js';
 const $=id=>document.getElementById(id);
 const num=(v,unit)=>Number.isFinite(v)?`${v.toFixed(unit==='in'?2:1)} ${unit}`:'Unknown';
 
@@ -46,7 +46,7 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
       if(s.wind.peak)block.append(el('p',`First maximum wind ${row.id==='nws'?'overlapping interval':'hourly sample'}: ${time(s.wind.peak.start)}${row.id==='nws'?` → ${time(s.wind.peak.end)}`:''}`));
       if(s.gust.peak)block.append(el('p',`First gust maximum ${row.id==='nws'?'overlapping interval':'hourly sample'}: ${time(s.gust.peak.start)}${row.id==='nws'?` → ${time(s.gust.peak.end)}`:''}`));
       block.append(dataTable('Six-hour timing · precipitation / maximum wind',['Valid period','Precip.','Wind'],row.periods.map(p=>[`${time(p.start)} → ${time(p.end)}`,num(p.rain.value,'in'),num(p.wind.value,'mph')]),{rowHeader:true,end:[1,2]}));
-      const details=el('details');details.append(el('summary','Grid, method & source'));
+      const details=disclosure('Grid, method & source');
       details.append(el('p',row.windMeaning),el('p',row.id==='nws'?`Requested point ${snapshot.point.latitude.toFixed(4)}, ${snapshot.point.longitude.toFixed(4)} · NWS grid ${row.grid.office} ${row.grid.x},${row.grid.y}. NWS and numerical models use different grids.`:`Nearest model cell ${row.selected.latitude.toFixed(4)}, ${row.selected.longitude.toFixed(4)}; requested ${snapshot.point.latitude.toFixed(4)}, ${snapshot.point.longitude.toFixed(4)}. Snapshot ${row.snapshotId||'not supplied'}.`));
       details.append(link('Source forecast data',row.source));if(row.catalog)details.append(el('p',row.attribution),link('Dataset metadata & license',row.catalog));block.append(details);host.append(block);
     }

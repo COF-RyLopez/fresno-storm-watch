@@ -4,15 +4,12 @@
 .dwr-supply-card dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;font-size:var(--calcite-font-size--1)}
 .dwr-supply-card dd{margin:0;font-variant-numeric:tabular-nums}
 .dwr-legend-row{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:var(--calcite-font-size--1)}
-.dwr-layer-row details{margin-top:8px;font-size:var(--calcite-font-size--1)}
+.dwr-layer-row calcite-block{margin-top:8px;font-size:var(--calcite-font-size--1)}
 #dwr-evidence{padding-inline:12px}
-.dwr-watch-summary{margin:12px 0;padding:12px;border:1px solid var(--calcite-color-border-2);border-radius:4px;background:var(--calcite-color-foreground-1)}
-.dwr-watch-summary summary{font-weight:600;cursor:pointer;line-height:1.5}
 .dwr-watch-summary p,#dwr-supply-evidence p,#county-sandbag-evidence p{font-size:var(--calcite-font-size--1);line-height:1.5;color:var(--calcite-color-text-2)}
 .dwr-watch-summary .dwr-inspection,#dwr-supply-evidence .dwr-inspection{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;color:var(--calcite-color-text-1);font-weight:600}
 .dwr-supply-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,.5fr);gap:8px}
 .dwr-supply-filters calcite-label{--calcite-label-margin-bottom:0}
-.dwr-watch-summary summary:focus-visible{outline:2px solid var(--calcite-color-focus);outline-offset:2px}
 #dwr-supply-evidence,#county-sandbag-evidence{padding-inline:12px}
 #dwr-supply-evidence h3,#county-sandbag-evidence h3{font-size:var(--calcite-font-size-0);margin:20px 0 8px}
 #dwr-supply-evidence h4,#county-sandbag-evidence h4{font-size:var(--calcite-font-size--1);margin:0}

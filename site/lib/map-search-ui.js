@@ -1,6 +1,6 @@
 import {sandbagSearchEntries} from './county-sandbag-model.js';
 import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js';
-import {elIfText as el} from './dom.js';
+import {elIfText as el,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 const BASE=new URL('../data/search/v0.31.0/',import.meta.url),WATERBODY_BASE=new URL('../data/search/waterbodies-v0.34.0/',import.meta.url);
 const KIND={sandbag:'County sandbag site',waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point'};
@@ -70,7 +70,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
       if(!located){clearSelection('Map navigation was interrupted or unavailable. Select the result to retry.');return;}
       selectionBusy=false;selectedShape=shape;
       const source=(row.kind==='waterbody'?waterbodyIndex:publicIndex)?.sources?.[row.kind],detail=$('map-search-selection');
-      const reference=el('details');reference.append(el('summary','Selected reference & source'),el('p',row.reference||'Grouped mapped segments may be disconnected. This is reference geometry, not a route, current flow or proof of open access.'),el('p',`Source date / retrieval: ${date(row.sourceTime??source?.retrievedAt)}`));
+      const reference=disclosure('Selected reference & source');reference.append(el('p',row.reference||'Grouped mapped segments may be disconnected. This is reference geometry, not a route, current flow or proof of open access.'),el('p',`Source date / retrieval: ${date(row.sourceTime??source?.retrievedAt)}`));
       detail.replaceChildren(el('h3',row.name),el('p',`${KIND[row.kind]} · ${row.detail??`${row.segments} source segments with this name`}`),reference);
       if(row.kind==='waterbody'){const fit=el('calcite-button','Fit full lake outline');fit.setAttribute('scale','s');fit.addEventListener('click',()=>void select(row.key));detail.append(fit);if(outline)reference.append(el('p','Showing the complete lake outline associated with the selected reservoir reporting site.'));}
       if(row.kind==='reservoir')detail.append(el('p','Full lake outline unavailable. This result is a reporting point only; reopen search to retry the lake index.'));

@@ -2,7 +2,7 @@
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
   <title>F.R.O.G. · Pump inventory maintenance</title>
-  <link rel="icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./pump-readiness.css?v=9c8593270d">
+  <link rel="icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./pump-readiness.css?v=51c1a81597">
   <script src="./theme.js?v=8a60674390"></script><script type="importmap">
 {"imports":{
 "./config.js":"./config.js?v=d82b554e1d",
@@ -11,7 +11,7 @@
 "./lib/afn-model.js":"./lib/afn-model.js?v=06d708fe9a",
 "./lib/afn-snapshot-model.js":"./lib/afn-snapshot-model.js?v=c3b0970e67",
 "./lib/area-concern-model.js":"./lib/area-concern-model.js?v=e5c976f8cc",
-"./lib/auth.js":"./lib/auth.js?v=28b402649f",
+"./lib/auth.js":"./lib/auth.js?v=30a3e298e9",
 "./lib/basemap-gallery-ui.js":"./lib/basemap-gallery-ui.js?v=2d2e451f3b",
 "./lib/care-model.js":"./lib/care-model.js?v=4af36b3643",
 "./lib/drainage-connections.js":"./lib/drainage-connections.js?v=0e7fae95f2",
@@ -72,10 +72,10 @@
   <main class="pump-page">
     <h1>Refresh the private pump inventory</h1><p><a href="./pump-refresh-setup.html">Hourly refresh: county IT setup and recovery</a>. Pause an active scheduled task before manual maintenance.</p><p>County GIS copies the FMFCD source into AGOL. Form users then need only their approved county AGOL account. This maintenance page is restricted to the existing exercise owner.</p>
     <calcite-notice open kind="info" icon="lock" width="full"><span slot="title">Private exercise inventory</span><span slot="message">The parent keeps source snapshots privately. The read-only form view contains existing pumps only. Readiness history is kept separately; source-copying never edits FMFCD, readiness confirmations or assignments.</span></calcite-notice>
-    <h2>1. Connect as county GIS</h2><calcite-action id="sign-in" text="County ArcGIS sign-in" text-enabled icon="user"></calcite-action><p id="identity-status" role="status">County AGOL sign-in required.</p><details id="signin-help"><summary>Access help</summary><p>Use the county exercise owner account. Reading the original FMFCD service can request a separate county Enterprise sign-in; only the inventory maintainer needs it. Credentials belong only in the official ArcGIS dialogs.</p></details>
+    <h2>1. Connect as county GIS</h2><calcite-action id="sign-in" text="County ArcGIS sign-in" text-enabled icon="user"></calcite-action><p id="identity-status" role="status">County AGOL sign-in required.</p><calcite-block id="signin-help" heading="Access help" collapsible><p>Use the county exercise owner account. Reading the original FMFCD service can request a separate county Enterprise sign-in; only the inventory maintainer needs it. Credentials belong only in the official ArcGIS dialogs.</p></calcite-block>
     <h2>2. Read and check the source</h2><calcite-button id="inventory-read" disabled appearance="outline" icon-start="refresh">Read FMFCD source</calcite-button><p id="inventory-source" role="status">No source snapshot prepared.</p>
     <h2>3. Copy into county AGOL</h2><p>The copy is verified record by record before the form switches to it. Proposed and other pump classifications are excluded from the form view. An interrupted upload leaves the last verified view in use.</p><calcite-button id="inventory-publish" disabled icon-start="upload">Create / refresh private AGOL copy</calcite-button>
-    <p id="inventory-progress" role="status" aria-live="polite"></p><section id="inventory-result" hidden aria-label="Verified inventory copy"><h2>Verified copy</h2><p id="inventory-summary"></p><p><a id="inventory-parent" target="_blank" rel="noopener">Private source snapshots</a> · <a id="inventory-view" target="_blank" rel="noopener">Read-only form view</a></p><p id="inventory-sharing"></p><details><summary>Public configuration identifiers for county GIS</summary><pre id="inventory-config" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details></section>
+    <p id="inventory-progress" role="status" aria-live="polite"></p><section id="inventory-result" hidden aria-label="Verified inventory copy"><h2>Verified copy</h2><p id="inventory-summary"></p><p><a id="inventory-parent" target="_blank" rel="noopener">Private source snapshots</a> · <a id="inventory-view" target="_blank" rel="noopener">Read-only form view</a></p><p id="inventory-sharing"></p><calcite-block heading="Public configuration identifiers for county GIS" collapsible><pre id="inventory-config" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></calcite-block></section>
     <footer><p>No inventory records or credentials are downloaded, included in the website files or saved in browser storage. Keep the parent owner-only. Review view sharing before onboarding staff. Refresh after source edits and at least weekly during this pilot; the form blocks saving when its source copy is more than seven days old.</p></footer>
   </main>
 </body></html>

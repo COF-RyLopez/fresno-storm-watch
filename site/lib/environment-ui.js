@@ -7,7 +7,7 @@ import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
 import {createWeatherTimeline} from './weather-ui.js';
 import {observationAt} from './weather-model.js';
-import {classLink as link,elClass as el} from './dom.js';
+import {classLink as link,elClass as el,disclosure} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
@@ -129,7 +129,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
       appendScheduledReleases(card,schedules.find(s=>s.station===station.id),time);
       const actions=el('div','','environment-actions');actions.append(newButton('Release & gauge trends',()=>onTrends(station.id)),newButton('Locate dam',()=>{onMap();map?.focusEnvironment(station.longitude,station.latitude);}),link('CDEC source',station.source));
       if(station.releaseNotices)actions.append(link('Release notices',station.releaseNotices));card.append(actions);
-      const details=el('details','','environment-details');details.append(el('summary','Release meaning & source details'),el('p',station.note),el('p',`Last successful collection: ${time(row?.lastSuccess?Date.parse(row.lastSuccess):null)}. Pool elevation uses the publisher reference; datum is not specified in this feed.`),link('Station metadata',station.metadata));card.append(details);list.append(card);
+      const details=disclosure('Release meaning & source details');details.className='environment-details';details.append(el('p',station.note),el('p',`Last successful collection: ${time(row?.lastSuccess?Date.parse(row.lastSuccess):null)}. Pool elevation uses the publisher reference; datum is not specified in this feed.`),link('Station metadata',station.metadata));card.append(details);list.append(card);
     }
     if(layers)drawReservoirs();
   }

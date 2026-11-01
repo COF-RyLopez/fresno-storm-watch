@@ -196,8 +196,9 @@ notice.append(title,Object.assign(el('span','Last success 14:05'),{slot:'message
 - Visibility: `[hidden]{display:none!important}` is global in `calcite-layout.css`, `eoc.css` and `map-pilot.css`, so
   `el.hidden=true` works on any `calcite-*` tag. For notice/alert/dialog/sheet/popover use `open`; for panel `closed`; for block `expanded`.
   These keep their transitions and open/close events.
-- Existing deprecated usages to migrate when touched: `<calcite-block ... open>` in `index.html:212-214` -> `expanded`;
-  `slot="trigger"` dropdown in `index.html:364` -> `reference-element`; `expand-disabled` (5.2-deprecated, still correct in 5.1.1).
+- Collapsible sections are `calcite-block`s built with `disclosure()` / `onExpand()` from `lib/dom.js`; read and write the
+  reflected `expanded` attribute (the property reads null before hydration). Data tables use `dataTable()` (static `calcite-table`).
+  Still deprecated but correct in 5.1.1: `expand-disabled` on action-bar (5.2).
 
 ## 8. Anti-patterns
 

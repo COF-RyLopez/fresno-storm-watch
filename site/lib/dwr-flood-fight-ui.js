@@ -3,7 +3,7 @@ import {countyGeometry} from './model.js';
 import {reportHealth} from './source-health.js';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js';
 import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js';
-import {node,nodeLink as link} from './dom.js';
+import {node,nodeLink as link,disclosure} from './dom.js';
 
 const KEY='dwrFloodFight', REFRESH_MS=300000;
 
@@ -93,7 +93,7 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
       for(const c of catalog.layers){
         const row=node('section');row.className='dwr-layer-row';const label=node('calcite-label');label.layout='inline';const box=node('calcite-checkbox');box.checked=c.defaultOn;box.dataset.dwrLayer=c.key;label.append(box,document.createTextNode(c.title));
         const statusNode=node('p',c.sourceIssue?`Dashboard source issue at onboarding: ${c.sourceIssue}. Select to recheck.`:'Not loaded · select to query the publisher.');statusNode.setAttribute('role','status');
-        const details=node('details');details.append(node('summary','Publisher symbols & source'));const key=node('div');details.append(key,link('Publisher layer',c.url));row.append(label,statusNode,details);host.append(row);
+        const details=disclosure('Publisher symbols & source');const key=node('div');details.append(key,link('Publisher layer',c.url));row.append(label,statusNode,details);host.append(row);
         const s={config:c,box,status:statusNode,legend:key,layer:null,pending:null,checked:null};states.set(c.key,s);
         box.addEventListener('calciteCheckboxChange',()=>{if(box.checked){controller.setLayerPreference(KEY,true);void refreshLayer(s);}else if(s.layer)s.layer.visible=false;});
       }

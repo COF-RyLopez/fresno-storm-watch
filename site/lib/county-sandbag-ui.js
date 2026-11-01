@@ -2,7 +2,7 @@ import {loadSdk} from './map.js';
 import {SANDBAG_APP,SANDBAG_SOURCE,SANDBAG_GUIDANCE,SANDBAG_STATES,SANDBAG_MAX_AGE,validateSandbagSnapshot,sandbagContext,sandbagHealth,sandbagHours} from './county-sandbag-model.js';
 import {reportHealth} from './source-health.js';
 import {roadGraphic,fillAreaSelect,selectAreaOption} from './dwr-supply-planning-ui.js';
-import {node,nodeButton as button,nodeLink as external} from './dom.js';
+import {node,nodeButton as button,nodeLink as external,disclosure,onExpand} from './dom.js';
 const KEY='countySandbags';
 const km=m=>(m/1000).toFixed(1)+' km';
 
@@ -30,7 +30,7 @@ export function createCountySandbags({exercise=false,timeZone='America/Los_Angel
     host.append(node('h3','Nearby road records'),node('p','Within 5 km of this site or its nearby watchpoints, using full road geometry. Straight-line context, not a pickup route.'));
     if(!matched?.roads.length)host.append(node('p',!r.geometry?'Road proximity cannot be determined without coordinates.':!view.roadCurrent?'Road feed unavailable / overdue; nearby status unknown.':'No matching road records returned; open roads and safe access are not established.'));
     for(const near of matched?.roads||[]){const section=node('section');section.className='dwr-road-context';const row=near.row,basis=[];if(near.siteMeters!==null)basis.push(`${km(near.siteMeters)} from site`);if(near.areaMeters!==null)basis.push(`${km(near.areaMeters)} from ${near.pointName}`);section.append(node('h4',row.kind+' · '+row.name),node('p',(near.verification&&row.status!=='Verification needed'?'Verification needed · ':'')+row.status),node('p',basis.join(' · ')),node('p',row.location),node('p',`Source update ${time(row.sourceTime||row.edited)} · starts ${time(row.start)} · ends ${time(row.end)}.`));for(const issue of row.issues||[])section.append(node('p',issue));section.append(button('Inspect road record',()=>onRoad(row.key)));host.append(section);}
-    const sources=node('details');sources.append(node('summary','Source dates, map key & coverage'),node('p',`Prepared collection ${time(snapshot.lastSuccess)} · ${snapshot.appSubtitle||'County app update label not supplied'}. The old app label and record dates are distinct from the collection time.`),node('p',`Road feed checked ${time(view.roadChecked)} · ${view.roadCurrent?'query current':'verification needed'}. Site-to-watchpoint distance is at most 25 km; road context is at most 5 km. Neither distance establishes service assignment or drivable access.`),node('p','County shovel/bag icon: source-active location; hollow gray diamond: status unknown; gray x: source inactive. White selection ring: selected site; cyan rings: associated watchpoints. Orange road references / dashed teal detours retain the existing road palette. Current inventory is unverified for every site.'),external('County interactive sandbag map',SANDBAG_APP),node('p'),external('Publisher feature service',SANDBAG_SOURCE));host.append(sources);
+    const sources=disclosure('Source dates, map key & coverage');sources.append(node('p',`Prepared collection ${time(snapshot.lastSuccess)} · ${snapshot.appSubtitle||'County app update label not supplied'}. The old app label and record dates are distinct from the collection time.`),node('p',`Road feed checked ${time(view.roadChecked)} · ${view.roadCurrent?'query current':'verification needed'}. Site-to-watchpoint distance is at most 25 km; road context is at most 5 km. Neither distance establishes service assignment or drivable access.`),node('p','County shovel/bag icon: source-active location; hollow gray diamond: status unknown; gray x: source inactive. White selection ring: selected site; cyan rings: associated watchpoints. Orange road references / dashed teal detours retain the existing road palette. Current inventory is unverified for every site.'),external('County interactive sandbag map',SANDBAG_APP),node('p'),external('Publisher feature service',SANDBAG_SOURCE));host.append(sources);
   }
   function draw(r,matched){
     if(!base)return;base.removeAll();context.removeAll();
@@ -42,7 +42,7 @@ export function createCountySandbags({exercise=false,timeZone='America/Los_Angel
   }
   function render(){
     view=calculate();const health=view.health,a=snapshot?.accounting;
-    $('county-sandbag-summary').textContent=exercise?'County sandbag locations · live data disabled':`County sandbag locations · ${a?a.active+' source-active':error?'unavailable':'loading'}`;
+    root.setAttribute('heading',exercise?'County sandbag locations · live data disabled':`County sandbag locations · ${a?a.active+' source-active':error?'unavailable':'loading'}`);
     $('county-sandbag-health').textContent=exercise?'Live county records are disabled in the fictional exercise.':a?`${a.active} source-active · ${a.unknown} status unknown · ${a.inactive} inactive · ${a.unmapped} address-only. ${health.current&&!error?'Prepared collection':'Collection overdue / failed; retained references'} ${time(snapshot.lastSuccess)}.`:error||'Loading county source snapshot…';
     $('county-sandbag-age').textContent=snapshot?`${snapshot.appSubtitle||'App update label unknown'} · site edit / maintenance dates appear in the evidence pane. A recent collection does not confirm stock or operating hours.`:'Source dates and availability will appear with the records.';
     $('county-sandbag-result').textContent=`${view.rows.length} records in this filter. ${view.unmappedInFilter?'Address-only sites have no spatial match; choose All river watch areas to view them. ':''}Proximity is not a service area or usable route.`;
@@ -69,9 +69,9 @@ export function createCountySandbags({exercise=false,timeZone='America/Los_Angel
   for(const id of ['county-sandbag-status','county-sandbag-area'])$(id).addEventListener('calciteSelectChange',render);
   $('county-sandbag-query').addEventListener('calciteInputInput',render);$('county-sandbag-refresh').addEventListener('click',()=>void refresh());
   pane.addEventListener('stormEvidenceClose',()=>{selected=null;context?.removeAll();});
-  root.addEventListener('toggle',()=>{if(root.open&&!snapshot)void refresh();});
+  onExpand(root,open=>{if(open&&!snapshot)void refresh();});
   setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!document.hidden)render();},60000);
-  const params=new URLSearchParams(location.search);if(params.get('sandbags')==='1')root.open=true;
+  const params=new URLSearchParams(location.search);if(params.get('sandbags')==='1')root.setAttribute('expanded','');
   render();queueMicrotask(()=>void refresh());
   return {select,setPlanning(data){planning=data;const signature=JSON.stringify(data.rows.map(r=>({id:r.area.id,name:r.area.name})));if(optionsSignature!==signature){optionsSignature=signature;fillAreaSelect($('county-sandbag-area'),data.rows);}render();},setRoads(data){roads=data;render();},selectArea(id){if(selectAreaOption($('county-sandbag-area'),id))render();},async setMap(controller){map=controller;try{const sdk=await loadSdk();const [GraphicsLayer,GraphicClass]=await sdk.import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);Graphic=GraphicClass;base=new GraphicsLayer({title:'County sandbag locations · source status / stock unconfirmed',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});context=new GraphicsLayer({title:'Selected county sandbag context · not a route',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});map.registerLayer(KEY,base,true);map.registerLayer(KEY,context,true);draw(...selection());}catch{$('county-sandbag-result').textContent='Sandbag map unavailable; source addresses remain in the list.';}}};
 }

@@ -2,12 +2,12 @@ import {buildReleaseTrend,TREND_REACHES,trendSegments} from './release-trend-mod
 import {HOUR,riverValue} from './river-model.js';
 import {formatTime} from './model.js';
 import {svgNode as svg} from './river-chart.js';
-import {classLink as link,elClass as el,dataTable} from './dom.js';
+import {classLink as link,elClass as el,disclosure,onExpand,dataTable} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
 /** @param {object} series @param {object} model @param {number[]} domain @param {boolean} release @param {string} zone @returns {HTMLElement} Aligned small multiples; no curve fitting, carry-forward or inferred water-arrival time. */
-export function releaseTrendChart(series,model,domain,release,zone,selectionKey=null){
+export function releaseTrendChart(series,model,domain,release,zone,selectionKey=null,dataOpen=false){
   const figure=el('figure','','release-trend-chart');
   const time=t=>formatTime(t,zone);
   const rows=[...series.observed,...series.forecast,...(release?model.markers:[])].filter(p=>Number.isFinite(p.value)).sort((a,b)=>a.time-b.time);
@@ -52,8 +52,8 @@ export function releaseTrendChart(series,model,domain,release,zone,selectionKey=
   chart.addEventListener('focus',inspect);
   const caption=el('figcaption',`${release?(series.daily?'Blue dots: daily reports at the midpoint of their PST report date.':'Solid blue: reported hourly releases.'):'Solid blue: observations. Dashed purple: NWS forecast; grey dashed: old forecast.'} ${release?'Hollow diamonds: planned releases. ':''}Dotted amber guides mark reservoir schedule times, not downstream arrival. Times: ${zone}.`);
   const sampleTable=()=>{const table=dataTable(`${series.title} (${series.units}) · chart data`,['Type','Time / report date',series.units],rows.map(p=>[p.kind==='scheduled'?'Planned':p.kind,p.kind==='daily report'?`${p.reportDate} PST`:time(p.time),riverValue(p.value)]),{end:[2]});table.classList.add('trend-table-scroll');return table;};
-  const data=el('details','','trend-sample-data');data.append(el('summary',`Inspect chart data (${rows.length} valid samples)`));
-  data.addEventListener('toggle',()=>{if(!data.open||data.children.length>1)return;data.append(sampleTable());});
+  const data=disclosure(`Inspect chart data (${rows.length} valid samples)`,dataOpen);data.className='trend-sample-data';
+  const fill=()=>{if(data.children.length)return;data.append(sampleTable());};onExpand(data,open=>{if(open)fill();});if(dataOpen)fill();
   figure.append(chart,readout,caption,data);return figure;
 }
 
@@ -67,17 +67,17 @@ export function createReleaseTrends({config,timeZone,exercise,onLocate=()=>{}}){
     const signature=JSON.stringify([stationId,gaugeId,measure,historyHours,futureHours,reservoirs,entries.get(gaugeId),Math.floor(Date.now()/60000)]);
     if(!force&&signature===lastSignature)return;lastSignature=signature;
     const host=$('release-trend-content'),oldCharts=[...host.querySelectorAll('.release-trend-chart svg')];
-    const selections=force?[]:oldCharts.map(n=>n.dataset.selection),focused=force?-1:oldCharts.indexOf(document.activeElement),expanded=force?[]:[...host.querySelectorAll('.trend-sample-data')].map(n=>n.open);
+    const selections=force?[]:oldCharts.map(n=>n.dataset.selection),focused=force?-1:oldCharts.indexOf(document.activeElement),expanded=force?[]:[...host.querySelectorAll('.trend-sample-data')].map(n=>n.hasAttribute('expanded'));
     host.replaceChildren();
     const title=el('h3',`${exercise?'EXERCISE · ':''}${model.reach.name}`);host.append(title);
     host.append(el('p',`Past ${historyHours/24} days → next ${futureHours/24} days · ${time(model.start)} → ${time(model.end)}. ${!model.gauge.id?'Release in cfs. Downstream comparison unavailable.':measure==='flow'?'Shared cfs scale for release and gauge flow.':'Gauge stage uses a separate, focused ft scale.'}`,'trend-window'));
     const columns=el('div','','release-trend-columns');
     const left=el('section');left.append(el('h4',`${stationId} · ${model.release.title}`),el('p',model.release.health,'trend-health'));
-    left.append(releaseTrendChart(model.release,model,model.releaseDomain,true,timeZone,selections[0]));
+    left.append(releaseTrendChart(model.release,model,model.releaseDomain,true,timeZone,selections[0],expanded[0]));
     left.append(el('p',`Last reservoir collection: ${time(model.release.collected)}. Collection time is not observation time.`,'trend-source'));
     if(model.release.source)left.append(link('Official CDEC observations',model.release.source));
     const right=el('section');right.append(el('h4',`${model.gauge.id?model.gauge.id+' · ':''}${model.gauge.title}`),el('p',model.gauge.health,'trend-health'));
-    if(model.gauge.id){right.append(releaseTrendChart(model.gauge,model,model.gaugeDomain,false,timeZone,selections[1]),el('p',`NWS forecast issued: ${time(model.gauge.issued)} · forecast ends: ${time(model.gauge.forecastEnd)} · station checked: ${time(model.gauge.checked)}.`,'trend-source'));if(model.gauge.source)right.append(link('Official NWS gauge',model.gauge.source));}
+    if(model.gauge.id){right.append(releaseTrendChart(model.gauge,model,model.gaugeDomain,false,timeZone,selections[1],expanded[1]),el('p',`NWS forecast issued: ${time(model.gauge.issued)} · forecast ends: ${time(model.gauge.forecastEnd)} · station checked: ${time(model.gauge.checked)}.`,'trend-source'));if(model.gauge.source)right.append(link('Official NWS gauge',model.gauge.source));}
     else{right.append(el('p','Downstream comparison unavailable. Pine Flat outflow remains visible on the release chart; it is not a separate downstream measurement.','trend-empty'),link('USACE Kings basin hourly report','https://www.spk-wc.usace.army.mil/fcgi-bin/hourly.py?report=pnf'),el('p','Downstream travel time, diversions and distributary operations require operator confirmation.'),link('USGS 11221500 record availability','https://waterdata.usgs.gov/monitoring-location/USGS-11221500/'));}
     columns.append(left,right);host.append(columns);
     host.append(el('p',model.reach.note,'trend-context'));
@@ -90,7 +90,6 @@ export function createReleaseTrends({config,timeZone,exercise,onLocate=()=>{}}){
     if(shown.length){const list=el('ul');for(const n of shown){const text=`${n.time>model.now?'UPCOMING':'Past effective time'} · ${time(n.time)} · ${n.valid?riverValue(n.value,'cfs'):'Amount flagged / unknown'}${n.delta===null?'':` · ${n.delta>=0?'+':''}${riverValue(n.delta,'cfs')} from previous schedule`}`;list.append(el('li',text));}notices.append(list);}
     notices.append(link('Official CDEC release notices',model.schedule.source));host.append(notices);
     host.append(el('p','Schedules can change without advance notice. These charts align source times only: they do not route releases, calculate downstream arrival, or establish safe access. Missing and flagged measurements leave gaps; no values are carried into the future.','trend-context'));
-    host.querySelectorAll('.trend-sample-data').forEach((n,i)=>{n.open=!!expanded[i];});
     if(focused>=0)host.querySelectorAll('.release-trend-chart svg')[focused]?.focus({preventScroll:true});
   }
   function selectStation(id){

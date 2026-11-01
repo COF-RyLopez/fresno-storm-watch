@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-kO42DQhd2GuHMO6WurzBYa2dQTUCKnKfFADck3ulXwI='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-bvnxWyTkRYipaozfDl8vfzAfq5rI+478CQMfli6OopM='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
 <title>Fresno County · Evacuation-zone population</title><meta name="description" content="Read-only planning map of Fresno County Sheriff's evacuation zones and approximate residents allocated from ACS five-year population estimates.">
-<link rel="icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./zone-population.css?v=7e385e5671">
+<link rel="icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./zone-population.css?v=f221c02d9c">
 <script src="./theme.js?v=8a60674390"></script><script type="importmap">
 {"imports":{
 "./lib/acs-model.js":"./lib/acs-model.js?v=f7f8d10a79",
@@ -13,7 +13,7 @@
 "./lib/basemap-gallery-ui.js":"./lib/basemap-gallery-ui.js?v=2d2e451f3b",
 "./lib/care-data.js":"./lib/care-data.js?v=80c5b96c44",
 "./lib/care-model.js":"./lib/care-model.js?v=4af36b3643",
-"./lib/dom.js":"./lib/dom.js?v=c28b6a3b48",
+"./lib/dom.js":"./lib/dom.js?v=46be0c1bb1",
 "./lib/drainage-connections.js":"./lib/drainage-connections.js?v=0e7fae95f2",
 "./lib/drainage-model.js":"./lib/drainage-model.js?v=8eede1bed0",
 "./lib/drainage-nearby-map.js":"./lib/drainage-nearby-map.js?v=7704858ac5",
@@ -57,10 +57,10 @@
 "./lib/workspace-model.js":"./lib/workspace-model.js?v=7e5d37f483",
 "./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
 "./lib/zone-population-product.js":"./lib/zone-population-product.js?v=47199f3b6f",
-"./zone-population.js":"./zone-population.js?v=2019b9672e"
+"./zone-population.js":"./zone-population.js?v=c9836b74cc"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./zone-population.js?v=2019b9672e"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./zone-population.js?v=c9836b74cc"></script>
 </head><body>
 <a class="skip-link" href="#zones-search">Skip to zone search</a>
 <header><div class="brand"><img src="./assets/frog-logo.png" width="44" height="44" alt="F.R.O.G. Flood Response Operations Group"><div><h1>Evacuation-zone population</h1><p>Fresno County Sheriff’s zones · read-only planning map</p></div></div><nav aria-label="Map actions"><a id="download-csv" href="./data/zone-population/zone-population.csv" download hidden>Download all zones · CSV</a><calcite-button id="print-map" appearance="outline" scale="s">Print map</calcite-button><a href="./?view=watch">Storm Watch</a></nav></header>
@@ -69,7 +69,7 @@
 <calcite-segmented-control id="mobile-switch" class="mobile-switch" aria-label="Phone workspace" width="full"><calcite-segmented-control-item id="show-list" value="Zones &amp; details">Zones &amp; details</calcite-segmented-control-item><calcite-segmented-control-item id="show-map" value="Map" checked>Map</calcite-segmented-control-item></calcite-segmented-control>
 <main data-mobile="map"><aside aria-label="Zone selection and population evidence"><section class="search"><calcite-label>Find an evacuation zone<calcite-input id="zones-search" type="search" placeholder="For example L39" autocomplete="off" clearable></calcite-input></calcite-label><calcite-label layout="inline"><calcite-checkbox id="only-unknown"></calcite-checkbox>Only estimates needing review</calcite-label><p id="zone-counts" role="status">Loading the dated zone inventory…</p></section>
 <section id="selected-zone" aria-label="Selected zone" hidden></section>
-<details id="methods"><summary>Sources &amp; estimation limits</summary><div id="method-details"></div><p><a href="./data/zone-population/manifest.json">Snapshot metadata</a> · <a href="./data/zone-population/evidence.json" download>Calculation contributions (JSON)</a></p><p>Population comes from the ACS, not the Sheriff’s Office. Zone boundaries come from the county. F.R.O.G. calculates the zone allocation; this is not a Census-published zone total.</p><p><a href="https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947">County evacuation-zone source</a> · <a href="https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83">Living Atlas ACS source</a> · <a href="https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3">2020 Census block weights</a> · <a href="https://www.arcgis.com/apps/webappviewer/index.html?id=e7d6006a016a444db8b210ac4d2eb5cf">Official evacuation reference</a></p></details>
+<calcite-block id="methods" heading="Sources &amp; estimation limits" collapsible><div id="method-details"></div><p><a href="./data/zone-population/manifest.json">Snapshot metadata</a> · <a href="./data/zone-population/evidence.json" download>Calculation contributions (JSON)</a></p><p>Population comes from the ACS, not the Sheriff’s Office. Zone boundaries come from the county. F.R.O.G. calculates the zone allocation; this is not a Census-published zone total.</p><p><a href="https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947">County evacuation-zone source</a> · <a href="https://www.arcgis.com/home/item.html?id=60c98f20a162416ea1725b94d7297f83">Living Atlas ACS source</a> · <a href="https://www.arcgis.com/home/item.html?id=903453c84ade4f11aa3bce393af172d3">2020 Census block weights</a> · <a href="https://www.arcgis.com/apps/webappviewer/index.html?id=e7d6006a016a444db8b210ac4d2eb5cf">Official evacuation reference</a></p></calcite-block>
 <calcite-table id="zones-table" caption="Independently estimated population for each county evacuation zone" interaction-mode="static"><calcite-table-row slot="table-header"><calcite-table-header heading="Zone"></calcite-table-header><calcite-table-header heading="ACS residents" alignment="end"></calcite-table-header></calcite-table-row></calcite-table><p id="list-empty" hidden>No zones match this search.</p>
 </aside><section class="map-stage" aria-label="Population map"><div class="map-tools"><calcite-button id="fit-county" appearance="outline" scale="s" disabled>All zones</calcite-button><calcite-label layout="inline"><calcite-switch id="map-labels" checked></calcite-switch>Zone + population labels</calcite-label></div><p id="map-status" role="status">Preparing the population map…</p><div id="zone-map" tabindex="0" aria-label="Map of Sheriff evacuation zones with approximate ACS residents"></div><div class="map-key" aria-label="Population map legend"><span><i class="zone-key"></i> Zone outline · ≈ approximate residents</span><span><i class="unknown-key"></i> Estimate unavailable</span><span>North up · Web Mercator display · zoom for more labels</span></div></section></main>
 <calcite-notice id="source-notice" scale="s" width="full" kind="warning" icon="information" hidden><span id="notice-title" slot="title"></span><span id="notice-detail" slot="message"></span></calcite-notice>

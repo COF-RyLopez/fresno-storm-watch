@@ -5,7 +5,7 @@ import {PUMP_READINESS_SCOPE,PUMP_READINESS_TEST_SCOPE,BACKUP_OPTIONS,CONNECTION
 import {pumpReadiness} from './pump-readiness-model.js';
 import {openPumpTask,renderPumpTasks} from './pump-task-ui.js';
 import {reportHealth} from './source-health.js';
-import {el} from './dom.js';
+import {el,disclosure} from './dom.js';
 const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
 
 /** Private append-only confirmations in the existing restricted checklist views. No browser persistence. */
@@ -31,7 +31,7 @@ export function createPumpReadiness({exercise=false,exerciseData=null,timeZone,s
     const r=pump.readiness;host.append(el('p',r.label));
     if(r.event){const e=r.event,p=e.payload;host.append(el('p',`${p.pumpLabel} · backup ${p.backup.toLowerCase()} · connection ${p.connection.toLowerCase()} · fuel ${p.fuel.toLowerCase()} · runtime ${p.runtimeHours===null?'unknown':p.runtimeHours+' hours (estimate)'}`),el('p',`Responsible: ${p.owner} · ${p.contact}`),el('p',`Confirmed ${stamp(p.observed)} · next review ${stamp(p.validUntil)}. Recorded by ${e.author} at ${stamp(e.created)}.`));if(p.runtimeHours!==null)host.append(el('p','Runtime basis: '+p.runtimeBasis));}
     for(const reason of r.reasons)host.append(el('p',reason));
-    const details=el('details');details.append(el('summary',`Readiness history · ${r.history.length} saved update(s)`));
+    const details=disclosure(`Readiness history · ${r.history.length} saved update(s)`);
     for(const e of [...r.history].sort((a,b)=>b.created-a.created))details.append(el('p',`${stamp(e.created)} · ${e.author} · ${e.payload.backup} backup · fuel ${e.payload.fuel} · runtime ${e.payload.runtimeHours??'unknown'}${e.payload.runtimeHours===null?'':' hours'} · review ${stamp(e.payload.validUntil)} · ${e.payload.evidence}`));
     host.append(details);if(includeTasks)renderPumpTasks(host,pump,stamp);
   }

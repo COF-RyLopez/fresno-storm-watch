@@ -2,9 +2,9 @@ import {POPULATION_SOURCES,POPULATION_METHOD,POPULATION_LIMIT} from './populatio
 import {CARE_SOURCES} from './care-model.js';
 import {PIO_GUIDANCE} from './acs-model.js';
 import {ZONE_ACS_METHOD,ZONE_ACS_ERROR,ZONE_ACS_BOUNDARIES} from './zone-acs-model.js';
-import {el,link} from './dom.js';
+import {el,link,disclosure} from './dom.js';
 export function populationSourceGuide(){
-  const box=el('details');box.id='pio-source-guide';box.append(el('summary','Where the zone population information comes from'));
+  const box=disclosure('Where the zone population information comes from');box.id='pio-source-guide';
   box.append(el('p','The county Population Map and its Population Density Map are published under the ArcGIS account COF_EOC_PROD (item ownership checked October 28, 2026). This identifies the publishing account; an individual analyst is not identified in those item descriptions.'),link('Original county Population Map',POPULATION_SOURCES.countyMap),el('br'),link('County Population Density Map · source layers',POPULATION_SOURCES.countyWebMap));
   box.append(el('p','Underlying counts: U.S. Census Bureau 2020 P.L. 94-171 data, distributed by Esri as California Census 2020 Redistricting Blocks under esri_demographics. County evacuation boundaries and published status come from Fresno County’s separate evacuation layer.'),link('Esri Census block item & methods',POPULATION_SOURCES.blocksItem),el('br'),link('County evacuation-zone item',CARE_SOURCES.zoneItem));
   box.append(el('p','The approximate number inside a selected zone is calculated by F.R.O.G.; it is not a zone population figure published by the original county viewer. '+POPULATION_METHOD),el('p',POPULATION_LIMIT));

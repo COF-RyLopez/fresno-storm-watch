@@ -1,6 +1,6 @@
 import {buildingPowerTarget} from './power-buildings-model.js';
 import {loadPowerBuildings,loadPowerBuildingsAutomatic} from './power-buildings-data.js';
-import {button,el} from './dom.js';
+import {button,el,disclosure,onExpand} from './dom.js';
 /** Session-only selected-area evidence. Refresh revisions cancel older queries, including after the pane closes. */
 export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
   let map=null,host=null,row=null,result=null,error=null,busy=false,epoch=0,labels=true,selectedId=null,detailsOpen=false;
@@ -47,11 +47,11 @@ export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
   }
   function render(){
     if(!host?.isConnected||!row)return;
-    const target=buildingPowerTarget(row),details=el('details'),content=el('div');
-    host.replaceChildren(details);host.className='power-buildings';details.className='power-detail-disclosure';details.open=detailsOpen;
+    const target=buildingPowerTarget(row),content=el('div');
     const quantity=result?` · ${result.rows.length.toLocaleString()}${visibleMode?' in view':''}`:busy?' · loading…':error?' · unavailable':!target.polygons.length?' · no published area':'';
-    details.append(el('summary','Buildings and addresses'+quantity),content);
-    details.addEventListener('toggle',()=>{if(details.isConnected)detailsOpen=details.open;});
+    const details=disclosure('Buildings and addresses'+quantity,detailsOpen);host.replaceChildren(details);host.className='power-buildings';details.className='power-detail-disclosure';
+    details.append(content);
+    onExpand(details,open=>{if(details.isConnected)detailsOpen=open;});
     content.append(el('p',target.reason));
     if(!target.polygons.length)return;
     if(exercise)content.append(el('p','EXERCISE · fictional utility area over real public Overture reference.'));
@@ -66,9 +66,9 @@ export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
     const source=el('a','Building sources and coverage');source.href=new URL('../planning.html#power-buildings',import.meta.url).href;source.target='_blank';source.rel='noopener noreferrer';content.append(source);
     const list=el('div'),ordered=selectedId?[...rows.filter(r=>r.id===selectedId),...rows.filter(r=>r.id!==selectedId)]:rows;
     for(const r of ordered.slice(0,40)){
-      const item=el('details');item.className='power-nearby-row';item.open=r.id===selectedId||expanded.has(r.id);
-      item.addEventListener('toggle',()=>{if(item.isConnected){if(item.open)expanded.add(r.id);else expanded.delete(r.id);}});
-      item.append(el('summary',r.label),el('p',r.height===null?'Height not supplied · flat footprint':`Published height ${r.height.toFixed(1)} m · approximate extrusion`));
+      const item=disclosure(r.label,r.id===selectedId||expanded.has(r.id));item.className='power-nearby-row';
+      onExpand(item,open=>{if(item.isConnected){if(open)expanded.add(r.id);else expanded.delete(r.id);}});
+      item.append(el('p',r.height===null?'Height not supplied · flat footprint':`Published height ${r.height.toFixed(1)} m · approximate extrusion`));
       for(const a of r.addresses)item.append(el('p',a));
       item.append(el('p',`Overture ID ${r.id} · version ${r.version} · ${r.sources?.join(', ')||'Source not specified'}`),button('Locate building',()=>{selectedId=r.id;onMap();void map.focusPowerBuilding(r.id);}));list.append(item);
     }
@@ -76,7 +76,7 @@ export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
     if(rows.length>40)content.append(el('p',`Up to 40 records listed; ${rows.length.toLocaleString()} footprints are on the map. Click a footprint to inspect it.`));
     if(!rows.length)content.append(el('p','No overlapping footprints returned in this scope. Building coverage may be incomplete.'));
   }
-  window.addEventListener('frogPowerBuildingSelect',event=>{if(result?.rows.some(r=>r.id===event.detail.id)){selectedId=event.detail.id;detailsOpen=true;render();host.querySelector('.power-nearby-row[open]')?.scrollIntoView({block:'nearest'});}});
+  window.addEventListener('frogPowerBuildingSelect',event=>{if(result?.rows.some(r=>r.id===event.detail.id)){selectedId=event.detail.id;detailsOpen=true;render();host.querySelector('.power-nearby-row[expanded]')?.scrollIntoView({block:'nearest'});}});
   async function refocus(ready){
     const version=epoch;
     if(await ready===false||version!==epoch||!host?.isConnected||!result?.rows.length||visibleMode)return;

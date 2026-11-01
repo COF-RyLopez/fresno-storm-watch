@@ -2,7 +2,7 @@ import {loadSdk} from './map.js';
 import {ACS_SOURCES,ACS_LIMIT,ACS_DENSITY_EXPRESSION,PIO_GUIDANCE,acsFields,formatAcsMeasure} from './acs-model.js';
 import {readAcsMetadata,readAcsTracts,readPioContext} from './acs-data.js';
 import {reportHealth} from './source-health.js';
-import {node,nodeLink as link,dataTable} from './dom.js';
+import {node,nodeLink as link,disclosure,onExpand,dataTable} from './dom.js';
 const $=id=>document.getElementById(id);
 const colors=[[0,100,'#e4f1f5'],[100,500,'#b4d5e6'],[500,2000,'#74a9cf'],[2000,5000,'#3685b5'],[5000,1e12,'#145a87']];
 const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short',timeZoneName:undefined}).format(t)+' Pacific';
@@ -56,7 +56,7 @@ export function createAcsContext({exercise=false,onMap=()=>{},onOpenWatch=()=>{}
       for(const topic of topics){const source=ACS_SOURCES[topic.key],section=node('section');section.append(node('h4',source.title));
         if(topic.error){section.append(node('p','Unavailable: '+topic.error));reportHealth('population:pio:'+topic.key,source.title,{error:topic.error});}
         else{const values=topic.rows[0].measures;section.append(node('p',`ACS ${topic.metadata.period} · ${source.universe}.`));
-          if(topic.key==='language'){section.append(table(values.slice(0,1),'People age 5+ · estimate ± 90% MOE'));const more=node('details');more.append(node('summary','Language groups · estimates & uncertainty'),table(values.slice(1),'Groups retain Census categories; no specific-language inference'));section.append(more);}
+          if(topic.key==='language'){section.append(table(values.slice(0,1),'People age 5+ · estimate ± 90% MOE'));const more=disclosure('Language groups · estimates & uncertainty');more.append(table(values.slice(1),'Groups retain Census categories; no specific-language inference'));section.append(more);}
           else section.append(table(values,topic.key==='disability'?'People · estimate ± 90% MOE':'Households · estimate ± 90% MOE'));
           section.append(node('p',`Checked ${time(topic.checked)}.`));reportHealth('population:pio:'+topic.key,source.title,{checked:topic.checked,maxAgeMs:Infinity,detail:`ACS ${topic.metadata.period}, whole-tract context; not current individual needs.`});
         }
@@ -71,12 +71,12 @@ export function createAcsContext({exercise=false,onMap=()=>{},onOpenWatch=()=>{}
     try{const data=await readAcsTracts({id,metadata:meta,signal:abort.signal});if(generation!==epoch||!isWatch())return;meta=data.metadata;const row={...data.rows[0],period:data.metadata.period},host=$('acs-detail');host.replaceChildren(node('h3',row.name),node('p',`GEOID ${row.id} · ACS ${meta.period} five-year estimates · checked ${time(data.checked)}.`),table(row.measures,'Whole tract · residents ± 90% MOE'),node('p','Whole-tract estimates; separate from the 2020 zone baseline. ± is the 90% margin of error, not a current affected-person count.'));
       if(row.measures.some(r=>r.estimate!==null&&r.moe!==null&&r.moe>r.estimate))host.append(node('p','At least one margin of error exceeds its estimate. Treat small counts with particular caution.'));
 
-      const disclosure=node('details');disclosure.id='acs-pio';const content=node('div');disclosure.append(node('summary','PIO reach, accessibility & transport'),content);disclosure.addEventListener('toggle',()=>{if(disclosure.open)void loadPio(content,generation,row);});host.append(disclosure);const method=node('details');method.append(node('summary','Estimate limits, map key & source'),node('p',ACS_LIMIT),node('p','Pink outline: selected whole tract. Publisher boundaries are trimmed around water for display; they are not used to calculate the 2020 zone estimate. Age groups do not establish an individual’s support needs.'),link('ACS population source, vintage & fields',ACS_SOURCES.population.item));host.append(method);host.scrollIntoView({block:'start'});legend();
+      const pio=disclosure('PIO reach, accessibility & transport');pio.id='acs-pio';const content=node('div');pio.append(content);onExpand(pio,open=>{if(open)void loadPio(content,generation,row);});host.append(pio);const method=disclosure('Estimate limits, map key & source');method.append(node('p',ACS_LIMIT),node('p','Pink outline: selected whole tract. Publisher boundaries are trimmed around water for display; they are not used to calculate the 2020 zone estimate. Age groups do not establish an individual’s support needs.'),link('ACS population source, vintage & fields',ACS_SOURCES.population.item));host.append(method);host.scrollIntoView({block:'start'});legend();
       selectedRow=row;void focusSelected(row,generation);
     }catch(e){if(generation!==epoch||e.name==='AbortError')return;$('acs-detail').replaceChildren(node('p','Tract context unavailable: '+e.message),link('Open the publisher source',ACS_SOURCES.population.item));}
   }
   async function open({geometry=null,zone=null,id=null}={}){
-    if(exercise)return;scope={geometry,zone};onOpenWatch();$('population-watch').open=true;onMap();pane.setAttribute('open','');abort?.abort();pioAbort?.abort();abort=new AbortController();const generation=++epoch;loadingPio=false;selectedRow=null;selected=null;highlight?.removeAll();picker.disabled=true;picker.replaceChildren();$('acs-detail').replaceChildren();
+    if(exercise)return;scope={geometry,zone};onOpenWatch();$('population-watch').setAttribute('expanded','');onMap();pane.setAttribute('open','');abort?.abort();pioAbort?.abort();abort=new AbortController();const generation=++epoch;loadingPio=false;selectedRow=null;selected=null;highlight?.removeAll();picker.disabled=true;picker.replaceChildren();$('acs-detail').replaceChildren();
     $('acs-status').textContent=zone?`Finding ACS tracts intersecting zone ${zone}…`:'Checking Fresno County ACS tracts…';
     try{const data=await readAcsTracts({geometry,signal:abort.signal});if(generation!==epoch||!isWatch())return;meta=data.metadata;
       $('acs-status').textContent=`${data.rows.length} ${zone?'tracts intersecting zone '+zone:'Fresno County tracts'} · ACS ${meta.period}. Whole-tract context only; tract totals are never added as zone population.`;

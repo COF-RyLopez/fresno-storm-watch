@@ -7,9 +7,6 @@
 .drainage-nearby p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
 .drainage-nearby .drainage-actions { align-items: end; }
 .drainage-nearby calcite-label { margin: 0; }
-.drainage-nearby summary { padding-block: 9px; cursor: pointer; line-height: 1.5; overflow-wrap: anywhere; color: var(--calcite-color-text-1); }
-.drainage-nearby summary:focus-visible { outline: 2px solid var(--calcite-color-focus); outline-offset: 2px; }
-.drainage-nearby-row { border-block-start: 1px solid var(--calcite-color-border-3); padding-block-end: 8px; }
 .drainage-nearby-row dl { display: grid; grid-template-columns: minmax(0,1fr); gap: 5px; margin: 0 0 12px; }
 .drainage-nearby-row dt { margin-top: 8px; font-weight: 600; }
 .drainage-nearby-row dd { margin: 0; overflow-wrap: anywhere; color: var(--calcite-color-text-2); }
@@ -57,12 +54,12 @@
 .pump-summary { padding-block: 12px 20px; border-block-end: 1px solid var(--calcite-color-border-2); margin-block: 8px 16px; }
 .pump-summary h4 { margin: 8px 0 12px; font-size: 1rem; position: sticky; top: 0; z-index: 1; padding-block: 6px; background: var(--calcite-color-foreground-1); }
 .pump-summary>p { margin-block: 6px; font-size: 13px; line-height: 1.5; }
-.pump-summary-controls { display: grid; gap: 8px; margin-block: 8px; }
+.pump-summary-controls { margin-block: 8px; }
 .pump-summary-weather { font-size: 13px; }
 .pump-summary-row { display: grid; gap: 6px; padding-block: 14px; border-block-end: 1px solid var(--calcite-color-border-3); min-width: 0; }
 .pump-summary-row :is(p,strong,small) { margin: 0; overflow-wrap: anywhere; line-height: 1.5; font-size: 13px; }
 .pump-summary .drainage-actions { align-items: center; margin-block: 12px; }
-.pump-summary details { margin-block: 8px; line-height: 1.5; }
+.pump-summary calcite-block { margin-block: 8px; line-height: 1.5; }
 @media (max-width:900px) {
   #evidence-mobile-host:has(:is(.pump-readiness-form,.pump-task-form)) { position: fixed; inset: 60px 0 0; height: auto; max-height: none; z-index: 1000; background: var(--calcite-color-foreground-1); }
 }
