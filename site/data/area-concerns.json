@@ -1,7 +1,7 @@
 {
   "version":1,
   "checked":"2026-10-19",
-  "scope":"The six existing Fresno river review groups, including county boundary reaches; not complete county coverage.",
+  "scope":"The seven existing Fresno river review groups, including county boundary reaches; not complete county coverage.",
   "basis":"Explicit nearby NWS planning samples provide wind context, not uniform conditions across a reach. Utility polygons are tested only at the configured gauge, reservoir and wind points in EPSG:4326. No river corridor polygons, buffers or nearest-outage assignments are inferred.",
   "windThresholdMph":null,
   "areas":[
@@ -9,6 +9,7 @@
     {"id":"san-joaquin-upper","windPoints":[],"note":"No wind sample is assigned to the Redinger reach. Shaver Lake is not substituted."},
     {"id":"little-dry","windPoints":["FRIANT"],"note":"Friant vicinity wind context only; this point is not a survey of Little Dry Creek or its facilities."},
     {"id":"james-bypass","windPoints":["JAMES"],"note":"One James Bypass planning sample; conditions elsewhere along the bypass are unknown."},
+    {"id":"mill-creek","windPoints":["PINEFLAT"],"note":"Pine Flat Dam vicinity sample, about 2 km from the Mill Creek gauge; conditions up the Mill Creek drainage are unknown."},
     {"id":"kings-upper","windPoints":["TRIMMER"],"note":"Trimmer wind context only; the upstream North Fork and mountain approaches are not fully sampled."},
     {"id":"kings-lower","windPoints":["PINEFLAT"],"note":"Pine Flat Dam vicinity sample; downstream Kings distributaries and facilities are not fully sampled."}
   ]

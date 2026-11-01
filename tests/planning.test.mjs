@@ -13,8 +13,8 @@ const lower=rows=>rows.find(r=>r.area.id==='san-joaquin-lower');
 const cycle={issue:Date.parse('2026-10-17T21:00:00Z'),start:Date.parse('2026-10-18T00:00:00Z'),end:Date.parse('2026-10-21T00:00:00Z'),hours:72,product:'QPF72hr'};
 const feature=qpf=>({attributes:{qpf,units:'Inches',product:'QPF72hr',issue_time:'2026-10-17 21:00:00',start_time:'2026-10-18 00:00:00',end_time:'2026-10-21 00:00:00'}});
 
-test('fixed six-area inventory uses all nine gauges and two dam sampling points',()=>{
-  assert.equal(points.length,11);assert.equal(new Set(areas.areas.flatMap(a=>a.gauges)).size,9);
+test('fixed seven-area inventory uses all ten gauges and two dam sampling points',()=>{
+  assert.equal(points.length,12);assert.equal(new Set(areas.areas.flatMap(a=>a.gauges)).size,10);
   assert.equal(areas.areas.find(a=>a.id==='kings-lower').gauges.length,0);
   assert.equal(areas.areas.find(a=>a.id==='kings-upper').releases.length,0);
   const bad=structuredClone(areas);bad.areas[0].releases[0].metric='outflow';
@@ -89,6 +89,6 @@ test('point collector bounds concurrency, uses explicit CRS, and isolates one fa
     if(point&&JSON.parse(point).x===points[0].longitude)return {ok:false,status:503};
     return {ok:true,json:async()=>({features:[feature(0.5)]})};
   };
-  const data=await fetchPlanningRain(points,fetcher,()=>now);assert.ok(max<=3);assert.equal(calls.length,12);assert.equal(Object.keys(data.points).length,11);assert.equal(data.points[points[0].id].value,null);
+  const data=await fetchPlanningRain(points,fetcher,()=>now);assert.ok(max<=3);assert.equal(calls.length,13);assert.equal(Object.keys(data.points).length,12);assert.equal(data.points[points[0].id].value,null);
   assert.equal(calls[1].searchParams.get('inSR'),'4326');assert.equal(calls[1].searchParams.get('geometryType'),'esriGeometryPoint');assert.equal(data.cycle.hours,72);
 });

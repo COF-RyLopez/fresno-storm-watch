@@ -48,8 +48,8 @@ test('area filters do not inflate unique source counts or claim supplies absent 
   assert.throws(()=>correlateDwrSupplies({...args(),radiusKm:999},now));
   const empty=correlateDwrSupplies({supplies:null,planning:null,roads:null},now);assert.equal(empty.loaded,false);assert.equal(empty.planningReady,false);assert.equal(empty.roadCurrent,false);
 });
-test('default 25 km links Fresno supply locations to the existing James Bypass, San Joaquin and Kings watchpoints',async()=>{
+test('default 25 km links Fresno supply locations to the existing James Bypass, San Joaquin, Kings and Mill Creek watchpoints',async()=>{
   const [areas,gauges,reservoirs]=await Promise.all(['river-areas.json','river-watchlist.json','reservoir-watchlist.json'].map(siteJson));
   const input={supplies:{loaded:true,checked:now,rows:normalizeSupplyFeatures([feature({}, {x:-120.250125,y:36.651172}),feature({Location_ID:'5-6',Location:'Sanger'}, {x:-119.537318,y:36.688532})])},planning:{rows:areas.areas.map(area=>({area})),points:planningPoints(areas,gauges.stations,reservoirs.stations)}};
-  const result=correlateDwrSupplies(input,now);assert.deepEqual(result.rows[0].areas.map(a=>a.id).sort(),['james-bypass','san-joaquin-lower']);assert.deepEqual(result.rows[1].areas.map(a=>a.id),['kings-lower']);
+  const result=correlateDwrSupplies(input,now);assert.deepEqual(result.rows[0].areas.map(a=>a.id).sort(),['james-bypass','san-joaquin-lower']);assert.deepEqual(result.rows[1].areas.map(a=>a.id).sort(),['kings-lower','mill-creek']);
 });

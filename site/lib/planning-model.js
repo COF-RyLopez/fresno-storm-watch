@@ -6,7 +6,7 @@ import {scheduleEvidence} from './release-model.js';
 /** @param {object} areaConfig @param {object[]} gauges @param {object[]} reservoirs @returns {object[]} Validate associations before any source queries. */
 export function planningPoints(areaConfig,gauges,reservoirs){
   const all=new Map([...gauges,...reservoirs].map(s=>[s.id,s]));
-  if(areaConfig?.version!==1||areaConfig.qpfPeriod?.id!==9||areaConfig.qpfPeriod?.hours!==72||!Array.isArray(areaConfig.areas)||areaConfig.areas.length!==6||new Set(areaConfig.areas.map(a=>a.id)).size!==6)throw new Error('River-area configuration is invalid.');
+  if(areaConfig?.version!==1||areaConfig.qpfPeriod?.id!==9||areaConfig.qpfPeriod?.hours!==72||!Array.isArray(areaConfig.areas)||areaConfig.areas.length!==7||new Set(areaConfig.areas.map(a=>a.id)).size!==7)throw new Error('River-area configuration is invalid.');
   const ids=new Set();
   for(const area of areaConfig.areas){
     if(!area.name||!area.note||!Array.isArray(area.gauges)||!Array.isArray(area.releases)||!area.rainPoints?.length)throw new Error('River-area evidence contract is incomplete.');

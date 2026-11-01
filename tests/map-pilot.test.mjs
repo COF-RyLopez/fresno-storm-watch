@@ -48,9 +48,9 @@ test('filtered display never changes countywide area review evaluation',()=>{
  const all=pilotFeatures(s,a,'watch','all'),review=pilotFeatures(s,a,'watch','review');assert(review.features.length<all.features.length);assert.equal(a.areas.filter(r=>r.review).length,count);assert.equal(new Set(all.features.map(f=>f.id)).size,all.features.length);
  assert(all.features.every(f=>f.geometry.type==='Point')); // No invented review-area boundaries.
 });
-test('Rivers uses all nine gauges and two dam locations; basin filter preserves unknowns',()=>{
- const s=bundle('missing'),a=pilotAssessment(s,now),all=pilotFeatures(s,a,'rivers');assert.equal(all.features.filter(f=>f.properties.kind==='gauge').length,9);assert.equal(all.features.filter(f=>f.properties.kind==='reservoir').length,2);assert(all.features.filter(f=>f.properties.kind==='gauge').every(f=>f.properties.tone==='gap'));
- const kings=pilotFeatures(s,a,'rivers','all','Kings');assert.equal(kings.features.filter(f=>f.properties.kind==='gauge').length,2);assert.equal(kings.features.filter(f=>f.properties.kind==='reservoir').length,2);
+test('Rivers uses all ten gauges and two dam locations; basin filter preserves unknowns',()=>{
+ const s=bundle('missing'),a=pilotAssessment(s,now),all=pilotFeatures(s,a,'rivers');assert.equal(all.features.filter(f=>f.properties.kind==='gauge').length,10);assert.equal(all.features.filter(f=>f.properties.kind==='reservoir').length,2);assert(all.features.filter(f=>f.properties.kind==='gauge').every(f=>f.properties.tone==='gap'));
+ const kings=pilotFeatures(s,a,'rivers','all','Kings');assert.equal(kings.features.filter(f=>f.properties.kind==='gauge').length,3);assert.equal(kings.features.filter(f=>f.properties.kind==='reservoir').length,2);
 });
 test('the same GeoJSON payload works independently of the renderer, with valid county coordinates',()=>{
  const s=bundle(),a=pilotAssessment(s,now);for(const view of ['watch','rivers']){const data=pilotFeatures(s,a,view);assert.deepEqual(data,pilotFeatures(s,a,view));for(const f of data.features){const [x,y]=f.geometry.coordinates;assert(x> -121&&x< -118&&y>35&&y<38);assert.match(f.properties.color,/^#[a-f0-9]{6}$/i);}}

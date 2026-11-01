@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "checked": "2026-10-17",
-  "scope": "Six named review groups for Fresno County and its boundary river reaches. These are not catchments, predicted inundation boundaries or staging sites.",
+  "checked": "2026-11-01",
+  "scope": "Seven named review groups for Fresno County and its boundary river reaches. These are not catchments, predicted inundation boundaries or staging sites.",
   "associationBasis": "Explicit grouping of the existing NWPS and CDEC watchlists by named river reach. Gauge and dam coordinates are publisher locations in EPSG:4326. Operator confirmation of downstream routing and local action thresholds is pending.",
   "qpfPeriod": {"id":9,"hours":72,"label":"WPC Days 1–3"},
   "areas": [
@@ -9,6 +9,7 @@
     {"id":"san-joaquin-upper","name":"San Joaquin · Redinger reach","gauges":["RJQC1"],"releases":[],"rainPoints":["RJQC1"],"note":"Upstream of Millerton. Friant releases are not assigned to this reach; no Redinger release feed is connected."},
     {"id":"little-dry","name":"Little Dry Creek · below Friant","gauges":["LTDC1"],"releases":[],"rainPoints":["LTDC1"],"note":"Tributary watchpoint. Friant Dam releases are not treated as releases into Little Dry Creek."},
     {"id":"james-bypass","name":"James Bypass","gauges":["JAMC1"],"releases":[],"rainPoints":["JAMC1"],"note":"Bypass operations and connectivity require operator confirmation. No reservoir release is automatically routed to this area."},
+    {"id":"mill-creek","name":"Mill Creek · near Piedra","gauges":["MLPC1"],"releases":[],"rainPoints":["MLPC1"],"note":"Eastern foothill tributary watchpoint. Pine Flat releases are not treated as releases into Mill Creek."},
     {"id":"kings-upper","name":"Kings · Trimmer & North Fork","gauges":["KREC1","NFCC1"],"releases":[],"rainPoints":["KREC1","NFCC1"],"note":"Upstream Kings River context. Pine Flat releases are not assigned to these upstream gauges."},
     {"id":"kings-lower","name":"Kings · below Pine Flat","gauges":[],"releases":[{"station":"PNF","metric":"outflow"}],"rainPoints":["PNF"],"note":"Pine Flat reported outflow provides release context. No downstream Kings gauge is connected in this pilot. Upstream gauges are not substituted; downstream routing and distributary operations remain unverified."}
   ]

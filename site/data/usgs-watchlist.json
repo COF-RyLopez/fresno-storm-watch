@@ -1,7 +1,7 @@
 {
   "version": 1,
   "checked": "2026-11-01",
-  "note": "USGS stream gauges read by Storm now (instantaneous values: gage height 00065, discharge 00060). Verified 2026-11-01 against https://waterservices.usgs.gov/nwis/site/?format=rdb&countyCd=06019&siteType=ST&siteStatus=active&hasDataTypeCd=iv: these are all active Fresno County stream gauges with recent values. 11254000 San Joaquin R near Mendota is active but returned no stage or flow in the last 7 days, so it is left out. No active USGS gauge exists on Big Dry, Dry, Fancher, Dog or Redbank Creek; those stay in the ungauged-creeks row. A site whose 'creek' equals an ungauged creek name replaces it there. floodStageFt stays null unless a published flood stage is confirmed; without it only rate of rise is used.",
+  "note": "USGS stream gauges read by Storm now (instantaneous values: gage height 00065, discharge 00060). Verified 2026-11-01 against https://waterservices.usgs.gov/nwis/site/?format=rdb&countyCd=06019&siteType=ST&siteStatus=active&hasDataTypeCd=iv: these are all active Fresno County stream gauges with recent values. 11254000 San Joaquin R near Mendota stopped publishing USGS instantaneous values on 2021-12-09; its live reading comes through NWPS (SJMC1 in river-watchlist.json) instead. Mill Creek near Piedra likewise has no USGS gauge and is read as NWPS MLPC1. No active USGS gauge exists on Big Dry, Dry, Fancher, Dog or Redbank Creek; those stay in the ungauged-creeks row. A site whose 'creek' equals an ungauged creek name replaces it there. floodStageFt stays null unless a published flood stage is confirmed; without it only rate of rise is used.",
   "sites": [
     {
       "site": "11251000",
