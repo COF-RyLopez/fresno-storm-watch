@@ -2,19 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createEvidencePane} from '../site/lib/evidence-ui.js';
+import {FakeElement} from './helpers/dom.mjs';
 
 /** A small DOM event harness exercises the actual pane coordinator, including batched attribute changes. */
 function setup(){
   const nodes=new Map(),listeners=new Map();let records=[],scheduled=false,callback;
   const notify=target=>{if(!listeners.has(target))return;records.push({target});if(!scheduled){scheduled=true;queueMicrotask(()=>{scheduled=false;const batch=records;records=[];callback(batch);});}};
-  class Node extends EventTarget{
-    constructor(id){super();this.id=id;this.attrs=new Map();this.children=[];this.hidden=false;this.isConnected=true;this.focusCount=0;this.classList={toggle:(k,on)=>{this[k]=on;}};nodes.set(id,this);}
-    setAttribute(k,v){this.attrs.set(k,v);if(k==='open')notify(this);}
-    removeAttribute(k){if(!this.attrs.has(k))return;this.attrs.delete(k);if(k==='open')notify(this);}
-    hasAttribute(k){return this.attrs.has(k);}
-    toggleAttribute(k,on=!this.hasAttribute(k)){if(on)this.setAttribute(k,'');else this.removeAttribute(k);}
-    append(n){if(n.parentElement)n.parentElement.children=n.parentElement.children.filter(x=>x!==n);n.parentElement=this;this.children.push(n);}
-    replaceChildren(...children){this.children=[];for(const n of children)this.append(n);}
+  class Node extends FakeElement{
+    constructor(id){super();this.id=id;this.hidden=false;this.focusCount=0;this.classList={toggle:(k,on)=>{this[k]=on;}};nodes.set(id,this);}
+    setAttribute(k,v){super.setAttribute(k,v);if(k==='open')notify(this);}
+    removeAttribute(k){if(!this.hasAttribute(k))return;super.removeAttribute(k);if(k==='open')notify(this);}
     getClientRects(){return this.hidden?[]:[{}];}
     focus(){this.focusCount++;document.activeElement=this;}
     setFocus(){this.focus();return Promise.resolve();}
@@ -57,5 +54,5 @@ test('close is idempotent, restores keyboard focus and hides the supporting layo
   const h=setup(),a=h.nodes.get('hanford-dialog');let cleanup=0;a.addEventListener('stormEvidenceClose',()=>cleanup++);a.setAttribute('open','');await h.flush();h.controller.close();h.controller.close();await h.flush();assert.equal(cleanup,1);assert.equal(h.doc.activeElement.id,'opener');assert.deepEqual(h.changes,[true,false]);
 });
 test('map-tool buttons toggle their dock panel and expose their expanded state',async()=>{
-  const h=setup(),b=h.nodes.get('map-tools-open');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.activeId,'map-tools-menu');assert.equal(b.attrs.get('aria-expanded'),'true');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.isOpen,false);assert.equal(b.attrs.get('aria-expanded'),'false');
+  const h=setup(),b=h.nodes.get('map-tools-open');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.activeId,'map-tools-menu');assert.equal(b.attributes.get('aria-expanded'),'true');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.isOpen,false);assert.equal(b.attributes.get('aria-expanded'),'false');
 });

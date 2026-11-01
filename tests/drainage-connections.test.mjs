@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {drainageConnections,connectionShown} from '../site/lib/drainage-connections.js';
 import {createDrainageDetailMap} from '../site/lib/drainage-nearby-map.js';
 import {readDrainageDetail} from '../site/lib/drainage-nearby-data.js';
+import {GraphicsLayer,Graphic} from './helpers/arcgis.mjs';
 import {FMFCD_DETAIL_LAYERS} from '../site/lib/drainage-nearby-model.js';
 const sr={wkid:4326},xy=(x,y=0)=>[-119.8+x*.00001,36.8+y*.00001];
 const pump=(p=xy(0))=>({key:'fictional-pump',kind:'pump',category:'existing',geometry:{x:p[0],y:p[1],spatialReference:sr}});
@@ -64,9 +65,7 @@ test('only live publisher documentation enables direction support',async()=>{
   assert((await read('Each pipeline is drawn in the general direction of flow.')).directionDocumented);assert(!(await read('')).directionDocumented);
 });
 test('connection overlays dim unrelated source graphics, survive 3D switching and clear private state',()=>{
-  class Layer{constructor(p){Object.assign(this,p);this.graphics=[];}removeAll(){this.graphics=[];}add(g){this.graphics.push(g);}}
-  class Graphic{constructor(p){Object.assign(this,p);}}
-  const layers=[],view={type:'2d',scale:6000},map=createDrainageDetailMap({GraphicsLayer:Layer,Graphic,registerLayer:(k,l)=>layers.push(l),setLayerEligibility(){},focusGeometry(){},getView:()=>view});
+  const layers=[],view={type:'2d',scale:6000},map=createDrainageDetailMap({GraphicsLayer,Graphic,registerLayer:(k,l)=>layers.push(l),setLayerEligibility(){},focusGeometry(){},getView:()=>view});
   const rows=[pipe(1,[xy(-100),xy(0)]),pipe(2,[xy(0),xy(100)])],trace=drainageConnections(pump(),result(rows));map.set(rows,{}, {trace,mode:'upstream'});
   assert.equal(layers[0].opacity,.22);assert.equal(layers.at(-1).graphics.length,1);assert.equal(layers.at(-1).graphics[0].attributes.drainageDetailKey,'pipe:1');
   view.type='3d';map.sync();assert(layers.at(-1).graphics.some(g=>g.geometry.type==='polygon'));assert(layers.at(-1).graphics.every(g=>g.symbol.type!=='cim'));

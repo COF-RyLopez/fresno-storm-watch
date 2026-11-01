@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import {MODELS,comparisonWindow,comparisonAreas,modelSeries,nwsSeries,summarizeWindow,compareForecasts} from '../site/lib/forecast-comparison-model.js';
 import {fetchComparison} from '../site/lib/forecast-comparison-data.js';
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
 const H=3600000,now=Date.parse('2026-10-20T01:00:00Z'),point={id:'PNF',latitude:36.833,longitude:-119.325};
 function fixture(model=MODELS[0]){
   const init=now-H,times=Array.from({length:49},(_,i)=>new Date(init+i*H).toISOString());
@@ -39,8 +39,7 @@ test('NWS precipitation uses interval amounts, not rain probability, and preserv
   p.quantitativePrecipitation.uom='wmoUnit:percent';assert.throws(()=>nwsSeries({properties:p},{office:'HNX',x:1,y:2},point,now));
 });
 test('six river groups retain explicit samples; Redinger uses its existing gauge, not Shaver',async()=>{
-  const read=async name=>JSON.parse(await readFile(new URL(`../site/data/${name}.json`,import.meta.url),'utf8'));
-  const [a,c,w,g]=await Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(read));
+  const [a,c,w,g]=await Promise.all(['river-areas.json','area-concerns.json','wind-watchlist.json','river-watchlist.json'].map(siteJson));
   const areas=comparisonAreas(a.areas,c.areas,w.sites,g.stations);assert.equal(areas.length,6);assert.equal(areas.find(a=>a.id==='san-joaquin-upper').points[0].id,'RJQC1');assert.equal(areas[0].points.length,3);
 });
 test('publisher failures are independent, credentials omitted and queries stay bounded',async()=>{

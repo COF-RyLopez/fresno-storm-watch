@@ -4,6 +4,7 @@ import {assessCareReviews,careRoadVicinity,freezeCareReview,careIdentity,careTim
 import {careReviewExercise} from '../site/lib/care-review-exercise.js';
 import {careBox} from '../site/lib/care-model.js';
 import {createCareMap} from '../site/lib/care-map.js';
+import {GraphicsLayer,Graphic} from './helpers/arcgis.mjs';
 const now=Date.parse('2026-10-27T18:00:00Z');
 function fixture(kind='overlap'){const d=careReviewExercise(kind,now),f=d.facilities.rows[0];return {...d,sourceErrors:d.errors,vicinity:new Map([[f.key,{identity:careIdentity(f),checked:d.roads.snapshot.checked,unknown:0,rows:d.roads.snapshot.rows.map(record=>({key:record.key,record,distanceMeters:200}))}]])};}
 const assess=f=>assessCareReviews(f,now),first=f=>assess(f)[0];
@@ -49,8 +50,7 @@ test('nearby road lookup passes full geometries, metric radius, exclusions and c
  assert.equal(await careRoadVicinity(f.facilities.rows,f.roads,query,{current:()=>false}),null);assert.equal(await careRoadVicinity(f.facilities.rows,null,query),null);let live=true;assert.equal(await careRoadVicinity(f.facilities.rows,f.roads,async()=>{live=false;return {'road-record':{rows:[],unknown:0}};},{current:()=>live}),null);
 });
 test('care review map uses only requested records by default and highlights returned utility polygons and nearby road geometry',async()=>{
- class Layer{constructor(p){Object.assign(this,p);this.graphics=[];}add(g){this.graphics.push(g);}removeAll(){this.graphics=[];}}class Graphic{constructor(p){Object.assign(this,p);}}
- const registered=[];const map=await createCareMap({registerLayer:(key,layer)=>registered.push({key,layer}),onViewChanged(){},getViewMode:()=> '2d',clearSearchSelection(){}},async()=>({import:async()=>[Layer,Graphic]}));
+ const registered=[];const map=await createCareMap({registerLayer:(key,layer)=>registered.push({key,layer}),onViewChanged(){},getViewMode:()=> '2d',clearSearchSelection(){}},async()=>({import:async()=>[GraphicsLayer,Graphic]}));
  const r=first(fixture());map.setSites([r.facility],[]);assert.equal(registered[0].layer.graphics.length,0);map.setSites([r.facility],[r]);assert.equal(registered[0].layer.graphics.length,1);assert.equal(registered[0].layer.graphics[0].attributes.careKey,r.key);
  r.roads.push({...r.roads[0],record:{...r.roads[0].record,geometry:r.facility.geometry}},{...r.roads[0],record:{...r.roads[0].record,geometry:careBox(r.facility.geometry)}});map.setReview(r);const support=registered.at(-1).layer;assert(support.graphics.some(g=>g.geometry.type==='point'&&g.symbol.type==='simple-marker'));assert(support.graphics.some(g=>g.geometry.type==='polygon'&&g.symbol.type==='simple-fill'));assert(support.graphics.some(g=>g.geometry.type==='polyline'));assert(support.graphics.some(g=>g.geometry.type==='polygon'));map.clearSelection();assert.equal(support.graphics.length,0);
 });

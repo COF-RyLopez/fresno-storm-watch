@@ -1,13 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import {CONFIG} from '../site/config.js';
 import {planningPoints,evaluateAreas} from '../site/lib/planning-model.js';
 import {planningExercise} from '../site/lib/planning-exercise.js';
 import {areaConcernExercise} from '../site/lib/area-concern-exercise.js';
 import {validateAreaConcerns,areaWindEvidence,areaPowerEvidence,combineAreaConcerns} from '../site/lib/area-concern-model.js';
-const read=async n=>JSON.parse(await readFile(new URL(`../site/data/${n}.json`,import.meta.url),'utf8'));
-const [areas,gauges,reservoirs,windInventory,associations]=await Promise.all(['river-areas','river-watchlist','reservoir-watchlist','wind-watchlist','area-concerns'].map(read));
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
+const [areas,gauges,reservoirs,windInventory,associations]=await Promise.all(['river-areas.json','river-watchlist.json','reservoir-watchlist.json','wind-watchlist.json','area-concerns.json'].map(siteJson));
 const points=planningPoints(areas,gauges.stations,reservoirs.stations),windSites=windInventory.sites;
 const HOUR=3_600_000,now=Date.parse('2026-10-19T18:00:00Z'),lower=rs=>rs.find(r=>r.area.id==='san-joaquin-lower');
 function fixture(scenario='overlap'){

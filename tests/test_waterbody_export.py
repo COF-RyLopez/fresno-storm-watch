@@ -1,12 +1,11 @@
 """Geometry-contract tests using the pinned Shapely / PROJ environment."""
-import importlib.util
+import runpy
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 from shapely.geometry import box, shape
 
-spec = importlib.util.spec_from_file_location('waterbody_acquisition', Path(__file__).resolve().parents[1] / 'scripts' / 'acquire-waterbodies-county.py')
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+module = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1] / 'scripts' / 'acquire-waterbodies-county.py')))
 
 
 class WaterbodyExportTests(unittest.TestCase):

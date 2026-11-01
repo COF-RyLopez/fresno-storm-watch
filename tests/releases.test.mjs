@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {scheduledRecords,scheduleEvidence,releaseSource} from '../site/lib/release-model.js';
 import {collectScheduledReleases} from '../scripts/collect-reservoirs.mjs';
 import {CONFIG} from '../site/config.js';
-import {readFile} from 'node:fs/promises';
 import {planningExercise} from '../site/lib/planning-exercise.js';
 import {planningPoints,evaluateAreas} from '../site/lib/planning-model.js';
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
 const now=Date.parse('2026-10-18T16:00:00Z'),HOUR=3600000,DAY=24*HOUR;
 // Fictional schedules exercise both future increases and decreases; these are never live data.
 const row=(hours,value,changes={})=>({stationId:'MIL',SENSOR_NUM:7,durCode:'E',units:'CFS',dataFlag:' ',obsDate:new Date(now+hours*HOUR-8*HOUR).toISOString().slice(0,16).replace('T',' '),value,...changes});
@@ -79,8 +79,7 @@ test('schedule fetch uses event sensor 7 and a bounded query; empty success repl
   assert.equal(result.error,null);assert.equal(result.records.length,0);
 });
 test('notices map only to downstream review areas and count once despite two Millerton release metrics',async()=>{
-  const read=async name=>JSON.parse(await readFile(new URL(`../site/data/${name}.json`,import.meta.url),'utf8'));
-  const [areas,watch,selection]=await Promise.all(['river-areas','river-watchlist','reservoir-watchlist'].map(read));
+  const [areas,watch,selection]=await Promise.all(['river-areas.json','river-watchlist.json','reservoir-watchlist.json'].map(siteJson));
   const points=planningPoints(areas,watch.stations,selection.stations),f=planningExercise(watch.stations,points,selection,'scheduled',now);
   const rows=evaluateAreas({areas:areas.areas,points,gaugeEntries:f.entries,reservoirs:f.reservoirs,rain:f.rain,riverConfig:CONFIG.rivers,environmentConfig:CONFIG.environment},now);
   assert.deepEqual(rows.filter(r=>r.review).map(r=>r.area.id).sort(),['kings-lower','san-joaquin-lower']);

@@ -8,6 +8,8 @@ import {normalizePower,deduplicatePower} from '../site/lib/power-model.js';
 import {POWER_LAYERS} from '../site/lib/power-data.js';
 import {WORKSPACES,workspaceDefaults} from '../site/lib/workspace-model.js';
 import {createNetworkMap} from '../site/lib/power-network-map.js';
+import {withGlobals} from './helpers/dom.mjs';
+import {GraphicsLayer,Graphic} from './helpers/arcgis.mjs';
 const now=Date.now(),spec=NETWORK_SOURCES.find(s=>s.id==='sce-circuits'),point={x:-119.4,y:37.1,spatialReference:{wkid:4326}},line={paths:[[[-119.45,37.08],[-119.4,37.1]]],spatialReference:{wkid:4326}};
 const county={geometry:{type:'Polygon',coordinates:[[[-120,36],[-119,36],[-119,38],[-120,38],[-120,36]]]}};
 const circuit=(a={})=>normalizeNetworkFeature({attributes:{objectid:1,circuit_id:'1234567',circuit_no:'00123',circt_nam:'Mountain',sub_name:'Example station',...a},geometry:line},spec,'objectid');
@@ -62,16 +64,11 @@ test('published network reconciles all sources, public geometry and stable displ
   const d=validateNetworkSnapshot(JSON.parse(await readFile(new URL('../site/data/power-network.json',import.meta.url),'utf8')));assert(d.sources.every(s=>s.url.startsWith('https://')&&!s.url.includes('?')));assert(d.sources.filter(s=>s.features.length).every(s=>s.accounting.returned===s.accounting.selected));
   const broken=structuredClone(d);broken.sources[0].features.push({...broken.sources[0].features[0]});assert.throws(()=>validateNetworkSnapshot(broken));
 });
-test('map highlighting clears without changing references or navigating during refresh',()=>{
-  const previousDocument=globalThis.document,previousWindow=globalThis.window;globalThis.document={documentElement:{dataset:{theme:'dark'}}};globalThis.window={addEventListener(){}};
-  try{
-    class Layer {constructor(p){Object.assign(this,p);this.graphics=[];}removeAll(){this.graphics=[];}addMany(list){this.graphics.push(...list);}}
-    class Graphic {constructor(p){Object.assign(this,p);}}
-    class Extent {constructor(p){Object.assign(this,p);this.type='extent';}}
-    const registered=[],eligibility=new Map(),moves=[];const m=createNetworkMap({GraphicsLayer:Layer,Graphic,Extent,registerLayer:(key,layer)=>registered.push({key,layer}),setLayerEligibility:(layer,enabled)=>eligibility.set(layer,enabled),focusGeometry:g=>moves.push(g),onSelect(){}});
-    const d=snapshot();m.setSnapshot(d);m.setMatch(matchPowerCircuit(outage(),d,now));const selected=m.focusLayers.circuit;assert.equal(selected.graphics.length,1);assert.equal(selected.graphics[0].symbol.width,4);assert.equal(eligibility.get(selected),true);assert.equal(moves.length,0);m.clearMatch();assert.equal(selected.graphics.length,0);assert.equal(eligibility.get(selected),false);assert.equal(m.layers.circuit.graphics.length,1);assert.equal(m.layers.circuit.opacity,1);m.setReference([circuit().key]);assert.equal(m.layers.circuit.opacity,.16);assert.equal(m.focusLayers.circuit.graphics[0].symbol.width,3.5);assert.equal(m.layers.circuit.minScale,75000);assert.equal(m.layers.line.minScale,250000);assert.equal(m.focusLayers.circuit.minScale,undefined);m.setSnapshot({...d,sources:d.sources.map(s=>({...s,features:[]}))});assert.equal(m.layers.circuit.opacity,1);m.setSnapshot(d);m.clearMatch();m.focus([circuit().key]);assert(moves[0] instanceof Extent);assert.equal(moves[0].type,'extent');assert(moves[0].xmin<line.paths[0][0][0]);
-  }finally{globalThis.document=previousDocument;globalThis.window=previousWindow;}
-});
+test('map highlighting clears without changing references or navigating during refresh',()=>withGlobals({document:{documentElement:{dataset:{theme:'dark'}}},window:{addEventListener(){}}},()=>{
+  class Extent {constructor(p){Object.assign(this,p);this.type='extent';}}
+  const registered=[],eligibility=new Map(),moves=[];const m=createNetworkMap({GraphicsLayer,Graphic,Extent,registerLayer:(key,layer)=>registered.push({key,layer}),setLayerEligibility:(layer,enabled)=>eligibility.set(layer,enabled),focusGeometry:g=>moves.push(g),onSelect(){}});
+  const d=snapshot();m.setSnapshot(d);m.setMatch(matchPowerCircuit(outage(),d,now));const selected=m.focusLayers.circuit;assert.equal(selected.graphics.length,1);assert.equal(selected.graphics[0].symbol.width,4);assert.equal(eligibility.get(selected),true);assert.equal(moves.length,0);m.clearMatch();assert.equal(selected.graphics.length,0);assert.equal(eligibility.get(selected),false);assert.equal(m.layers.circuit.graphics.length,1);assert.equal(m.layers.circuit.opacity,1);m.setReference([circuit().key]);assert.equal(m.layers.circuit.opacity,.16);assert.equal(m.focusLayers.circuit.graphics[0].symbol.width,3.5);assert.equal(m.layers.circuit.minScale,75000);assert.equal(m.layers.line.minScale,250000);assert.equal(m.focusLayers.circuit.minScale,undefined);m.setSnapshot({...d,sources:d.sources.map(s=>({...s,features:[]}))});assert.equal(m.layers.circuit.opacity,1);m.setSnapshot(d);m.clearMatch();m.focus([circuit().key]);assert(moves[0] instanceof Extent);assert.equal(moves[0].type,'extent');assert(moves[0].xmin<line.paths[0][0][0]);
+}));
 
 test('no-write exercise uses invented locations and a consistent station/circuit identity',()=>{
   const d=validateNetworkSnapshot(networkExercise(now)),m=matchPowerCircuit(psps('EXERCISE · mountain circuit'),d,now);assert.equal(m.state,'matched');assert.equal(m.substations.length,1);assert(m.circuits.every(f=>f.code.startsWith('EXERCISE-')));

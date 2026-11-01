@@ -1,12 +1,11 @@
 """Full-outline identities, winding, holes and accounting; no network calls."""
-import importlib.util
+import runpy
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 from shapely.geometry import Polygon, mapping
 
-spec = importlib.util.spec_from_file_location('waterbody_search', Path(__file__).resolve().parents[1] / 'scripts/build-waterbody-search.py')
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+module = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1] / 'scripts/build-waterbody-search.py')))
 
 
 class WaterbodySearchTests(unittest.TestCase):

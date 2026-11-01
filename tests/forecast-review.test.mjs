@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import {comparisonWindow,comparisonAreas} from '../site/lib/forecast-comparison-model.js';
 import {pointDifferences,areaDifferences,rankDifferences,mergeForecastReviews,uniqueComparisonPoints,validateComparisonSnapshot,REVIEW_MAX_AGE} from '../site/lib/forecast-review-model.js';
 import {collectComparisonSnapshot,currentComparisonSnapshot} from '../site/lib/forecast-review-data.js';
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
 const now=Date.parse('2026-10-20T01:00:00Z'),H=3600000,w=comparisonWindow(now);
 const point={id:'A',name:'Public sample A',longitude:-119.7,latitude:36.9};
 const modelId='noaa-hrrr-forecast-48-hour',gfsId='noaa-gfs-forecast';
@@ -78,5 +78,5 @@ test('stale public copy falls back to current failures without relabeling old va
   const result=await currentComparisonSnapshot([{points:[point]}],{now,fetchImpl});assert(calls>1);assert.equal(result.points[0].checked,now);assert(result.points[0].rows.every(r=>r.error));assert(result.points[0].rows.every(r=>!r.rain));
 });
 test('configured review groups resolve seven unique samples rather than eight area associations',async()=>{
-  const read=async name=>JSON.parse(await readFile(new URL(`../site/data/${name}.json`,import.meta.url),'utf8'));const [a,c,w,g]=await Promise.all(['river-areas','area-concerns','wind-watchlist','river-watchlist'].map(read));const points=uniqueComparisonPoints(comparisonAreas(a.areas,c.areas,w.sites,g.stations));assert.equal(points.length,7);
+  const [a,c,w,g]=await Promise.all(['river-areas.json','area-concerns.json','wind-watchlist.json','river-watchlist.json'].map(siteJson));const points=uniqueComparisonPoints(comparisonAreas(a.areas,c.areas,w.sites,g.stations));assert.equal(points.length,7);
 });

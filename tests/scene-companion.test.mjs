@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sceneCamera, sceneCompanionUrl, setupSceneCompanion } from '../site/lib/scene-companion.js';
+import { withGlobals } from './helpers/dom.mjs';
 
 const config = { portalUrl:'https://cofgisonline.maps.arcgis.com', photorealisticSceneId:'' };
 
@@ -41,15 +42,13 @@ test('companion rejects unsafe destinations, embedded credentials and invalid it
 });
 
 test('UI clearly reports setup and config errors while retaining a working closeable dialog', () => {
-  const previous=globalThis.document;
   const nodes=new Map();
   for(const id of ['#open-photorealistic','#photorealistic-help','#open-scene-companion','#scene-companion-status','#scene-exercise-note']) {
     nodes.set(id,{attrs:{},hidden:true,textContent:'',events:{},
       setAttribute(name,value){this.attrs[name]=value;},removeAttribute(name){delete this.attrs[name];},
       addEventListener(name,callback){this.events[name]=callback;}});
   }
-  globalThis.document={querySelector:id=>nodes.get(id)};
-  try {
+  return withGlobals({document:{querySelector:id=>nodes.get(id)}},()=>{
     setupSceneCompanion(config,()=>undefined,true);
     nodes.get('#open-photorealistic').events.click();
     assert.match(nodes.get('#scene-companion-status').textContent,/County setup needed/);
@@ -73,5 +72,5 @@ test('UI clearly reports setup and config errors while retaining a working close
     assert.match(nodes.get('#scene-companion-status').textContent,/configuration is invalid/);
     assert.equal(nodes.get('#open-scene-companion').attrs.href,undefined);
     assert.equal(nodes.get('#open-scene-companion').attrs.disabled,'');
-  } finally {globalThis.document=previous;}
+  });
 });

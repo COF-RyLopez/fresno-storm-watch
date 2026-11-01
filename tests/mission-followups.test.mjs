@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {missionEvidenceKey,missionFollowups,followupsForEvidence} from '../site/lib/mission-followup-model.js';
 import {incidentHandoffLines} from '../site/lib/mission-model.js';
 import {createMissionFollowups} from '../site/lib/mission-followup-ui.js';
+import {FakeElement,withGlobals} from './helpers/dom.mjs';
 const item={kind:'planning-evidence',id:'kings'},now=Date.now();
 const record=(id='a',changes={})=>({id,entity:'task1',incident:'exercise',author:'Fictional tester',created:now-1000,supersedes:[],payload:{kind:'Follow-up',title:'Verify readiness',location:'Fictional river',owner:'Exercise team',due:now-60000,status:'Open',nextReview:'Verify source',sourceKey:missionEvidenceKey(item),...changes}});
 test('follow-ups use exact evidence identities and retain corrections, conflicts and unlinked records',()=>{
@@ -17,12 +18,10 @@ test('follow-ups use exact evidence identities and retain corrections, conflicts
  const text=incidentHandoffLines({incidentFollowups:{assessed:true,incident:'exercise',checked:now,rows:[conflict]}},String).join('\n');assert.match(text,/Conflicting versions/);assert.match(text,/owner Exercise team/);assert.match(text,/version /);
 });
 /** Minimal DOM for controller privacy/lifecycle tests; no ArcGIS calls or remote writes. */
+class Element extends FakeElement{value='';}
 async function withController(run){
- const keys=['document','window','setInterval'],original=new Map(keys.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)])),elements=new Map();
- class Element extends EventTarget{constructor(){super();this.value='';this.children=[];}append(...rows){this.children.push(...rows);}replaceChildren(...rows){this.children=[...rows];}setAttribute(k,v){this[k]=v;}}
- const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},win=new EventTarget();
- try{Object.defineProperty(globalThis,'document',{value:{getElementById:get,createElement:()=>new Element(),hidden:false},configurable:true});Object.defineProperty(globalThis,'window',{value:win,configurable:true});Object.defineProperty(globalThis,'setInterval',{value:()=>0,configurable:true});await run({get,win});}
- finally{for(const [key,descriptor]of original)if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}
+ const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},win=new EventTarget();
+ await withGlobals({document:{getElementById:get,createElement:()=>new Element(),hidden:false},window:win,setInterval:()=>0},()=>run({get,win}));
 }
 test('private follow-up failure and sign-out clear retained records, and stale responses cannot repopulate them',()=>withController(async({get,win})=>{
  let fail=false,release=null,defer=false;const events=[];win.addEventListener('storm-mission-followups',e=>events.push(e.detail));

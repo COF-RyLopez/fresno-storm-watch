@@ -1,12 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { CONFIG } from '../site/config.js';
 import { planningPoints,qpfPointValue,releaseEvidence,evaluateAreas,positiveChange } from '../site/lib/planning-model.js';
 import { planningExercise } from '../site/lib/planning-exercise.js';
 import { fetchPlanningRain } from '../site/lib/planning-data.js';
-const read=async name=>JSON.parse(await readFile(new URL(`../site/data/${name}.json`,import.meta.url),'utf8'));
-const areas=await read('river-areas'),watch=await read('river-watchlist'),reservoirs=await read('reservoir-watchlist');
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
+const areas=await siteJson('river-areas.json'),watch=await siteJson('river-watchlist.json'),reservoirs=await siteJson('reservoir-watchlist.json');
 const points=planningPoints(areas,watch.stations,reservoirs.stations);
 const now=Date.parse('2026-10-17T22:00:00Z'),HOUR=3600000;
 const input=(scenario='combined')=>{const f=planningExercise(watch.stations,points,reservoirs,scenario,now);return {areas:areas.areas,points,gaugeEntries:f.entries,reservoirs:f.reservoirs,rain:f.rain,riverConfig:CONFIG.rivers,environmentConfig:CONFIG.environment};};

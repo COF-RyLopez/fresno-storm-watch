@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {FOLLOW_DOCUMENT,slideMapping,chooseSlideLayer} from '../site/lib/briefing-follow-model.js';
 import {createBriefingLayers} from '../site/lib/briefing-layer-ui.js';
+import {FakeElement,withGlobals} from './helpers/dom.mjs';
 const context=(page,more={})=>({sha256:FOLLOW_DOCUMENT,page,verified:true,follow:true,...more});
 test('page associations require the verified exact PDF revision, not a matching page number',()=>{
   assert(slideMapping(context(6)).mapping);assert.match(slideMapping(context(6,{verified:false})).reason,/verification/);assert.match(slideMapping(context(6,{sha256:'a'.repeat(64)})).reason,/revision/);
@@ -26,22 +27,22 @@ test('rainfall ranges and WSSI are explicitly related guidance, choosing determi
   assert.throws(()=>chooseSlideLayer(m,[{id:'rain-day-2',start:m.end,end:m.end+86400000}]));assert.match(slideMapping(context(14)).mapping.note,/window can differ/);
 });
 /** Minimal DOM harness executes the actual asynchronous follow controller, with public-source contracts. */
-test('controller ignores superseded pages, clears unsupported maps and re-resolves dates on periodic cycle rollover',async()=>{
-  const saved={};for(const k of ['document','window','location','history','fetch','setInterval'])saved[k]=globalThis[k];const realNow=Date.now;
+test('controller ignores superseded pages, clears unsupported maps and re-resolves dates on periodic cycle rollover',async t=>{
   let now=Date.parse('2026-10-20T02:00:00Z'),opened=0,hold=false,resolvers=[],interval,queryNumber=0,shiftAt=0;
-  class Node{constructor(tag='div'){this.tagName=tag;this.children=[];this.style={};this.dataset={};this.textContent='';}append(...nodes){this.children.push(...nodes);}prepend(...nodes){this.children.unshift(...nodes);}replaceChildren(...nodes){this.children=nodes;}setAttribute(k,v){this[k]=v;}addEventListener(){}cloneNode(){const n=new Node(this.tagName);n.textContent=this.textContent;return n;}}
-  const nodes=new Map();
-  try{
-    Date.now=()=>now;globalThis.document={hidden:false,getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);},createElement:tag=>new Node(tag),addEventListener(){}};
-    globalThis.window={addEventListener(){},dispatchEvent(){}};globalThis.location={href:'https://example.test/?view=weather',get search(){return new URL(this.href).search;}};globalThis.history={pushState(a,b,url){location.href=String(url);},replaceState(a,b,url){location.href=String(url);}};globalThis.setInterval=fn=>{interval=fn;return 1;};
-    globalThis.fetch=async input=>{
+  class Node extends FakeElement{cloneNode(){const n=new Node(this.tag);n.textContent=this.textContent;return n;}}
+  const nodes=new Map(),location={href:'https://example.test/?view=weather',get search(){return new URL(this.href).search;}};
+  t.mock.method(Date,'now',()=>now);
+  await withGlobals({
+    document:{hidden:false,getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);},createElement:tag=>new Node(tag),addEventListener(){}},
+    window:{addEventListener(){},dispatchEvent(){}},location,history:{pushState(a,b,url){location.href=String(url);},replaceState(a,b,url){location.href=String(url);}},setInterval:fn=>{interval=fn;return 1;},
+    fetch:async input=>{
       const u=new URL(input);if(u.pathname.endsWith('/query')&&++queryNumber===shiftAt)now+=86400000;const day=Number(/MapServer\/(\d+)/.exec(u.pathname)?.[1]||0)+1;
       if(hold&&u.pathname.endsWith('/query'))await new Promise(r=>resolvers.push(r));
       const start=new Date(now);start.setUTCHours(12,0,0,0);start.setUTCDate(start.getUTCDate()+day-1);
       const stamp=n=>new Date(n).toISOString().slice(0,19).replace('T',' ');
       const data=u.pathname.endsWith('/query')?{features:[{attributes:{product:`Day ${day} Excessive Rainfall Potential Forecast`,issue_time:stamp(now-3600000),start_time:stamp(+start),end_time:stamp(+start+86400000)}}]}:u.pathname.endsWith('/legend')?{layers:[0,1,2].map(layerId=>({layerId,legend:[{label:'Marginal',contentType:'image/png',imageData:'aGVsbG8='}]}))}:{geometryType:'esriGeometryPolygon',drawingInfo:{renderer:{field1:'dn'}}};
       return new Response(JSON.stringify(data));
-    };
+    }},async()=>{
     const controller=createBriefingLayers({timeZone:'America/Los_Angeles',onOpen:()=>opened++});
     hold=true;const pending=controller.followSlide(context(3));await Promise.resolve();await controller.followSlide(context(8));hold=false;resolvers.splice(0).forEach(r=>r());await pending;
     assert.equal(opened,0);assert.match(nodes.get('hanford-live-note').textContent,/no verified matching/);assert.equal(new URL(location.href).searchParams.get('briefingLayer'),null);
@@ -49,5 +50,5 @@ test('controller ignores superseded pages, clears unsupported maps and re-resolv
     now+=86400000;interval();await new Promise(r=>setImmediate(r));await new Promise(r=>setImmediate(r));assert.equal(nodes.get('briefing-layer-select').value,'ero-day-1');
     await controller.followSlide(context(8));assert.equal(nodes.get('hanford-live-times').textContent,'No live briefing forecast selected.');
     now=Date.parse('2026-10-20T02:00:00Z');queryNumber=0;shiftAt=4;await controller.followSlide(context(3));await new Promise(r=>setImmediate(r));assert.match(nodes.get('briefing-layer-status').textContent,/Map withheld/);assert.match(nodes.get('briefing-layer-status').textContent,/forecast window/);
-  }finally{Date.now=realNow;for(const [k,v]of Object.entries(saved)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+  });
 });

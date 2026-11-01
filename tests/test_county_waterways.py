@@ -1,11 +1,10 @@
 """Offline tests for network-attribute population accounting, not topology."""
-import importlib.util
+import runpy
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 
-spec = importlib.util.spec_from_file_location('county_acquisition', Path(__file__).resolve().parents[1] / 'scripts' / 'acquire-waterways-county.py')
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+module = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1] / 'scripts' / 'acquire-waterways-county.py')))
 
 
 class NetworkAuditTests(unittest.TestCase):

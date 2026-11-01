@@ -1,21 +1,18 @@
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {afnContext} from '../site/lib/afn-ui.js';
+import {FakeElement,stubGlobals} from './helpers/dom.mjs';
 
 // Minimal DOM fixture: exercise the actual calcite-block expand/collapse and click handlers and async lifecycle.
-class Element {
-  constructor(tag){this.tag=tag;this.children=[];this.handlers=new Map();this.attributes=new Map();}
-  append(...nodes){this.children.push(...nodes);}
-  replaceChildren(...nodes){this.children=[...nodes];}
-  setAttribute(key,value){this.attributes.set(key,value);}
+// emit awaits async handlers, so tests can wait for a load that an expand or click started.
+class Element extends FakeElement{
+  handlers=new Map();
   addEventListener(name,handler){this.handlers.set(name,[...(this.handlers.get(name)||[]),handler]);}
   async emit(name){await Promise.all((this.handlers.get(name)||[]).map(handler=>handler({type:name,target:this})));}
   /** Like calcite-block: the expanded attribute changes, then calciteBlockExpand / calciteBlockCollapse is emitted from the block. */
-  toggle(open){this.attributes.set('expanded',open);return this.emit(open?'calciteBlockExpand':'calciteBlockCollapse');}
+  toggle(open){this.toggleAttribute('expanded',open);return this.emit(open?'calciteBlockExpand':'calciteBlockCollapse');}
 }
-const previousDocument=globalThis.document;
-globalThis.document={createElement:tag=>new Element(tag)};
-after(()=>{if(previousDocument===undefined)delete globalThis.document;else globalThis.document=previousDocument;});
+after(stubGlobals({document:{createElement:tag=>new Element(tag)}}));
 const zone={key:'county-zone:287',geometry:{rings:[[[-120,36],[-120,37],[-119,37],[-120,36]]],spatialReference:{wkid:4326}}};
 const topics=()=>['languages','svi','ces','ccl'].map(key=>({key,rows:[],checked:123,period:'2020–2024',source:'https://www.census.gov/'}));
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};

@@ -8,8 +8,8 @@ import {planningExercise} from '../site/lib/planning-exercise.js';
 import {planningPoints,evaluateAreas} from '../site/lib/planning-model.js';
 import {assessGauge} from '../site/lib/river-model.js';
 import {chartWindow,refreshPilotSnapshot} from '../site/lib/pilot-data.js';
-const read=async name=>JSON.parse(await readFile(new URL('../site/data/'+name+'.json',import.meta.url),'utf8'));
-const [areas,gauges,reservoirSettings,associations,windSettings]=await Promise.all(['river-areas','river-watchlist','reservoir-watchlist','area-concerns','wind-watchlist'].map(read));
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
+const [areas,gauges,reservoirSettings,associations,windSettings]=await Promise.all(['river-areas.json','river-watchlist.json','reservoir-watchlist.json','area-concerns.json','wind-watchlist.json'].map(siteJson));
 const now=Date.parse('2026-10-20T20:00:00Z'),points=planningPoints(areas,gauges.stations,reservoirSettings.stations);
 function bundle(scenario='combined'){
  const f=planningExercise(gauges.stations,points,reservoirSettings,scenario,now);

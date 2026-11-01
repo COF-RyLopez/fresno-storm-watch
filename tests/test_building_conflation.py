@@ -1,13 +1,12 @@
 """Small fictional geometry checks; no private county data are used."""
-import importlib.util
+import runpy
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from shapely.geometry import Point, box
 
-SPEC = importlib.util.spec_from_file_location("conflation", Path(__file__).resolve().parents[1] / "scripts" / "conflate-buildings.py")
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts" / "conflate-buildings.py")))
 
 
 class ConflationTests(unittest.TestCase):

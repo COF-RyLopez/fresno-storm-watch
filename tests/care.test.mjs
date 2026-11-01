@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {CARE_SOURCES,normalizeCare,normalizeZone,comparePlaces,compareBuildings,zonesAt,distanceMetres,careBox} from '../site/lib/care-model.js';
 import {readCareCollection,readCarePlaces} from '../site/lib/care-data.js';
 import {createCareMap} from '../site/lib/care-map.js';
+import {GraphicsLayer,Graphic} from './helpers/arcgis.mjs';
 import {readFile} from 'node:fs/promises';
 
 const point={x:-119.75,y:36.75,spatialReference:{wkid:4326}};
@@ -55,10 +56,8 @@ test('published Places reference is pinned, complete, unique and contains no pri
  const result=await readCarePlaces({fetcher});assert(result.rows.length>0);assert.equal(result.rows.length,result.index.count);assert(!result.rows.some(r=>r.facility||r.countyFootprints));
 });
 test('care comparison layers clear selection outlines and synchronize 3D independently',async()=>{
- class Layer{constructor(p){Object.assign(this,p);this.graphics=[];}add(g){this.graphics.push(g);}removeAll(){this.graphics=[];}}
- class Graphic{constructor(p){Object.assign(this,p);}}
  const layers=[],callbacks=[],focus=[];let mode='2d',clears=0;
- const map=await createCareMap({registerLayer:(key,layer)=>layers.push({key,layer}),onViewChanged:f=>callbacks.push(f),getViewMode:()=>mode,clearSearchSelection:()=>clears++,focusSearchSelection:async g=>focus.push(['outline',g]),focusReferenceGeometry:async g=>focus.push(['point',g])},async()=>({import:async()=>[Layer,Graphic]}));
+ const map=await createCareMap({registerLayer:(key,layer)=>layers.push({key,layer}),onViewChanged:f=>callbacks.push(f),getViewMode:()=>mode,clearSearchSelection:()=>clears++,focusSearchSelection:async g=>focus.push(['outline',g]),focusReferenceGeometry:async g=>focus.push(['point',g])},async()=>({import:async()=>[GraphicsLayer,Graphic]}));
  await map.focus(point);await map.focus(careBox(point));assert.deepEqual(focus.map(f=>f[0]),['point','outline']);assert(!focus[0][1].rings);
  map.setSelection(normalizeCare(facility),[{geometry:careBox(point),height:12,associated:true}],[]);const context=layers[1].layer;assert.equal(context.graphics[0].symbol.type,'simple-fill');mode='3d';callbacks[0]();assert.equal(context.graphics[0].symbol.type,'polygon-3d');
  assert(context.graphics.length>0);map.clear();assert.equal(clears,1);assert(layers.every(r=>r.layer.graphics.length===0));

@@ -5,7 +5,6 @@ export function concernSummary(row){
  const changes=[row.status,...(row.scheduled||[]).map(n=>n.label||n.title||'Scheduled release notice'),row.forecastDifference?.review?'Forecast models differ; inspect timing':null].filter(Boolean);
  return {id:row.area.id,name:row.area.name,change:changes.join(' · '),review:!!row.review,rank:row.rank||0,quality:row.gaps?.length?`${row.gaps.length} evidence gaps`:'Inspect publisher times and coverage',observed:observed.length?Math.max(...observed):null,forecast:forecast.length?Math.min(...forecast):null,nextReview:'Confirm operator guidance, field conditions, site power and approved access.',points:(row.samplePoints||[]).map(p=>({id:p.id,longitude:p.longitude,latitude:p.latitude})),gaps:[...(row.gaps||[])]};
 }
-export const concernOrder=(a,b)=>Number(b.review)-Number(a.review)||b.rank-a.rank||a.name.localeCompare(b.name);
 /** A draft captures selected evidence at that moment; it never refreshes silently. */
 export function freezeConcern(row,context,now=Date.now()){
  const summary=concernSummary(row);
