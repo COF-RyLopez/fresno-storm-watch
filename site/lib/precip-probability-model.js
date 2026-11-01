@@ -4,7 +4,7 @@
 export const PROBABILITY_SOURCE='https://www.wpc.ncep.noaa.gov/Prob_Precip/?zoom=HNX';
 export const PROBABILITY_BASE='https://www.wpc.ncep.noaa.gov/Prob_Precip/';
 export const PROBABILITY_MAX_CHECK_AGE=2*3_600_000;
-export const PROBABILITY_MAX_CYCLE_AGE=6*3_600_000;
+const PROBABILITY_MAX_CYCLE_AGE=6*3_600_000;
 export const PROBABILITY_BOUNDS=Object.freeze({xmin:-124.786952,ymin:24.530802,xmax:-95.856708,ymax:38.002106,spatialReference:{wkid:4326}});
 export const PROBABILITY_LEGEND=Object.freeze([
   ['90%','#003200'],['80%','#00440a'],['70%','#185612'],['60%','#266a1b'],['50%','#347e24'],['40%','#51a736'],['30%','#85c16d'],['20%','#b4dca3'],['10%','#e2f6da'],['1%','#f5f5f5']

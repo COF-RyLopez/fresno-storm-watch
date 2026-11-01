@@ -1,5 +1,5 @@
 import {pumpReadinessSummary,filterPumpSummary} from './pump-summary-model.js';
-import {el,disclosure} from './dom.js';
+import {el,button,disclosure} from './dom.js';
 const PAGE_SIZE=3;
 /** No private records persist outside this tab. Counts always use the full loaded inventory. */
 export function createPumpSummary({host,timeZone,onInspect=()=>{},exercise=false}){
@@ -14,8 +14,8 @@ export function createPumpSummary({host,timeZone,onInspect=()=>{},exercise=false
   const filterLabel=el('calcite-label','Show pumps'),filter=el('calcite-select');filter.label='Pump readiness summary filter';filter.scale='s';
   for(const [value,label]of [['attention','Needs attention'],['backup','Backup power needed'],['refuel','Refueling requested'],['followup','Follow-up / unknown'],['all','All existing pumps']]){const o=el('calcite-option',label);o.value=value;filter.append(o);}filter.value='attention';filterLabel.append(filter);
   const searchLabel=el('calcite-label','Find pump or responsible contact'),search=el('calcite-input');search.placeholder='Pump, drainage code or contact';search.clearable=true;search.autocomplete='off';searchLabel.append(search);controls.append(filterLabel,searchLabel);
-  const list=el('div'),pages=el('div'),range=el('span'),before=el('calcite-button','Previous pumps'),after=el('calcite-button','Next pumps');pages.className='drainage-actions';
-  for(const b of [before,after]){b.scale='s';b.appearance='outline';}pages.append(before,range,after);
+  const list=el('div'),pages=el('div'),range=el('span'),before=button('Previous pumps',()=>{page--;render();}),after=button('Next pumps',()=>{page++;render();});pages.className='drainage-actions';
+  pages.append(before,range,after);
   const note=disclosure('Source times and review order'),sourceTimes=el('p');note.append(sourceTimes,qualification);
   host.append(heading,status,counts,window,controls,list,pages,note);
   function render(){
@@ -39,7 +39,7 @@ export function createPumpSummary({host,timeZone,onInspect=()=>{},exercise=false
     if(!rows.length){list.append(el('p','No pump records returned in this filter. Missing confirmations or coverage do not establish readiness.'));return;}
     for(const r of rows.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE)){
       const row=el('article');row.className='pump-summary-row';
-      const inspect=el('calcite-button',r.name);inspect.scale='s';inspect.appearance='outline';inspect.onclick=()=>onInspect(r.groupId,r.key);row.append(inspect,el('strong',r.labels.join(' · ')));
+      row.append(button(r.name,()=>onInspect(r.groupId,r.key)),el('strong',r.labels.join(' · ')));
       if(r.name!==r.sourceName)row.append(el('small',r.sourceName));
       row.append(el('p',r.contact?`${r.contact.current?'Responsible':'Last reported contact · reconfirm'}: ${r.contact.owner} · ${r.contact.method}`:'Responsible contact unconfirmed · inspect and confirm with FMFCD.'));
       row.append(el('p',`Rainfall at pump: ${r.rain.value===null?'amount unknown':r.rain.value.toFixed(2)+' in liquid equivalent (polygon label)'}${r.rain.current?'':' · source overdue / unavailable'}.${r.powerRain?' Utility-area concern overlaps rainfall context; verify timing.':r.utilityConcern?' Utility-area concern needs verification.':''}`));
@@ -50,6 +50,5 @@ export function createPumpSummary({host,timeZone,onInspect=()=>{},exercise=false
     }
   }
   filter.addEventListener('calciteSelectChange',()=>{page=0;render();});search.addEventListener('calciteInputInput',()=>{page=0;render();});
-  before.onclick=()=>{page--;render();};after.onclick=()=>{page++;render();};
   render();return {setData(value){({groups=[],connected=false,busy=false,error=null,unmatched=0,readinessState=null}=value);summary=pumpReadinessSummary(groups);render();}};
 }

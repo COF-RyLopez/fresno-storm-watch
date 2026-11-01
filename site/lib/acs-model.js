@@ -23,7 +23,7 @@ export function acsPeriod(description){
   if(matches.length!==1||Number(matches[0][2])-Number(matches[0][1])!==4)throw Error('ACS five-year period could not be verified from publisher metadata.');
   return matches[0][1]+'–'+matches[0][2];
 }
-export function acsNumber(value){return typeof value==='number'&&Number.isFinite(value)&&value>=0?value:null;}
+function acsNumber(value){return typeof value==='number'&&Number.isFinite(value)&&value>=0?value:null;}
 export function acsMeasure(attributes,estimate,moe){return {estimate:acsNumber(attributes[estimate]),moe:acsNumber(attributes[moe])};}
 const format=v=>new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(v);
 export function formatAcsMeasure({estimate,moe}){return estimate===null?'Unavailable':format(estimate)+(moe===null?' · MOE unavailable':' ± '+format(moe));}

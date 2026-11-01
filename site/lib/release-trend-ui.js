@@ -7,7 +7,7 @@ import {classLink as link,elClass as el,disclosure,onExpand} from './dom.js';
 const $=id=>document.getElementById(id);
 
 /** @param {object} series @param {object} model @param {number[]} domain @param {boolean} release @param {string} zone @returns {HTMLElement} Aligned small multiples; no curve fitting, carry-forward or inferred water-arrival time. */
-export function releaseTrendChart(series,model,domain,release,zone,selectionKey=null,dataOpen=false){
+function releaseTrendChart(series,model,domain,release,zone,selectionKey=null,dataOpen=false){
   const figure=el('figure','','release-trend-chart');
   const time=t=>formatTime(t,zone);
   const rows=[...series.observed,...series.forecast,...(release?model.markers:[])].filter(p=>Number.isFinite(p.value)).sort((a,b)=>a.time-b.time);

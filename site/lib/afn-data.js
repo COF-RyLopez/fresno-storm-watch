@@ -1,4 +1,4 @@
-import {readArcgis} from './acs-data.js';
+import {readArcgis,editedAt} from './acs-data.js';
 import {AFN_SOURCES,validateLanguageAreas,normalizePuma,normalizeSvi,normalizeCes,normalizeDac,normalizeCcl} from './afn-model.js';
 
 const read=(url,query,options)=>readArcgis(url,query,options,25000,'Source HTTP ','Publisher query failed.');
@@ -6,19 +6,19 @@ const normalizers={puma:normalizePuma,svi:normalizeSvi,ces:normalizeCes,sb535:no
 
 /** Bounded read of every record intersecting the zone; a partial result is an error, never a smaller count. */
 export async function readIntersecting(key,geometry,options={}){
-  const s=AFN_SOURCES[key],meta=await read(s.url,null,options);
+  const s=AFN_SOURCES[key],meta=await read(s.url,null,options),edited=editedAt(meta);
   if(!s.fields.every(n=>meta.fields?.some(f=>f.name===n)))throw Error('Publisher field schema changed.');
   const filter={where:s.where,geometry:JSON.stringify(geometry),geometryType:'esriGeometryPolygon',inSR:4326,spatialRel:'esriSpatialRelIntersects'},url=s.url+'/query';
   const count=await read(url,{...filter,returnCountOnly:true},options);
   if(!Number.isInteger(count.count)||count.count<0||count.count>s.limit)throw Error('Record count exceeds the bounded zone query.');
-  if(!count.count)return {key,rows:[],checked:Date.now(),edited:meta.editingInfo?.dataLastEditDate??meta.editingInfo?.lastEditDate??null};
+  if(!count.count)return {key,rows:[],checked:Date.now(),edited};
   const data=await read(url,{...filter,outFields:s.fields.join(','),returnGeometry:false,orderByFields:s.fields[0],resultRecordCount:s.limit},options);
   if(!Array.isArray(data.features)||data.exceededTransferLimit||data.features.length!==count.count)throw Error('Query is incomplete or changed during retrieval.');
   const rows=data.features.map(normalizers[key]),ids=rows.map(r=>r.key||r.id);
   if(new Set(ids).size!==ids.length)throw Error('Duplicate source record.');
-  return {key,rows,checked:Date.now(),edited:meta.editingInfo?.dataLastEditDate??meta.editingInfo?.lastEditDate??null};
+  return {key,rows,checked:Date.now(),edited};
 }
-export async function readLanguageAreas({fetcher=fetch,signal}={}){
+async function readLanguageAreas({fetcher=fetch,signal}={}){
   const r=await fetcher(new URL('../data/acs-b16001-fresno.json',import.meta.url),{credentials:'omit',signal:signal||AbortSignal.timeout(15000)});
   if(!r.ok)throw Error('Language reference unavailable.');return validateLanguageAreas(await r.json());
 }

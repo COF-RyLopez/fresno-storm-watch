@@ -1,3 +1,4 @@
+import { validPoint } from './power-geometry.js';
 /** Pure data/state rules, shared by the browser and Node's test runner. */
 export const COUNTIES = Object.freeze({
   '06019': 'Fresno', '06039': 'Madera', '06047': 'Merced', '06031': 'Kings', '06107': 'Tulare'
@@ -42,6 +43,14 @@ export function validateCounties(geojson) {
   return geojson.features;
 }
 
+/** WGS84 ring with at least four vertices that closes on itself; messages are caller-specific. */
+function checkRing(ring, invalid, open, incomplete = invalid) {
+  if (!Array.isArray(ring) || ring.length < 4) throw new Error(incomplete);
+  if (ring.some(p => !validPoint(p))) throw new Error(invalid);
+  if (ring[0][0] !== ring.at(-1)[0] || ring[0][1] !== ring.at(-1)[1]) throw new Error(open);
+  return ring;
+}
+
 /** @param {object} geometry @returns {object} Convert GeoJSON to clockwise Esri exterior rings, EPSG:4326. */
 export function countyGeometry(geometry) {
   const polygons = geometry?.type === 'Polygon' ? [geometry.coordinates] : geometry?.type === 'MultiPolygon' ? geometry.coordinates : null;
@@ -49,12 +58,7 @@ export function countyGeometry(geometry) {
   const rings = polygons.flatMap(polygon => {
     if (!Array.isArray(polygon) || !polygon.length) throw new Error('County polygon has no exterior.');
     return polygon.map((input, index) => {
-      if (!Array.isArray(input) || input.length < 4) throw new Error('County ring is incomplete.');
-      const ring = input.map(point => {
-        if (!Array.isArray(point) || point.length < 2 || !Number.isFinite(point[0]) || !Number.isFinite(point[1]) || Math.abs(point[0]) > 180 || Math.abs(point[1]) > 90) throw new Error('County coordinates must be longitude/latitude.');
-        return point.slice(0, 2);
-      });
-      if (ring[0][0] !== ring.at(-1)[0] || ring[0][1] !== ring.at(-1)[1]) throw new Error('County polygon ring is not closed.');
+      const ring = checkRing(input, 'County coordinates must be longitude/latitude.', 'County polygon ring is not closed.', 'County ring is incomplete.').map(point => point.slice(0, 2));
       let area = 0;
       for (let i = 1; i < ring.length; i++) area += ring[i - 1][0] * ring[i][1] - ring[i][0] * ring[i - 1][1];
       if (!area) throw new Error('County polygon ring has zero area.');
@@ -78,10 +82,7 @@ export function normalizeAlerts(batches, now = Date.now()) {
       // Cancellation/removal is reflected by the next complete publisher snapshot.
       if (expires !== null && expires <= now) continue;
       if (!feature.geometry?.rings?.length) throw new Error('NWS returned an alert without polygon geometry.');
-      for (const ring of feature.geometry.rings) {
-        if (!Array.isArray(ring) || ring.length < 4 || ring.some(p => !Array.isArray(p) || !Number.isFinite(p[0]) || !Number.isFinite(p[1]) || Math.abs(p[0]) > 180 || Math.abs(p[1]) > 90)) throw new Error('NWS polygon coordinates are invalid.');
-        if (ring[0][0] !== ring.at(-1)[0] || ring[0][1] !== ring.at(-1)[1]) throw new Error('NWS polygon ring is not closed.');
-      }
+      for (const ring of feature.geometry.rings) checkRing(ring, 'NWS polygon coordinates are invalid.', 'NWS polygon ring is not closed.');
       const key = `${a.cap_id}|${a.issuance}`;
       const content = JSON.stringify([a.prod_type, a.issuance, a.onset ?? '', a.expiration ?? '', a.wfo ?? '']);
       if (!grouped.has(key)) grouped.set(key, {
@@ -144,6 +145,11 @@ export function bannerState(state, now, staleMs) {
   return { tone, title: state.pending.size ? `${state.pending.size} new or updated ${state.pending.size === 1 ? 'alert' : 'alerts'}` : `${state.alerts.length} regional ${state.alerts.length === 1 ? 'alert' : 'alerts'} remain visible`,
     detail: state.pending.size ? 'New since this page opened or since you cleared the notification. Select an alert for details.' : 'Clearing the notification does not end a hazard or record a team acknowledgement.' };
 }
+
+/** @param {number} time @param {string} zone @returns {string} Dated to the minute with zone abbreviation, e.g. "Nov 1, 2026, 3:04 PM PST". */
+export const formatDateTime = (time, zone = 'America/Los_Angeles') => new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zone, timeZoneName: 'short' }).format(time);
+/** @param {number} time @returns {string} Medium date and short time in Pacific, suffixed " Pacific". */
+export const formatPacific = time => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Los_Angeles' }).format(time) + ' Pacific';
 
 /** @param {number|null} time @param {string} zone @returns {string} Explicit Pacific zone, including DST. */
 export function formatTime(time, zone = 'America/Los_Angeles') {

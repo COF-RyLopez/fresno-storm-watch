@@ -3,7 +3,7 @@ import {loadSdk} from './map.js';
 import {formatTime} from './model.js';
 import {DRAINAGE_URL,DRAINAGE_MAX_AGE,drainageCounts,unchangedDrainageSelection} from './drainage-model.js';
 import {openDrainage} from './drainage-data.js';
-import {button,el,disclosure} from './dom.js';
+import {button,el,link,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 /** @param {object} options @returns {object} Private, read-only drainage context; memory cleared on sign-out, expiry, disconnect and failure. */
 export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRainfall=()=>{},onFacilities=()=>{},onRoad=()=>{},onData=()=>{},renderNearby=()=>{}}){
@@ -17,7 +17,7 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
     host.append(el('p',row.status));if(['basin','pump'].includes(row.kind))renderNearby(host,row);
     const inventory=disclosure('Inventory dates and attributes');inventory.append(dl);host.append(inventory);
     host.append(el('p',row.kind==='pump'?'This inventory does not supply pump discharge, power availability, backup, controls or current status.':'The polygon is a mapped inventory / drainage boundary. It is not a current shoreline, storage-volume curve or predicted flood extent.'),el('h3','Planning context'),el('p',weather?.status||'Rainfall forecast is checking; source availability and dates remain visible on the map.'),el('p','Rainfall polygons are liquid-equivalent forecasts, not runoff or flood depth. Drainage and receiving-water connections require owner verification.'));
-    const a=el('a','FMFCD source layer');a.href=DRAINAGE_URL+'/'+row.layerId;a.target='_blank';a.rel='noopener noreferrer';host.append(a,button('Zoom to full outline / location',()=>{onMap();void map?.focusDrainage(key);}));
+    host.append(link('FMFCD source layer',DRAINAGE_URL+'/'+row.layerId),button('Zoom to full outline / location',()=>{onMap();void map?.focusDrainage(key);}));
     $('drainage-evidence').setAttribute('open','');if(focus){onMap();void map?.focusDrainage(key);}
   }
   function render(){
@@ -55,8 +55,8 @@ export function createDrainageWatch({timeZone,exercise=false,onMap=()=>{},onRain
   $('drainage-filter').addEventListener('calciteSelectChange',render);$('drainage-search').addEventListener('calciteInputInput',render);
   for(const [id,key]of [['drainage-existing','drainage'],['drainage-proposed','drainageProposed'],['drainage-other','drainageOther']])$(id).addEventListener('calciteCheckboxChange',()=>map?.setLayerPreference(key,$(id).checked));
   $('drainage-catchments').addEventListener('calciteCheckboxChange',async()=>{const wanted=$('drainage-catchments').checked;map?.setLayerPreference('drainageCatchments',wanted);if(!wanted||!adapter||rows.some(r=>r.kind==='catchment'))return;const epoch=generation;$('drainage-boundary-status').textContent='Loading optional boundaries in small batches…';try{const boundaries=await adapter.readBoundaries();if(epoch!==generation)return;if($('drainage-catchments').checked){rows=[...rows.filter(r=>r.kind!=='catchment'),...boundaries];map?.setDrainage(rows);$('drainage-boundary-status').textContent='Drainage boundaries generalized for display. Use FMFCD source geometry for engineering.';render();}}catch(e){if(epoch===generation)clear({message:e.message});}});
-  $('drainage-rainfall').onclick=()=>{onRainfall(Number($('drainage-qpf').value));map?.setLayerPreference('weather',true);};
-  $('drainage-qpf').addEventListener('calciteSelectChange',()=>{onRainfall(Number($('drainage-qpf').value));map?.setLayerPreference('weather',true);});
+  const rain=()=>{onRainfall(Number($('drainage-qpf').value));map?.setLayerPreference('weather',true);};
+  $('drainage-rainfall').onclick=rain;$('drainage-qpf').addEventListener('calciteSelectChange',rain);
   $('drainage-fit').onclick=()=>{onMap();void map?.fitDrainage();};
   document.addEventListener('frogLayerPreference',e=>{const id={drainage:'drainage-existing',drainageProposed:'drainage-proposed',drainageOther:'drainage-other',drainageCatchments:'drainage-catchments'}[e.detail.key];if(id)$(id).checked=e.detail.wanted;});
   $('drainage-connect-facilities').onclick=async()=>{$('drainage-connect-facilities').loading=true;try{$('drainage-facility-message').textContent=await onFacilities()||'County inventory checked. See the connected facility count above.';}catch{$('drainage-facility-message').textContent='County facility connection failed. Retry from Power / PSPS.';}finally{$('drainage-connect-facilities').loading=false;}};$('drainage-open-roads').onclick=onRoad;

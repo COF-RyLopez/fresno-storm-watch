@@ -1,4 +1,5 @@
 import {loadSdk} from './map.js';
+import {withTimeout} from './with-timeout.js';
 const $=id=>document.getElementById(id);
 /** One nonmodal evidence surface. Existing open attributes remain the domain controllers' visibility contract. */
 export function createEvidencePane({onChange=()=>{},timeZone='America/Los_Angeles'}={}){
@@ -48,7 +49,7 @@ export function createEvidencePane({onChange=()=>{},timeZone='America/Los_Angele
       if(request!==featureGeneration||active?.id!=='map-feature-evidence')return;
       if(!featureComponent){featureComponent=document.createElement('arcgis-feature');featureComponent.setAttribute('auto-destroy-disabled','');featureComponent.setAttribute('heading-level','3');featureComponent.timeZone=timeZone;$('map-feature-content').append(featureComponent);}
       // The existing SDK 5.1 CDN entry registers components on demand; no second loader/import is needed.
-      let timeout;try{await Promise.race([customElements.whenDefined('arcgis-feature'),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Feature component load timed out')),15_000);})]);}finally{clearTimeout(timeout);}
+      await withTimeout(customElements.whenDefined('arcgis-feature'),15_000,'Feature component load timed out');
       if(request!==featureGeneration||active?.id!=='map-feature-evidence')return;
       featureComponent.view=view;featureComponent.map=view.map;featureComponent.spatialReference=view.spatialReference;featureComponent.graphic=graphic;
       $('map-feature-status').textContent='Publisher attributes and source times. A selected feature is evidence, not a verified field condition.';

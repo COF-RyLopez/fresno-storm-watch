@@ -1,6 +1,5 @@
 """Render unaltered NWS PDF pages into small, version-addressed app previews."""
 from __future__ import annotations
-import argparse
 import hashlib
 import json
 import logging
@@ -10,7 +9,6 @@ import pypdfium2 as pdfium
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "site" / "data"
-ARCHIVE_SHA = "28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4"
 
 def render_pages(path: Path, expected_sha: str) -> list[dict[str, object]]:
     """Verify source bytes, then render at most 40 pages without changing content."""
@@ -46,16 +44,7 @@ def render_pages(path: Path, expected_sha: str) -> list[dict[str, object]]:
     return pages
 
 def main() -> None:
-    """Refresh public preview metadata, or render the explicitly dated partner archive."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--archive", action="store_true")
-    args = parser.parse_args()
-    if args.archive:
-        pages = render_pages(DATA / "briefings" / "nws-hanford-2026-10-19.pdf", ARCHIVE_SHA)
-        logging.info("Partner archive preview: %s pages", len(pages))
-        if len(pages) != 19:
-            raise ValueError("Dated partner deck must retain its 19 pages")
-        return
+    """Refresh public preview metadata for the current public PDF."""
     metadata_path = DATA / "hanford-briefing.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     document = metadata.get("document")

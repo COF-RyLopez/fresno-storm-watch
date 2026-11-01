@@ -1,8 +1,7 @@
-import {briefingState,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF} from './briefing-model.js';
+import {briefingState,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF,isoDay as day} from './briefing-model.js';
 import {pacificDate} from './briefing-context-model.js';
 
 export const PARTNER_BRIEFING=Object.freeze({url:'./data/briefings/nws-hanford-2026-10-19.pdf',sha256:'28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4',bytes:6247407});
-const day=value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 /** @param {object} value @returns {object} Summaries cite an exact document, page and calendar window; no inferred county hazard geometry. */
 export function validateBriefingImpacts(value){
   if(value?.schemaVersion!==1||!Array.isArray(value.documents)||!Array.isArray(value.impacts)||value.documents.length>10||value.impacts.length>30)throw new Error('Invalid Fresno briefing summary register.');

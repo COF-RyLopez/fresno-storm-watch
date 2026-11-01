@@ -7,7 +7,7 @@ import {readAfnContext} from './afn-data.js';
 import {freezeAfnEvidence,AFN_TOPIC_KEYS} from './afn-snapshot-model.js';
 import {PIO_SOURCE_CHECK_MS,pioSourceReviews} from './pio-source-review.js';
 
-async function readZones({signal}){
+export async function readZones({signal}){
   const counties=await loadCounties(new URL('../data/counties.geojson',import.meta.url));
   signal.throwIfAborted();
   return readCareCollection('zones',{county:counties.find(c=>c.properties.GEOID==='06019'),signal});

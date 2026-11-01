@@ -10,7 +10,7 @@ export const ZONE_STATUS=Object.freeze({Order:'Evacuation Order',Warn:'Evacuatio
 export const ZONE_COLORS=Object.freeze({Order:'#b53535',Warn:'#ffff00',Lifted:'#65a843',unknown:'#b4bdc6'});
 export const normalizeText=v=>String(v??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 const abbreviations={street:'st',avenue:'ave',road:'rd',drive:'dr',boulevard:'blvd',lane:'ln',court:'ct',highway:'hwy',north:'n',south:'s',east:'e',west:'w'};
-export const normalizedAddress=v=>normalizeText(v).split(' ').map(s=>abbreviations[s]||s).join(' ');
+const normalizedAddress=v=>normalizeText(v).split(' ').map(s=>abbreviations[s]||s).join(' ');
 export const distanceMetres=(a,b)=>{const rad=Math.PI/180,p=a.y*rad,q=b.y*rad,s=Math.sin((q-p)/2)**2+Math.cos(p)*Math.cos(q)*Math.sin((b.x-a.x)*rad/2)**2;return 6371008.8*2*Math.asin(Math.min(1,Math.sqrt(s)));};
 export function careBox(point,metres=250){const dy=metres/111195,dx=dy/Math.cos(point.y*Math.PI/180);return {rings:[[[point.x-dx,point.y-dy],[point.x-dx,point.y+dy],[point.x+dx,point.y+dy],[point.x+dx,point.y-dy],[point.x-dx,point.y-dy]]],spatialReference:{wkid:4326}};}
 export function normalizeCare(feature){

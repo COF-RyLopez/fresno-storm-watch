@@ -1,7 +1,5 @@
 /** Public CDEC collector. Run locally or before a Pages deployment; no credentials/proxy. */
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
 import { CDEC_URL, cdecSeries, validateReservoirSnapshot } from '../site/lib/environment-model.js';
 import {scheduledRecords,RELEASE_LOOKBACK_DAYS,RELEASE_HORIZON_DAYS} from '../site/lib/release-model.js';
 import {loadPrevious,writeAtomic} from './lib/snapshot-io.mjs';
@@ -63,7 +61,7 @@ async function main(){
   console.log(JSON.stringify({event:'reservoir-collection',time:snapshot.generatedAt,stations:snapshot.stations.map(s=>({id:s.id,error:s.error,series:Object.keys(s.metrics).length,values:Object.values(s.metrics).filter(m=>m.lastValid).length,conflicts:Object.values(s.metrics).reduce((n,m)=>n+(m.conflicts||0),0),scheduleError:s.scheduled.error,notices:s.scheduled.records?.length||0}))}));
   if(snapshot.stations.some(s=>s.error||s.scheduled.error))console.warn('CDEC collection incomplete; the published snapshot marks failed sources and retained values.');
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+if(import.meta.main){
   await main();
   if(process.argv.includes('--watch'))setInterval(()=>void main().catch(error=>console.error('Reservoir snapshot write failed:',error.message)),POLL_MS);
 }

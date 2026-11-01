@@ -5,7 +5,7 @@ export const COPY_PARENT='frog_fmfcd_pumps_exercise_2026_27';
 export const COPY_VIEW=COPY_PARENT+'_read';
 const spec=DRAINAGE_LAYERS.find(s=>s.kind==='pump');
 const FIELDS=[['source_oid','esriFieldTypeInteger'],['source_code','esriFieldTypeString',255],['source_subtype','esriFieldTypeInteger'],['source_modified','esriFieldTypeDate'],['source_x','esriFieldTypeDouble'],['source_y','esriFieldTypeDouble'],['snapshot_id','esriFieldTypeString',36],['source_checked','esriFieldTypeDate'],['source_count','esriFieldTypeInteger'],['existing_count','esriFieldTypeInteger'],['source_digest','esriFieldTypeString',64],['row_key','esriFieldTypeString',80]];
-export const COPY_FIELDS=FIELDS.map(([n])=>n);
+const COPY_FIELDS=FIELDS.map(([n])=>n);
 export function pumpCopyLayer(){
   const fields=[{name:'OBJECTID',type:'esriFieldTypeOID',alias:'Object ID',nullable:false,editable:false}];
   for(const [name,type,length]of FIELDS)fields.push({name,alias:name,type,nullable:['source_subtype','source_modified'].includes(name),editable:true,...(length?{length}:{})});
@@ -14,7 +14,7 @@ export function pumpCopyLayer(){
 export function verifyCopySchema(metadata){
   if(metadata.geometryType!=='esriGeometryPoint'||COPY_FIELDS.some(name=>!metadata.fields?.some(f=>f.name===name)))throw Error('Pump-copy schema is incomplete. Keep the existing items and ask GIS to inspect them.');
 }
-export function copyRecord(a){
+function copyRecord(a){
   if(!Number.isSafeInteger(a.source_oid)||a.source_oid<1||typeof a.source_code!=='string'||!Number.isFinite(a.source_x)||!Number.isFinite(a.source_y)||a.source_subtype!==null&&!Number.isInteger(a.source_subtype)||a.source_modified!==null&&!Number.isFinite(a.source_modified))throw Error('Invalid source association in the AGOL pump copy.');
   return drainageRecord(spec,{attributes:{OBJECTID:a.source_oid,DA:a.source_code,SUBTYPE:a.source_subtype,MODIFIEDDATE:a.source_modified},geometry:{x:a.source_x,y:a.source_y}},'OBJECTID');
 }
