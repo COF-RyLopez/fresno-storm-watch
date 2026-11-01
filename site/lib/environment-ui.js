@@ -1,13 +1,13 @@
 import {reportHealth} from './source-health.js';
 import { loadSdk } from './map.js';
 import { formatTime } from './model.js';
-import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot } from './environment-model.js';
+import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot,upstreamStorage } from './environment-model.js';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';
 import {scheduleEvidence} from './release-model.js';
 import {appendScheduledReleases} from './release-ui.js';
 import {createWeatherTimeline} from './weather-ui.js';
 import {observationAt} from './weather-model.js';
-import {classLink as link,elClass as el,elAttrs,disclosure} from './dom.js';
+import {classLink as link,elClass as el,elAttrs,disclosure,dataTable} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
@@ -121,7 +121,12 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
         const cell=el('div','','reservoir-metric');cell.dataset.tone=assessment.tone;
         cell.append(el('dt',metric.label));const dd=el('dd',sample?`${new Intl.NumberFormat('en-US',{maximumFractionDigits:metric.decimals,minimumFractionDigits:metric.decimals}).format(sample.value)} ${metric.displayUnits}`:'Unknown');cell.append(dd);
         cell.append(el('small',sample?(metric.duration==='D'?`Report date ${sample.reportDate} · PST`:time(sample.time)):'No valid source reading'));
-        cell.append(el('small',assessment.label,'metric-state'));grid.append(cell);
+        cell.append(el('small',assessment.label,'metric-state'));
+        // CDEC sensor 200 is storage minus the top-of-conservation (flood-control) limit: negative means room left.
+        if(metric.key==='floodSpace'&&sample){const fmt=new Intl.NumberFormat('en-US').format(Math.abs(sample.value));dd.textContent=sample.value<0?`${fmt} acre-ft left`:`${fmt} acre-ft into flood space`;
+          cell.append(el('small',sample.value<0?'Room below the flood-control limit (top of conservation).':'Above the flood-control limit: the operator is expected to release. Confirm with the operator.','metric-state'));if(sample.value>=0)cell.dataset.tone='gap';}
+        if(metric.key==='inflow'&&sample?.value<0)cell.append(el('small','Computed by the operator from storage change and outflow; it can read briefly negative.','metric-state'));
+        grid.append(cell);
       }
       card.append(grid);
       const conflicts=Object.values(row?.metrics||{}).reduce((n,m)=>n+(m.conflicts||0),0);
@@ -131,7 +136,19 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
       if(station.releaseNotices)actions.append(link('Release notices',station.releaseNotices));card.append(actions);
       const details=disclosure('Release meaning & source details');details.className='environment-details';details.append(el('p',station.note),el('p',`Last successful collection: ${time(row?.lastSuccess?Date.parse(row.lastSuccess):null)}. Pool elevation uses the publisher reference; datum is not specified in this feed.`),link('Station metadata',station.metadata));card.append(details);list.append(card);
     }
+    if(selection.upstream&&!exercise)list.append(upstreamCard(upstreamStorage(snapshot,selection.upstream,now)));
     if(layers)drawReservoirs();
+  }
+
+  function upstreamCard(up){
+    const af=v=>v===null?'Unknown':new Intl.NumberFormat('en-US').format(v),delta=v=>v===null?'—':`${v>0?'+':v<0?'−':''}${new Intl.NumberFormat('en-US').format(Math.abs(v))}`;
+    const card=el('calcite-block','','reservoir-card');card.setAttribute('heading',`Upstream storage · ${selection.upstream.basin}`);card.setAttribute('description','Daily CDEC storage, acre-feet · context, not a forecast of Millerton inflow');card.setAttribute('expanded','');
+    if(up.error){const w=el('p',`Source check failed: ${up.error}. Previous values retained.`,'environment-health');w.dataset.tone='gap';card.append(w);}
+    const rows=up.rows.map(r=>[r.name,af(r.value),delta(r.change1d),delta(r.change7d),r.reportDate?(r.old?`${r.reportDate} · old`:r.reportDate):'No valid reading']);
+    rows.push(['Total',af(up.total.value),delta(up.total.change1d),delta(up.total.change7d),'']);
+    card.append(dataTable('Upstream reservoir storage',['Reservoir','Storage','1-day change','7-day change','Report date (PST)'],rows,{rowHeader:true,end:[1,2,3]}));
+    card.append(el('p',selection.upstream.note,'environment-note'));
+    return card;
   }
 
   async function refreshReservoirs(){
@@ -143,6 +160,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   function drawReservoirs(){
     if(!selection||!layers)return;
     layers.reservoirs.removeAll();
+    for(const s of selection.upstream?.stations||[])layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:17,height:17},attributes:{name:s.name,river:'San Joaquin (upstream)'}}));
     for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
