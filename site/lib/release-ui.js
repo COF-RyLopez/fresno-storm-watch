@@ -1,5 +1,5 @@
 /** Shared schedule presentation for reservoir cards and river-area evidence. */
-import {elClass as el} from './dom.js';
+import {elClass as el,classLink} from './dom.js';
 const amount=value=>new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(value);
 
 /** @param {object} notice @param {Function} time @returns {string} Show effective time, not an invented issuance or arrival time. */
@@ -23,5 +23,5 @@ export function appendScheduledReleases(host,evidence,time){
     }section.append(list);
   }
   section.append(el('p',`Schedule last collected ${time(evidence.collected)}. Notice issuance time is not supplied. Unscheduled changes can occur; confirm with the operator. Effective time is at the reservoir, not downstream arrival.`,'environment-note'));
-  const source=el('a','Official CDEC release notices');source.href=evidence.source;source.target='_blank';source.rel='noopener noreferrer';section.append(source);host.append(section);
+  section.append(classLink('Official CDEC release notices',evidence.source));host.append(section);
 }

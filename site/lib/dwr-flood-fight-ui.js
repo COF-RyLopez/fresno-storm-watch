@@ -1,9 +1,9 @@
 import {loadSdk} from './map.js';
-import {countyGeometry} from './model.js';
+import {countyGeometry,formatPacific as checkedText} from './model.js';
 import {reportHealth} from './source-health.js';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js';
 import {normalizeSupplyFeatures} from './dwr-supply-planning-model.js';
-import {node,nodeLink as link,disclosure} from './dom.js';
+import {node,nodeLink as link,nodeButton,disclosure} from './dom.js';
 
 const KEY='dwrFloodFight', REFRESH_MS=300000;
 
@@ -11,7 +11,6 @@ const KEY='dwrFloodFight', REFRESH_MS=300000;
 export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>{}}={}) {
   const $=id=>document.getElementById(id),states=new Map();
   let controller,county,catalog,group,classes,pendingCatalog,started=false,inventoryWatching=false;
-  const checkedText=ms=>new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeStyle:'short',timeZone:'America/Los_Angeles'}).format(ms)+' Pacific';
   function status(s,text){s.status.textContent=text;}
   async function legend(s){
     s.legend.replaceChildren();
@@ -33,8 +32,7 @@ export function createDwrFloodFight({exercise=false,onMap=()=>{},onSupplies=()=>
       const dl=node('dl');
       for(const [field,label]of [['Burlap_Sandbags__ea_','Burlap sandbags (each)'],['Plastic_Sandbags__ea_','Plastic sandbags (each)'],['Plastic__rolls_','Plastic (rolls)'],['Containers','Containers']])dl.append(node('dt',label),node('dd',inventoryQuantity(a[field])));
       card.append(dl,node('p','Reported inspection inventory · confirm current stock and release arrangements with DWR.'));
-      const button=node('calcite-button','Locate on map');button.scale='s';button.appearance='outline';
-      button.addEventListener('click',()=>{onMap();controller.setLayerPreference(KEY,true);void controller.focusReferenceGeometry(f.geometry.toJSON(),20000);});card.append(button);host.append(card);
+      card.append(nodeButton('Locate on map',()=>{onMap();controller.setLayerPreference(KEY,true);void controller.focusReferenceGeometry(f.geometry.toJSON(),20000);}));host.append(card);
     }
     if(!features.length)host.append(node('p','No supply locations returned for Fresno County. This does not establish that supplies are unavailable.'));
   }

@@ -6,7 +6,7 @@ import {pioStates} from './pio-model.js';
 import {createPioSourceMonitor} from './pio-source-data.js';
 import {pioReviewCount,pendingPioSourceReviews} from './pio-source-review.js';
 import {reportHealth} from './source-health.js';
-import {el,disclosure} from './dom.js';
+import {el,link,disclosure} from './dom.js';
 const $=id=>document.getElementById(id);
 /** Named-account, read-only incident follow-ups. No persistence and no automatic dispatch. */
 export function createMissionFollowups({openStore=createPrivateStore,sourceMonitor=createPioSourceMonitor()}={}){
@@ -30,7 +30,7 @@ export function createMissionFollowups({openStore=createPrivateStore,sourceMonit
       const groups=new Map();for(const n of pioNotices){const key=n.evidence?.outreachEvent||n.key;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(n);}
       for(const group of groups.values()){const n=group[0],article=el('article');article.className='mission-card';article.append(el('h4',n.location),...group.map(n=>el('p',n.change)),el('p',`Owner: ${n.owner} · ${group.some(n=>n.category==='Data failures')?'Comparison unavailable':'Source applicability needs review'}`));const detail=disclosure('Source review & next step');detail.append(...[...new Set(group.map(n=>n.nextReview))].map(text=>el('p',text)),el('p',`Compared ${time(n.sourceTime)}. Whole-area AFN context is not a zone population or confirmed support need. Source query/edit dates are not evacuation-order issue times.`));article.append(detail);pioHost.append(article);}
       pioHost.append(el('p','Approved messages, confirmed languages and saved evidence remain unchanged. Review sources every five minutes while this page is visible.'));
-      const a=el('a','Record source review in private EOC review queue');a.href='./eoc.html#notifications';a.target='_blank';a.rel='noopener noreferrer';pioHost.append(a);
+      pioHost.append(link('Record source review in private EOC review queue','./eoc.html#notifications'));
     }
     reportHealth('mission-followups','Private incident follow-ups',{checked,error:error?'Private follow-up query failed; sign in and retry.':null,state:!session||!requested?'unassessed':null,detail:'Only the selected incident is assessed. Pump assignments remain separate.',maxAgeMs:120000});
     reportHealth('mission-pio-sources','Private PIO source comparisons',{checked:pioChecked,error:pioError||pioFailures?'Some PIO sources could not be compared; current applicability is unknown.':null,state:!session||!requested?'unassessed':null,detail:'Selected incident only. Approved messages remain unchanged.',maxAgeMs:420000});

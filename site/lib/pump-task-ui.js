@@ -3,8 +3,8 @@ import {pumpBinding,bindingKey} from './pump-readiness-contract.js';
 import {pumpReadiness} from './pump-readiness-model.js';
 import {pumpTasks} from './pump-task-model.js';
 import {PUMP_TASK_TYPES,PUMP_TASK_STATUSES} from './pump-task-contract.js';
-import {el,disclosure} from './dom.js';
-const local=ms=>{const d=new Date(ms);return new Date(ms-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
+import {el,button,disclosure} from './dom.js';
+import {localDateValue as local} from './eoc-forms.js';
 export function renderPumpTasks(host,pump,stamp){
   const tasks=pump.tasks;host.append(el('h4','Assigned follow-ups'));
   if(!tasks?.current){host.append(el('p','Assignments unavailable / overdue. Recheck county AGOL; no task status is assumed.'));return;}
@@ -23,7 +23,7 @@ export async function openPumpTask({host,record,current,access,refresh,scope,exe
   const fields={},field=(key,label,type,values=null)=>{const wrap=el('label',label),n=el(type==='select'?'select':type==='textarea'?'textarea':'input');if(n.tagName==='INPUT')n.type=type;n.setAttribute('aria-label',label);n.name=key;n.required=true;if(type==='text'||type==='textarea')n.maxLength=1500;if(values)for(const value of values){const o=el('option',value);o.value=value;n.append(o);}wrap.append(n);form.append(wrap);fields[key]=n;return n;};
   field('type','Work type','select',PUMP_TASK_TYPES);field('assigneeType','Assign to a','select',['Person','Team']);field('owner','Responsible person or team','text');field('due','Due by (your local time)','datetime-local');field('status','Assignment status','select',PUMP_TASK_STATUSES);field('nextReview','Requested work / next follow-up','textarea');field('evidence','Update notes / completion evidence','textarea');
   const identityLabel=el('label'),identity=el('input');identity.type='checkbox';identity.required=true;identityLabel.className='pump-readiness-identity';identityLabel.append(identity,document.createTextNode('I confirmed this pump location and identity and reviewed the saved assignment versions.'));form.append(identityLabel);
-  const feedback=el('p');feedback.setAttribute('role','status');const save=el('calcite-button',exercise?'Save fictional assignment':'Save private assignment'),close=el('calcite-button','Close assignment');save.scale=close.scale='s';close.appearance='outline';close.onclick=()=>host.replaceChildren();const actions=el('div');actions.className='drainage-actions';actions.append(save,close);form.append(feedback,actions);
+  const feedback=el('p');feedback.setAttribute('role','status');const save=el('calcite-button',exercise?'Save fictional assignment':'Save private assignment'),close=button('Close assignment',()=>host.replaceChildren());save.scale='s';const actions=el('div');actions.className='drainage-actions';actions.append(save,close);form.append(feedback,actions);
   let versions=[],originalHeads=[],pending=null,saving=false;
   function choose(){
     const s=access().state,tasks=pumpTasks(record,s,pumpReadiness(record,s).event),history=tasks.history.filter(e=>e.payload.pumpTask.type===fields.type.value);versions=heads(history);originalHeads=versions.flatMap(h=>h.heads.map(e=>e.id)).sort();

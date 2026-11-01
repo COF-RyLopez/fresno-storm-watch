@@ -9,6 +9,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
   let enabled=true,gusts=true,animate=!matchMedia('(prefers-reduced-motion: reduce)').matches;
   let busy=false,next=0,generation=0,key='',loading=null,point=null,mapError=null;
   const cache=new Map();
+  const setFlow=l=>{const r=l.renderer.clone();r.flowSpeed=animate?4:0;l.renderer=r;};
   const showStatus=()=>{
     const state=hrrrAt(manifest,target()),available=!!state.frame&&!error&&!mapError;
     $('hrrr-time').textContent=state.frame?`HRRR step ${time(Date.parse(state.frame.valid))} · +${state.frame.leadHours}h · instantaneous model forecast`:state.reason;
@@ -55,7 +56,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
       if(gusts){const gust=new ImageryTileLayer({title:'HRRR surface gusts · mph · model forecast',source:{extent,pixelBlock:new PixelBlock(hrrrPixels(data,'gust'))},opacity:.48,visible:false,legendEnabled:false,renderer:{type:'raster-stretch',stretchType:'min-max',statistics:[{min:0,max:75,avg:25,stddev:20}],colorRamp:{type:'multipart',colorRamps:GUST_STOPS.slice(1).map((s,i)=>({fromColor:GUST_STOPS[i][1],toColor:s[1],algorithm:'cie-lab'}))}}});await gust.load();additions.unshift(gust);}
       if(token!==generation){for(const l of additions)l.destroy();return;}
       for(const l of additions){l.on('layerview-create-error',event=>{if(key!==wanted)return;mapError=`HRRR map rendering failed · ${event.error?.message||'Use NWS forecasts'}`;map.setLayerEligibility(group,false);showStatus();});l.visible=true;}
-      const renderer=wind.renderer.clone();renderer.flowSpeed=animate?4:0;wind.renderer=renderer;
+      setFlow(wind);
       group.addMany(additions);windLayer=wind;frame=data;key=wanted;mapError=null;
     }catch(e){for(const l of additions)if(!group.layers.includes(l))l.destroy();if(token===generation){error=`HRRR field unavailable · ${e.message}`;clear();}}
     finally{if(token===generation){loading=null;showStatus();}}
@@ -68,7 +69,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
   }
   $('hrrr-toggle').addEventListener('calciteCheckboxChange',()=>{enabled=$('hrrr-toggle').checked;map?.setLayerPreference('hrrr',enabled);void draw();});
   $('hrrr-gusts').addEventListener('calciteCheckboxChange',()=>{gusts=$('hrrr-gusts').checked;void draw();});
-  $('hrrr-play').addEventListener('click',()=>{animate=!animate;if(windLayer){const r=windLayer.renderer.clone();r.flowSpeed=animate?4:0;windLayer.renderer=r;}showStatus();});
+  $('hrrr-play').addEventListener('click',()=>{animate=!animate;if(windLayer)setFlow(windLayer);showStatus();});
   $('hrrr-next').addEventListener('click',()=>{const next=manifest?.frames.find(f=>Date.parse(f.valid)>target());if(next)onTime(Date.parse(next.valid));});
   $('hrrr-fit').addEventListener('click',()=>{onMap();map?.fitHrrr();});
   $('hrrr-refresh').addEventListener('click',()=>void refresh());

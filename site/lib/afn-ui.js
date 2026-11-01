@@ -2,7 +2,7 @@ import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities
 import {formatAcsMeasure} from './acs-model.js';
 import {readAfnContext} from './afn-data.js';
 import {reportHealth} from './source-health.js';
-import {node,nodeLink as link,disclosure,onExpand,dataTable} from './dom.js';
+import {node,nodeLink as link,nodeButton,disclosure,onExpand,dataTable} from './dom.js';
 const number=v=>v===null?'Unknown':new Intl.NumberFormat('en-US').format(v);
 // Values after the row header are end-aligned, as the native table's cells were.
 const grid=(caption,head,rows)=>dataTable(caption,head,rows,{rowHeader:true,end:head.map((_,i)=>i).slice(1)});
@@ -37,9 +37,9 @@ const render={
 
 /** Read-only, loaded on first open; nothing is stored or written. */
 export function afnContext(zone,{isCurrent=()=>true,readContext=readAfnContext,onHealth=reportHealth}={}){
-  const details=disclosure('AFN & language context · whole areas'),host=node('div'),retry=node('calcite-button','Retry AFN sources');
+  const details=disclosure('AFN & language context · whole areas'),host=node('div'),retry=nodeButton('Retry AFN sources',()=>refresh());
   let loaded=false,pending=null,controller=null,disposed=false,generation=0;
-  retry.scale='s';retry.appearance='outline';retry.hidden=true;
+  retry.hidden=true;
   host.setAttribute('aria-live','polite');
   details.append(host,retry);
   const current=value=>!disposed&&value===generation&&isCurrent();
@@ -67,6 +67,5 @@ export function afnContext(zone,{isCurrent=()=>true,readContext=readAfnContext,o
     return pending;
   }
   onExpand(details,open=>{if(open&&!loaded)return refresh();});
-  retry.addEventListener('click',()=>refresh());
   return {element:details,refresh,dispose(){disposed=true;generation++;controller?.abort();retry.disabled=true;}};
 }

@@ -1,14 +1,12 @@
 import {makeEvent,heads,headIds} from './eoc-model.js';
 import {pioStates,pioApprovalFor,PIO_RECEIPTS,assertReadyForApproval} from './pio-model.js';
-import {createPioSourceMonitor,pioZoneSnapshot} from './pio-source-data.js';
+import {createPioSourceMonitor,pioZoneSnapshot,readZones} from './pio-source-data.js';
 import {pendingPioSourceReviews} from './pio-source-review.js';
 import {capturePopulationEvidence} from './population-snapshot-data.js';
 import {freezePopulationEvidence,populationEvidenceSummary,populationEvidenceLines} from './population-snapshot-model.js';
 import {captureAfnEvidence} from './afn-snapshot-data.js';
 import {AFN_TOPIC_KEYS,freezeAfnEvidence,afnEvidenceSummary,afnEvidenceLines} from './afn-snapshot-model.js';
-import {readCareCollection} from './care-data.js';
 import {CARE_SOURCES,ZONE_STATUS} from './care-model.js';
-import {loadCounties} from './nws.js';
 import {localDateValue} from './eoc-forms.js';
 import {populationSourceGuide} from './population-guide.js';
 import {loadPioZoneContext,assertPopulationMapBoundary,populationMapSummary,populationMapLines} from './pio-zone-context.js';
@@ -31,7 +29,7 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
     const generation=epoch;abort?.abort();abort=new AbortController();
     zonePending=(async()=>{try{
       let data;if(exercise)data={checked:Date.now(),rows:[{key:'county-zone:99999999',oid:99999999,name:'EXERCISE ZONE A',status:'unknown',rawStatus:null,geometry:{rings:[[[-119.8,36.7],[-119.8,36.71],[-119.79,36.71],[-119.79,36.7],[-119.8,36.7]]],spatialReference:{wkid:4326}}}]};
-      else{const counties=await loadCounties(new URL('../data/counties.geojson',import.meta.url));if(generation!==epoch)return null;data=await readCareCollection('zones',{county:counties.find(c=>c.properties.GEOID==='06019'),signal:AbortSignal.any([abort.signal,AbortSignal.timeout(45000)])});}
+      else data=await readZones({signal:AbortSignal.any([abort.signal,AbortSignal.timeout(45000)])});
       if(generation!==epoch)return null;zones=data;zoneError=null;return data;
     }catch(e){if(generation===epoch&&e.name!=='AbortError')zoneError=e.message;throw e;}
     finally{if(generation===epoch)zonePending=null;}})();return zonePending;
@@ -60,7 +58,7 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
   }
   function field(form,name,label,{type='text',value='',required=true,options=null,help='',max=1500}={}){
     const wrap=el('div');wrap.className='field';const l=el('label',label);l.htmlFor='pio-'+name;const input=el(options?'select':type==='textarea'?'textarea':'input');input.id='pio-'+name;input.name=name;input.autocomplete='off';input.required=required;
-    if(options)for(const [v,t]of options){const o=el('option',t);o.value=v;input.append(o);}else if(type!=='textarea')input.type=type==='date'?'datetime-local':type;
+    if(options)for(const [v,t]of options)input.append(new Option(t,v));else if(type!=='textarea')input.type=type==='date'?'datetime-local':type;
     input.value=type==='date'?localDateValue(value):value;input.maxLength=max;wrap.append(l,input);if(help)wrap.append(el('small',help));form.append(wrap);return input;
   }
   function section(form,title){form.append(el('h3',title));}
@@ -77,7 +75,7 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
     if(e.kind==='plan'){
       section(form,'Zone & responsibility');const zone=field(form,'zone','County evacuation zone',{value:o.zone?.key||e.zoneKey||'',options:[['','Checking county zones…']]});zone.disabled=true;
       const source=el('p');source.id='pio-zone-source';source.className='meta';form.append(source);
-      const generation=e.generation;void loadZones().then(data=>{if(editor!==e||generation!==epoch||!data)return;zone.replaceChildren();const empty=el('option','Choose a county zone…');empty.value='';zone.append(empty);for(const r of [...data.rows].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}))){const option=el('option',r.name+' · '+(ZONE_STATUS[r.status]||'Status unknown'));option.value=r.key;zone.append(option);}zone.value=o.zone?.key||e.zoneKey||'';zone.disabled=!!e.record;if(e.record&&!data.rows.some(z=>z.key===o.zone.key)){const missing=el('option',o.zone.name+' · not returned; retained history');missing.value=o.zone.key;zone.append(missing);zone.value=o.zone.key;error.textContent='The recorded county zone is no longer returned. Preserve this history and create outreach for a verified current zone.';}
+      const generation=e.generation;void loadZones().then(data=>{if(editor!==e||generation!==epoch||!data)return;zone.replaceChildren(new Option('Choose a county zone…',''),...[...data.rows].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(r=>new Option(r.name+' · '+(ZONE_STATUS[r.status]||'Status unknown'),r.key)));zone.value=o.zone?.key||e.zoneKey||'';zone.disabled=!!e.record;if(e.record&&!data.rows.some(z=>z.key===o.zone.key)){zone.append(new Option(o.zone.name+' · not returned; retained history',o.zone.key));zone.value=o.zone.key;error.textContent='The recorded county zone is no longer returned. Preserve this history and create outreach for a verified current zone.';}
         const describe=()=>{const row=data.rows.find(z=>z.key===zone.value);source.textContent=row?`${row.name} · published ${ZONE_STATUS[row.status]||'Unknown'} · queried ${time(data.checked)}. Individual order issue/update time is unavailable. Confirm message applicability with the county.`:'Choose a zone; the source status does not establish a current order or safe access.';};zone.addEventListener('change',()=>{describe();e.population=null;e.populationMap=null;e.afn=null;void captureForEditor(e,zone.value);void captureAfnForEditor(e,zone.value);});describe();renderPopulationEditor(e);if(zone.value&&!e.population&&!e.populationMap)void captureForEditor(e,zone.value);if(zone.value&&!e.afn)void captureAfnForEditor(e,zone.value);
       }).catch(()=>{if(editor===e)error.textContent='County zone check failed: '+zoneError+'. Retry by reopening the form. No current status is inferred.';});
       field(form,'title','Outreach purpose / title',{value:p.title||'',max:240});field(form,'owner','Responsible PIO / team',{value:p.owner||'',max:200});

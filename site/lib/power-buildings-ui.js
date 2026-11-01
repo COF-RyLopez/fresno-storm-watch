@@ -1,6 +1,6 @@
 import {buildingPowerTarget} from './power-buildings-model.js';
 import {loadPowerBuildings,loadPowerBuildingsAutomatic} from './power-buildings-data.js';
-import {button,el,disclosure,onExpand} from './dom.js';
+import {button,el,link,disclosure,onExpand} from './dom.js';
 /** Session-only selected-area evidence. Refresh revisions cancel older queries, including after the pane closes. */
 export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
   let map=null,host=null,row=null,result=null,error=null,busy=false,epoch=0,labels=true,selectedId=null,detailsOpen=false;
@@ -63,7 +63,7 @@ export function createPowerBuildings({onMap=()=>{},exercise=false}={}){
     content.append(el('p','Amber = potential utility-area overlap. Dashed = height unknown (flat). Heights are approximate metres, not terrain, first-floor elevations or flood depth. Address associations do not confirm electric service.'));
     content.append(button(labels?'Hide address labels':'Show address labels',()=>{labels=!labels;map.setPowerBuildingLabels(labels);render();}));
     content.append(el('p',`Overture ${result.index.release} · ${result.index.addressMethod}. Address labels appear at 1:6,000 and closer. Unmatched addresses remain unknown.`));
-    const source=el('a','Building sources and coverage');source.href=new URL('../planning.html#power-buildings',import.meta.url).href;source.target='_blank';source.rel='noopener noreferrer';content.append(source);
+    content.append(link('Building sources and coverage',new URL('../planning.html#power-buildings',import.meta.url).href));
     const list=el('div'),ordered=selectedId?[...rows.filter(r=>r.id===selectedId),...rows.filter(r=>r.id!==selectedId)]:rows;
     for(const r of ordered.slice(0,40)){
       const item=disclosure(r.label,r.id===selectedId||expanded.has(r.id));item.className='power-nearby-row';

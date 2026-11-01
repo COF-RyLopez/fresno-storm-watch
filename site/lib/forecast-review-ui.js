@@ -3,7 +3,7 @@ import {currentComparisonSnapshot} from './forecast-review-data.js';
 import {areaDifferences,rankDifferences,REVIEW_MAX_AGE} from './forecast-review-model.js';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
-import {el,disclosure,onExpand} from './dom.js';
+import {el,nodeButton as button,disclosure,onExpand} from './dom.js';
 const $=id=>document.getElementById(id);
 const short={nws:'NWS','noaa-hrrr-forecast-48-hour':'HRRR','noaa-gfs-forecast':'GFS'};
 export const differenceText=a=>!a?'Forecast comparisons are being checked.':`Precipitation spread ${a.rain?`${a.rain.rainSpread.toFixed(2)} in at ${a.rain.point.name}`:'unknown'} · wettest-period separation ${a.rainTiming?`${a.rainTiming.rainTiming.hours} h at ${a.rainTiming.point.name}`:'unknown / no positive peak'} · wind peak-period separation ${a.wind?`${a.wind.windTiming.hours} h at ${a.wind.point.name}`:'unknown / no positive peak'}${a.complete?'':' · comparison coverage incomplete'}.`;
@@ -14,10 +14,10 @@ export function createForecastReview({timeZone,exercise,onData=()=>{},onCompare=
   const expanded=new Set();
   const time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Unknown';
   const pane=$('forecast-review'),host=$('forecast-review-list');
-  const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appearance='outline';b.addEventListener('click',fn);return b;};
+  const withheld=p=>({...p,rows:p.rows.map(r=>({...r,error:'Latest comparison check failed; prior values withheld'}))});
   const periodText=periods=>periods.map(p=>`${time(p.start)} → ${time(p.end)}`).join(' or ');
   function render(){
-    const assessed=error&&snapshot?{...snapshot,points:snapshot.points.map(p=>({...p,rows:p.rows.map(r=>({...r,error:'Latest comparison check failed; prior values withheld'}))}))}:snapshot;
+    const assessed=error&&snapshot?{...snapshot,points:snapshot.points.map(withheld)}:snapshot;
     const differences=areaDifferences(areas,assessed),ranked=rankDifferences(differences,metric),reviews=differences.filter(a=>a.review),incomplete=differences.filter(a=>!a.complete);
     $('notify-forecast').textContent=exercise?'Forecast differences · exercise':!snapshot?`Forecast differences · ${error?'unavailable':'checking'}`:`Forecast differences · ${reviews.length} areas${incomplete.length?' · incomplete':''}`;
     $('notify-forecast').title=$('notify-forecast').textContent;$('notify-forecast').setAttribute('aria-label',$('notify-forecast').textContent);$('notify-forecast').textContent=exercise?'Models · exercise':!snapshot?`Models · ${error?'unavailable':'checking'}`:`Model review · ${reviews.length}${incomplete.length?' · limited':''}`;
@@ -63,5 +63,5 @@ export function createForecastReview({timeZone,exercise,onData=()=>{},onCompare=
   const tick=()=>{if(document.hidden)return;render();if(Date.now()>=next)void refresh();};
   setInterval(tick,60000);document.addEventListener('visibilitychange',tick);window.addEventListener('online',()=>{next=0;tick();});
   render();
-  return {open,getPoint:id=>{const p=snapshot?.points.find(p=>p.point.id===id);return p&&error?{...p,rows:p.rows.map(r=>({...r,error:'Latest comparison check failed; prior values withheld'}))}:p||null;},updatePoint:point=>{if(snapshot){snapshot={...snapshot,points:snapshot.points.map(p=>p.point.id===point.point.id?point:p)};render();}},ready};
+  return {open,getPoint:id=>{const p=snapshot?.points.find(p=>p.point.id===id);return p&&error?withheld(p):p||null;},updatePoint:point=>{if(snapshot){snapshot={...snapshot,points:snapshot.points.map(p=>p.point.id===point.point.id?point:p)};render();}},ready};
 }

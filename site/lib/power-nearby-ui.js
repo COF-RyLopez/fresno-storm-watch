@@ -4,7 +4,8 @@ import {openPumpCopy} from './pump-copy-data.js';
 import {PUMP_INVENTORY_CONFIG} from '../pump-inventory-config.js';
 import {EOC_CONFIG} from '../eoc-config.js';
 import {pumpReadiness} from './pump-readiness-model.js';
-import {button,el,disclosure,onExpand} from './dom.js';
+import {button,el,link,disclosure,onExpand} from './dom.js';
+import {pumpFormLink} from './pump-form-model.js';
 
 /** Session-only evidence beside a selected network reference. Proximity never becomes electrical connectivity. */
 export function createPowerNearby({timeZone,exercise=false,exerciseData,onMap=()=>{},onLoadFacilities=()=>{},onSignIn=()=>{}}){
@@ -63,7 +64,7 @@ export function createPowerNearby({timeZone,exercise=false,exerciseData,onMap=()
           item.append(button('Locate on map',()=>{if(current()){onMap();map.setLayerPreference('facilities',true);void map.focusPowerNearby(row.geometry,row.category);}}));results.append(item);
         }
       }
-      if(group.rows.some(r=>r.category==='pump')){const form=el('a','Open standalone pump readiness form');const formUrl=new URL('../pump-readiness.html',import.meta.url);if(exercise)formUrl.searchParams.set('exercise','1');form.href=formUrl.href;form.target='_blank';form.rel='noopener noreferrer';results.append(form);}
+      if(group.rows.some(r=>r.category==='pump'))results.append(link('Open standalone pump readiness form',pumpFormLink(new URL('../',import.meta.url),{exercise})));
     }).catch(()=>{if(current())note.textContent='Nearby distance checks failed. No spatial relationship is confirmed. Select the reference again or refresh county places to retry.';});
   }
   function clear(){revision++;expanded.clear();host?.replaceChildren();target=null;host=null;map?.clearPowerNearby();}
