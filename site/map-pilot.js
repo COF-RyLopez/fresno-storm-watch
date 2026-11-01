@@ -13,7 +13,7 @@ let snapshot,county,assessment,features,adapter,view='watch',engine='maplibre',b
 const runs=[],seenEngines=new Set(),faults=new Set();
 const fetchJson=async url=>{const r=await fetch(url,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(25000)});if(!r.ok)throw Error('Public data returned HTTP '+r.status);return r.json();};
 const filter=()=>$('review-filter').value||'review',basin=()=>$('basin').value||'All';
-function lock(value){busy=value;for(const id of ['engine','watch-tab','rivers-tab','review-filter','basin','refresh','fit','metrics-toggle','search','mobile-toggle'])$(id).disabled=value;for(const b of $('records').querySelectorAll('button'))b.disabled=value;}
+function lock(value){busy=value;for(const id of ['engine','view','review-filter','basin','refresh','fit','metrics-toggle','search','mobile-toggle','records'])$(id).disabled=value;}
 function warn(message){faults.add(message);$('map-status').textContent='Map issue: '+message;if(metricsOpen)showMetrics();}
 function route(push=false){const u=new URL(location.href);u.searchParams.set('view',view);u.searchParams.set('engine',engine);if(push)history.pushState(null,'',u);}
 function readRoute(){const p=new URL(location.href).searchParams;view=p.get('view')==='rivers'?'rivers':'watch';engine=p.get('engine')==='arcgis'?'arcgis':'maplibre';$('engine').value=engine;}
@@ -21,17 +21,17 @@ function hideEvidence(){metricsOpen=false;$('right-panel').hidden=true;adapter?.
 function evidence(title){metricsOpen=false;$('right-panel').hidden=false;$('evidence-panel').heading=title;const n=$('evidence');n.replaceChildren();responsive();return n;}
 function responsive(){const small=matchMedia('(max-width:850px)').matches;$('right-panel').displayMode=small?'overlay':'dock';adapter?.resize();}
 function showMapOnSmall(){if(matchMedia('(max-width:850px)').matches){document.body.classList.add('mobile-map');$('mobile-toggle').textContent='Show list';adapter?.resize();}}
-function labels(){const watch=view==='watch';$('watch-tab').setAttribute('aria-selected',String(watch));$('rivers-tab').setAttribute('aria-selected',String(!watch));$('topic').heading=watch?'Area Watch':'Rivers';$('review-label').hidden=!watch;$('basin-label').hidden=watch;$('scope').textContent=watch?'Six Fresno County river review groups. Select a card to locate its watchpoints and open evidence.':'Nine NWS gauges and two reservoir reporting locations. Waterways and waterbodies use the existing F.R.O.G. cached vector tiles.';}
+function labels(){const watch=view==='watch';$('view').value=watch?'Area Watch':'Rivers';$('topic').heading=watch?'Area Watch':'Rivers';$('review-label').hidden=!watch;$('basin-label').hidden=watch;$('scope').textContent=watch?'Six Fresno County river review groups. Select a card to locate its watchpoints and open evidence.':'Nine NWS gauges and two reservoir reporting locations. Waterways and waterbodies use the existing F.R.O.G. cached vector tiles.';}
 function render({assess=true}={}){
  if(assess){assessment=pilotAssessment(snapshot);features=pilotFeatures(snapshot,assessment,view,filter(),basin());}
  const reviews=assessment.areas.filter(r=>r.review).length,gaps=assessment.areas.filter(r=>r.gaps.length).length;
  $('summary').textContent=`Countywide: ${reviews} of 6 river areas need review · ${gaps} areas have information gaps · Public comparison snapshot, not a replacement for the full app`;
  $('data-time').textContent=`Shared NWPS/WPC check ${time(snapshot.generatedAt)} · ${snapshot.dataId.slice(0,10)} · Publisher times in evidence. Checked on open / on demand; freshness assessed ${time(Date.now())}.`;
- const query=$('search').value.trim().toLocaleLowerCase(),list=$('records');list.replaceChildren();
- const add=(name,status,note,tone,props)=>{if(query&&!`${name} ${note}`.toLocaleLowerCase().includes(query))return;const b=el('button');b.className='record';b.disabled=busy;b.style.setProperty('--tone',PILOT_COLORS[tone]||PILOT_COLORS.gap);b.append(el('strong',name));const s=el('span',status);s.className='status';b.append(s,el('span',note));b.addEventListener('click',()=>select(props));list.append(b);};
+ const query=($('search').value??''/* undefined until the lazy calcite-input loads */).trim().toLocaleLowerCase(),list=$('records');list.replaceChildren();
+ const add=(name,status,note,tone,props)=>{if(query&&!`${name} ${note}`.toLocaleLowerCase().includes(query))return;const b=el('calcite-list-item');b.label=name;b.description=status;b.style.setProperty('--tone',PILOT_COLORS[tone]||PILOT_COLORS.gap);b.append(Object.assign(el('div',note),{slot:'content-bottom',className:'note'}));b.addEventListener('calciteListItemSelect',()=>select(props));list.append(b);};
  if(view==='watch')for(const r of assessment.areas.filter(r=>filter()==='all'||r.review))add(r.area.name,r.status,`${r.gaps.length} information gaps · ${r.gauges.length} gauges · ${r.samplePoints.length} watchpoints`,r.threshold?'threshold':r.review?'change':r.gaps.length?'gap':'monitor',{areaId:r.area.id});
  else{for(const r of assessment.gauges.filter(r=>basin()==='All'||r.station.basin===basin()))add(r.station.name,r.assessment.label,`${r.station.id} · ${r.station.basin} · ${r.assessment.observed?riverValue(r.assessment.observed.value,r.gauge.observed.units):'Observation unknown'}`,r.assessment.tone,{gaugeId:r.station.id});for(const p of snapshot.input.reservoirSettings.stations)add(p.name,'Reservoir reporting location',p.river,'monitor',{reservoirId:p.id});}
- if(!list.childElementCount)list.append(el('p','No locations match this display filter. Choose All areas or clear the search. This does not indicate safe conditions.'));
+ if(!list.childElementCount)list.append(Object.assign(el('p','No locations match this display filter. Choose All areas or clear the search. This does not indicate safe conditions.'),{slot:'empty-content'}));
  const legend=document.querySelector('.legend');legend.replaceChildren();for(const name of view==='watch'?['▲ Area watchpoint']:['● Gauge','◆ Reservoir'])legend.append(el('span',name));for(const [tone,name]of Object.entries({threshold:'Published threshold cue',change:'Change / review',monitor:'Monitor',gap:'Unknown / incomplete'})){const s=el('span');const dot=el('i');dot.style.background=PILOT_COLORS[tone];s.append(dot,document.createTextNode(name));legend.append(s);}for(const status of new Set(features.features.filter(f=>f.properties.kind==='power').map(f=>f.properties.status))){const s=el('span');const dot=el('i');dot.style.background=POWER_COLORS[status];s.append(dot,document.createTextNode(POWER_STATES[status]));legend.append(s);}legend.append(el('span','Outline: Fresno County'));labels();
 }
 async function select(props){
@@ -75,14 +75,14 @@ async function benchmark(){
 }
 async function load(){
  if(running)return;lock(true);hideEvidence();const start=performance.now();try{const [s,c]=await Promise.all([fetchJson('./data/map-pilot-latest.json'),fetchJson('./data/counties.geojson')]);validatePilot(s);$('summary').textContent='Checking shared NWS river and WPC rainfall feeds…';snapshot=await refreshPilotSnapshot(s);county=c.features.find(f=>f.properties.GEOID==='06019'||f.properties.NAME==='Fresno');if(!county)throw Error('Fresno County reference missing');dataLoadMs=performance.now()-start;const select=$('basin');select.replaceChildren();for(const name of ['All',...new Set(s.input.gauges.stations.map(p=>p.basin))]){const n=el('calcite-option',name==='All'?'All basins':name);n.value=name;select.append(n);}select.value='All';await activate();}
- catch(e){$('summary').textContent='Pilot data unavailable: '+e.message;$('map-status').textContent='Use the full app and publisher links while this pilot feed is unavailable.';$('records').replaceChildren(link('Open full Storm Watch','./?view=watch'));lock(false);}
+ catch(e){$('summary').textContent='Pilot data unavailable: '+e.message;$('map-status').textContent='Use the full app and publisher links while this pilot feed is unavailable.';$('records').replaceChildren(Object.assign(link('Open full Storm Watch','./?view=watch'),{slot:'empty-content'}));lock(false);}
 }
 readRoute();labels();
 $('engine').addEventListener('calciteSelectChange',()=>{if(running)return;engine=$('engine').value;activate(true);});
-for(const topic of ['watch','rivers'])$(topic+'-tab').addEventListener('click',()=>{if(running)return;view=topic;activate(true);});
-for(const topic of ['watch','rivers'])$(topic+'-tab').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)||busy)return;e.preventDefault();view=e.key==='Home'?'watch':e.key==='End'?'rivers':view==='watch'?'rivers':'watch';activate(true);$(view+'-tab').focus();});
+// Calcite 5.1.1 uses each segmented item's value as its accessible name, so values are the visible labels.
+$('view').addEventListener('calciteSegmentedControlChange',()=>{if(running){labels();return;}view=$('view').value==='Rivers'?'rivers':'watch';activate(true);});
 for(const id of ['review-filter','basin'])$(id).addEventListener('calciteSelectChange',()=>{if(snapshot&&!busy)activate();});
-$('search').addEventListener('input',()=>{if(snapshot)render({assess:false});});
+$('search').addEventListener('calciteInputInput',()=>{if(snapshot)render({assess:false});});
 $('fit').addEventListener('click',()=>adapter?.fit(PILOT_BOUNDS,300).catch(e=>warn(e.message)));
 $('refresh').addEventListener('click',load);$('metrics-toggle').addEventListener('click',showMetrics);
 $('evidence-panel').addEventListener('calcitePanelClose',hideEvidence);
