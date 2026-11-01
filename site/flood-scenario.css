@@ -14,9 +14,10 @@ html, body { margin: 0; height: 100%; background: var(--app-canvas); color: var(
 .stats b { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; } .stats span { color: var(--app-muted); font-size: .75rem; }
 .ramp { height: 12px; border-radius: 3px; } .ramp-labels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--app-muted); }
 .key { display: grid; gap: 4px; font-size: .8rem; } .key i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid #0006; }
-.player { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); display: flex; gap: 10px; align-items: center;
+.player { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
   padding: 8px 12px; border-radius: 6px; background: var(--app-surface); border: 1px solid var(--app-border); box-shadow: 0 4px 18px #0005; }
-.player calcite-slider { flex: 1; } .player calcite-select { width: 100px; }
+.player #time { flex: 1 1 140px; min-height: 32px; accent-color: var(--app-link); cursor: pointer; } .player #time:focus-visible { outline: 2px solid var(--app-link); outline-offset: 3px; }
+.player-clock { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; } .player calcite-select { width: 100px; }
 .note { font-size: .75rem; color: var(--app-muted); margin: 0; }
 .traffic { display: grid; gap: 8px; } .traffic calcite-label { --calcite-label-margin-bottom: 0; }
 @media (max-width: 760px) { /* phones: map first; the scenario panel opens from Details */

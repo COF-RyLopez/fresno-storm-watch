@@ -130,7 +130,9 @@ export function showStatus(t, acres, s) {
     $('s-people').textContent = fmt.format(s.people);
     $('s-loss').textContent = usd.format(s.loss);
   }
-  if (Math.abs(Number($('time').value) - t) > 0.01) $('time').value = Number(t.toFixed(2));
+  $('player-clock').textContent = clockLabel(t);
+  $('time').setAttribute('aria-valuetext', clockLabel(t));
+  if (Math.abs(Number($('time').value) - t) > 0.01) $('time').value = t.toFixed(2);
 }
 
 /** Play / pause and the time slider; render(t) draws model time t and time() reads the time shown. player.playing is live. */
@@ -153,6 +155,6 @@ export function createPlayer(hours, time, render) {
     if (on) { if (time() >= hours.at(-1)) render(hours[0]); requestAnimationFrame(tick); }
   }
   $('play').addEventListener('click', () => setPlaying(!player.playing));
-  $('time').addEventListener('calciteSliderInput', e => { const v = Number(e.target.value); setPlaying(false); render(v); }); // read first: pausing re-renders and resets the slider
+  $('time').addEventListener('input', e => { const v = Number(e.target.value); setPlaying(false); render(v); }); // read first: pausing re-renders and resets the slider
   return player;
 }

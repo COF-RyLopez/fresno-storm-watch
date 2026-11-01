@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-OIJuqzOwz0ZUvc7xRdPw907mxMicLIy/OqkeJgd3oXE='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-0957UoNFeq5KVAvUAst8pJmWQhDAdtMZQQ2NImNfo5E='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
 <meta name="description" content="3D flood scenario playback prototype: hourly HEC-RAS depth, flood front and building impacts. Demonstration data, not a forecast.">
 <title>Storm Watch · Flood scenario playback (3D)</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69">
@@ -28,7 +28,7 @@
 "./lib/evacuation-traffic.js":"./lib/evacuation-traffic.js?v=3af79ab5b4",
 "./lib/facility-model.js":"./lib/facility-model.js?v=558e4542ad",
 "./lib/flood-scenario-model.js":"./lib/flood-scenario-model.js?v=b23ebd16cc",
-"./lib/flood-scenario-page.js":"./lib/flood-scenario-page.js?v=0c3925f4ea",
+"./lib/flood-scenario-page.js":"./lib/flood-scenario-page.js?v=bc2eb2ef92",
 "./lib/fmfcd-symbology.js":"./lib/fmfcd-symbology.js?v=57ed1f2698",
 "./lib/frame-window.js":"./lib/frame-window.js?v=2db08f9200",
 "./lib/ground-homography.js":"./lib/ground-homography.js?v=88c8f03f89",
@@ -64,7 +64,7 @@
 }}
 </script>
 <script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario-3d.js?v=7ba4c370a5"></script>
-<link rel="stylesheet" href="./flood-scenario.css?v=06379e7b21">
+<link rel="stylesheet" href="./flood-scenario.css?v=46d962218a">
 </head><body>
 <calcite-shell>
   <header slot="header">
@@ -116,7 +116,7 @@
   <div class="stage"><div id="view"></div>
   <div class="player" aria-label="Scenario playback">
     <calcite-button id="play" icon-start="play" scale="s" appearance="solid" label="Play">Play</calcite-button>
-    <calcite-slider id="time" min="0" max="24" step="0.05" value="0" label-handles label="Scenario hour"></calcite-slider>
+    <input id="time" type="range" min="0" max="24" step="0.05" value="0" aria-label="Scenario hour" aria-valuetext="T+0 h 00 min"><span id="player-clock" class="player-clock" aria-hidden="true">T+0 h 00 min</span>
     <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.016667">1 min/s</calcite-option><calcite-option value="0.083333">5 min/s</calcite-option><calcite-option value="0.25">15 min/s</calcite-option><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
   </div></div>
 </calcite-shell>
