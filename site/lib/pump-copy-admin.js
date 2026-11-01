@@ -1,6 +1,5 @@
 import {COPY_PARENT,COPY_VIEW,COPY_TAG,pumpCopyLayer,verifyCopySchema,verifyStagedCopy,readPumpCopy} from './pump-copy-model.js';
-import {privateObjectIds} from './eoc-store.js';
-import {copyUrl} from './pump-copy-data.js';
+import {copyUrl,queryCopy} from './pump-copy-data.js';
 
 /** Only the existing county exercise owner may create or advance inventory snapshots. */
 export function authorizePumpCopyAdmin(config,session){
@@ -12,15 +11,6 @@ export function verifyCopyAccess(item,meta,{owner,isView}){
   if(item.owner!==owner||item.type!=='Feature Service'||!item.tags?.includes(COPY_TAG)||!['private','shared'].includes(item.access)||!isView&&item.access!=='private'||Boolean(meta.isView)!==isView)throw Error('Unexpected inventory ownership, sharing or service type. No copy was changed.');
   const caps=capabilities(meta.capabilities);
   if(!caps.has('query')||isView&&caps.size!==1||!isView&&[...caps].some(c=>!['query','create','editing'].includes(c)))throw Error('Inventory service permissions are not the expected private append-only/read-only settings.');
-}
-/** Complete bounded batches; reject repeated/missing hosted IDs even when counts happen to agree. */
-export async function queryCopy(call,url,where='1=1'){
-  const ids=await privateObjectIds(await call(url+'/query',{where,returnIdsOnly:true}),()=>call(url+'/query',{where,returnCountOnly:true}));
-  if(ids.length>5000)throw Error('Inventory snapshot exceeds the bounded maintenance limit.');
-  const meta=await call(url),oid=meta.objectIdField||meta.fields?.find(f=>f.type==='esriFieldTypeOID')?.name;if(!oid)throw Error('Hosted pump IDs are missing.');
-  const features=[];
-  for(let i=0;i<ids.length;i+=200){const batch=ids.slice(i,i+200),r=await call(url+'/query',{objectIds:batch.join(','),outFields:'*',returnGeometry:false});if(r.exceededTransferLimit||!Array.isArray(r.features)||r.features.length!==batch.length||new Set(r.features.map(f=>f.attributes?.[oid])).size!==batch.length||r.features.some(f=>!batch.includes(f.attributes?.[oid])))throw Error('Incomplete hosted pump-copy response.');features.push(...r.features);}
-  return features;
 }
 /** A verified generation is made visible only after all rows have been read back intact. */
 export async function advancePumpCopy({call,parentUrl,viewUrl,snapshot,onProgress=()=>{}}){
