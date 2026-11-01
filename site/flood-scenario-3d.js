@@ -3,19 +3,17 @@
 // then, from scripts/build-flood-footprints.py (footprints.geojson); scenarios without either fall back to points only.
 // Desktop prototype: the phone-tuned 2D page is flood-scenario.html.
 import { loadSdk } from './lib/map.js';
-import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
+import { blend, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
 import { createTrafficCanvas } from './lib/evacuation-traffic.js';
 import { createFrameWindow } from './lib/frame-window.js';
 import { squareToQuad } from './lib/ground-homography.js';
-import { buildingFields, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, hydrograph as popupChart, pickScenario, showScenario, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
+import { buildingFields, buildingPopup, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, frontLayer, pickScenario, showScenario, showStatus, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
-const fmt = new Intl.NumberFormat('en-US');
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 });
 const params = new URLSearchParams(location.search);
 
-const { index, id, DATA } = await pickScenario(ROOT);
+const { index, id, entry, DATA } = await pickScenario(ROOT);
 $('link-2d').href = `./flood-scenario.html?scenario=${encodeURIComponent(id)}`;
 const [scenario, buildingsJson, unmatched, sdk] = await Promise.all([
   fetch(DATA + 'scenario.json').then(r => r.json()),
@@ -30,22 +28,18 @@ const [Map, SceneView, Basemap, TileLayer, MediaLayer, ImageElement, ExtentAndRo
   '@arcgis/core/geometry/Point.js', '@arcgis/core/core/reactiveUtils.js', '@arcgis/core/layers/SceneLayer.js'
 ]);
 
-const { frames, hours, extent } = showScenario(scenario, Extent);
+const { frames, hours, extent, start } = showScenario(scenario, Extent);
 
 // Depth frames and flood front, draped on the terrain (as in the 2D page).
 const depth = new MediaLayer({ source: [], title: 'Modeled depth', blendMode: 'normal' });
 const showFrames = createFrameWindow(depth.source.elements,
   i => new ImageElement({ image: DATA + frames[i].image, opacity: 0, georeference: new ExtentAndRotationGeoreference({ extent }) }), frames.length);
-const front = new GeoJSONLayer({
-  url: DATA + 'front.geojson', title: 'Flood front', definitionExpression: 'hour = -1', elevationInfo: { mode: 'on-the-ground' },
-  renderer: { type: 'simple', symbol: { type: 'simple-fill', color: [0, 0, 0, 0], outline: { color: [255, 176, 0, 0.9], width: 1.5 } } }
-});
+const front = frontLayer(GeoJSONLayer, DATA, { elevationInfo: { mode: 'on-the-ground' } });
 
 // Buildings: depth at the displayed time vs first-floor height, the same expression and classes as flood-scenario.js.
 const samples = scenario.depth_model === 'samples';
 const props = rowsToObjects(buildingsJson);
 const fieldInfos = popupFields(scenario.arrival_labels);
-const hydrograph = popupChart(samples, frames);
 const fields = buildingFields(buildingsJson.fields);
 const unmatchedSet = unmatched && new Set(unmatched);
 const points = new FeatureLayer({ // NSI points with no Overture footprint (all of them when there is no footprint file)
@@ -53,7 +47,7 @@ const points = new FeatureLayer({ // NSI points with no Overture footprint (all 
   spatialReference: { wkid: 4326 }, elevationInfo: { mode: 'on-the-ground' },
   source: props.filter(p => !unmatchedSet || unmatchedSet.has(p.fd_id))
     .map(({ lon, lat, ...a }, i) => new Graphic({ geometry: { type: 'point', longitude: lon, latitude: lat }, attributes: { oid: i + 1, ...a } })),
-  popupTemplate: { title: '{occtype} · NSI {fd_id}', content: [{ type: 'fields', fieldInfos: fieldInfos.filter(f => fields.some(x => x.name === f.fieldName)) }, ...hydrograph, { type: 'text', text: scenario.popup_note }] }
+  popupTemplate: buildingPopup(scenario, frames, fields.map(f => f.name))
 });
 const footprintPopup = {
     title: '{occtype} · NSI {fd_id}',
@@ -173,25 +167,16 @@ function render(next) {
     const b = blend(q, hours), bb = { ...b, w: Number(b.w.toFixed(2)) };
     points.renderer = classRenderer(depthExpression(q, bb));
   }
-  $('clock').textContent = clockLabel(t);
-  $('s-acres').textContent = fmt.format(Math.round(frames[i0].wet_acres * (1 - w) + frames[i1].wet_acres * w));
   // ponytail: the 44k-building tally took a quarter of each frame here; 5 times a second is enough for the counters
-  if (!player.playing || performance.now() - summaryAt > 200) {
-    summaryAt = performance.now();
-    const s = summarize(props, t, hours);
-    $('s-wet').textContent = fmt.format(s.wet);
-    $('s-inside').textContent = fmt.format(s.inside);
-    $('s-people').textContent = fmt.format(s.people);
-    $('s-loss').textContent = usd.format(s.loss);
-  }
-  if (Math.abs(Number($('time').value) - t) > 0.01) $('time').value = Number(t.toFixed(2));
+  const tally = !player.playing || performance.now() - summaryAt > 200;
+  if (tally) summaryAt = performance.now();
+  showStatus(t, frames[i0].wet_acres * (1 - w) + frames[i1].wet_acres * w, tally ? summarize(props, t, hours) : null);
   drawTraffic();
 }
 
 // Evacuation cars: a canvas over the scene. In a local scene the ground near the view centre is a plane, and a plane maps to
 // the screen by a homography, fitted from four projected points each redraw (no per-car toScreen).
 // ponytail: plane at the centre's ground height, cars are not hidden by buildings; per-car elevation + a 3D layer if that matters.
-const entry = index.scenarios.find(s => s.id === id);
 function groundToScreen() {
   const c = view.center;
   if (!c) return null;
@@ -208,14 +193,9 @@ let traffic = null;
 function drawTraffic() {
   if (carCanvas.draw($('traffic-show').checked ? traffic : null, t * 3600)) trafficCounts(traffic, t);
 }
-const showTraffic = trafficLoader(id, next => { traffic = next; drawTraffic(); });
 if (entry.evacuation) {
-  $('traffic').hidden = false;
-  $('traffic-note').textContent = 'Same evac-engine run as the 2D page: one car per household of night-time residents on OpenStreetMap roads, '
-    + 'Greenshields speed-density with spillback and rerouting around roads deeper than 0.5 ft. Departure delays are a placeholder, not a calibrated warning curve.';
-  $('speed').value = '0.016667';
-  $('traffic-mode').addEventListener('calciteSegmentedControlChange', e => showTraffic(e.target.value));
-  $('traffic-show').addEventListener('calciteSwitchChange', () => { if ($('traffic-show').checked && !traffic) showTraffic($('traffic-mode').value); else drawTraffic(); });
+  const showTraffic = trafficLoader(id, 'Same evac-engine run as the 2D page: one car per household of night-time residents on OpenStreetMap roads, '
+    + 'Greenshields speed-density with spillback and rerouting around roads deeper than 0.5 ft. Departure delays are a placeholder, not a calibrated warning curve.', next => { traffic = next; drawTraffic(); }, drawTraffic);
   reactiveUtils.watch(() => [view.camera, view.size], () => drawTraffic(), { initial: false });
   showTraffic('base');
 }
@@ -239,11 +219,10 @@ requestAnimationFrame(function loop(now) {
   requestAnimationFrame(loop);
 });
 
-const firstWet = frames.findIndex(f => f.wet_acres > 0);
 await view.when();
 view.whenLayerView(footprints || points).then(lv => { watchRedraw(lv); capFeatures(lv); });
 // Open tilted over the first neighbourhoods with water above the first floor (Clovis / NE Fresno for Big Dry Creek).
 const wet = props.filter(p => p.depth_max - p.found_ht > 2 && p.arrive_hr <= 6);
 if (wet.length) await view.goTo({ center: [wet.reduce((s, p) => s + p.lon, 0) / wet.length, wet.reduce((s, p) => s + p.lat, 0) / wet.length], scale: 40_000, tilt: 60 }, { animate: false });
 window.scene3d = { view, footprints, points, render, setPlaying: player.setPlaying, sceneRenderer, classAt }; // for benchmarking and checks from DevTools
-render(hours[Math.max(firstWet - 1, 0)]);
+render(start);
