@@ -69,3 +69,13 @@ test('published network: valid, routable, and every app gauge and dam snapped wi
   assert(sj.every(p=>p.path===sj[0].path));assert(sj.every((p,i)=>!i||p.km<sj[i-1].km));
   assert(n.points.get('MLPC1').km<n.points.get('PNF').km+5&&n.points.get('KREC1').km>n.points.get('PNF').km,'Kings: Trimmer above Pine Flat above Mill Creek gauge');
 });
+
+test('Google 3D tile credits: read asset.copyright from a GLB, ignore anything else, order by frequency',async()=>{
+  const {glbCopyright,createCredits}=await import('../site/lib/google-tiles.js');
+  const glb=copyright=>{const json=new TextEncoder().encode(JSON.stringify({asset:{version:'2.0',copyright}})),pad=(4-json.length%4)%4,len=json.length+pad,b=new ArrayBuffer(20+len),v=new DataView(b);
+    v.setUint32(0,0x46546c67,true);v.setUint32(4,2,true);v.setUint32(8,20+len,true);v.setUint32(12,len,true);v.setUint32(16,0x4e4f534a,true);new Uint8Array(b,20).set(json);new Uint8Array(b,20+json.length).fill(32);return b;};
+  assert.deepEqual(glbCopyright(glb('Data SIO, NOAA; Google;Airbus')),['Data SIO, NOAA','Google','Airbus']);
+  assert.deepEqual(glbCopyright(new TextEncoder().encode('{"not":"glb"}').buffer),[]);assert.deepEqual(glbCopyright(new ArrayBuffer(4)),[]);
+  const c=createCredits(2);c.add(['Google','Airbus']);c.add(['Google','Maxar']);assert.equal(c.line(),'Google; Airbus; Maxar');
+  c.add(['Maxar']);assert.equal(c.line(),'Maxar; Google','oldest tile drops out of the rolling window');assert.equal(c.add([]),false);
+});
