@@ -116,3 +116,12 @@ test('wazeTraffic converts speeds to mph, flags worsening or Medium+, and goes s
   assert.deepEqual([r.label,r.speedMph,r.regularMph,r.rising,r.major,r.stale],['Unusual traffic · N Blackstone Ave',8,30,true,false,false]);
   assert.equal(wazeTraffic(s,now+WAZE_MAX_AGE+1)[0].stale,true);assert.deepEqual(wazeTraffic(null,now),[]);
 });
+
+test('untyped closures count only while recent (map-editor closures are long-lived); event closures are not storm closures',async()=>{
+  const f=feed(),untyped=f.alerts.find(a=>a.type==='ROAD_CLOSED'&&!a.subtype),H=3_600_000;
+  const at=async pub=>(await collect({...f,alerts:[{...untyped,pubMillis:pub}]})).counts;
+  assert.deepEqual([(await at(now-11*H)).kept,(await at(now-13*H)).kept,(await at(now-13*H)).notStormRelevant],[1,0,1]);
+  const typed=f.alerts.find(a=>a.subtype==='ROAD_CLOSED_HAZARD');
+  assert.equal((await collect({...f,alerts:[{...typed,pubMillis:now-48*H}]})).counts.kept,1,'a closure reported for a hazard stays regardless of age');
+  assert.equal(wazeCategory('ROAD_CLOSED','ROAD_CLOSED_EVENT'),null);
+});

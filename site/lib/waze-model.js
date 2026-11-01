@@ -4,6 +4,9 @@ import {fresh} from './source-health-model.js';
 export const WAZE_SOURCE='Waze for Cities partner feed';
 export const WAZE_NOTE='Unverified crowd reports from Waze users. Not county verification; a disappearing report does not mean a road reopened.';
 export const WAZE_MAX_AGE=20*60000;
+/** A ROAD_CLOSED with no subtype is usually a map-editor closure (construction, long-term); only recent ones can be storm closures.
+ * ponytail: 12 h age cut; replace with a source flag if Waze adds one to the partner feed. */
+export const WAZE_UNTYPED_CLOSURE_MAX_AGE=12*3600_000;
 export const WAZE_CATEGORIES=['Flooding','Road closed','Hazard on road'];
 /** Explicit storm allowlist (Waze data feed / CIFS subtype names): subtype -> [category, short label]. Anything absent is dropped. */
 export const WAZE_SUBTYPES=Object.freeze({
@@ -14,8 +17,7 @@ export const WAZE_SUBTYPES=Object.freeze({
   HAZARD_WEATHER_HAIL:['Hazard on road','Hail'],
   HAZARD_WEATHER_FREEZING_RAIN:['Hazard on road','Freezing rain'],
   HAZARD_ON_ROAD_OBJECT:['Hazard on road','Object on road'],
-  ROAD_CLOSED_HAZARD:['Road closed','Road closed (hazard)'],
-  ROAD_CLOSED_EVENT:['Road closed','Road closed (event)']
+  ROAD_CLOSED_HAZARD:['Road closed','Road closed (hazard)']
 });
 const HAZARD_TYPES=['HAZARD','WEATHERHAZARD'];
 /** @returns {[string,string]|null} ROAD_CLOSED with no subtype counts as a closure; planned construction closures are excluded. */
