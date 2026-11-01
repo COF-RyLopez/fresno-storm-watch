@@ -35,7 +35,7 @@ import {createHanfordBriefing} from './lib/briefing-ui.js';
 import {createBriefingLayers} from './lib/briefing-layer-ui.js';
 import {createBriefingContextView} from './lib/briefing-context-ui.js';
 import { createReleaseTrends } from './lib/release-trend-ui.js';
-import {elAttrs as component} from './lib/dom.js';
+import {elAttrs as component,el,elClass} from './lib/dom.js';
 
 const $ = id => document.getElementById(id);
 const exercise = new URLSearchParams(location.search).get('exercise') === '1';
@@ -109,14 +109,6 @@ briefingLayers=createBriefingLayers({timeZone:CONFIG.timeZone,exercise,onOpen:op
 void createRiverWatch({config:CONFIG.rivers,timeZone:CONFIG.timeZone,exercise,onOpen:()=>planningView(true),onMap:workspace.showMap,onTrends:(id,gauge)=>{openReservoirs();releaseTrends.open(id,gauge);},onData:data=>{mapSearch.setGauges(data);planning.setRiverData(data);releaseTrends.setRiverData(data);}}).then(controller=>{rivers=controller;if(planningExerciseEntries)rivers.setExerciseEntries(planningExerciseEntries);if(map)rivers.setMap(map);});
 void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,initialOpen:workspace.camerasOpen,onOpenChange:workspace.setCameras,onMap:workspace.showMap,onGauge:id=>rivers?.select(id)}).then(controller=>{cameras=controller;cameras.setOpen(workspace.camerasOpen,{notify:false});cameras.setSuspended(evidence.isOpen);if(map)cameras.setMap(map);});
 
-/** @param {string} tag @param {string} text @param {string} className @returns {HTMLElement} Publisher values are always text, never HTML. */
-function element(tag, text = '', className = '') {
-  const node = document.createElement(tag);
-  node.textContent = text;
-  if (className) node.className = className;
-  return node;
-}
-
 /** @returns {void} Render health separately from hazard counts. */
 function renderBanner() {
   const banner = bannerState(state, Date.now(), CONFIG.staleMs);
@@ -160,10 +152,10 @@ function renderList() {
   $('list-count').textContent = state.lastSuccess === null ? '—' : String(state.alerts.length);
   $('list-count').setAttribute('label', `Regional alert count: ${state.lastSuccess === null ? 'not available' : state.alerts.length}`);
   if (!visible.length) {
-    const box = element('div', '', 'empty-state');
+    const box = elClass('div', '', 'empty-state');
     box.slot = 'empty-content';
-    box.append(component('calcite-icon', '', { icon:'information', scale:'l' }), element('h3', state.lastSuccess === null ? 'Waiting for a complete check' : state.alerts.length ? 'No alerts in this category' : 'No alerts returned'),
-      element('p', state.error ? 'The NWS update could not be completed. Check the source link below.' : state.alerts.length ? 'The regional banner still includes every alert category.' : 'An empty result is not an all-clear. Continue to monitor official forecasts.'));
+    box.append(component('calcite-icon', '', { icon:'information', scale:'l' }), el('h3', state.lastSuccess === null ? 'Waiting for a complete check' : state.alerts.length ? 'No alerts in this category' : 'No alerts returned'),
+      el('p', state.error ? 'The NWS update could not be completed. Check the source link below.' : state.alerts.length ? 'The regional banner still includes every alert category.' : 'An empty result is not an all-clear. Continue to monitor official forecasts.'));
     host.append(box);
   }
   for (const alert of visible) {
@@ -172,10 +164,10 @@ function renderList() {
       description:`${alert.category} · ${alert.counties.join(' · ')}`, selected:selectedKey === alert.key,
       'icon-start': alert.category === 'Warning' ? 'exclamation-mark-triangle' : alert.category === 'Watch' ? 'clock' : 'information'
     });
-    const meta = element('div', `Expires ${formatTime(alert.expires, CONFIG.timeZone)}`, 'alert-meta');
+    const meta = elClass('div', `Expires ${formatTime(alert.expires, CONFIG.timeZone)}`, 'alert-meta');
     meta.slot = 'content-bottom';
-    if (alert.expires !== null && alert.expires <= Date.now()) meta.append(element('p', 'Expiration passed · verify source', 'quality'));
-    if (alert.quality) meta.append(element('p', alert.quality, 'quality'));
+    if (alert.expires !== null && alert.expires <= Date.now()) meta.append(elClass('p', 'Expiration passed · verify source', 'quality'));
+    if (alert.quality) meta.append(elClass('p', alert.quality, 'quality'));
     item.append(meta);
     if (state.pending.has(alert.signature)) item.append(component('calcite-chip', 'New', { class:'new-chip', slot:'content-end', label:'New or updated alert', scale:'s' }));
     host.append(item);
@@ -201,18 +193,18 @@ function renderDetail() {
   $('alert-detail-open').disabled=!alert;
   if (!alert) {
     $('alert-evidence').removeAttribute('open');
-    host.append(element('p', 'Select an alert to see its NWS issue time, expiration and official source.', 'muted'));
+    host.append(elClass('p', 'Select an alert to see its NWS issue time, expiration and official source.', 'muted'));
     return;
   }
-  host.append(component('calcite-chip', alert.category, { class:`category-chip ${alert.category.toLowerCase()}`, label:alert.category, scale:'s' }), element('h3', alert.type));
-  const data = element('dl');
+  host.append(component('calcite-chip', alert.category, { class:`category-chip ${alert.category.toLowerCase()}`, label:alert.category, scale:'s' }), el('h3', alert.type));
+  const data = el('dl');
   for (const [label, value] of [['Issuing office', alert.office], ['Issued', formatTime(alert.issued, CONFIG.timeZone)], ['Effective / onset', formatTime(alert.onset, CONFIG.timeZone)], ['Expires', formatTime(alert.expires, CONFIG.timeZone)], ['NWS ingestion', formatTime(alert.ingested, CONFIG.timeZone)], ['Intersecting counties', alert.counties.join(', ')]]) {
-    data.append(element('dt', label), element('dd', value));
+    data.append(el('dt', label), el('dd', value));
   }
   host.append(data);
-  if (alert.quality) host.append(element('p', alert.quality, 'quality'));
-  if (exercise) host.append(element('p', 'Fictional exercise record. There is no official NWS alert for this record.', 'quality'));
-  const actions = element('div', '', 'detail-actions');
+  if (alert.quality) host.append(elClass('p', alert.quality, 'quality'));
+  if (exercise) host.append(elClass('p', 'Fictional exercise record. There is no official NWS alert for this record.', 'quality'));
+  const actions = elClass('div', '', 'detail-actions');
   if (!exercise) actions.append(component('calcite-button', 'NWS alert record', { href:alert.sourceUrl, target:'_blank', rel:'noopener noreferrer', appearance:'outline', scale:'s', 'icon-end':'launch' }));
   const zoom = component('calcite-button', 'Zoom to alert', { appearance:'outline', scale:'s', 'icon-start':'extent', disabled:!map });
   zoom.addEventListener('click', () => { workspace.showMap(); map?.select(alert, true); });

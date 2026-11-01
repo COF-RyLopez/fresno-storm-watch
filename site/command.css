@@ -14,7 +14,6 @@
 .scope-bar #eyebrow{font-size:10px}
 .county-strip{gap:0 6px;padding:1px 8px;flex-wrap:wrap;align-items:center}
 .county-strip calcite-button{flex:0 1 auto}
-.county-pump-counts{display:none!important}
 .topic-tools-list{display:grid;padding:8px}
 .command-watch{padding:0}
 #mission-counts{padding:10px 14px 0;color:var(--calcite-color-text-2);font-size:12px;line-height:1.5}
@@ -38,9 +37,8 @@
 #mission-evidence-content .mission-actions{margin-block:12px}
 /* Search stays visible; secondary map actions share a row on wide workspaces. */
 @container(min-width:900px){
- #map-panel .map-toolbar-stack{display:grid;grid-template-columns:minmax(260px,1fr) auto;align-items:center;gap:4px 10px}
+ #map-panel .map-toolbar-stack{display:grid;grid-template-columns:minmax(260px,1fr) auto;align-items:center}
  .map-search-launch{min-width:0}
- #map-panel .map-action-row{border:0;padding:0;gap:4px}
  #map-panel .source-notes{grid-column:1/-1}
 }
 #map-panel .map-toolbar-stack{padding-block:4px;gap:4px}
@@ -54,8 +52,6 @@
  .scope-bar .mission-clock{margin-inline-start:0;font-size:10px}
  .scope-bar #mission-tools-toggle{margin-inline-start:auto}
  .county-strip{justify-content:flex-start;padding:0 4px;gap:0 2px}
- .county-strip calcite-button{flex:0 1 auto}
- #tools-shell{--calcite-shell-panel-width:100vw;--calcite-shell-panel-max-width:100vw}
 }
 
 #scenario-library-map-status[data-problem=true]{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;color:var(--calcite-color-text-1)}

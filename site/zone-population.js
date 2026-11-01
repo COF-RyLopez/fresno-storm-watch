@@ -2,7 +2,7 @@ import {loadSdk} from './lib/map.js';
 import {readZoneProduct,estimatedResidents,zoneLabel,zoneRows,boundaryFingerprint} from './lib/zone-population-product.js';
 import {readCareCollection} from './lib/care-data.js';
 import {pioZoneLink} from './lib/pio-zone-context.js';
-import {el,disclosure} from './lib/dom.js';
+import {el,disclosure,link} from './lib/dom.js';
 const $=id=>document.getElementById(id);
 const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short'}).format(t)+' PT';
 let product=null,view=null,layer=null,layerView=null,selected=null,highlight=null,epoch=0,graphics=new Map(),blobUrl=null;
@@ -31,7 +31,7 @@ async function select(feature,updateUrl=false){
   if(p.countyShare<.999)host.append(el('p','This source zone extends outside the county. The estimate includes only its Fresno County portion.'));
   host.append(el('p',p.samplingMoe===null?'Sampling-only MOE component unavailable.':`Sampling-only MOE component: ± ${Math.ceil(p.samplingMoe).toLocaleString()} residents. Total allocation uncertainty is not quantified.`));
   const details=disclosure('Calculation evidence & dates');details.append(el('p',product.meta.limits.method),el('p',product.meta.limits.uncertainty),el('p',`County zone snapshot queried ${time(product.meta.zonesChecked)}. Calculation prepared ${time(product.meta.built)}. Neither is a population observation or order issue time.`));
-  const link=el('a','Open selected-zone evidence in Storm Watch');link.href='./?'+new URLSearchParams({view:'watch',population:'1',zone:p.name});link.target='_blank';link.rel='noopener noreferrer';details.append(link);host.append(details);renderList();
+  details.append(link('Open selected-zone evidence in Storm Watch','./?'+new URLSearchParams({view:'watch',population:'1',zone:p.name})));host.append(details);renderList();
   if(updateUrl){const u=new URL(location.href);u.searchParams.set('zone',p.name);u.searchParams.set('id',p.oid);history.pushState(null,'',u);}
   if(matchMedia('(max-width:760px)').matches){mobile('map');await new Promise(requestAnimationFrame);}
   const graphic=graphics.get(p.oid);if(!graphic)return;

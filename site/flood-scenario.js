@@ -3,7 +3,7 @@ import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenari
 import { createTrafficCanvas } from './lib/evacuation-traffic.js';
 import { createFrameWindow } from './lib/frame-window.js';
 import { createZarrFrames } from './lib/zarr-frames.js';
-import { buildingFields, buildingPopup, classRenderer, createPlayer, frontLayer, pickScenario, showScenario, showStatus, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
+import { buildingFields, buildingPopup, classRenderer, createPlayer, frontLayer, pickScenario, rampDepth, showScenario, showStatus, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
 
 const ROOT = './data/flood-scenarios/';
 // Phones get the map first: the panel starts collapsed behind Details, and traffic loads only when switched on.
@@ -60,8 +60,7 @@ if (buildingsJson) {
 }
 const depthExpression = (q, { i0, i1, w }) => samples
   ? `var a = $feature.arrive_hr; var d = IIf(!IsEmpty(a) && ${q} < a, 0, $feature.d${i0} * ${1 - w} + $feature.d${i1} * ${w});`
-  : `var a = $feature.arrive_hr; var pk = $feature.peak_hr; var m = $feature.depth_max; var t = ${q}; var f = Min(1, m);
-     var d = IIf(IsEmpty(a) || t < a, 0, IIf(t >= pk || pk <= a, m, f + (m - f) * (t - a) / (pk - a)));`;
+  : rampDepth(q);
 const buildingRenderer = (q, b) => classRenderer(depthExpression(q, b), 0.5);
 
 const themedBasemap = themedBasemaps(Basemap, TileLayer);

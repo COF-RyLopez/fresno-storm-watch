@@ -7,7 +7,7 @@ import { blend, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
 import { createTrafficCanvas } from './lib/evacuation-traffic.js';
 import { createFrameWindow } from './lib/frame-window.js';
 import { squareToQuad } from './lib/ground-homography.js';
-import { buildingFields, buildingPopup, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, frontLayer, pickScenario, showScenario, showStatus, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
+import { buildingFields, buildingPopup, CLASSES, classRenderer, createPlayer, fieldInfos as popupFields, frontLayer, pickScenario, rampDepth, showScenario, showStatus, themedBasemaps, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
@@ -58,8 +58,7 @@ const footprintPopup = {
 };
 const depthExpression = (q, { i0, i1, w }) => samples
   ? `var d = $feature.d${i0} * ${1 - w} + $feature.d${i1} * ${w};`
-  : `var a = $feature.arrive_hr; var pk = $feature.peak_hr; var m = $feature.depth_max; var t = ${q}; var f = Min(1, m);
-     var d = IIf(IsEmpty(a) || t < a, 0, IIf(t >= pk || pk <= a, m, f + (m - f) * (t - a) / (pk - a)));`;
+  : rampDepth(q);
 
 // Footprints (ramp scenarios): a client-side layer whose 'cls' field holds each footprint's class (index into CLASSES) at the
 // time shown, under one fixed renderer. The ramp depth only rises, so the build script stores the hour each footprint enters
