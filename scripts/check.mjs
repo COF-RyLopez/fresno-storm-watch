@@ -13,6 +13,7 @@ import {validatePowerSnapshot} from '../site/lib/power-model.js';
 import {validateWindSnapshot} from '../site/lib/weather-model.js';
 import {validateAreaConcerns} from '../site/lib/area-concern-model.js';
 import {siteJson} from './lib/snapshot-io.mjs';
+import {validateWazeSnapshot} from '../site/lib/waze-model.js';
 
 const root = new URL('../', import.meta.url);
 for (const folder of ['site/', 'site/lib/', 'scripts/', 'scripts/lib/', 'services/scenarios/']) {
@@ -45,6 +46,8 @@ validateReservoirSnapshot(await siteJson('reservoir-latest.json'));
 validateNetworkSnapshot(await siteJson('power-network.json'));
 validatePowerSnapshot(await siteJson('power-latest.json'));
 validateWindSnapshot(await siteJson('wind-latest.json'));
+// Optional partner snapshot: absent unless WAZE_PUBLISH is 'true' in the Pages run.
+try{validateWazeSnapshot(await siteJson('waze-latest.json'));}catch(error){if(error.code!=='ENOENT')throw error;}
 const areaSettings=await siteJson('river-areas.json');
 assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,11);
 const areaConcerns=await siteJson('area-concerns.json'),windSettings=await siteJson('wind-watchlist.json');

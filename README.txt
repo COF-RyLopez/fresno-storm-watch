@@ -126,9 +126,9 @@ processing, local setup and rollback. Public grids rebuild during Pages deploy.
 MAP CONTEXT (introduced v0.15.0)
 USGS 3DHP named waterways and close-scale unnamed features are county-filtered
 in 2D/3D. Open 3D Buildings loads on demand in 3D. Source geometry is reference
-context; private county-to-building matches remain pending. Waze is not connected:
-the interim AGOL Data Pipelines route needs privileges, a credit budget and
-verified coverage. A managed collector or Velocity can support faster updates.
+context; private county-to-building matches remain pending. Waze is not shown in the
+app yet; a gated Pages collector exists (see WAZE PARTNER FEED). The AGOL Data
+Pipelines route needs privileges, a credit budget and verified coverage.
 See site/planning.html#map-context and #waze for source contracts and setup.
 
 EOC PILOT LINKS
@@ -320,6 +320,23 @@ and never treats a fresh collection as a fresh measurement. Failed source checks
 retain marked old data. Daily/hourly age rules are 72h/3h prototype review limits.
 No credentials or npm package installation is required. A ZIP alone is not a running
 collector. See site/setup.html and site/planning.html#weather-reservoirs.
+
+WAZE PARTNER FEED (collector only; no UI yet)
+scripts/collect-waze.mjs (npm run collect:waze) reads the county Waze for Cities
+JSON feed. The feed URL embeds an access key: it lives only in the GitHub Actions
+secret WAZE_FEED_URL, is never committed, logged or written, and is redacted from
+errors. Without the secret the Pages step logs a skip and succeeds.
+Publishing is OFF by default. Only when the repository variable WAZE_PUBLISH is
+exactly true does it write site/data/waze-latest.json (public on Pages; gitignored,
+so it disappears from the next deploy once the variable is cleared). Otherwise it
+fetches, validates and logs counts only. Before setting WAZE_PUBLISH=true, confirm
+the county data-sharing agreement permits public display, retention and required
+Waze attribution. Kept: flood/weather/object-on-road hazards and hazard, event or
+unspecified closures inside the county polygon (site/lib/waze-model.js allowlist).
+Each row: hashed id, type/subtype, 4-decimal point, street, city, report time,
+reliability, confidence, thumbs-up. No uuid, description or reporter fields. Jams
+and irregularities are counted only. Invalid feeds keep the prior snapshot with an
+error. Reports are unverified crowd cues, not county verification.
 
 AUTHENTICATION
 Public NWS alerts, NWPS gauges, FEMA zones, terrain and Caltrans cameras need no account.

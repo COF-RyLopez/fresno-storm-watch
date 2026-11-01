@@ -1,0 +1,382 @@
+{
+  "alerts": [
+    {
+      "country": "US",
+      "nThumbsUp": 1,
+      "city": "Fresno, CA",
+      "reportRating": 2,
+      "reportByMunicipalityUser": "false",
+      "reliability": 6,
+      "type": "WEATHERHAZARD",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000001",
+      "roadType": 2,
+      "magvar": 91,
+      "subtype": "HAZARD_WEATHER_FLOOD",
+      "street": "E Shaw Ave",
+      "wazeData": "world,-119.787123456,36.737812345,0000aaaa-bbbb-4ccc-8ddd-000000000001",
+      "reportDescription": "Fabricated description 1 from reporter",
+      "location": {
+        "x": -119.787123456,
+        "y": 36.737812345
+      },
+      "pubMillis": 1793555580000,
+      "confidence": 1
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 2,
+      "city": "Clovis, CA",
+      "reportRating": 3,
+      "reportByMunicipalityUser": "false",
+      "reliability": 7,
+      "type": "ROAD_CLOSED",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000002",
+      "roadType": 2,
+      "magvar": 92,
+      "subtype": "ROAD_CLOSED_HAZARD",
+      "street": "Tollhouse Rd",
+      "wazeData": "world,-119.655149,36.825249,0000aaaa-bbbb-4ccc-8ddd-000000000002",
+      "reportDescription": "Fabricated description 2 from reporter",
+      "location": {
+        "x": -119.655149,
+        "y": 36.825249
+      },
+      "pubMillis": 1793555280000,
+      "confidence": 2
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 0,
+      "city": "Sanger, CA",
+      "reportRating": 4,
+      "reportByMunicipalityUser": "false",
+      "reliability": 8,
+      "type": "WEATHERHAZARD",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000003",
+      "roadType": 2,
+      "magvar": 93,
+      "subtype": "HAZARD_ON_ROAD_OBJECT",
+      "street": "S Academy Ave",
+      "wazeData": "world,-119.45231,36.59742,0000aaaa-bbbb-4ccc-8ddd-000000000003",
+      "reportDescription": "Fabricated description 3 from reporter",
+      "location": {
+        "x": -119.45231,
+        "y": 36.59742
+      },
+      "pubMillis": 1793554980000,
+      "confidence": 3
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 1,
+      "city": "",
+      "reportRating": 5,
+      "reportByMunicipalityUser": "false",
+      "reliability": 9,
+      "type": "WEATHERHAZARD",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000004",
+      "roadType": 2,
+      "magvar": 94,
+      "subtype": "HAZARD_WEATHER_HEAVY_RAIN",
+      "street": "I-5 S",
+      "wazeData": "world,-120.35971,36.13968,0000aaaa-bbbb-4ccc-8ddd-000000000004",
+      "reportDescription": "Fabricated description 4 from reporter",
+      "location": {
+        "x": -120.35971,
+        "y": 36.13968
+      },
+      "pubMillis": 1793554680000,
+      "confidence": 0
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 2,
+      "city": "Fresno, CA",
+      "reportRating": 6,
+      "reportByMunicipalityUser": "false",
+      "reliability": 5,
+      "type": "ROAD_CLOSED",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000005",
+      "roadType": 2,
+      "magvar": 95,
+      "subtype": "",
+      "street": "Blackstone Ave",
+      "wazeData": "world,-119.7871,36.7378,0000aaaa-bbbb-4ccc-8ddd-000000000005",
+      "reportDescription": "Fabricated description 5 from reporter",
+      "location": {
+        "x": -119.7871,
+        "y": 36.7378
+      },
+      "pubMillis": 1793554380000,
+      "confidence": 1
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 0,
+      "city": "Fresno, CA",
+      "reportRating": 1,
+      "reportByMunicipalityUser": "false",
+      "reliability": 6,
+      "type": "ROAD_CLOSED",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000006",
+      "roadType": 2,
+      "magvar": 96,
+      "subtype": "ROAD_CLOSED_CONSTRUCTION",
+      "street": "Ventura St",
+      "wazeData": "world,-119.7871,36.7378,0000aaaa-bbbb-4ccc-8ddd-000000000006",
+      "reportDescription": "Fabricated description 6 from reporter",
+      "location": {
+        "x": -119.7871,
+        "y": 36.7378
+      },
+      "pubMillis": 1793554080000,
+      "confidence": 2
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 1,
+      "city": "Fresno, CA",
+      "reportRating": 2,
+      "reportByMunicipalityUser": "false",
+      "reliability": 7,
+      "type": "WEATHERHAZARD",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000007",
+      "roadType": 2,
+      "magvar": 97,
+      "subtype": "HAZARD_ON_ROAD_POT_HOLE",
+      "street": "N Example St",
+      "wazeData": "world,-119.7871,36.7378,0000aaaa-bbbb-4ccc-8ddd-000000000007",
+      "reportDescription": "Fabricated description 7 from reporter",
+      "location": {
+        "x": -119.7871,
+        "y": 36.7378
+      },
+      "pubMillis": 1793553780000,
+      "confidence": 3
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 2,
+      "city": "Fresno, CA",
+      "reportRating": 3,
+      "reportByMunicipalityUser": "false",
+      "reliability": 8,
+      "type": "ACCIDENT",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000008",
+      "roadType": 2,
+      "magvar": 98,
+      "subtype": "ACCIDENT_MINOR",
+      "street": "N Example St",
+      "wazeData": "world,-119.7871,36.7378,0000aaaa-bbbb-4ccc-8ddd-000000000008",
+      "reportDescription": "Fabricated description 8 from reporter",
+      "location": {
+        "x": -119.7871,
+        "y": 36.7378
+      },
+      "pubMillis": 1793553480000,
+      "confidence": 0
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 0,
+      "city": "Fresno, CA",
+      "reportRating": 4,
+      "reportByMunicipalityUser": "false",
+      "reliability": 9,
+      "type": "JAM",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000009",
+      "roadType": 2,
+      "magvar": 99,
+      "subtype": "JAM_HEAVY_TRAFFIC",
+      "street": "N Example St",
+      "wazeData": "world,-119.7871,36.7378,0000aaaa-bbbb-4ccc-8ddd-000000000009",
+      "reportDescription": "Fabricated description 9 from reporter",
+      "location": {
+        "x": -119.7871,
+        "y": 36.7378
+      },
+      "pubMillis": 1793553180000,
+      "confidence": 1
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 1,
+      "city": "Visalia, CA",
+      "reportRating": 5,
+      "reportByMunicipalityUser": "false",
+      "reliability": 5,
+      "type": "WEATHERHAZARD",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000010",
+      "roadType": 2,
+      "magvar": 100,
+      "subtype": "HAZARD_WEATHER_FLOOD",
+      "street": "W Main St",
+      "wazeData": "world,-119.2921,36.3302,0000aaaa-bbbb-4ccc-8ddd-000000000010",
+      "reportDescription": "Fabricated description 10 from reporter",
+      "location": {
+        "x": -119.2921,
+        "y": 36.3302
+      },
+      "pubMillis": 1793552880000,
+      "confidence": 2
+    },
+    {
+      "country": "US",
+      "nThumbsUp": 2,
+      "city": "Madera, CA",
+      "reportRating": 6,
+      "reportByMunicipalityUser": "false",
+      "reliability": 6,
+      "type": "ROAD_CLOSED",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000011",
+      "roadType": 2,
+      "magvar": 101,
+      "subtype": "ROAD_CLOSED_HAZARD",
+      "street": "Avenue 12",
+      "wazeData": "world,-120.0607,36.9613,0000aaaa-bbbb-4ccc-8ddd-000000000011",
+      "reportDescription": "Fabricated description 11 from reporter",
+      "location": {
+        "x": -120.0607,
+        "y": 36.9613
+      },
+      "pubMillis": 1793552580000,
+      "confidence": 3
+    },
+    {
+      "country": "US",
+      "city": "Fresno, CA",
+      "reportRating": 1,
+      "reportByMunicipalityUser": "false",
+      "reliability": 7,
+      "type": "WEATHERHAZARD",
+      "uuid": "0000aaaa-bbbb-4ccc-8ddd-000000000012",
+      "roadType": 2,
+      "magvar": 102,
+      "subtype": "HAZARD_WEATHER_FOG",
+      "wazeData": "world,-119.7871,36.7378,0000aaaa-bbbb-4ccc-8ddd-000000000012",
+      "reportDescription": "Fabricated description 12 from reporter",
+      "location": {
+        "x": -119.7871,
+        "y": 36.7378
+      },
+      "pubMillis": 1793552280000,
+      "confidence": 0
+    }
+  ],
+  "endTimeMillis": 1793555940000,
+  "startTimeMillis": 1793555880000,
+  "startTime": "2026-11-01 17:58:00:000",
+  "endTime": "2026-11-01 17:59:00:000",
+  "jams": [
+    {
+      "country": "US",
+      "city": "Fresno, CA",
+      "level": 4,
+      "line": [
+        {
+          "x": -119.78,
+          "y": 36.74
+        },
+        {
+          "x": -119.779,
+          "y": 36.741
+        },
+        {
+          "x": -119.778,
+          "y": 36.7415
+        }
+      ],
+      "speedKMH": 4.2,
+      "length": 812,
+      "turnType": "NONE",
+      "uuid": 9001,
+      "endNode": "E Shaw Ave",
+      "speed": 1.17,
+      "segments": [
+        {
+          "fromNode": 1,
+          "ID": 2,
+          "toNode": 3,
+          "isForward": true
+        }
+      ],
+      "roadType": 2,
+      "delay": 233,
+      "street": "N Blackstone Ave",
+      "id": 9001,
+      "pubMillis": 1793555760000
+    },
+    {
+      "country": "US",
+      "city": "Clovis, CA",
+      "level": 2,
+      "line": [
+        {
+          "x": -119.7,
+          "y": 36.82
+        },
+        {
+          "x": -119.699,
+          "y": 36.821
+        },
+        {
+          "x": -119.69800000000001,
+          "y": 36.8215
+        }
+      ],
+      "speedKMH": 22.5,
+      "length": 410,
+      "turnType": "NONE",
+      "uuid": 9002,
+      "speed": 6.25,
+      "roadType": 1,
+      "delay": 41,
+      "street": "CA-168 E",
+      "id": 9002,
+      "pubMillis": 1793555640000
+    }
+  ],
+  "irregularities": [
+    {
+      "id": "7001",
+      "detectionDateMillis": 1793555280000,
+      "detectionDate": "Sun Nov 01 17:48:00 +0000 2026",
+      "updateDateMillis": 1793555820000,
+      "type": "Small",
+      "speed": 12.3,
+      "regularSpeed": 48.1,
+      "delaySeconds": 180,
+      "seconds": 240,
+      "length": 900,
+      "trend": 1,
+      "street": "N Blackstone Ave",
+      "city": "Fresno, CA",
+      "country": "US",
+      "severity": 3,
+      "jamLevel": 3,
+      "driversCount": 14,
+      "alertsCount": 1,
+      "nThumbsUp": 0,
+      "nComments": 0,
+      "nImages": 0,
+      "line": [
+        {
+          "x": -119.78,
+          "y": 36.75
+        },
+        {
+          "x": -119.779,
+          "y": 36.751
+        },
+        {
+          "x": -119.778,
+          "y": 36.7515
+        }
+      ],
+      "causeType": "weather",
+      "startNode": "W Shaw Ave",
+      "endNode": "W Herndon Ave",
+      "highway": false
+    }
+  ]
+}
