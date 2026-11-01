@@ -36,7 +36,7 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   }
   function showGauge(id){
     const host=$('usgs-detail'),s=inputs.watchlist.find(s=>s.site===id);host.replaceChildren();
-    if(!s){$('usgs-evidence').heading=id;host.append(el('p',`${id} has no live gauge in this app. Check FMFCD and field reports.`),el('p','Add an active USGS site for this creek to data/usgs-watchlist.json to replace this row.'));$('usgs-evidence').setAttribute('open','');map?.fitExtent(STORM_CONFIG.extents.creeks);return;}
+    if(!s){$('usgs-evidence').heading=id;host.append(el('p',`No live gauge in this app: ${id}. Check FMFCD and field reports.`),el('p','Add an active USGS site for a creek to data/usgs-watchlist.json to take it off this list.'));$('usgs-evidence').setAttribute('open','');map?.fitExtent(STORM_CONFIG.extents.creeks);return;}
     const r=inputs.usgs?.readings?.get(id);$('usgs-evidence').heading=s.name;
     const facts=[['USGS site',s.site],['Latest stage',r?.stage?`${r.stage.value.toFixed(2)} ft · ${time(r.stage.time)} · ${ageLabel(Date.now()-r.stage.time)}`:'Not returned'],['Latest flow',r?.flow?`${Math.round(r.flow.value).toLocaleString('en-US')} cfs · ${time(r.flow.time)}`:'Not returned'],['Rise (~3 h)',r?.rise?`${r.rise.delta>=0?'+':''}${r.rise.delta.toFixed(2)} ft in ${r.rise.hours.toFixed(1)} h · ${r.rise.rate.toFixed(2)} ft/h`:'Not computable'],['Flood stage',Number.isFinite(s.floodStageFt)?`${s.floodStageFt} ft`:'Not configured · rate of rise only'],['Last USGS check',inputs.usgs?.checked?time(inputs.usgs.checked):'None'+(inputs.usgs?.error?` · ${inputs.usgs.error}`:'')]];
     const dl=el('dl');for(const [k,v]of facts)dl.append(el('dt',k),el('dd',v));host.append(dl);

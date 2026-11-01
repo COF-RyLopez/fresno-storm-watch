@@ -39,7 +39,8 @@ function item(key,{tier,place,why,source,time=null,stale=false,focus,rise=null,p
   // Old evidence never ranks above Verify; NWS warnings stay first but carry an overdue tag.
   return {key,tier:stale&&tier!==1?4:tier,place,why,source,time,age,stale,focus,rise,peak,open,tag};
 }
-const order=(a,b)=>a.tier-b.tier||(b.rise??-Infinity)-(a.rise??-Infinity)||(a.peak??Infinity)-(b.peak??Infinity)||a.place.localeCompare(b.place)||a.key.localeCompare(b.key);
+const UNGAUGED_KEY='creek:ungauged';
+const order=(a,b)=>a.tier-b.tier||(a.key===UNGAUGED_KEY)-(b.key===UNGAUGED_KEY)||(b.rise??-Infinity)-(a.rise??-Infinity)||(a.peak??Infinity)-(b.peak??Infinity)||a.place.localeCompare(b.place)||a.key.localeCompare(b.key);
 
 /** @param {number|null} ms @returns {string} */
 export const ageLabel=ms=>ms===null?'age unknown':ms<60_000?'under 1 min old':ms<HOUR?`${Math.floor(ms/60_000)} min old`:`${Math.floor(ms/HOUR)} h ${Math.floor(ms%HOUR/60_000)} min old`;
@@ -83,8 +84,9 @@ export function stormFocus({alerts=[],alertCheck=null,areas=[],drainage=null,sig
     if(!tier)continue;
     rows.push(item('usgs:'+s.site,{...base,tier,why:(flood?`At/above flood stage ${s.floodStageFt} ft · `:'')+(r.rise?`${ft(r.rise.delta,r.rise.hours)} (${rate.toFixed(2)} ft/h)`:'Rise unknown'),time:r.stage.time,stale,rise:rate},now));
   }
-  for(const creek of c.ungaugedCreeks)if(!watchlist.some(s=>s.creek===creek))
-    rows.push(item('creek:'+creek,{tier:4,place:creek,why:'No live gauge · check FMFCD and field reports',source:'No live gauge',focus:'creeks',open:{kind:'creek',id:creek}},now));
+  // One standing reminder, not one row per creek: a permanent gap must not crowd out live signals.
+  const ungauged=c.ungaugedCreeks.filter(creek=>!watchlist.some(s=>s.creek===creek));
+  if(ungauged.length)rows.push(item(UNGAUGED_KEY,{tier:4,place:'Foothill creeks without a live gauge',why:ungauged.join(', ')+' · check FMFCD and field reports',source:'No live gauge',focus:'creeks',open:{kind:'creek',id:ungauged.join(', ')}},now));
 
   return rows.filter(r=>focus==='all'||r.focus==='both'||r.focus===focus).sort(order);
 }

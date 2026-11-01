@@ -66,11 +66,14 @@ test('one roads summary row counts current closures and new ones in the last hou
   assert.equal(failed.stale,true);assert.equal(stormFocus(quiet,NOW).some(r=>r.key==='roads:summary'),false,'current check with no closures');
 });
 
-test('ungauged creek rows appear in Creeks focus unless a USGS gauge covers the creek',()=>{
+test('ungauged creeks are one summary row, last in Verify, listing only creeks no USGS gauge covers',()=>{
   const rows=stormFocus({...quiet,watchlist:[covered[0]]},NOW);
-  const creeks=rows.filter(r=>r.key.startsWith('creek:')).map(r=>r.place);
-  assert.deepEqual(creeks,STORM_CONFIG.ungaugedCreeks.slice(1).sort());
-  for(const r of rows.filter(r=>r.key.startsWith('creek:'))){assert.equal(r.tier,4);assert.equal(r.focus,'creeks');assert.equal(r.source,'No live gauge');}
+  const creek=rows.filter(r=>r.key.startsWith('creek:'));
+  assert.equal(creek.length,1);
+  const [r]=creek;assert.equal(r.tier,4);assert.equal(r.focus,'creeks');assert.equal(r.source,'No live gauge');
+  assert.equal(r.why,STORM_CONFIG.ungaugedCreeks.slice(1).join(', ')+' · check FMFCD and field reports');
+  assert.equal(rows.at(-1).key,'creek:ungauged','sorts after other Verify rows');
+  assert.equal(stormFocus({...quiet,watchlist:covered},NOW).some(r=>r.key.startsWith('creek:')),false,'all creeks gauged');
   assert.equal(stormFocus({...quiet,watchlist:[covered[0]],focus:'metro'},NOW).some(r=>r.key.startsWith('creek:')),false);
 });
 
