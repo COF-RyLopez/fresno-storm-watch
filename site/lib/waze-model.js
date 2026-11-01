@@ -4,6 +4,9 @@ import {fresh} from './source-health-model.js';
 export const WAZE_SOURCE='Waze for Cities partner feed';
 export const WAZE_NOTE='Unverified crowd reports from Waze users. Not county verification; a disappearing report does not mean a road reopened.';
 export const WAZE_MAX_AGE=20*60000;
+/** A ROAD_CLOSED with no subtype is usually a map-editor closure (construction, long-term); only recent ones can be storm closures.
+ * ponytail: 12 h age cut; replace with a source flag if Waze adds one to the partner feed. */
+export const WAZE_UNTYPED_CLOSURE_MAX_AGE=12*3600_000;
 export const WAZE_CATEGORIES=['Flooding','Road closed','Hazard on road'];
 /** Explicit storm allowlist (Waze data feed / CIFS subtype names): subtype -> [category, short label]. Anything absent is dropped. */
 export const WAZE_SUBTYPES=Object.freeze({
@@ -14,8 +17,7 @@ export const WAZE_SUBTYPES=Object.freeze({
   HAZARD_WEATHER_HAIL:['Hazard on road','Hail'],
   HAZARD_WEATHER_FREEZING_RAIN:['Hazard on road','Freezing rain'],
   HAZARD_ON_ROAD_OBJECT:['Hazard on road','Object on road'],
-  ROAD_CLOSED_HAZARD:['Road closed','Road closed (hazard)'],
-  ROAD_CLOSED_EVENT:['Road closed','Road closed (event)']
+  ROAD_CLOSED_HAZARD:['Road closed','Road closed (hazard)']
 });
 const HAZARD_TYPES=['HAZARD','WEATHERHAZARD'];
 /** @returns {[string,string]|null} ROAD_CLOSED with no subtype counts as a closure; planned construction closures are excluded. */
@@ -25,6 +27,10 @@ export function wazeCategory(type,subtype){
   return hit&&(subtype.startsWith('ROAD_CLOSED')?type==='ROAD_CLOSED':HAZARD_TYPES.includes(type))?hit:null;
 }
 const ALERT_KEYS='id,type,subtype,lon,lat,street,city,reportedAt,reliability,confidence,thumbsUp';
+/** Waze "unusual traffic": slowdowns flagged against that road's historical speed for the time slot. Not jams (routine congestion). */
+export const WAZE_TRAFFIC_SIZES=['None','Small','Medium','Large','Huge'];
+const TRAFFIC_KEYS='id,size,lengthM,delaySeconds,speedKmh,regularSpeedKmh,trend,street,city,detectedAt,updatedAt,line';
+export const WAZE_ATTRIBUTION=Object.freeze({text:'Data provided by Waze App. Learn more at Waze.com.',linkText:'Waze App',href:'https://www.waze.com'});
 const iso=(v,now)=>typeof v==='string'&&Number.isFinite(Date.parse(v))&&Date.parse(v)<=now+120000;
 const score=v=>v===null||Number.isInteger(v)&&v>=0&&v<=10;
 const rounded=v=>Number.isFinite(v)&&Math.round(v*1e4)/1e4===v;
@@ -45,6 +51,14 @@ export function validateWazeSnapshot(d,now=Date.now()){
     if(![a.street,a.city].every(v=>v===null||typeof v==='string')||!score(a.reliability)||!score(a.confidence)||!(a.thumbsUp===null||Number.isInteger(a.thumbsUp)&&a.thumbsUp>=0))throw new Error('Waze alert fields invalid');
     seen.add(a.id);
   }
+  if(!Array.isArray(d.irregularities)||d.irregularities.length>5000)throw new Error('Waze unusual traffic missing');
+  const traffic=new Set(),nonNeg=v=>v===null||Number.isFinite(v)&&v>=0;
+  for(const t of d.irregularities){
+    if(Object.keys(t).join()!==TRAFFIC_KEYS||!/^[0-9a-f]{16}$/.test(t.id)||traffic.has(t.id)||!(t.size===null||WAZE_TRAFFIC_SIZES.includes(t.size)))throw new Error('Waze unusual traffic identity invalid');
+    if(!Array.isArray(t.line)||t.line.length<1||t.line.length>25||t.line.some(p=>!Array.isArray(p)||p.length!==2||!rounded(p[0])||!rounded(p[1])||Math.abs(p[0])>180||Math.abs(p[1])>90))throw new Error('Waze unusual traffic line invalid');
+    if(!iso(t.detectedAt,now)||!iso(t.updatedAt,now)||![t.lengthM,t.delaySeconds,t.speedKmh,t.regularSpeedKmh].every(nonNeg)||![-1,0,1,null].includes(t.trend)||![t.street,t.city].every(v=>v===null||typeof v==='string'))throw new Error('Waze unusual traffic fields invalid');
+    traffic.add(t.id);
+  }
   const counts=wazeCounts(d.alerts);
   for(const c of WAZE_CATEGORIES)if(d.counts?.byCategory?.[c]!==counts[c])throw new Error('Waze category counts mismatch');
   return d;
@@ -58,4 +72,14 @@ export function wazeReports(snapshot,now=Date.now()){
     const [category,name]=wazeCategory(a.type,a.subtype);
     return {...a,category,label:a.street?`${name} · ${a.street}`:name,ageMinutes:Math.max(0,Math.round((now-Date.parse(a.reportedAt))/60000)),stale};
   }).sort((a,b)=>Date.parse(b.reportedAt)-Date.parse(a.reportedAt));
+}
+
+const mph=kmh=>kmh===null?null:Math.round(kmh*0.621371);
+/** @param {object|null} snapshot @param {number} now @returns {object[]} Unusual-traffic rows, biggest delay first. Stale like wazeReports. */
+export function wazeTraffic(snapshot,now=Date.now()){
+  if(!snapshot)return [];
+  const d=validateWazeSnapshot(snapshot,now),stale=!fresh(Date.parse(d.checkedAt),WAZE_MAX_AGE,now);
+  return d.irregularities.map(t=>({...t,speedMph:mph(t.speedKmh),regularMph:mph(t.regularSpeedKmh),label:`Unusual traffic · ${t.street||t.city||'unnamed road'}`,
+    // ponytail: Medium+ or worsening ranks Next; tune if a storm shows these flood the list.
+    rising:t.trend===1,major:['Medium','Large','Huge'].includes(t.size),stale})).sort((a,b)=>(b.delaySeconds??-1)-(a.delaySeconds??-1)||a.id.localeCompare(b.id));
 }

@@ -4,9 +4,10 @@ import {readFile,mkdtemp,writeFile,readdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {collectWaze,run,redact,validateWazeFeed} from '../scripts/collect-waze.mjs';
+import {collectWaze,run,redact,validateWazeFeed,filterWazeTraffic} from '../scripts/collect-waze.mjs';
 import {fresnoCounty} from '../scripts/lib/snapshot-io.mjs';
-import {wazeReports,validateWazeSnapshot,wazeCategory,WAZE_MAX_AGE} from '../site/lib/waze-model.js';
+import {wazeReports,wazeTraffic,validateWazeSnapshot,wazeCategory,WAZE_MAX_AGE} from '../site/lib/waze-model.js';
+import {countyGeometry} from '../site/lib/model.js';
 
 const raw=await readFile(new URL('./fixtures/waze-feed.json',import.meta.url),'utf8'),feed=()=>JSON.parse(raw);
 const county=await fresnoCounty(),now=Date.parse('2026-11-01T18:00:00Z');
@@ -19,7 +20,7 @@ test('keeps only allowlisted storm alerts inside Fresno County and counts what i
   const s=await collect(feed());
   assert.equal(s.error,null);assert.equal(s.checkedAt,new Date(now).toISOString());
   assert.deepEqual(s.alerts.map(a=>a.subtype).sort(),['','HAZARD_ON_ROAD_OBJECT','HAZARD_WEATHER_FLOOD','HAZARD_WEATHER_FOG','HAZARD_WEATHER_HEAVY_RAIN','ROAD_CLOSED_HAZARD']);
-  assert.deepEqual(s.counts,{alerts:12,kept:6,notStormRelevant:4,outsideCounty:2,duplicates:0,jams:2,irregularities:1,byCategory:{Flooding:1,'Road closed':2,'Hazard on road':3},
+  assert.deepEqual(s.counts,{alerts:12,kept:6,notStormRelevant:4,outsideCounty:2,duplicates:0,jams:2,irregularities:1,irregularitiesKept:1,byCategory:{Flooding:1,'Road closed':2,'Hazard on road':3},
     byType:{'ACCIDENT:ACCIDENT_MINOR':1,'JAM:JAM_HEAVY_TRAFFIC':1,'ROAD_CLOSED:NO_SUBTYPE':1,'ROAD_CLOSED:ROAD_CLOSED_CONSTRUCTION':1,'ROAD_CLOSED:ROAD_CLOSED_HAZARD':2,'WEATHERHAZARD:HAZARD_ON_ROAD_OBJECT':1,'WEATHERHAZARD:HAZARD_ON_ROAD_POT_HOLE':1,'WEATHERHAZARD:HAZARD_WEATHER_FLOOD':2,'WEATHERHAZARD:HAZARD_WEATHER_FOG':1,'WEATHERHAZARD:HAZARD_WEATHER_HEAVY_RAIN':1}});
   assert.deepEqual(s.feed,{startTime:'2026-11-01T17:58:00.000Z',endTime:'2026-11-01T17:59:00.000Z'});
   assert.equal(s.possiblyTruncated,false);
@@ -94,4 +95,33 @@ test('wazeReports categorises, labels, ages and marks stale snapshots',async()=>
   assert(wazeReports(s,now+WAZE_MAX_AGE+1).every(r=>r.stale));
   const failed=await collectWaze({url:URL_WITH_KEY,county,fetchImpl:ok('x'),now});assert.deepEqual(wazeReports(failed,now),[]);assert.equal(failed.checkedAt,null);
   assert.throws(()=>wazeReports({...s,counts:{...s.counts,byCategory:{...s.counts.byCategory,Flooding:9}}},now),/counts mismatch/);
+});
+
+test('unusual traffic: kept inside the county, minimised, line capped at 25 points, malformed records skipped',async()=>{
+  const s=await collect(feed()),[t]=s.irregularities,text=JSON.stringify(s.irregularities);
+  assert.deepEqual(t,{id:t.id,size:'Small',lengthM:900,delaySeconds:180,speedKmh:12.3,regularSpeedKmh:48.1,trend:1,street:'N Blackstone Ave',city:'Fresno, CA',detectedAt:'2026-11-01T17:48:00.000Z',updatedAt:'2026-11-01T17:57:00.000Z',line:[[-119.78,36.75],[-119.779,36.751],[-119.778,36.7515]]});
+  assert.match(t.id,/^[0-9a-f]{16}$/);for(const leak of ['7001','driversCount','startNode','W Shaw Ave','causeType'])assert(!text.includes(leak),leak);
+  const rings=countyGeometry(county.geometry).rings,base=feed().irregularities[0];
+  const long={...base,id:1,line:Array.from({length:60},(_,i)=>({x:-119.78+i*1e-4,y:36.75}))};
+  const kept=filterWazeTraffic([long,{...base,id:2,line:[{x:-121.9,y:37.3}]},{...base,id:3,line:[]},{...base,id:4,detectionDateMillis:'x'},{...base,id:null},{...long}],rings);
+  assert.equal(kept.length,1);assert.equal(kept[0].line.length,25);assert.deepEqual(kept[0].line.at(-1),[-119.7741,36.75]);
+  const odd=filterWazeTraffic([{...base,type:'weird',trend:7,delaySeconds:-5,street:42}],rings)[0];
+  assert.deepEqual([odd.size,odd.trend,odd.delaySeconds,odd.street],[null,null,null,null]);
+  assert.throws(()=>validateWazeSnapshot({...s,irregularities:[{...t,driversCount:3}]},now),/identity invalid/);
+  assert.throws(()=>validateWazeSnapshot({...s,irregularities:[{...t,line:[[-119.781234567,36.75]]}]},now),/line invalid/);
+});
+
+test('wazeTraffic converts speeds to mph, flags worsening or Medium+, and goes stale with the snapshot',async()=>{
+  const s=await collect(feed()),[r]=wazeTraffic(s,now);
+  assert.deepEqual([r.label,r.speedMph,r.regularMph,r.rising,r.major,r.stale],['Unusual traffic · N Blackstone Ave',8,30,true,false,false]);
+  assert.equal(wazeTraffic(s,now+WAZE_MAX_AGE+1)[0].stale,true);assert.deepEqual(wazeTraffic(null,now),[]);
+});
+
+test('untyped closures count only while recent (map-editor closures are long-lived); event closures are not storm closures',async()=>{
+  const f=feed(),untyped=f.alerts.find(a=>a.type==='ROAD_CLOSED'&&!a.subtype),H=3_600_000;
+  const at=async pub=>(await collect({...f,alerts:[{...untyped,pubMillis:pub}]})).counts;
+  assert.deepEqual([(await at(now-11*H)).kept,(await at(now-13*H)).kept,(await at(now-13*H)).notStormRelevant],[1,0,1]);
+  const typed=f.alerts.find(a=>a.subtype==='ROAD_CLOSED_HAZARD');
+  assert.equal((await collect({...f,alerts:[{...typed,pubMillis:now-48*H}]})).counts.kept,1,'a closure reported for a hazard stays regardless of age');
+  assert.equal(wazeCategory('ROAD_CLOSED','ROAD_CLOSED_EVENT'),null);
 });

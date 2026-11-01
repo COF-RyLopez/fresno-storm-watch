@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {cameraMediaUrl,normalizeCameras,cameraAvailability,cameraImageFreshness} from '../site/lib/camera-model.js';
+import {cameraMediaUrl,normalizeCameras,cameraAvailability,cameraImageFreshness,nearbyCameras} from '../site/lib/camera-model.js';
 
 const now=Date.parse('2026-10-17T20:40:00Z');
 const sites=JSON.parse(await readFile(new URL('../site/data/camera-watchlist.json',import.meta.url),'utf8')).cameras;
@@ -49,4 +49,17 @@ test('old image does not become current after a successful reload',()=>{
   assert.equal(cameraImageFreshness({loaded:now,modified:null},now).tone,'unknown');
   assert.equal(cameraImageFreshness({loaded:now,modified:now+120_000},now).tone,'unknown');
   assert.equal(cameraImageFreshness({loaded:now,modified:now,error:'Network failure'},now).tone,'gap');
+});
+
+test('nearbyCameras: in-service D6 cameras with an approved image near the line, nearest first, capped',()=>{
+  const cam=(index,lon,lat,extra={})=>({cctv:{index,inService:'true',location:{district:'6',locationName:`CAM ${index}`,longitude:String(lon),latitude:String(lat),route:'SR-41',direction:'North'},imageData:{static:{currentImageURL:`https://cwwp2.dot.ca.gov/data/d6/cctv/image/c${index}/c${index}.jpg`}},...extra}});
+  // ~1.1 km of road along a latitude line; cameras off the middle of the segment, beyond its end, and out of range.
+  const line=[[-119.80,36.80],[-119.7875,36.80]],data=[cam('1',-119.79,36.805),cam('2',-119.79,36.801),cam('3',-119.77,36.80),cam('4',-119.79,36.85),
+    cam('5',-119.79,36.8001,{inService:'false'}),cam('6',-119.79,36.8001,{imageData:{static:{currentImageURL:'http://evil.example/x.jpg'}}}),{cctv:{...cam('7',-119.79,36.8001).cctv,location:{...cam('7',-119.79,36.8001).cctv.location,district:'7'}}}];
+  const near=nearbyCameras({data},line,{limit:5});
+  assert.deepEqual(near.map(c=>c.index),['2','1','3']);
+  assert(Math.abs(near[0].km-0.11)<0.01);assert(Math.abs(near[2].km-1.56)<0.02);assert.equal(near[0].direction,'North');
+  assert.deepEqual(nearbyCameras({data},line).map(c=>c.index),['2','1']);
+  assert.deepEqual(nearbyCameras({data},[[-119.79,36.80]],{maxKm:0.2}).map(c=>c.index),['2']);
+  assert.throws(()=>nearbyCameras({},line),/unexpected format/);
 });
