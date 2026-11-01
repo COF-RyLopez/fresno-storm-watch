@@ -33,8 +33,8 @@ export function polygonArea(multi){
   return total;
 }
 
-export const bounds=multi=>{const b=[Infinity,Infinity,-Infinity,-Infinity];for(const p of multi)for(const r of p)for(const [x,y]of r){b[0]=Math.min(b[0],x);b[1]=Math.min(b[1],y);b[2]=Math.max(b[2],x);b[3]=Math.max(b[3],y);}return b;};
-export const boxesMeet=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
+const bounds=multi=>{const b=[Infinity,Infinity,-Infinity,-Infinity];for(const p of multi)for(const r of p)for(const [x,y]of r){b[0]=Math.min(b[0],x);b[1]=Math.min(b[1],y);b[2]=Math.max(b[2],x);b[3]=Math.max(b[3],y);}return b;};
+const boxesMeet=(a,b)=>a[0]<=b[2]&&a[2]>=b[0]&&a[1]<=b[3]&&a[3]>=b[1];
 export const overlap=(a,b)=>boxesMeet(a.box,b.box)?clipping.intersection(a.shape,b.shape):[];
 // Relative topology check only; these angular values are never used as ground area.
 const topologyArea=multi=>multi.reduce((sum,p)=>sum+p.reduce((v,ring,index)=>{const [ox,oy]=ring[0];let a=0;for(let i=0;i<ring.length-1;i++)a+=(ring[i][0]-ox)*(ring[i+1][1]-oy)-(ring[i+1][0]-ox)*(ring[i][1]-oy);return v+(index?-1:1)*Math.abs(a/2);},0),0);

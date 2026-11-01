@@ -1,7 +1,5 @@
 /** Public NWS forecasts for a bounded, named Fresno planning-point inventory. */
 import {readFile} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
-import {resolve} from 'node:path';
 import {validateWindSnapshot} from '../site/lib/weather-model.js';
 import {fetchWindForecasts} from '../site/lib/weather-data.js';
 import {loadPrevious,writeAtomic} from './lib/snapshot-io.mjs';
@@ -25,4 +23,4 @@ async function main(){
   console.log(JSON.stringify({event:'wind-collection',generatedAt:snapshot.generatedAt,durationMs:Date.now()-started,sites:snapshot.sites.map(s=>({id:s.id,error:s.error,issued:s.forecast?.issued,lastSuccess:s.lastSuccess}))}));
   if(snapshot.sites.some(s=>s.error))console.warn('NWS wind collection incomplete; failed sites remain explicitly marked.');
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await main();
+if(import.meta.main)await main();

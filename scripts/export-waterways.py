@@ -84,6 +84,29 @@ def cached_json(path: Path, fetch: Callable[[], dict[str, Any]], check: Callable
     return result
 
 
+def read_inventory(ids: list[int], fetch: Callable[[list[int]], list[Any]], inventory: Callable[[], dict[str, Any]],
+                   changed: str, size: int = 500, workers: int = 3) -> list[Any]:
+    """fetch() sorted returnIdsOnly `ids` in exact `size` batches, then require inventory() to return the same IDs."""
+    records = []
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for index, batch in enumerate(pool.map(fetch, [ids[i:i + size] for i in range(0, len(ids), size)]), 1):
+            records.extend(batch)
+            if index % 10 == 0:
+                LOG.info('Read %s of %s records', len(records), len(ids))
+    if sorted(inventory().get('objectIds') or []) != ids:
+        raise RuntimeError(changed)
+    return records
+
+
+def esri_rings(geom: Any) -> list[list[tuple[float, ...]]]:
+    """Polygon / MultiPolygon as Esri rings: exteriors clockwise, holes counterclockwise; XY unchanged."""
+    rings = []
+    for polygon in [geom] if geom.geom_type == 'Polygon' else geom.geoms:
+        polygon = orient(polygon, sign=-1.0)
+        rings.extend([list(polygon.exterior.coords), *[list(r.coords) for r in polygon.interiors]])
+    return rings
+
+
 def county_filter(path: Path) -> tuple[Any, dict[str, Any]]:
     """Use the existing validated Fresno County boundary, in longitude/latitude."""
     doc = json.loads(path.read_text(encoding='utf-8'))
@@ -91,12 +114,7 @@ def county_filter(path: Path) -> tuple[Any, dict[str, Any]]:
     county = shape(feature['geometry'])
     if county.is_empty or not county.is_valid:
         raise ValueError('Fresno boundary is not valid; no implicit repair applied.')
-    parts = [county] if county.geom_type == 'Polygon' else list(county.geoms)
-    rings = []
-    for polygon in parts:
-        polygon = orient(polygon, sign=-1.0)  # Esri exterior clockwise; holes opposite.
-        rings.extend([list(polygon.exterior.coords), *[list(r.coords) for r in polygon.interiors]])
-    return county, {'rings': rings, 'spatialReference': {'wkid': 4326}}
+    return county, {'rings': esri_rings(county), 'spatialReference': {'wkid': 4326}}
 
 
 def morton_key(x: float, y: float) -> int:
@@ -181,13 +199,13 @@ def write_outputs(rows: list[dict[str, Any]], output: Path, provenance: dict[str
 def main() -> None:
     """Fetch a named reference snapshot; never publishes to AGOL or replaces app sources."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / 'work' / 'waterways-geoparquet')
     parser.add_argument('--reuse-download', action='store_true', help='Reuse the recorded public download for deterministic conversion checks')
     args = parser.parse_args()
-    args.output.mkdir(parents=True, exist_ok=True)
+    output = ROOT / 'work' / 'waterways-geoparquet'
+    output.mkdir(parents=True, exist_ok=True)
     county_path = ROOT / 'site' / 'data' / 'counties.geojson'
     county, filter_geometry = county_filter(county_path)
-    download = args.output / 'source-download.json'
+    download = output / 'source-download.json'
     started = time.perf_counter()
     if args.reuse_download:
         stored = json.loads(download.read_text(encoding='utf-8'))
@@ -209,20 +227,18 @@ def main() -> None:
                 raise RuntimeError('Batch IDs changed or records are missing.')
             LOG.info('Downloaded %s features', len(features))
             return features
-        with ThreadPoolExecutor(max_workers=3) as pool:
-            features = [f for batch in pool.map(fetch_batch, [ids[i:i+500] for i in range(0, len(ids), 500)]) for f in batch]
-        if sorted(request_json(SOURCE + '/query', parameters).get('objectIds') or []) != ids:
-            raise RuntimeError('Source inventory changed during export; retry before publishing.')
+        features = read_inventory(ids, fetch_batch, lambda: request_json(SOURCE + '/query', parameters),
+                                  'Source inventory changed during export; retry before publishing.')
         stored = {'retrievedUtc': datetime.now(timezone.utc).isoformat(), 'source': SOURCE, 'oidField': oid, 'expectedCount': len(ids), 'features': features, 'query': {k: v for k, v in parameters.items() if k != 'geometry'}}
         download.write_text(json.dumps(stored, ensure_ascii=False), encoding='utf-8')
     rows, rejected = convert(stored['features'], county, stored['oidField'])
-    (args.output / 'rejected-records.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
+    (output / 'rejected-records.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
     if rejected or len(rows) != stored['expectedCount']:
         raise RuntimeError('Rejected/missing features; inspect rejected-records.json. Prior output retained.')
     provenance = {'source': SOURCE, 'retrievedUtc': stored['retrievedUtc'], 'scope': 'Named USGS segments intersecting Fresno County; complete segments retained, not clipped', 'boundarySha256': hashlib.sha256(county_path.read_bytes()).hexdigest(), 'query': stored['query'], 'sourceFeatureDateUnits': 'milliseconds since Unix epoch; source edit date, not observation time', 'sourceLengthUnits': 'km, full source segment', 'license': 'USGS public data; retain attribution', 'purpose': 'Reference/analysis format trial, not live flow, terrain or flood simulation'}
-    result = write_outputs(rows, args.output, provenance)
+    result = write_outputs(rows, output, provenance)
     report = {**provenance, **result, 'sourceCount': stored['expectedCount'], 'rejectedCount': len(rejected), 'elapsedSeconds': round(time.perf_counter()-started, 2), 'timingMeaning': 'Export elapsed time, not map rendering time', 'namedOnly': True, 'unconverted': 'Unnamed waterways remain in the publisher service; no assertion of a complete local hydrography export'}
-    (args.output / 'manifest.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+    (output / 'manifest.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     LOG.info('Validated %s -> %s features, %s rejected', stored['expectedCount'], len(rows), len(rejected))
     print(json.dumps({k: report[k] for k in ['features', 'parquetBytes', 'geojsonBytes', 'gzipGeojsonBytes', 'rejectedCount', 'elapsedSeconds']}, indent=2))
 

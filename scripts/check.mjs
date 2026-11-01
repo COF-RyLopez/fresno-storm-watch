@@ -12,6 +12,7 @@ import { planningPoints } from '../site/lib/planning-model.js';
 import {validatePowerSnapshot} from '../site/lib/power-model.js';
 import {validateWindSnapshot} from '../site/lib/weather-model.js';
 import {validateAreaConcerns} from '../site/lib/area-concern-model.js';
+import {siteJson} from './lib/snapshot-io.mjs';
 
 const root = new URL('../', import.meta.url);
 for (const folder of ['site/', 'site/lib/', 'scripts/', 'scripts/lib/', 'services/scenarios/']) {
@@ -21,32 +22,32 @@ for (const folder of ['site/', 'site/lib/', 'scripts/', 'scripts/lib/', 'service
     assert.equal(result.status, 0, result.stderr);
   }
 }
-const counties = JSON.parse(await readFile(new URL('site/data/counties.geojson', root), 'utf8'));
+const counties = await siteJson('counties.geojson');
 assert.equal(validateCounties(counties).length, 5);
 const config = await readFile(new URL('site/config.js', root), 'utf8');
 assert(!/clientSecret\s*:|password\s*:|accessToken\s*:/i.test(config), 'Public config must not contain secret settings.');
 const html = await readFile(new URL('site/index.html', root), 'utf8');
 assert(html.includes('https://js.arcgis.com/5.1/'), 'Pinned SDK stylesheet expected');
-for (const file of ['index.html','setup.html','planning.html','terrain.html','eoc.html','eoc-guide.html','flood-scenario.html','flood-scenario-3d.html','map-pilot.html','scenario-guide.html','pump-readiness-test.html','pump-readiness.html','pump-inventory.html','pump-refresh-setup.html','zone-population.html']) {
+for (const file of (await readdir(new URL('site/', root))).filter(name => name.endsWith('.html'))) {
   const page=await readFile(new URL(`site/${file}`,root),'utf8');
   for (const match of page.matchAll(/(?:href|src)="(\.\/[^"?#]+)"/g)) await readFile(new URL(match[1], new URL('site/', root)));
 }
-const watch=JSON.parse(await readFile(new URL('site/data/river-watchlist.json',root),'utf8'));
+const watch=await siteJson('river-watchlist.json');
 assert.equal(watch.stations.length,9);
 assert.equal(new Set(watch.stations.map(s=>s.id)).size,9);
 for(const s of watch.stations)assert(/^[A-Z0-9]{5}$/.test(s.id)&&s.longitude>=-125&&s.longitude<=-114&&s.latitude>=32&&s.latitude<=43&&s.note,'Invalid watchpoint metadata');
-const cameras=JSON.parse(await readFile(new URL('site/data/camera-watchlist.json',root),'utf8'));
+const cameras=await siteJson('camera-watchlist.json');
 assert.equal(cameras.cameras.length,8);assert.equal(new Set(cameras.cameras.map(c=>c.id)).size,8);
-const reservoirSettings=JSON.parse(await readFile(new URL('site/data/reservoir-watchlist.json',root),'utf8'));
+const reservoirSettings=await siteJson('reservoir-watchlist.json');
 assert.deepEqual(reservoirSettings.stations.map(s=>s.id),['MIL','PNF']);
 for(const station of reservoirSettings.stations)assert(station.longitude>-121&&station.longitude<-118&&station.latitude>36&&station.latitude<38&&station.metrics.every(m=>['D','H'].includes(m.duration)&&['CFS','FEET','AF'].includes(m.units)),'Reservoir geography or metric contract changed');
-validateReservoirSnapshot(JSON.parse(await readFile(new URL('site/data/reservoir-latest.json',root),'utf8')));
-validateNetworkSnapshot(JSON.parse(await readFile(new URL('site/data/power-network.json',root),'utf8')));
-validatePowerSnapshot(JSON.parse(await readFile(new URL('site/data/power-latest.json',root),'utf8')));
-validateWindSnapshot(JSON.parse(await readFile(new URL('site/data/wind-latest.json',root),'utf8')));
-const areaSettings=JSON.parse(await readFile(new URL('site/data/river-areas.json',root),'utf8'));
+validateReservoirSnapshot(await siteJson('reservoir-latest.json'));
+validateNetworkSnapshot(await siteJson('power-network.json'));
+validatePowerSnapshot(await siteJson('power-latest.json'));
+validateWindSnapshot(await siteJson('wind-latest.json'));
+const areaSettings=await siteJson('river-areas.json');
 assert.equal(planningPoints(areaSettings,watch.stations,reservoirSettings.stations).length,11);
-const areaConcerns=JSON.parse(await readFile(new URL('site/data/area-concerns.json',root),'utf8')),windSettings=JSON.parse(await readFile(new URL('site/data/wind-watchlist.json',root),'utf8'));
+const areaConcerns=await siteJson('area-concerns.json'),windSettings=await siteJson('wind-watchlist.json');
 validateAreaConcerns(areaConcerns,areaSettings.areas,windSettings.sites);
 const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
 const pilotRuntime=JSON.parse(await readFile(new URL('docs/map-pilot-runtime.json',root),'utf8'));
@@ -56,10 +57,10 @@ console.log('Syntax, county geometry, nine river watchpoints, eight cameras, two
 
 const comparisonSites=uniqueComparisonPoints(comparisonAreas(areaSettings.areas,areaConcerns.areas,windSettings.sites,watch.stations));
 assert.equal(comparisonSites.length,7);
-validateComparisonSnapshot(JSON.parse(await readFile(new URL('site/data/comparison-latest.json',root),'utf8')),comparisonSites);
+validateComparisonSnapshot(await siteJson('comparison-latest.json'),comparisonSites);
 console.log('Seven public forecast-comparison points and scheduled snapshot schema checked.');
 
-const carePlaces=JSON.parse(await readFile(new URL('site/data/care-places/index.json',root),'utf8'));
+const carePlaces=await siteJson('care-places/index.json');
 const careBytes=await readFile(new URL('site/data/care-places/'+carePlaces.file,root));
 assert.equal(careBytes.length,carePlaces.bytes);assert.equal(createHash('sha256').update(careBytes).digest('hex'),carePlaces.sha256);
 assert.equal(carePlaces.accounting.read,carePlaces.accounting.retained+carePlaces.accounting.outside+carePlaces.accounting.invalid);

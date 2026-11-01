@@ -21,8 +21,8 @@ LOG = logging.getLogger('waterbody-search')
 def build_groups(features: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, int]]:
     """Group matching GNIS identities, preserving holes, multipart shapes and full extent."""
     from shapely.geometry import shape
-    from shapely.geometry.polygon import orient
     from shapely.ops import unary_union
+    esri_rings = runpy.run_path(str(ROOT / 'scripts/export-waterways.py'))['esri_rings']
     groups: dict[str, Any] = {}
     counts = {'input': len(features), 'otherFeatureType': 0, 'unnamed': 0, 'accepted': 0}
     seen = set()
@@ -59,10 +59,6 @@ def build_groups(features: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], 
         geometry = unary_union(group['polygons'])
         if not geometry.is_valid or geometry.geom_type not in ('Polygon', 'MultiPolygon'):
             raise ValueError('Invalid combined lake outline')
-        rings = []
-        for polygon in ([geometry] if geometry.geom_type == 'Polygon' else geometry.geoms):
-            polygon = orient(polygon, sign=-1.0)  # Esri exterior CW, holes CCW.
-            rings.extend([list(polygon.exterior.coords), *[list(r.coords) for r in polygon.interiors]])
         digest = hashlib.sha256(identity.encode()).hexdigest()[:20]
         key = 'waterbody:' + digest
         name, *aliases = sorted(group['names'])
@@ -71,7 +67,7 @@ def build_groups(features: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], 
                         'segments': len(group['ids']), 'bounds': list(geometry.bounds), 'shard': digest[:2] + '.json',
                         'detail': f"Full published lake / reservoir outline · {len(group['ids'])} source polygon(s)",
                         'reference': 'Complete publisher reference footprint, including all parts and holes; portions may extend outside Fresno County or the clipped basemap. Not a current shoreline, water level, flood extent or verified operating boundary. Nearby references use this footprint including its interior, not just the reporting point or shore.'})
-        geometries[key] = {'rings': rings, 'spatialReference': {'wkid': 4326}}
+        geometries[key] = {'rings': esri_rings(geometry), 'spatialReference': {'wkid': 4326}}
     return entries, geometries, counts
 
 

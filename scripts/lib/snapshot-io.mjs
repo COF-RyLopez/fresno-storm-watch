@@ -1,8 +1,11 @@
-/** Shared collector I/O: prior-snapshot fallback, atomic same-directory replace, bounded response reads, county boundary. */
+/** Shared collector I/O: prior-snapshot fallback, atomic same-directory replace, bounded response reads, county boundary, committed site/data JSON. */
 import {readFile,writeFile,rename} from 'node:fs/promises';
 
+/** @param {string} name path under site/data/ @returns {Promise<any>} Parsed committed JSON. */
+export const siteJson=async name=>JSON.parse(await readFile(new URL('../../site/data/'+name,import.meta.url),'utf8'));
+
 /** @returns {Promise<object>} Fresno County (GEOID 06019) from the committed boundary file. */
-export const fresnoCounty=async()=>JSON.parse(await readFile(new URL('../../site/data/counties.geojson',import.meta.url),'utf8')).features.find(f=>f.properties.GEOID==='06019');
+export const fresnoCounty=async()=>(await siteJson('counties.geojson')).features.find(f=>f.properties.GEOID==='06019');
 
 /** @param {URL} output @param {string|Buffer} data @returns {Promise<void>} Write <name>.tmp beside output, then rename over it. */
 export async function writeAtomic(output,data){
