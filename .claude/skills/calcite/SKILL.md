@@ -1,6 +1,6 @@
 ---
 name: calcite
-description: Use when building or changing UI in site/ with Esri Calcite components, --calcite-* tokens, or light/dark theming, or when replacing hand-rolled buttons, selects, inputs, tabs, badges, tables or banners with Calcite. Covers the exact Calcite build this app loads (5.1.1 via ArcGIS Maps SDK 5.1) and its differences from the 5.2 docs.
+description: Use when building or changing UI in site/ with Esri Calcite components, --calcite-* tokens, or light/dark theming, or when replacing hand-rolled buttons, selects, inputs, tabs, badges, tables or banners with Calcite. Covers the exact Calcite builds this app loads (5.1.1 via ArcGIS Maps SDK 5.1 on most pages, 5.2.0 directly on map-pilot), their differences, and the SDK 5.2 upgrade checklist.
 ---
 
 # Calcite in fresno-storm-watch
@@ -9,16 +9,31 @@ Full verified property lists, per-component CSS variables and the 5.1.1 -> 5.2 d
 Every name below was checked against developers.arcgis.com/calcite-design-system or the shipped 5.1.1 files.
 If a name is not here or in reference.md, look it up before using it.
 
-## 1. How Calcite loads here (version 5.1.1)
+## 1. How Calcite loads here (5.1.1 on SDK pages, 5.2.0 on map-pilot)
 
-- Pages load `<script type="module" src="https://js.arcgis.com/5.1/">`, which redirects to `/5.1/index.js`;
-  its first line is `import "../calcite-components/5.1.1/index.js"`. **The app runs Calcite 5.1.1.**
-- `site/map-pilot.html` (MapLibre, no Maps SDK) loads `https://js.arcgis.com/calcite-components/5.1.1/index.js` directly.
+**Check the page before using a prop.** Two Calcite versions are live, one per page (never two on one page):
+
+| Page(s) | Calcite | Why |
+|---|---|---|
+| Every page that loads the Maps SDK (`js.arcgis.com/5.1/`): index, eoc, flood-scenario(-3d), zone-population, pump-* | **5.1.1** | bundled by the released SDK 5.1 |
+| `site/map-pilot.html` (MapLibre, no Maps SDK) | **5.2.0** | loads `https://js.arcgis.com/calcite-components/5.2.0/index.js` directly |
+
+- SDK pages load `<script type="module" src="https://js.arcgis.com/5.1/">`, which redirects to `/5.1/index.js`;
+  its first line is `import "../calcite-components/5.1.1/index.js"`. A page cannot load a second Calcite
+  version beside the SDK's (the `calcite-*` custom elements can only be registered once, and SDK widgets are built against 5.1.1).
+- On map-pilot, the 5.2-only props listed below are allowed; everywhere else they silently do nothing.
+- **Upgrading the SDK pages to 5.2:** wait for the released Maps SDK 5.2 (as of 2026-11-01 npm `@arcgis/core`
+  `latest` is 5.1.27; `js.arcgis.com/5.2/` serves the `5.2.0-next` release candidate, which imports Calcite 5.2.0).
+  Then in one PR: bump every `js.arcgis.com/5.1/` script and theme URL (and `theme.js`), regenerate import maps / CSP
+  hashes, re-check the deprecations in reference.md (block `open`, dropdown `slot="trigger"`, accordion,
+  `--calcite-color-background`/`foreground-*`), adopt the 5.2 props that were held back (e.g. slider `label` for
+  `weather-time`, `scenario-clock`, `inundation-time`), browser-check light/dark (5.2 themes via `color-scheme` +
+  `light-dark()`; the `calcite-mode-*` classes still work), and update this section.
 - The Calcite entry registers every `calcite-*` tag lazily and injects its global CSS (tokens, mode classes)
   as a constructed stylesheet. No separate Calcite CSS `<link>` is needed. `<link id="esri-theme">` points at
   `https://js.arcgis.com/5.1/esri/themes/{dark|light}/main.css` (Maps SDK widgets + Calcite token blocks); `theme.js` swaps it.
 - **Docs describe 5.2** (get-started snippet `calcite-components/5.2`, `@esri/calcite-design-tokens` 4.2).
-  5.2-only props must not be used yet: block `expandable`, action-bar `expandToggleDisabled`/`overflowMode`,
+  5.2-only props must not be used on SDK (5.1.1) pages yet: block `expandable`, action-bar `expandToggleDisabled`/`overflowMode`,
   input/-text/-number `inlineEdit*`, table `stickyHeader`, switch `required`, slider `label` (in 5.1.1 name a single-handle slider with `min-label`; verified in Chromium), `calcite-text`. See reference.md.
 - CSP (`script-src`) allows only self + js.arcgis.com, and the import map is generated: after editing
   site JS/CSS run `npm run build:import-map`, then `npm test` (tests read page HTML and fail on stale maps).

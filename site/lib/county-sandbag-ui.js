@@ -66,8 +66,8 @@ export function createCountySandbags({exercise=false,timeZone='America/Los_Angel
     catch(e){error=e.message||'County sandbag feed unavailable';onData(snapshot?{...snapshot,error}:null);}
     finally{busy=false;$('county-sandbag-refresh').loading=false;render();}
   }
-  for(const id of ['county-sandbag-status','county-sandbag-area'])$(id).addEventListener('change',render);
-  $('county-sandbag-query').addEventListener('input',render);$('county-sandbag-refresh').addEventListener('click',()=>void refresh());
+  for(const id of ['county-sandbag-status','county-sandbag-area'])$(id).addEventListener('calciteSelectChange',render);
+  $('county-sandbag-query').addEventListener('calciteInputInput',render);$('county-sandbag-refresh').addEventListener('click',()=>void refresh());
   pane.addEventListener('stormEvidenceClose',()=>{selected=null;context?.removeAll();});
   root.addEventListener('toggle',()=>{if(root.open&&!snapshot)void refresh();});
   setInterval(()=>{if(!document.hidden)void refresh();},300000);setInterval(()=>{if(!document.hidden)render();},60000);

@@ -17,7 +17,7 @@ export function createMissionFollowups({openStore=createPrivateStore,sourceMonit
     const rows=missionFollowups(records),active=rows.filter(r=>r.active),overdue=rows.filter(r=>r.overdue);
     $('mission-followups-load').disabled=!session||busy;$('mission-followups-load').textContent=busy?'Checking follow-ups…':requested?'Refresh follow-ups':'Choose private incident';
     $('mission-followups-status').textContent=!session?'County sign-in required · incident follow-ups unassessed.':error?'Private follow-up check failed; retained details cleared. Reconnect and retry.':!requested?'Choose a private exercise incident to review its saved follow-ups.':busy?'Checking private exercise follow-ups…':!choices.size?'No exercise incidents returned. Record an incident in the EOC workspace first.':`${choices.get(incident)||incident} · ${active.length} active / ${overdue.length} overdue · checked ${time(checked)}. Updates are checked each minute while this tab is visible.`;
-    const picker=$('mission-followups-incident');$('mission-followups-incident-label').hidden=!choices.size;picker.hidden=!choices.size;picker.disabled=busy;const selected=picker.value;picker.replaceChildren(...[...choices].map(([id,name])=>{const o=el('option',name);o.value=id;return o;}));picker.value=incident||selected;
+    const picker=$('mission-followups-incident');$('mission-followups-incident-label').hidden=!choices.size;picker.hidden=!choices.size;picker.disabled=busy;const want=incident||picker.value;picker.replaceChildren(...[...choices].map(([id,name])=>{const o=el('calcite-option',name);o.value=id;o.selected=id===want;return o;}));picker.value=want;
     const host=$('mission-followups-list');host.replaceChildren();
     const shown=$('mission-followups-history').checked?rows:active;$('mission-followups-history-label').hidden=!checked||!rows.length;
     if(checked&&!shown.length)host.append(el('p',rows.length?'No active follow-ups. Include completed / canceled records to review history.':'No general follow-ups returned for this incident. Pump assignments use the separate pump-readiness workflow.'));
@@ -50,7 +50,7 @@ export function createMissionFollowups({openStore=createPrivateStore,sourceMonit
     }catch{if(version===epoch){sourceMonitor.clear();store?.close();store=null;choices.clear();records=[];pioNotices=[];pioChecked=null;pioBusy=false;checked=null;error=true;}}
     finally{if(version===epoch){busy=false;render();}}
   }
-  $('mission-followups-load').onclick=()=>void refresh(incident,{force:true});$('mission-followups-incident').onchange=e=>void refresh(e.target.value);$('mission-followups-history').onchange=render;
+  $('mission-followups-load').onclick=()=>void refresh(incident,{force:true});$('mission-followups-incident').addEventListener('calciteSelectChange',e=>void refresh(e.target.value));$('mission-followups-history').addEventListener('calciteCheckboxChange',render);
   setInterval(()=>{if(!document.hidden&&session&&requested&&!busy&&!pioBusy)void refresh();},60000);
   render();return {
     setSession(value){epoch++;sourceMonitor.clear();session=value;store?.close();store=null;incident='';choices.clear();records=[];pioNotices=[];pioChecked=null;pioBusy=false;pioError=false;checked=null;error=null;busy=false;requested=false;render();},
