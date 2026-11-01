@@ -2,7 +2,7 @@ import {comparisonWindow,compareForecasts} from './forecast-comparison-model.js'
 import {fetchComparison,loadComparisonAreas} from './forecast-comparison-data.js';
 import {formatTime} from './model.js';
 import {REVIEW_MAX_AGE as MAX_AGE,pointDifferences} from './forecast-review-model.js';
-import {el,link} from './dom.js';
+import {el,link,dataTable} from './dom.js';
 const $=id=>document.getElementById(id);
 const num=(v,unit)=>Number.isFinite(v)?`${v.toFixed(unit==='in'?2:1)} ${unit}`:'Unknown';
 
@@ -29,9 +29,7 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
     $('comparison-window').textContent=`Common 24-hour window: ${time(w.start)} → ${time(w.end)}. Starts at the next full UTC six-hour boundary; not a rolling next-24-hour total. Independent of the map slider.`;
     if(stale){host.append(el('p','Forecast check overdue. Previous values are withheld until checked again.'));return;}
     const rows=compareForecasts(pointDifferences(snapshot).rows,w),nws=rows.find(r=>r.id==='nws');
-    const overview=el('table');overview.className='comparison-table';overview.append(el('caption','Same-window comparison · full coverage required'));
-    const headings=el('tr');for(const label of ['Source','Precip. in','Wind mph','Gust mph']){const th=el('th',label);th.scope='col';headings.append(th);}const top=el('thead');top.append(headings);overview.append(top);
-    const values=el('tbody');for(const row of rows){const tr=el('tr'),name=el('th',row.id==='nws'?'NWS':row.id.includes('hrrr')?'HRRR':'GFS');name.scope='row';tr.append(name);for(const [key,places]of [['rain',2],['wind',1],['gust',1]])tr.append(el('td',row.error?'Unavailable':key==='gust'&&!row.gustProvided?'Not supplied':Number.isFinite(row.summary[key].value)?row.summary[key].value.toFixed(places):'Unknown'));values.append(tr);}overview.append(values);host.append(overview);
+    host.append(dataTable('Same-window comparison · full coverage required',['Source','Precip. in','Wind mph','Gust mph'],rows.map(row=>[row.id==='nws'?'NWS':row.id.includes('hrrr')?'HRRR':'GFS',...[['rain',2],['wind',1],['gust',1]].map(([key,places])=>row.error?'Unavailable':key==='gust'&&!row.gustProvided?'Not supplied':Number.isFinite(row.summary[key].value)?row.summary[key].value.toFixed(places):'Unknown')]),{rowHeader:true,end:[1,2,3]}));
     for(const row of rows){
       const block=el('calcite-block');block.heading=row.label;block.setAttribute('heading-level','3');block.setAttribute('expanded','');block.setAttribute('collapsible','');
       if(row.error){block.append(el('p',`Unavailable · ${row.error}. Other sources remain independent.`));host.append(block);continue;}
@@ -47,9 +45,7 @@ export function createForecastComparison({timeZone,exercise,onMap=()=>{},onLocat
       block.append(el('p',row.wettest?`Wettest six-hour period (first if tied): ${time(row.wettest.start)} → ${time(row.wettest.end)}`:s.rain.value===0?'No precipitation in this complete forecast window.':'Wettest period unknown; one or more precipitation periods are missing.'));
       if(s.wind.peak)block.append(el('p',`First maximum wind ${row.id==='nws'?'overlapping interval':'hourly sample'}: ${time(s.wind.peak.start)}${row.id==='nws'?` → ${time(s.wind.peak.end)}`:''}`));
       if(s.gust.peak)block.append(el('p',`First gust maximum ${row.id==='nws'?'overlapping interval':'hourly sample'}: ${time(s.gust.peak.start)}${row.id==='nws'?` → ${time(s.gust.peak.end)}`:''}`));
-      const table=el('table');table.className='comparison-table';table.append(el('caption','Six-hour timing · precipitation / maximum wind'));
-      const head=el('tr');for(const title of ['Valid period','Precip.','Wind'])head.append(el('th',title));const thead=el('thead');thead.append(head);table.append(thead);
-      const body=el('tbody');for(const p of row.periods){const tr=el('tr');tr.append(el('th',`${time(p.start)} → ${time(p.end)}`),el('td',num(p.rain.value,'in')),el('td',num(p.wind.value,'mph')));body.append(tr);}table.append(body);block.append(table);
+      block.append(dataTable('Six-hour timing · precipitation / maximum wind',['Valid period','Precip.','Wind'],row.periods.map(p=>[`${time(p.start)} → ${time(p.end)}`,num(p.rain.value,'in'),num(p.wind.value,'mph')]),{rowHeader:true,end:[1,2]}));
       const details=el('details');details.append(el('summary','Grid, method & source'));
       details.append(el('p',row.windMeaning),el('p',row.id==='nws'?`Requested point ${snapshot.point.latitude.toFixed(4)}, ${snapshot.point.longitude.toFixed(4)} · NWS grid ${row.grid.office} ${row.grid.x},${row.grid.y}. NWS and numerical models use different grids.`:`Nearest model cell ${row.selected.latitude.toFixed(4)}, ${row.selected.longitude.toFixed(4)}; requested ${snapshot.point.latitude.toFixed(4)}, ${snapshot.point.longitude.toFixed(4)}. Snapshot ${row.snapshotId||'not supplied'}.`));
       details.append(link('Source forecast data',row.source));if(row.catalog)details.append(el('p',row.attribution),link('Dataset metadata & license',row.catalog));block.append(details);host.append(block);

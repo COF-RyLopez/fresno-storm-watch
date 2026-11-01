@@ -80,3 +80,15 @@ test('selection guards ignore superseded successful or rejected reads even witho
     assert.doesNotMatch(text(context.element),/Old selection failed|No CDSS adult or senior care records/);
   }
 });
+
+test('AFN grids render as static calcite-tables with a header row, row headers and end-aligned values',async()=>{
+  const facility={name:'EXERCISE care home',type:'RESIDENTIAL-ELDERLY',city:'FRESNO',capacity:6,status:3};
+  const context=afnContext(zone,{readContext:async()=>topics().map(t=>t.key==='ccl'?{...t,rows:[facility]}:t),onHealth:()=>{}});
+  context.element.open=true;await context.element.emit('toggle');
+  const all=n=>[n,...(n.children||[]).flatMap(all)],wrap=all(context.element).find(n=>n.className==='data-table'&&n.children[1].caption.startsWith('Records and licensed capacity'));
+  const [caption,table]=wrap.children,[head,row]=table.children;
+  assert.equal(caption.attributes.get('aria-hidden'),'true');assert.equal(caption.textContent,table.caption);
+  assert.equal(table.tag,'calcite-table');assert.equal(table.interactionMode,'static');
+  assert.equal(head.slot,'table-header');assert.deepEqual(head.children.map(h=>[h.tag,h.heading,h.alignment]),[['calcite-table-header','Facility type',undefined],['calcite-table-header','Status code','end'],['calcite-table-header','Records','end'],['calcite-table-header','Licensed capacity','end']]);
+  assert.deepEqual(row.children.map(c=>[c.tag,c.heading??c.textContent]),[['calcite-table-header','RESIDENTIAL-ELDERLY'],['calcite-table-cell','3'],['calcite-table-cell','1'],['calcite-table-cell','6']]);
+});
