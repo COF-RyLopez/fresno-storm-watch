@@ -19,7 +19,8 @@ test('keeps only allowlisted storm alerts inside Fresno County and counts what i
   const s=await collect(feed());
   assert.equal(s.error,null);assert.equal(s.checkedAt,new Date(now).toISOString());
   assert.deepEqual(s.alerts.map(a=>a.subtype).sort(),['','HAZARD_ON_ROAD_OBJECT','HAZARD_WEATHER_FLOOD','HAZARD_WEATHER_FOG','HAZARD_WEATHER_HEAVY_RAIN','ROAD_CLOSED_HAZARD']);
-  assert.deepEqual(s.counts,{alerts:12,kept:6,notStormRelevant:4,outsideCounty:2,duplicates:0,jams:2,irregularities:1,byCategory:{Flooding:1,'Road closed':2,'Hazard on road':3}});
+  assert.deepEqual(s.counts,{alerts:12,kept:6,notStormRelevant:4,outsideCounty:2,duplicates:0,jams:2,irregularities:1,byCategory:{Flooding:1,'Road closed':2,'Hazard on road':3},
+    byType:{'ACCIDENT:ACCIDENT_MINOR':1,'JAM:JAM_HEAVY_TRAFFIC':1,'ROAD_CLOSED:NO_SUBTYPE':1,'ROAD_CLOSED:ROAD_CLOSED_CONSTRUCTION':1,'ROAD_CLOSED:ROAD_CLOSED_HAZARD':2,'WEATHERHAZARD:HAZARD_ON_ROAD_OBJECT':1,'WEATHERHAZARD:HAZARD_ON_ROAD_POT_HOLE':1,'WEATHERHAZARD:HAZARD_WEATHER_FLOOD':2,'WEATHERHAZARD:HAZARD_WEATHER_FOG':1,'WEATHERHAZARD:HAZARD_WEATHER_HEAVY_RAIN':1}});
   assert.deepEqual(s.feed,{startTime:'2026-11-01T17:58:00.000Z',endTime:'2026-11-01T17:59:00.000Z'});
   assert.equal(s.possiblyTruncated,false);
   assert.equal(wazeCategory('ROAD_CLOSED','ROAD_CLOSED_CONSTRUCTION'),null);assert.equal(wazeCategory('ACCIDENT','HAZARD_WEATHER_FLOOD'),null);
