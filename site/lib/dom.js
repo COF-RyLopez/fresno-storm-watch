@@ -16,3 +16,17 @@ export const classButton=(text,fn)=>{const b=elClass('calcite-button',text);b.se
 export const link=(text,url)=>{const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 export const nodeLink=(text,url)=>{const a=node('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
 export const classLink=(text,url)=>{const a=elClass('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;};
+
+/** Read-only calcite-table (5.1.1). Static mode keeps table/cell roles without a tab stop per cell. Calcite shows `caption` to assistive tech only, so an aria-hidden visible copy precedes it.
+ * rows: arrays of text or nodes (the first becomes a row header when rowHeader), or prebuilt calcite-table-row elements. end: column indexes aligned to the end (numbers). */
+export function dataTable(caption,head,rows,{rowHeader=false,end=[]}={}){
+  const make=tag=>document.createElement(tag),wrap=make('div'),label=make('div'),table=make('calcite-table');
+  wrap.className='data-table';label.className='data-table-caption';label.textContent=caption;label.setAttribute('aria-hidden','true');
+  table.caption=caption;table.interactionMode='static';table.scale='s';
+  const row=(cells,slot)=>{const r=make('calcite-table-row');if(slot)r.slot=slot;r.append(...cells);return r;};
+  const header=(text,i)=>{const h=make('calcite-table-header');h.heading=text;if(end.includes(i))h.alignment='end';return h;};
+  const cell=(value,i)=>{const c=make('calcite-table-cell');if(end.includes(i))c.alignment='end';if(typeof value!=='string')c.append(value);else if(end.includes(i)){const n=make('span');n.className='data-table-num';n.textContent=value;c.append(n);}else c.textContent=value;return c;};
+  if(head.length)table.append(row(head.map(header),'table-header'));
+  for(const cells of rows)table.append(Array.isArray(cells)?row(cells.map((v,i)=>i===0&&rowHeader?header(v,i):cell(v,i))):cells);
+  wrap.append(label,table);return wrap;
+}

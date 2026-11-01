@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-aSf2auWCShAafoKcb/MpPYlM97xMiyIajUk7SVq1GoM='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
-<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=1786332b0b"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=d2545541c4"><link rel="stylesheet" href="./mission.css?v=a103684f46"><link rel="stylesheet" href="./command.css?v=20cac0f0f1"><link rel="stylesheet" href="./drainage.css?v=0daab41331"><link rel="stylesheet" href="./care.css?v=7bc00c3502"><link rel="stylesheet" href="./dwr.css?v=3b4b0b4518"><link rel="stylesheet" href="./population.css?v=2da1cff8f9">
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=1786332b0b"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=7d68bff164"><link rel="stylesheet" href="./mission.css?v=a103684f46"><link rel="stylesheet" href="./command.css?v=20cac0f0f1"><link rel="stylesheet" href="./drainage.css?v=0daab41331"><link rel="stylesheet" href="./care.css?v=7bc00c3502"><link rel="stylesheet" href="./dwr.css?v=3b4b0b4518"><link rel="stylesheet" href="./population.css?v=02e1a23c8b">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
@@ -13,11 +13,11 @@
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=8fbcd18fb3",
 "./lib/acs-model.js":"./lib/acs-model.js?v=f7f8d10a79",
-"./lib/acs-ui.js":"./lib/acs-ui.js?v=9146fb62c9",
+"./lib/acs-ui.js":"./lib/acs-ui.js?v=0239dcaed9",
 "./lib/afn-data.js":"./lib/afn-data.js?v=2d74660dd5",
 "./lib/afn-model.js":"./lib/afn-model.js?v=06d708fe9a",
 "./lib/afn-snapshot-model.js":"./lib/afn-snapshot-model.js?v=c3b0970e67",
-"./lib/afn-ui.js":"./lib/afn-ui.js?v=47348b5ff0",
+"./lib/afn-ui.js":"./lib/afn-ui.js?v=ad2dee2ff6",
 "./lib/area-concern-exercise.js":"./lib/area-concern-exercise.js?v=fb6ceea12c",
 "./lib/area-concern-model.js":"./lib/area-concern-model.js?v=e5c976f8cc",
 "./lib/auth.js":"./lib/auth.js?v=28b402649f",
@@ -45,7 +45,7 @@
 "./lib/command-queue-model.js":"./lib/command-queue-model.js?v=574d4089a6",
 "./lib/county-sandbag-model.js":"./lib/county-sandbag-model.js?v=f6ddf83575",
 "./lib/county-sandbag-ui.js":"./lib/county-sandbag-ui.js?v=b519605922",
-"./lib/dom.js":"./lib/dom.js?v=517ea31a14",
+"./lib/dom.js":"./lib/dom.js?v=c28b6a3b48",
 "./lib/drainage-connections.js":"./lib/drainage-connections.js?v=0e7fae95f2",
 "./lib/drainage-data.js":"./lib/drainage-data.js?v=4211aff3e7",
 "./lib/drainage-model.js":"./lib/drainage-model.js?v=8eede1bed0",
@@ -79,7 +79,7 @@
 "./lib/fmfcd-symbology.js":"./lib/fmfcd-symbology.js?v=57ed1f2698",
 "./lib/forecast-comparison-data.js":"./lib/forecast-comparison-data.js?v=634b7e9452",
 "./lib/forecast-comparison-model.js":"./lib/forecast-comparison-model.js?v=a08d0c9ac1",
-"./lib/forecast-comparison-ui.js":"./lib/forecast-comparison-ui.js?v=1e21aff97d",
+"./lib/forecast-comparison-ui.js":"./lib/forecast-comparison-ui.js?v=2ad46686ae",
 "./lib/forecast-review-data.js":"./lib/forecast-review-data.js?v=2194ebd064",
 "./lib/forecast-review-model.js":"./lib/forecast-review-model.js?v=c8c118599d",
 "./lib/forecast-review-ui.js":"./lib/forecast-review-ui.js?v=f832d72374",
@@ -115,7 +115,7 @@
 "./lib/population-model.js":"./lib/population-model.js?v=dd56053986",
 "./lib/population-snapshot-data.js":"./lib/population-snapshot-data.js?v=4d59c17f6f",
 "./lib/population-snapshot-model.js":"./lib/population-snapshot-model.js?v=e1cbf529d7",
-"./lib/population-ui.js":"./lib/population-ui.js?v=463562d12c",
+"./lib/population-ui.js":"./lib/population-ui.js?v=87112e7eb3",
 "./lib/power-buildings-data.js":"./lib/power-buildings-data.js?v=22ebb7eb3f",
 "./lib/power-buildings-map.js":"./lib/power-buildings-map.js?v=e7d2f74514",
 "./lib/power-buildings-model.js":"./lib/power-buildings-model.js?v=a196298264",
@@ -149,7 +149,7 @@
 "./lib/pump-task-ui.js":"./lib/pump-task-ui.js?v=514af6508b",
 "./lib/release-model.js":"./lib/release-model.js?v=f2dcebaa96",
 "./lib/release-trend-model.js":"./lib/release-trend-model.js?v=a7bc004f6f",
-"./lib/release-trend-ui.js":"./lib/release-trend-ui.js?v=2a7d4da6f6",
+"./lib/release-trend-ui.js":"./lib/release-trend-ui.js?v=78461b17b7",
 "./lib/release-ui.js":"./lib/release-ui.js?v=6a850209f5",
 "./lib/river-chart.js":"./lib/river-chart.js?v=84bae751aa",
 "./lib/river-exercise.js":"./lib/river-exercise.js?v=336a25d5ab",

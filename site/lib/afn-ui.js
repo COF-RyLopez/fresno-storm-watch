@@ -2,14 +2,10 @@ import {AFN_SOURCES,AFN_LIMIT,CCL_LIMIT,summarizePercentiles,summarizeFacilities
 import {formatAcsMeasure} from './acs-model.js';
 import {readAfnContext} from './afn-data.js';
 import {reportHealth} from './source-health.js';
-import {node,nodeLink as link} from './dom.js';
+import {node,nodeLink as link,dataTable} from './dom.js';
 const number=v=>v===null?'Unknown':new Intl.NumberFormat('en-US').format(v);
-function grid(caption,head,rows){
-  const t=node('table');t.className='afn-table';const thead=node('thead'),tr=node('tr');t.append(node('caption',caption));
-  for(const label of head){const th=node('th',label);th.scope='col';tr.append(th);}thead.append(tr);const body=node('tbody');
-  for(const cells of rows){const row=node('tr'),th=node('th',cells[0]);th.scope='row';row.append(th,...cells.slice(1).map(c=>node('td',c)));body.append(row);}
-  t.append(thead,body);return t;
-}
+// Values after the row header are end-aligned, as the native table's cells were.
+const grid=(caption,head,rows)=>dataTable(caption,head,rows,{rowHeader:true,end:head.map((_,i)=>i).slice(1)});
 const TITLES={languages:'Hmong & Punjabi · Census PUMA',svi:'CDC/ATSDR Social Vulnerability Index 2022',ces:'CalEnviroScreen 4.0 & SB 535 disadvantaged communities',ccl:'CDSS community care · adult & senior'};
 const render={
   languages(t,s){

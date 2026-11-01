@@ -2,7 +2,7 @@ import {buildReleaseTrend,TREND_REACHES,trendSegments} from './release-trend-mod
 import {HOUR,riverValue} from './river-model.js';
 import {formatTime} from './model.js';
 import {svgNode as svg} from './river-chart.js';
-import {classLink as link,elClass as el} from './dom.js';
+import {classLink as link,elClass as el,dataTable} from './dom.js';
 
 const $=id=>document.getElementById(id);
 
@@ -51,8 +51,9 @@ export function releaseTrendChart(series,model,domain,release,zone,selectionKey=
   chart.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)||!rows.length)return;event.preventDefault();cursor=event.key==='Home'?0:event.key==='End'?rows.length-1:Math.max(0,Math.min(rows.length-1,cursor+(event.key==='ArrowRight'?1:-1)));readout.setAttribute('aria-live','polite');inspect();});
   chart.addEventListener('focus',inspect);
   const caption=el('figcaption',`${release?(series.daily?'Blue dots: daily reports at the midpoint of their PST report date.':'Solid blue: reported hourly releases.'):'Solid blue: observations. Dashed purple: NWS forecast; grey dashed: old forecast.'} ${release?'Hollow diamonds: planned releases. ':''}Dotted amber guides mark reservoir schedule times, not downstream arrival. Times: ${zone}.`);
+  const sampleTable=()=>{const table=dataTable(`${series.title} (${series.units}) · chart data`,['Type','Time / report date',series.units],rows.map(p=>[p.kind==='scheduled'?'Planned':p.kind,p.kind==='daily report'?`${p.reportDate} PST`:time(p.time),riverValue(p.value)]),{end:[2]});table.classList.add('trend-table-scroll');return table;};
   const data=el('details','','trend-sample-data');data.append(el('summary',`Inspect chart data (${rows.length} valid samples)`));
-  data.addEventListener('toggle',()=>{if(!data.open||data.children.length>1)return;const wrap=el('div','','trend-table-scroll'),table=el('table');const head=el('thead'),tr=el('tr');for(const label of ['Type','Time / report date',series.units])tr.append(el('th',label));head.append(tr);table.append(head);const body=el('tbody');for(const p of rows){const row=el('tr');row.append(el('td',p.kind==='scheduled'?'Planned':p.kind),el('td',p.kind==='daily report'?`${p.reportDate} PST`:time(p.time)),el('td',riverValue(p.value)));body.append(row);}table.append(body);wrap.append(table);data.append(wrap);});
+  data.addEventListener('toggle',()=>{if(!data.open||data.children.length>1)return;data.append(sampleTable());});
   figure.append(chart,readout,caption,data);return figure;
 }
 
