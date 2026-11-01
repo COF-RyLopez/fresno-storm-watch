@@ -142,6 +142,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
       if(viewEventData(event).layer===buildings){buildingViews.set(view,'error');updateStatus();}
     });
   };
+  const syncWater=()=>{named.visible=unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());};
   for (const layer of [named,unnamed]) void layer.load().catch(()=>{waterError=true;updateStatus();});
   return {
     bindView,
@@ -162,8 +163,8 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
       console.debug(`County waterway lookup: ${result.features.length} publisher records, ${retained.length} county-intersecting records`);
       return retained;
     },
-    setBasemapReference:value=>{basemapReference=!!value;named.visible=waterEnabled&&!basemapReference;unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());updateStatus();},
-    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;named.visible=waterEnabled&&!basemapReference;unnamed.visible=waterEnabled&&!basemapReference;void names.then(labels=>labels?.sync());if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
+    setBasemapReference:value=>{basemapReference=!!value;syncWater();updateStatus();},
+    setVisibility:(water,build)=>{waterEnabled=!!water;buildingsWanted=!!build;syncWater();if(buildings)buildings.visible=buildingsWanted&&getView().type==='3d';void ensureBuildings();updateStatus();},
     onViewChanged:()=>{
       const view=getView();void names.then(labels=>labels?.changeView());
       if(buildings){

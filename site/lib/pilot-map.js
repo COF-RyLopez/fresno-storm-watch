@@ -1,6 +1,7 @@
 import {countyGeometry} from './model.js';
 import {PILOT_BOUNDS,collection} from './pilot-model.js';
 import {waterwayStyle} from './waterway-basemap.js';
+import {withTimeout} from './with-timeout.js';
 
 const BASE='https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_';
 export const styleId=view=>view==='rivers'?'frog-waterways-0.33.0':'esri-dark-gray';
@@ -13,7 +14,7 @@ export async function pilotStyle(view){
 }
 /** ArcGIS service metadata is not standard TileJSON; use its documented tile template. */
 export function libreStyle(style){const s=structuredClone(style);if(s.sources.esri)s.sources.esri={type:'vector',tiles:['https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf'],minzoom:0,maxzoom:16,attribution:'Esri, HERE, Garmin, FAO, NOAA, USGS, OpenStreetMap contributors'};return s;}
-const timeout=(promise,ms)=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Map did not settle within '+ms/1000+' seconds')),ms);Promise.resolve(promise).then(value=>{clearTimeout(timer);resolve(value);},error=>{clearTimeout(timer);reject(error);});});
+const timeout=(promise,ms)=>withTimeout(promise,ms,'Map did not settle within '+ms/1000+' seconds');
 const rendered=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
 /** Lazy renderer: MapLibre mode never imports the ArcGIS map engine. */

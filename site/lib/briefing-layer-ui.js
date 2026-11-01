@@ -10,7 +10,7 @@ const $=id=>document.getElementById(id);
 const cycleQuery=s=>{const q=new URL(`${s.service}/${s.layer}/query`);q.search=new URLSearchParams({f:'json',where:'1=1',outFields:'product,issue_time,start_time,end_time'+(s.field==='qpf'?',units':''),returnGeometry:'false',returnDistinctValues:'true'});return q;};
 /** Public live services only. Tour state, source revisions and features stay in page memory. */
 export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMap=()=>{},onStart=()=>{},onStop=()=>{},onBriefing=()=>{},onManual=()=>{}}){
-  let map=null,FeatureLayer=null,MediaLayer=null,ImageElement=null,ExtentAndRotationGeoreference=null,Extent=null,index=0,active=false,busy=false,cycle=null,checked=null,error=null,generation=0,abort=null,next=0,legend=[];
+  let map=null,FeatureLayer=null,MediaLayer=null,ImageElement=null,ExtentAndRotationGeoreference=null,Extent=null,webMercatorUtils=null,index=0,active=false,busy=false,cycle=null,checked=null,error=null,generation=0,abort=null,next=0,legend=[];
   const imageUrls=new Map();
   let slideGeneration=0,slideAbort=null,slideContext=null,followingBusy=false,slideNote='Select a slide to compare its source with the live map.';
   const layers=new Map(),failed=new Set(),step=()=>BRIEFING_LAYERS[index],time=t=>formatTime(t,timeZone);
@@ -55,8 +55,7 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
       if(request!==generation||signal.aborted)return null;
       if(map&&MediaLayer){
         let layer=layers.get(s.id);
-        const mercator=(lon,lat)=>[6378137*lon*Math.PI/180,6378137*Math.log(Math.tan(Math.PI/4+lat*Math.PI/360))];
-        const b=snapshot.bounds,[xmin,ymin]=mercator(b.xmin,b.ymin),[xmax,ymax]=mercator(b.xmax,b.ymax);
+        const b=snapshot.bounds,[xmin,ymin]=webMercatorUtils.lngLatToXY(b.xmin,b.ymin),[xmax,ymax]=webMercatorUtils.lngLatToXY(b.xmax,b.ymax);
         const element=new ImageElement({image,georeference:new ExtentAndRotationGeoreference({extent:new Extent({xmin,ymin,xmax,ymax,spatialReference:{wkid:3857}})})});
         if(!layer){layer=new MediaLayer({title:'WPC probability · '+s.label,visible:false,opacity:1,source:[element],copyright:'NOAA / National Weather Service / Weather Prediction Center'});layers.set(s.id,layer);map.registerLayer('briefingLayers',layer,false,1);watchLayer(layer,s.id);}
         else{layer.source.elements.removeAll();layer.source.elements.add(element);}
@@ -131,5 +130,5 @@ export function createBriefingLayers({timeZone,exercise=false,onOpen=()=>{},onMa
   window.addEventListener('popstate',()=>{const q=new URLSearchParams(location.search),id=q.get('briefingLayer');if(inWeather()&&slideContext?.follow)void followSlide(slideContext);else if(inWeather()&&BRIEFING_LAYERS.some(s=>s.id===id))open(id,{history:false,fit:false,origin:'route'});else if(active)stop(true,false);});
   if(exercise)picker.disabled=true;
   render();const initialQuery=new URLSearchParams(location.search),initial=initialQuery.get('briefingLayer');if(['weather','conditions'].includes(initialQuery.get('view'))&&BRIEFING_LAYERS.some(s=>s.id===initial))open(initial,{history:false,fit:false,origin:'route'});
-  return {open,stop,followSlide,async setMap(controller){map=controller;try{const sdk=await loadSdk();[FeatureLayer,MediaLayer,ImageElement,ExtentAndRotationGeoreference,Extent]=await sdk.import(['@arcgis/core/layers/FeatureLayer.js','@arcgis/core/layers/MediaLayer.js','@arcgis/core/layers/support/ImageElement.js','@arcgis/core/layers/support/ExtentAndRotationGeoreference.js','@arcgis/core/geometry/Extent.js']);map.onViewChanged(render);if(active){map.setLayerPreference('briefingLayers',true);void refresh();}}catch(e){error=e.message;}render();}};
+  return {open,stop,followSlide,async setMap(controller){map=controller;try{const sdk=await loadSdk();[FeatureLayer,MediaLayer,ImageElement,ExtentAndRotationGeoreference,Extent,webMercatorUtils]=await sdk.import(['@arcgis/core/layers/FeatureLayer.js','@arcgis/core/layers/MediaLayer.js','@arcgis/core/layers/support/ImageElement.js','@arcgis/core/layers/support/ExtentAndRotationGeoreference.js','@arcgis/core/geometry/Extent.js','@arcgis/core/geometry/support/webMercatorUtils.js']);map.onViewChanged(render);if(active){map.setLayerPreference('briefingLayers',true);void refresh();}}catch(e){error=e.message;}render();}};
 }
