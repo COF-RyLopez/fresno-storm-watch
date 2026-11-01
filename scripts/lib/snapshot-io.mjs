@@ -1,4 +1,4 @@
-/** Shared collector I/O: prior-snapshot fallback, atomic same-directory replace, county boundary. */
+/** Shared collector I/O: prior-snapshot fallback, atomic same-directory replace, bounded response reads, county boundary. */
 import {readFile,writeFile,rename} from 'node:fs/promises';
 
 /** @returns {Promise<object>} Fresno County (GEOID 06019) from the committed boundary file. */
@@ -9,6 +9,9 @@ export async function writeAtomic(output,data){
   const temporary=new URL(output.href.replace(/\.[^./]+$/,'.tmp'));
   await writeFile(temporary,data,'utf8');await rename(temporary,output);
 }
+
+/** @param {Response} response @param {number} max @param {string} httpLabel @param {string} tooLargeMessage @returns {Promise<Buffer>} Bound streamed responses, including missing content lengths. */
+export async function bounded(response,max,httpLabel,tooLargeMessage){if(!response.ok)throw new Error(`${httpLabel} HTTP ${response.status}`);let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>max)throw new Error(tooLargeMessage);chunks.push(chunk);}return Buffer.concat(chunks);}
 
 /**
  * Validated local prior; with --published and `published`, a newer validated Pages copy replaces it.

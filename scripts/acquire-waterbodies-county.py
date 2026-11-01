@@ -7,10 +7,10 @@ to the county envelope to retain boundary-crossing lake/reservoir context.
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import json
 import logging
 import math
+import runpy
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -71,17 +71,15 @@ def convert(features: list[dict[str, Any]], county: Any, oid: str) -> tuple[list
 
 def acquire() -> None:
     """Download an enumerated, resumable inventory; replace output only after validation."""
-    spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
-    source = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(source)
+    source = runpy.run_path(str(ROOT / 'scripts' / 'export-waterways.py'))
 
     def request(params: dict[str, Any], url: str = SOURCE + '/query') -> dict[str, Any]:
         """Retry bounded public REST requests; preserve errors and verify TLS."""
-        return source.request_json(url, params, retries=3, error='USGS waterbody service error',
-                                   headers={'User-Agent': 'FresnoStormWatch/0.33 reference-export', 'Accept-Encoding': 'gzip'})
+        return source['request_json'](url, params, retries=3, error='USGS waterbody service error',
+                                      headers={'User-Agent': 'FresnoStormWatch/0.33 reference-export', 'Accept-Encoding': 'gzip'})
 
     boundary = ROOT / 'site' / 'data' / 'counties.geojson'
-    county, filter_geometry = source.county_filter(boundary)
+    county, filter_geometry = source['county_filter'](boundary)
     output = ROOT / 'work' / 'waterbodies-county'
     cache = output / 'batches'
     cache.mkdir(parents=True, exist_ok=True)
@@ -104,18 +102,14 @@ def acquire() -> None:
 
     def batch(part: list[int]) -> list[dict[str, Any]]:
         """GeoJSON is requested in RFC7946 WGS84 XY with Z/M disabled."""
-        path = cache / f'{key}-{part[0]}.json'
-        data = json.loads(path.read_text(encoding='utf-8')) if path.exists() else request({
+        def check(data: dict[str, Any]) -> list[dict[str, Any]]:
+            features = data.get('features') or []
+            if data.get('exceededTransferLimit') or sorted(f['properties'][oid] for f in features) != part:
+                raise RuntimeError('Waterbody query truncated or inventory changed')
+            return features
+        return source['cached_json'](cache / f'{key}-{part[0]}.json', lambda: request({
             'f': 'geojson', 'objectIds': ','.join(map(str, part)), 'outFields': ','.join(fields),
-            'outSR': 4326, 'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'})
-        features = data.get('features') or []
-        if data.get('exceededTransferLimit') or sorted(f['properties'][oid] for f in features) != part:
-            raise RuntimeError('Waterbody query truncated or inventory changed')
-        if not path.exists():
-            temporary = path.with_suffix('.tmp')
-            temporary.write_text(json.dumps(data, separators=(',', ':')), encoding='utf-8')
-            temporary.replace(path)
-        return features
+            'outSR': 4326, 'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'}), check)
 
     features = []
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -141,7 +135,7 @@ def acquire() -> None:
         'limitations': 'Published reference footprints, not current shorelines, observed water levels, flood extents, predicted inundation or a complete local pond/basin inventory. Feature types remain publisher classifications.',
         'dimensionPolicy': 'Requested RFC7946 WGS84 XY with outSR=4326, returnZ=false and returnM=false; no vertical datum or elevation use.',
         'license': 'USGS open, non-proprietary federal reference data; acknowledgment retained.'}
-    source.write_snapshot(output, rows, manifest)
+    source['write_snapshot'](output, rows, manifest)
     LOG.info('Validated %s waterbodies; types: %s', len(rows), kinds)
 
 

@@ -11,10 +11,10 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
-import importlib.util
 import json
 import logging
 from pathlib import Path
+import runpy
 import struct
 from typing import Any
 import xml.etree.ElementTree as ET
@@ -85,16 +85,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fid-archive', type=Path, help='Optional local FID 2018 ZIP to inspect; never republished')
     args = parser.parse_args()
-    spec = importlib.util.spec_from_file_location('waterways', ROOT / 'scripts' / 'export-waterways.py')
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = runpy.run_path(str(ROOT / 'scripts' / 'export-waterways.py'))
 
     def query(layer: int, params: dict[str, Any]) -> dict[str, Any]:
         """POST bounded read-only queries; fail on service errors instead of truncating."""
-        return module.request_json(f'{CALWATRS}/{layer}/query', params, timeout=60, error=f'CalWATRS layer {layer}', headers={})
+        return module['request_json'](f'{CALWATRS}/{layer}/query', params, timeout=60, error=f'CalWATRS layer {layer}', headers={})
 
     boundary = ROOT / 'site' / 'data' / 'counties.geojson'
-    _, geometry = module.county_filter(boundary)
+    _, geometry = module['county_filter'](boundary)
     spatial = {'where': '1=1', 'geometry': json.dumps(geometry),
                'geometryType': 'esriGeometryPolygon', 'inSR': 4326,
                'spatialRel': 'esriSpatialRelIntersects'}
