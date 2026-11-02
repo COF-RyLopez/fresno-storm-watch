@@ -41,7 +41,7 @@ test('legacy conditions and release links, initial landing and canonical tab lin
 });
 test('Calcite shell retains unique live control ids and one pinned runtime after the split',async()=>{
   const html=await readFile(new URL('../site/index.html',import.meta.url),'utf8');const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size,'DOM ids must remain unique');
-  for(const id of Object.keys(WORKSPACES)){assert(ids.includes('tab-'+id));assert(ids.includes(WORKSPACES[id].panel));}
+  for(const id of Object.keys(WORKSPACES)){assert.equal(ids.includes('tab-'+id),id!=='storm',`County Watch topic tab for ${id} (Storm now is its own mission button)`);assert(ids.includes(WORKSPACES[id].panel));}
   for(const id of ['context-menu','map-tools-menu','camera-sheet','source-health-dialog','notify-areas','notify-alerts','notify-power','notify-health'])assert(ids.includes(id));
   assert.equal((html.match(/type="module" src="https:\/\/js.arcgis.com\/5.1\/"/g)||[]).length,1);assert(!html.includes('cdn.jsdelivr.net/npm/@esri/calcite'));
 });

@@ -25,7 +25,9 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     evidence?.layout();
     for(const title of document.querySelectorAll('[data-workspace]')){title.selected=title.dataset.workspace===section;title.toggleAttribute('selected',title.selected);}
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
-    $('storm-shell').dataset.workspace=section;$('storm-shell').dataset.destination=mission;$('workspace-tabs').hidden=true;
+    $('storm-shell').dataset.workspace=section;$('storm-shell').dataset.destination=mission;
+    // County Watch topics are visible tabs; Storm now, Planning and Briefing are their own missions.
+    $('workspace-tabs').hidden=mission!=='watch'||section==='storm';
     $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Planning':'Briefing'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     mapLabels();
   }
@@ -39,8 +41,9 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     window.dispatchEvent(new Event('stormWorkspaceChange'));
   }
   function showMap(){panelOpen=!compact.matches;render();}
-  // Legacy tab elements remain hidden for compatibility. Their asynchronous activation
-  // events must not re-navigate after a topic-menu choice or a browser history change.
+  // County Watch topic tabs navigate on user clicks / Enter / Space only: Calcite's own activation events can
+  // arrive late after a programmatic selection or a browser history change and must not re-navigate.
+  for(const t of document.querySelectorAll('#workspace-tabs calcite-tab-title')){const go=()=>{if(t.dataset.workspace!==section)showPanel(t.dataset.workspace);};t.addEventListener('click',go);t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go();});}
   window.addEventListener('popstate',()=>{cameraStates.set(section,camerasOpen);section=workspaceRoute(location.href);camerasOpen=cameraStates.get(section)||false;mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';evidence?.close({restoreFocus:false});render();if(map)void map.setWorkspace(section);onCameraChange(camerasOpen);onActivate(section);});
   $('workspace-list').addEventListener('click',()=>{panelOpen=true;render();});
   document.querySelectorAll('[data-show-map]').forEach(b=>b.addEventListener('click',showMap));

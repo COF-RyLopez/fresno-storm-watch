@@ -14,7 +14,6 @@
 .scope-bar #eyebrow{font-size:10px}
 .county-strip{gap:0 6px;padding:1px 8px;flex-wrap:wrap;align-items:center}
 .county-strip calcite-button{flex:0 1 auto}
-.topic-tools-list{display:grid;padding:8px}
 .command-watch{padding:0}
 #mission-counts{padding:10px 14px 0;color:var(--calcite-color-text-2);font-size:12px;line-height:1.5}
 .command-list-controls{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--calcite-color-border-3)}
@@ -49,7 +48,6 @@
  .scope-bar{padding:0 8px;gap:2px 8px}
  .scope-bar #eyebrow{display:none}
  .scope-bar .mission-clock{margin-inline-start:0;font-size:10px}
- .scope-bar #mission-tools-toggle{margin-inline-start:auto}
  .county-strip{justify-content:flex-start;padding:0 4px;gap:0 2px}
 }
 
