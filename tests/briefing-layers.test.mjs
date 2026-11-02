@@ -7,7 +7,7 @@ const data=(s=rain)=>({features:[{attributes:{product:s.product,issue_time:'2026
 test('guided steps distinguish seven NOAA feature layers from six WPC probability image selections',()=>{
   assert.equal(BRIEFING_LAYERS.length,13);assert.equal(new Set(BRIEFING_LAYERS.map(s=>s.id)).size,13);
   for(const s of BRIEFING_LAYERS.filter(s=>s.kind!=='probability'))assert.equal(new URL(s.service).hostname,'mapservices.weather.noaa.gov');
-  assert.match(rain.relationship,/do not reproduce/);assert.match(ero.relationship,/latest published cycle/);assert.equal(winter.page,14);
+  assert.match(rain.relationship,/do not reproduce/);assert.match(ero.relationship,/latest published cycle/);
 });
 test('UTC parsing accepts NOAA daily and WSSI formats without local time assumptions',()=>{
   assert.equal(briefingLayerTime('2026-10-19 2019Z'),Date.parse('2026-10-19T20:19:00Z'));

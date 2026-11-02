@@ -46,10 +46,8 @@ test('fresh collection does not renew an old briefing and a stale collection sta
   const oldFile={...r.snapshot,document:{...r.snapshot.document,sourceUpdatedAt:new Date(now).toISOString(),fileModifiedAt:new Date(now-37*3600_000).toISOString()}};assert.match(briefingState(oldFile,now).label,/Older briefing/);
   assert.throws(()=>validateBriefingSnapshot({...r.snapshot,sourcePdf:HNX_BRIEFING_PDF+'?token=not-allowed'}));
 });
-test('deployed current PDF and dated partner deck match their published provenance',async()=>{
+test('deployed current PDF matches its published provenance',async()=>{
   const s=validateBriefingSnapshot(JSON.parse(await readFile(new URL('../site/data/hanford-briefing.json',import.meta.url),'utf8'))),bytes=await readFile(new URL('../site/data/hanford-briefing-current.pdf',import.meta.url));assert.equal(createHash('sha256').update(bytes).digest('hex'),s.document.sha256);assert.equal(bytes.length,s.document.bytes);
-  const archive=await readFile(new URL('../site/data/briefings/nws-hanford-2026-10-19.pdf',import.meta.url));assert.equal(createHash('sha256').update(archive).digest('hex'),'28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4');
   assert(s.document.previews.length>0&&s.document.previews.length<=40);for(const p of s.document.previews){const im=await readFile(new URL('../site/'+p.path.slice(2),import.meta.url));assert.equal(im.subarray(0,4).toString(),'RIFF');assert.equal(im.subarray(8,12).toString(),'WEBP');}
-  for(let i=1;i<=19;i++){const im=await readFile(new URL(`../site/data/briefing-previews/28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4/${i}.webp`,import.meta.url));assert.equal(im.subarray(8,12).toString(),'WEBP');}
   assert.throws(()=>validateBriefingSnapshot({...s,document:{...s.document,previews:[{path:'https://example.com/image.svg',width:1200,height:900}]}}));
 });

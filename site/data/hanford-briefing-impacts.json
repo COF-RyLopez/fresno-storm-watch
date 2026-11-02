@@ -10,16 +10,6 @@
       "pages": 4,
       "sourcePage": "https://www.weather.gov/hnx/briefing",
       "sourcePdf": "https://www.weather.gov/media/hnx/smokeImages/partneremail.pdf"
-    },
-    {
-      "id": "partner-2026-10-19",
-      "kind": "archive",
-      "label": "NWS Hanford partner slides · Oct 19, 2026",
-      "date": "2026-10-19",
-      "sha256": "28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4",
-      "pages": 19,
-      "sourcePage": "https://www.weather.gov/hnx/briefing",
-      "sourcePdf": "./data/briefings/nws-hanford-2026-10-19.pdf"
     }
   ],
   "impacts": [
@@ -38,22 +28,6 @@
       "probability": "No county-wide rainfall probability is stated in this page's key points.",
       "planning": "Planning / Operations: review drainage and culvert inspection coverage, road crew availability, and access to owner-approved staging sites before the forecast window.",
       "limitation": "Rain does not establish river flooding or safe access. Check current gauges, reservoir operators and official closures. Kern County wind and heavy-rain details on this page are excluded."
-    },
-    {
-      "id": "fresno-foothills-rain",
-      "document": "partner-2026-10-19",
-      "page": 2,
-      "area": "Fresno foothills & lower Sierra",
-      "overview": "Light rain · Oct 20 night–22 afternoon · categorical confidence not stated",
-      "geography": "Fresno portions of the regional foothills / lower-Sierra forecast, below 8,000 ft; not a delineated watershed forecast.",
-      "impact": "Partner key points describe light rainfall below 8,000 ft.",
-      "firstDate": "2026-10-20",
-      "lastDate": "2026-10-22",
-      "timing": "Regional storm arrival late Tuesday night, Oct 20, into early Wednesday, Oct 21; continues through Thursday afternoon, Oct 22, 2026 · local PDT.",
-      "confidence": "No categorical confidence stated in these key points. The stated rainfall probability is a separate measure.",
-      "probability": "40–60% chance of 0.5 in of rain in the foothills / lower Sierra. The key points do not specify the accumulation interval; do not treat this as a 24-hour county probability.",
-      "planning": "Planning / Operations: confirm river-operator contacts, current releases and downstream gauge coverage for the San Joaquin and Kings systems; review inspection access and resource lead times with the responsible owners.",
-      "limitation": "This is a dated partner deck, not the continuously checked public summary. Rainfall probability is not a runoff estimate, downstream arrival time or prepositioning order."
     },
     {
       "id": "fresno-high-sierra-snow",
