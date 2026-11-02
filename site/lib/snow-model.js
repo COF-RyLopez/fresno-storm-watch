@@ -37,3 +37,39 @@ export function snowLines(text){
   const flat=String(text||'').replace(/\s+/g,' ');
   return flat.split(/(?<=[.!?])\s+(?=[A-Z])/).filter(s=>/\bsnow(fall| levels?| accumulations?)?\b|\bfreezing level/i.test(s)).map(s=>s.trim()).slice(0,5);
 }
+
+const R_KM=6371.0088;
+/** @param {number[]} a [lon,lat] @param {number[]} b @returns {number} Great-circle km. */
+export function km(a,b){const r=Math.PI/180,dp=(b[1]-a[1])*r,dl=(b[0]-a[0])*r,h=Math.sin(dp/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dl/2)**2;return 2*R_KM*Math.asin(Math.sqrt(h));}
+/** Join a road's segments into lines: start at the end farthest from the road's centre, then repeatedly take the nearest
+ * unused segment (reversed if its far end is closer). A gap over GAP_KM starts a new part instead of a straight jump,
+ * so neither the map nor the profile crosses open country.
+ * ponytail: greedy, fine for the county's few-dozen-segment roads; a graph walk if branches ever matter.
+ * @param {number[][][]} paths @returns {number[][][]} parts in travel order */
+export const GAP_KM=0.3;
+export function chainPaths(paths){
+  const segs=paths.filter(p=>p.length>1).map(p=>p.slice());if(!segs.length)return [];
+  const all=segs.flat(),c=[all.reduce((a,p)=>a+p[0],0)/all.length,all.reduce((a,p)=>a+p[1],0)/all.length];
+  let start=null;segs.forEach((p,i)=>{for(const [pt,rev] of [[p[0],false],[p.at(-1),true]]){const d=km(c,pt);if(!start||d>start.d)start={i,rev,d};}});
+  let line=start.rev?segs[start.i].slice().reverse():segs[start.i];const parts=[line],used=new Set([start.i]);
+  while(used.size<segs.length){
+    let best=null;for(let i=0;i<segs.length;i++)if(!used.has(i))for(const rev of [false,true]){const d=km(line.at(-1),rev?segs[i].at(-1):segs[i][0]);if(!best||d<best.d)best={i,rev,d};}
+    used.add(best.i);const next=best.rev?segs[best.i].slice().reverse():segs[best.i];
+    if(best.d>GAP_KM){line=next.slice();parts.push(line);}else line.push(...next.slice(best.d<0.01?1:0));
+  }
+  return parts;
+}
+/** 3DEP getSamples -> ordered, de-duplicated [{km, m}] along the line (the service returns samples out of order and repeats some). */
+export function profileSamples(samples){
+  const byId=new Map();for(const s of samples||[]){const v=Number(s.value);if(Number.isFinite(v)&&!byId.has(s.locationId))byId.set(s.locationId,{x:s.location.x,y:s.location.y,m:v});}
+  const pts=[...byId.entries()].sort((a,b)=>a[0]-b[0]).map(([,p])=>p);let d=0;
+  return pts.map((p,i)=>{if(i)d+=km([pts[i-1].x,pts[i-1].y],[p.x,p.y]);return {km:d,m:p.m};});
+}
+/** @returns {{lengthMi:number,lowFt:number,highFt:number,aboveMi:number|null}} aboveMi: length at or above the snow level (null without one). */
+export function profileStats(points,snowM){
+  const ms=points.map(p=>p.m);let above=0;
+  for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],seg=b.km-a.km;if(snowM===null)continue;
+    if(a.m>=snowM&&b.m>=snowM)above+=seg;else if(a.m>=snowM||b.m>=snowM){const f=(snowM-a.m)/(b.m-a.m);above+=a.m>=snowM?seg*f:seg*(1-f);}}
+  const mi=k=>k/1.609344;
+  return {lengthMi:mi(points.at(-1)?.km||0),lowFt:Math.min(...ms)*FT_PER_M,highFt:Math.max(...ms)*FT_PER_M,aboveMi:snowM===null?null:mi(above)};
+}
