@@ -78,11 +78,11 @@ export function profileStats(points,snowM){
 export const GNIS_URL='https://carto.nationalmap.gov/arcgis/rest/services/geonames/MapServer';
 export const LANDMARK_LAYERS=Object.freeze([{id:3,kind:'place',metres:600},{id:5,kind:'peak',metres:1500,where:"gaz_featureclass IN ('Summit','Gap')"}]);
 /** @param {{name:string,kind:string,x:number,y:number}[]} items @param {{km:number,m:number,x:number,y:number}[]} points profile
- * @returns {{name:string,kind:string,km:number,m:number,offKm:number}[]} each at its nearest profile point, nearest copy of a name kept, in road order. */
+ * @returns {{name:string,kind:string,km:number,m:number,offKm:number,x:number,y:number}[]} each at its nearest profile point (x/y: the landmark itself), nearest copy of a name kept, in road order. */
 export function placeOnProfile(items,points){
   const best=new Map();
   for(const it of items){let near=null;for(const p of points){const d=km([it.x,it.y],[p.x,p.y]);if(!near||d<near.d)near={p,d};}
-    if(near&&(!best.has(it.name)||near.d<best.get(it.name).offKm))best.set(it.name,{name:it.name,kind:it.kind,km:near.p.km,m:near.p.m,offKm:near.d});}
+    if(near&&(!best.has(it.name)||near.d<best.get(it.name).offKm))best.set(it.name,{name:it.name,kind:it.kind,km:near.p.km,m:near.p.m,offKm:near.d,x:it.x,y:it.y});}
   return [...best.values()].sort((a,b)=>a.km-b.km);
 }
 /** Which places get a text label: greedy by closeness to the road, at most maxLabels, never overlapping on either of
