@@ -50,7 +50,7 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
     const dl=el('dl');for(const [k,v]of facts)dl.append(el('dt',k),el('dd',v));host.append(dl);
     if(exercise)host.append(el('p','Fictional exercise values from a constructed fixture, not a USGS reading.'));
     if(!s.verified)host.append(el('p','Site number and location not yet confirmed against the USGS site service.'));
-    host.append(el('p','Provisional USGS data. Planning aid, not an alert service.'),link(`USGS ${s.site} monitoring location page (opens new tab) ↗`,`https://waterdata.usgs.gov/monitoring-location/USGS-${s.site}/`));
+    host.append(el('p','Provisional USGS data.'),link(`USGS ${s.site} monitoring location page (opens new tab) ↗`,`https://waterdata.usgs.gov/monitoring-location/USGS-${s.site}/`));
     $('usgs-evidence').setAttribute('open','');
     map?.focusReferenceGeometry({x:s.longitude,y:s.latitude,spatialReference:{wkid:4326}},35000);
   }
