@@ -5,7 +5,7 @@ export const SURGE_COLORS=Object.freeze({observed:'#ffd166',forecast:'#ff8fab'})
 /** @returns {object} {setNetwork(net), setFrames(frames)} */
 export function createRiverNetworkMap({GraphicsLayer,Graphic,registerLayer}){
   const base=new GraphicsLayer({title:'River network · USGS 3DHP routable streams',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
-  const pulses=new GraphicsLayer({title:'Illustrative surge travel · assumed speed',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
+  const pulses=new GraphicsLayer({title:'Illustrative surge travel · measured / assumed speeds',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
   registerLayer('riverNetwork',base,true,2);registerLayer('riverNetwork',pulses);
   return {
     setNetwork(net){
