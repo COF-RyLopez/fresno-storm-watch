@@ -1,6 +1,6 @@
 import {loadSdk} from './map.js';
 import {reportHealth} from './source-health.js';
-import {labelPolygons} from './map-labels.js';
+import {labelPolygons,createLabelLayer} from './map-labels.js';
 import {SNOW_POINTS,SNOW_ROUTES_URL,ROUTE_PRIORITIES,snowLevels,snowLevelAt,snowRange,feet,snowLines,chainPaths,profileSamples,profileStats,km,FT_PER_M,GNIS_URL,LANDMARK_LAYERS,placeOnProfile,labelRows} from './snow-model.js';
 
 const $=id=>document.getElementById(id);
@@ -9,7 +9,7 @@ const NWS={Accept:'application/geo+json,application/json'};
 const HOUR=3_600_000;
 /** Snow level (NWS gridpoints) shaded on USGS 3DEP terrain at the weather timeline time, plus the county's snow-removal routes. */
 export function createSnowLevel({time,exercise,target}){
-  let controller=null,routes=null,highlight=null,Graphic=null,profile=null,profileToken=0,point='shaver',series=new Map(),errors=new Map(),checked=null,threshold=null,terrain=null,afd=null,afdError=null,busy=false;
+  let controller=null,routes=null,highlight=null,peakLabels=null,Graphic=null,profile=null,profileToken=0,point='shaver',series=new Map(),errors=new Map(),checked=null,threshold=null,terrain=null,afd=null,afdError=null,busy=false;
   const json=async url=>{const r=await fetch(url,{headers:NWS,cache:'no-store',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error(`NWS HTTP ${r.status}`);return r.json();};
   /** Mask the 3DEP elevation tile to cells at or above the snow level and paint them pale blue-white (ArcGIS client-side pixelFilter). */
   function pixelFilter(data){
@@ -48,7 +48,7 @@ export function createSnowLevel({time,exercise,target}){
       `<text x="${L-4}" y="${y(hi-40)+3}" text-anchor="end" font-size="11" fill="currentColor">${Math.round((hi-40)*FT_PER_M).toLocaleString()} ft</text><text x="${L-4}" y="${y(lo+40)+3}" text-anchor="end" font-size="11" fill="currentColor">${Math.round((lo+40)*FT_PER_M).toLocaleString()} ft</text>`+
       landmarkSvg(labelRows(marks,{width:W-L-R,maxKm:max}),x,y,T,H-B,L,W-R)+
       `<text x="${L}" y="${H-6}" font-size="11" fill="currentColor">0</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="11" fill="currentColor">${s.lengthMi.toFixed(1)} mi</text>`;
-    $('snow-profile-places').replaceChildren(...marks.map(m=>{const li=document.createElement('li');const ft=Math.round(m.m*FT_PER_M).toLocaleString();li.textContent=m.kind==='peak'?`${m.name} (${m.name.includes('Gap')?'pass':'summit'}, ${mi(m.offKm).toFixed(1)} mi off the road) · mi ${mi(m.km).toFixed(1)} · road at ${ft} ft`:`${m.name} · mi ${mi(m.km).toFixed(1)} · ${ft} ft`;return li;}));
+    $('snow-profile-places').replaceChildren(...marks.map(m=>{const li=document.createElement('li');const ft=Math.round(m.m*FT_PER_M).toLocaleString();li.textContent=m.kind==='peak'?`${m.name} (${m.name.includes('Gap')?'pass':'summit'}${m.peakFt?` ${m.peakFt.toLocaleString()} ft`:''}, ${mi(m.offKm).toFixed(1)} mi off the road) · mi ${mi(m.km).toFixed(1)} · road at ${ft} ft`:`${m.name} · mi ${mi(m.km).toFixed(1)} · ${ft} ft`;return li;}));
     svg.toggleAttribute('hidden',false);svg.setAttribute('aria-label',`Elevation profile of ${profile.name}: ${Math.round(s.lowFt).toLocaleString()} to ${Math.round(s.highFt).toLocaleString()} ft over ${s.lengthMi.toFixed(1)} miles`);
     $('snow-profile-status').textContent=`${profile.name}: ${Math.round(s.lowFt).toLocaleString()}–${Math.round(s.highFt).toLocaleString()} ft over ${s.lengthMi.toFixed(1)} mi`+(s.aboveMi===null?' · no snow level for this time':s.aboveMi<0.05?` · all below the ${feet(threshold).toLocaleString()} ft snow level`:` · ${s.aboveMi.toFixed(1)} mi at or above the ${feet(threshold).toLocaleString()} ft snow level`)+`. USGS 3DEP elevation along the county route${profile.parts>1?`, ${profile.parts} mapped pieces joined (gaps not counted)`:''}.`;
   }
@@ -72,8 +72,22 @@ export function createSnowLevel({time,exercise,target}){
       return placeOnProfile(j.features.filter(f=>f.attributes.gaz_name&&f.geometry).flatMap(f=>(f.geometry.points||[[f.geometry.x,f.geometry.y]]).map(([x,y])=>({name:f.attributes.gaz_name,kind:l.kind,x,y}))),points).filter(m=>m.offKm<=l.metres/1000+0.2);}));
     return sets.flat().sort((a,b)=>a.km-b.km);
   }
+  /** The profiled road's summits and passes on the map: a ▲ like the chart and one label (name · elevation) each. Peak
+   * elevations are one 3DEP getSamples call; places are left to the basemap, which already names them. */
+  async function showPeaks(peaks,token){
+    if(!peaks.length)return;
+    let feet=new Map();
+    try{const body=new URLSearchParams({geometry:JSON.stringify({points:peaks.map(p=>[p.x,p.y]),spatialReference:{wkid:4326}}),geometryType:'esriGeometryMultipoint',returnFirstValueOnly:'true',f:'json'});
+      const r=await fetch(`${ELEVATION_URL}/getSamples`,{method:'POST',body,signal:AbortSignal.timeout(30000)});
+      if(r.ok)for(const s of (await r.json()).samples||[]){const v=Number(s.value);if(Number.isFinite(v)&&!feet.has(s.locationId))feet.set(s.locationId,Math.round(v*FT_PER_M/10)*10);}}
+    catch{/* Names still show without elevations. */}
+    if(token!==profileToken)return;
+    for(const [i,p] of peaks.entries()){p.peakFt=feet.get(i)??null;highlight?.add(new Graphic({geometry:{type:'point',longitude:p.x,latitude:p.y,spatialReference:{wkid:4326}},symbol:{type:'simple-marker',style:'triangle',size:11,color:'#c9b27c',outline:{color:'#17232b',width:1}}}));}
+    void peakLabels?.set(peaks.map(p=>({longitude:p.x,latitude:p.y,label:p.peakFt?`${p.name} · ${p.peakFt.toLocaleString()} ft`:p.name})));
+    drawProfile();
+  }
   async function showProfile(name){
-    const token=++profileToken;profile=null;highlight?.removeAll();drawProfile();
+    const token=++profileToken;profile=null;highlight?.removeAll();void peakLabels?.set([]);drawProfile();
     if(!name||!routes){$('snow-profile-status').textContent='Choose a road to see its elevation profile.';return;}
     $('snow-profile-status').textContent=`Sampling elevation along ${name}…`;
     try{
@@ -94,7 +108,8 @@ export function createSnowLevel({time,exercise,target}){
       highlight?.add(new Graphic({geometry:{type:'polyline',paths:parts,spatialReference:{wkid:4326}},symbol:{type:'simple-line',color:[255,255,255,.85],width:7}}));
       const xs=line.map(p=>p[0]),ys=line.map(p=>p[1]);void controller?.fitExtent({xmin:Math.min(...xs)-.01,ymin:Math.min(...ys)-.01,xmax:Math.max(...xs)+.01,ymax:Math.max(...ys)+.01});
       drawProfile();
-      try{const marks=await landmarks(parts,points);if(token!==profileToken)return;profile.marks=marks;drawProfile();}
+      try{const marks=await landmarks(parts,points);if(token!==profileToken)return;profile.marks=marks;drawProfile();
+        await showPeaks(marks.filter(m=>m.kind==='peak'),token);}
       catch{/* Names are optional; the profile and its numbers stand alone. */}
     }catch(e){if(token===profileToken)$('snow-profile-status').textContent=`Elevation profile unavailable · ${e.message}`;}
   }
@@ -123,7 +138,9 @@ export function createSnowLevel({time,exercise,target}){
       popupTemplate:{title:'{name} · snow removal',content:[{type:'fields',fieldInfos:[{fieldName:'prioritydescription',label:'County priority'},{fieldName:'maintainedby',label:'Maintained by'},{fieldName:'limits',label:'Limits'},{fieldName:'description',label:'Road class'}]},{type:'text',text:'County snow-removal plan, not current road conditions or plow status. Check closures and chain controls before travel.'}]}});
     labelPolygons(routes,{expression:'Proper($feature.name)',minScale:150_000,placement:'center-along'});
     // The profiled road, drawn under the coloured routes as a white casing.
-    highlight=new GraphicsLayer({title:'Selected snow route (elevation profile)',popupEnabled:false});map.registerLayer('snowRoutes',highlight);map.registerLayer('snowRoutes',routes);render();
+    highlight=new GraphicsLayer({title:'Selected snow route (elevation profile)',popupEnabled:false});map.registerLayer('snowRoutes',highlight);map.registerLayer('snowRoutes',routes);
+    // Peak names: same deconflicted label layer as gauges, shown once zoomed in near the road (the profile zooms there).
+    peakLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Summits and passes near the profiled road',below:true,minScale:300_000});map.registerLayer('snowRoutes',peakLabels.layer);render();
     try{const names=await routes.queryFeatures({where:'1=1',outFields:['name'],returnDistinctValues:true,returnGeometry:false});
       const opts=[...new Set(names.features.map(f=>f.attributes.name).filter(Boolean))].sort().map(n=>{const o=document.createElement('calcite-option');o.value=n;o.textContent=n.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase());return o;});
       $('snow-profile-road').append(...opts);$('snow-profile-road').disabled=exercise;}

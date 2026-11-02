@@ -45,7 +45,7 @@ test('landmarks land at their nearest point along the road, one per name, in roa
   const pts=[0,1,2,3].map(i=>({km:i,m:1000+i*100,x:0,y:i*0.009}));
   const out=placeOnProfile([{name:'Lakeshore',kind:'place',x:0.001,y:0.027},{name:'Big Creek',kind:'place',x:0,y:0.0},{name:'Big Creek',kind:'place',x:0.05,y:0.01},{name:'Kerckhoff Dome',kind:'peak',x:0.01,y:0.018}],pts);
   assert.deepEqual(out.map(o=>[o.name,o.km,o.m]),[['Big Creek',0,1000],['Kerckhoff Dome',2,1200],['Lakeshore',3,1300]]);
-  assert.ok(out[0].offKm<0.01);
+  assert.ok(out[0].offKm<0.01);assert.deepEqual([out[1].x,out[1].y],[0.01,0.018]);// the peak's own position, for the map
 });
 test('labels never overlap; extras and peaks become ticks',()=>{
   const marks=[{name:'Big Creek',kind:'place',km:0,offKm:.1},{name:'Camp Sierra',kind:'place',km:0.2,offKm:.3},{name:'Cedar Crest',kind:'place',km:0.4,offKm:.2},{name:'Kerckhoff Dome',kind:'peak',km:5,offKm:.5},{name:'Lakeshore',kind:'place',km:10,offKm:.1}];
