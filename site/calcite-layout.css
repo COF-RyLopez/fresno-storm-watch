@@ -423,6 +423,7 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 
 .hrrr-color-key{height:12px;background:linear-gradient(to right,#304560,#436d9b,#629bc0,#9bc5be,#ded59b,#e6a16e);border:1px solid var(--calcite-color-border-2)}
 .hrrr-color-labels,.hrrr-rain-labels{display:flex;justify-content:space-between;font-size:.75rem;font-variant-numeric:tabular-nums}
+.snow-route-key{display:flex;flex-wrap:wrap;gap:var(--calcite-space-2xs) var(--calcite-space-sm);font-size:.75rem}.snow-route-key i{display:inline-block;width:16px;border-top:3px solid;margin-inline-end:4px;vertical-align:middle}
 .hrrr-rain-key{height:12px;background:linear-gradient(to right,#7fd1a0,#3fa66a,#2f86b8,#6c5cc4,#b04fae,#e2558a);border:1px solid var(--calcite-color-border-2)}
 .hrrr-rain-key[hidden],.hrrr-rain-labels[hidden],.hrrr-color-key[hidden],.hrrr-color-labels[hidden]{display:none}
 #hrrr-legend{display:grid;gap:.35rem}
