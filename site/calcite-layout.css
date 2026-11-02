@@ -429,3 +429,4 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 .hrrr-rain-key[hidden],.hrrr-rain-labels[hidden],.hrrr-color-key[hidden],.hrrr-color-labels[hidden]{display:none}
 #hrrr-legend{display:grid;gap:.35rem}
 .snow-fleet-key i{width:10px;height:10px;border:1px solid #17232b;border-radius:50%}.snow-fleet-key i.square{border-radius:0}.snow-fleet-readiness ul,.snow-fleet-readiness ol{margin:.25rem 0 .4rem;padding-inline-start:1.2rem;font-size:.85rem}.snow-fleet-readiness h4{margin:.5rem 0 .2rem;font-size:.85rem}
+.google-logo{height:18px;width:auto;margin:10px 10px 5px}.google-credits{font-size:11px;line-height:1.4;white-space:normal;box-sizing:border-box;margin:0 10px 5px;color:#fff;background:rgba(0,0,0,.45);padding:2px 6px;border-radius:2px;max-width:min(50vw,520px)}.google-credits:empty{display:none}
