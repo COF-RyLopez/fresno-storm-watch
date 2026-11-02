@@ -55,8 +55,10 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   const briefingContext=new GraphicsLayer({title:'Selected briefing context — proximity, not exposure',elevationInfo:{mode:'on-the-ground'}});
   const searchSelection=new GraphicsLayer({title:'Search selection — reference only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
   const fema = new FeatureLayer({
-    url:'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28',
-    title:'FEMA mapped flood hazard — planning reference', minScale:100_000, opacity:0.55, elevationInfo:{mode:'on-the-ground'},
+    // Esri Living Atlas copy of FEMA NFHL flood hazard zones (same fields; Fresno counts match FEMA's NFHL/MapServer/28
+    // as of 2026-11-02). Unlike FEMA's service (1:36,000), it draws out to 1:1,000,000.
+    url:'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Flood_Hazard_Reduced_Set_gdb/FeatureServer/0',
+    title:'FEMA flood zones — planning reference', minScale:1_000_000, opacity:0.55, elevationInfo:{mode:'on-the-ground'},
     definitionExpression:"SFHA_TF = 'T' OR ZONE_SUBTY LIKE '%0.2%' OR FLD_ZONE = 'D'",
     outFields:['FLD_ZONE','ZONE_SUBTY','SFHA_TF','DFIRM_ID','FLD_AR_ID','SOURCE_CIT'],
     renderer:{type:'unique-value',valueExpression:"When($feature.SFHA_TF == 'T', 'sfha', $feature.FLD_ZONE == 'D', 'undetermined', 'moderate')",uniqueValueInfos:[
@@ -173,7 +175,7 @@ elevationInfo:{mode:'on-the-ground'},
   const femaViews=new WeakMap();
   const femaStatus=()=>{
     const host=document.querySelector('#fema-status');
-    host.textContent=!fema.visible?'FEMA overlay off':femaError||femaViews.get(view)==='error'?'FEMA unavailable in this view — check publisher source':fema.loadStatus!=='loaded'||!femaViews.get(view)?'Loading FEMA reference':view.scale>100_000?'Fresno FEMA zones · zoom to 1:100,000 or closer':'FEMA zones intersecting Fresno County';
+    host.textContent=!fema.visible?'FEMA overlay off':femaError||femaViews.get(view)==='error'?'FEMA unavailable in this view — check publisher source':fema.loadStatus!=='loaded'||!femaViews.get(view)?'Loading FEMA reference':view.scale>1_000_000?'FEMA flood zones · zoom in to see them':'FEMA zones intersecting Fresno County';
   };
   void fema.load().then(femaStatus).catch(()=>{femaError=true;femaStatus();});
   const drawGauges=()=>{
