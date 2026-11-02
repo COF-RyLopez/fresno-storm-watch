@@ -4,7 +4,7 @@ import {CONFIG} from './config.js';
 import {fetchRiverWatch} from './lib/nwps.js';
 import {assessGauge} from './lib/river-model.js';
 import {fetchUsgs,parseUsgsIv,usgsReading} from './lib/usgs-gauges.js';
-import {indexNetwork,surgeSources,surgeFrames,routeSlice,timelineRange,startOffset,SURGE_CONFIG} from './lib/river-network-model.js';
+import {indexNetwork,surgeSources,surgeFrames,routeSlice,routeLine,profilePath,timelineRange,startOffset,SURGE_CONFIG} from './lib/river-network-model.js';
 import {SURGE_COLORS} from './lib/river-network-map.js';
 import {formatTime} from './lib/model.js';
 import {glbCopyright,createCredits} from './lib/google-tiles.js';
@@ -22,8 +22,8 @@ const data=Promise.all([json('./data/river-network.json'),lists,
 const gaugeFetch=(w,u)=>Promise.allSettled([fetchRiverWatch(w.stations,CONFIG.rivers),fetchUsgs(u.sites.map(s=>s.site))]);
 let firstGauges=exercise?null:lists.then(([w,u])=>gaugeFetch(w,u));
 const sdk=await import('https://js.arcgis.com/5.1/').then(()=>globalThis.$arcgis);
-const [ArcMap,SceneView,Basemap,TileLayer,GraphicsLayer,Graphic,IntegratedMesh3DTilesLayer,esriConfig,reactiveUtils]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/SceneView.js',
-  '@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/IntegratedMesh3DTilesLayer.js','@arcgis/core/config.js','@arcgis/core/core/reactiveUtils.js']);
+const [ArcMap,SceneView,Basemap,TileLayer,GraphicsLayer,Graphic,IntegratedMesh3DTilesLayer,esriConfig,reactiveUtils,ElevationProfileViewModel]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/SceneView.js',
+  '@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/IntegratedMesh3DTilesLayer.js','@arcgis/core/config.js','@arcgis/core/core/reactiveUtils.js','@arcgis/core/widgets/ElevationProfile/ElevationProfileViewModel.js']);
 const [doc,[watch,usgsWatch],tiles]=await data;
 const net=indexNetwork(doc);
 
@@ -94,6 +94,7 @@ function draw(){
     g.tube.geometry={type:'polyline',paths:f.lines,spatialReference:{wkid:4326}};g.head.geometry=pin(pt[0],pt[1]);
   }
   for(const [k,g] of live)if(!seen.has(k)){pulses.removeMany([g.tube,g.head]);live.delete(k);}
+  profileMarker(t);
   const m=Math.round(offset);
   $('surge-time').textContent=m===0?'now':`${m>0?'+':'−'}${Math.floor(Math.abs(m)/60)} h ${Math.abs(m)%60} min · ${time(t)}`;
   const mph=(SURGE_CONFIG.speedKmh*0.621371).toFixed(1);
@@ -105,7 +106,7 @@ function draw(){
   for(const s of sources){const it=document.createElement('calcite-list-item');it.label=s.name;it.description=`${s.kind==='forecast'?'Forecast':'Observed'} · ${s.label} · starts ${time(s.t0)}`;it.value=s.key;list.append(it);}
 }
 $('surge-list').addEventListener('calciteListItemSelect',e=>{const s=sources.find(x=>x.key===e.target.value),pt=s&&net.points.get(s.id);
-  if(s){stop();set(Math.max(range.min,Math.min(range.max,startOffset(s))));}
+  if(s){setProfile(s);stop();set(Math.max(range.min,Math.min(range.max,startOffset(s))));}
   // Frame the reach the pulse covers in its first 6 hours, not just the gauge, so Play keeps it in view.
   const ahead=s&&routeSlice(net,s.path,s.km,s.km-SURGE_CONFIG.speedKmh*6);
   // goTo only moved the camera reliably with a [lon,lat] target here (plain or unattached geometry was ignored), so aim at
@@ -131,7 +132,36 @@ const loading=document.createElement('div');loading.className='scene-loading';lo
 view.ui.add(loading,'top-right');
 // Removed once the scene first stops loading, or after 45 s so a slow device never keeps it on screen.
 Promise.race([reactiveUtils.whenOnce(()=>view.ready&&!view.updating),new Promise(r=>setTimeout(r,45_000))]).then(()=>view.ui.remove(loading));
+// River profile: the SDK's ElevationProfileViewModel samples the scene's ground along the route below the selected source
+// (no ElevationProfile widget UI). With no sources it shows the San Joaquin below Millerton.
+const profileVm=new ElevationProfileViewModel({view,profiles:[{type:'ground'}]});let profileTarget=null,profileShape=null;
+function setProfile(target){
+  const line=target?.path&&Number.isFinite(target.km)?routeLine(net,target.path,target.km):[];
+  profileTarget=line.length>1?target:null;profileShape=null;$('profile-line').setAttribute('d','');$('profile-marker').setAttribute('visibility','hidden');
+  if(!profileTarget){$('profile-status').textContent='No mapped route below this gauge to profile.';return;}
+  $('profile-title').textContent=`Elevation profile below ${target.name}`;$('profile-status').textContent=`Sampling ground elevation below ${target.name}…`;
+  profileVm.input=new Graphic({geometry:{type:'polyline',paths:[line],spatialReference:{wkid:4326}}});
+}
+function profileMarker(t){
+  const s=profileTarget,m=$('profile-marker');
+  if(!profileShape||!Number.isFinite(s?.t0)||t<s.t0){m.setAttribute('visibility','hidden');return;}
+  const d=SURGE_CONFIG.speedKmh*(t-s.t0)/3_600_000*1000;if(d>profileShape.maxD){m.setAttribute('visibility','hidden');return;}
+  const i=profileShape.samples.findIndex(p=>p.distance>=d),p=profileShape.samples[Math.max(0,i)];
+  m.setAttribute('cx',profileShape.x(d).toFixed(1));m.setAttribute('cy',profileShape.y(p.elevation).toFixed(1));m.setAttribute('visibility','visible');
+}
+reactiveUtils.watch(()=>[profileVm.progress,profileVm.profiles?.getItemAt(0)?.samples],()=>{
+  const raw=profileVm.profiles?.getItemAt(0)?.samples;if(!profileTarget||profileVm.progress<1||!raw)return;
+  // Samples come in the view model's effectiveUnits (metric: km along the line, m elevation); chart in metres.
+  const toM={kilometers:1000,meters:1,miles:1609.344,feet:0.3048},u=profileVm.effectiveUnits||{},dk=toM[u.distance]??1,ek=toM[u.elevation]??1;
+  const samples=raw.map(p=>({distance:p.distance*dk,elevation:p.elevation*ek}));
+  const shape=profilePath(samples,300,110);if(!shape){$('profile-status').textContent='Elevation profile unavailable for this route.';return;}
+  profileShape={...shape,samples};$('profile-line').setAttribute('d',shape.d);
+  const ft=m=>Math.round(m*3.28084).toLocaleString(),mi=(shape.maxD/1609.344).toFixed(0);
+  $('profile-status').textContent=`${profileTarget.name} → end of mapped network · ${mi} mi · ${ft(shape.hi)} ft to ${ft(shape.lo)} ft (drop ${ft(shape.hi-shape.lo)} ft). Ground elevation from the scene, not the water surface.${Number.isFinite(profileTarget.t0)?' Yellow dot: the pulse front at the timeline time.':''}`;
+  profileMarker(Date.now()+offset*60_000);
+});
 await refresh();
+const mil=net.points.get('MIL');setProfile(sources[0]||(mil&&{name:'Millerton Lake (San Joaquin River)',path:mil.path,km:mil.km}));
 // Open on the first pulse source when there is one, looking downstream.
 const first=sources[0],fp=first&&net.points.get(first.id);
 if(fp)view.when(()=>view.goTo({target:[fp.longitude,fp.latitude],zoom:11,heading:210,tilt:45})).catch(()=>{});

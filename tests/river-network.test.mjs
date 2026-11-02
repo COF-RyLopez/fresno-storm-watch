@@ -91,3 +91,13 @@ test('forecast crests start a pulse only when at least 0.5 ft above the current 
   assert.equal(timelineRange([{t0:200*H}],0).max,72*60,'capped');
   assert.equal(startOffset({t0:37*60_000},0),45);assert.equal(startOffset({t0:-10*60_000},0),0);
 });
+
+test('routeLine joins a downstream route into one line; profilePath scales samples into the chart box',async()=>{
+  const {routeLine,profilePath}=await import('../site/lib/river-network-model.js');
+  const line=routeLine(net(),'A',15,0);
+  assert.deepEqual(line[0],routeSlice(net(),'A',15,0)[0][0]);assert.deepEqual(line.at(-1),[-120,37]);
+  assert.equal(line.filter(c=>c[0]===-120.1&&c[1]===37).length,1,'the confluence vertex is not repeated');
+  const p=profilePath([{distance:0,elevation:100},{distance:500,elevation:60},{distance:1000,elevation:50}],300,100);
+  assert.equal(p.d,'M0.0 0.0L150.0 80.0L300.0 100.0');assert.deepEqual([p.maxD,p.lo,p.hi],[1000,50,100]);
+  assert.equal(profilePath([{distance:0,elevation:1}],300,100),null);
+});

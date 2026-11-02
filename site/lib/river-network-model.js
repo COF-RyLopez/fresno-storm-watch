@@ -82,3 +82,17 @@ export function timelineRange(sources,now=Date.now(),cfg=SURGE_CONFIG){
 }
 /** @returns {number} Minutes from now to the first timeline step at or after a source's start. */
 export const startOffset=(s,now=Date.now(),cfg=SURGE_CONFIG)=>(Math.ceil((s.t0-now)/60_000/cfg.stepMinutes)*cfg.stepMinutes||0); // round up: land on or after the start
+
+/** @returns {number[][]} One downstream line from distance-to-terminal `fromKm` to `toKm` (parts joined in route order). */
+export function routeLine(net,pathId,fromKm,toKm=0){
+  const out=[];
+  for(const part of routeSlice(net,pathId,fromKm,toKm))for(const c of part){const last=out.at(-1);if(!last||last[0]!==c[0]||last[1]!==c[1])out.push(c);}
+  return out;
+}
+/** @param {{distance:number,elevation:number}[]} samples metres @returns {object|null} SVG path for a width×height chart, with its ranges. */
+export function profilePath(samples,width,height){
+  const s=(samples||[]).filter(p=>Number.isFinite(p?.distance)&&Number.isFinite(p?.elevation));if(s.length<2)return null;
+  const maxD=s.at(-1).distance,lo=Math.min(...s.map(p=>p.elevation)),hi=Math.max(...s.map(p=>p.elevation)),span=hi-lo||1;
+  const x=d=>d/maxD*width,y=e=>height-(e-lo)/span*height;
+  return {d:s.map((p,i)=>`${i?'L':'M'}${x(p.distance).toFixed(1)} ${y(p.elevation).toFixed(1)}`).join(''),maxD,lo,hi,x,y};
+}
