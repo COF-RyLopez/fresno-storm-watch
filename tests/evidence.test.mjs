@@ -16,8 +16,8 @@ function setup(){
     focus(){this.focusCount++;document.activeElement=this;}
     setFocus(){this.focus();return Promise.resolve();}
   }
-  const ids=['evidence-host','evidence-shell','evidence-mobile-host','planning-workspace','context-open','map-tools-open','map-feature-evidence','map-feature-content','map-feature-select','map-feature-status','hanford-dialog','facility-dialog','context-menu','map-tools-menu','opener'];
-  ids.forEach(id=>new Node(id));const panes=['map-feature-evidence','hanford-dialog','facility-dialog','context-menu','map-tools-menu'].map(id=>nodes.get(id));
+  const ids=['evidence-host','evidence-shell','evidence-mobile-host','planning-workspace','context-open','map-feature-evidence','map-feature-content','map-feature-select','map-feature-status','hanford-dialog','facility-dialog','context-menu','opener'];
+  ids.forEach(id=>new Node(id));const panes=['map-feature-evidence','hanford-dialog','facility-dialog','context-menu'].map(id=>nodes.get(id));
   const doc=new EventTarget();doc.getElementById=id=>nodes.get(id);doc.querySelectorAll=()=>panes;doc.activeElement=nodes.get('opener');globalThis.document=doc;
   globalThis.MutationObserver=class{constructor(fn){callback=fn;}observe(n){listeners.set(n,true);}};
   const media=new EventTarget();media.matches=false;globalThis.matchMedia=()=>media;globalThis.customElements={whenDefined:()=>Promise.resolve()};
@@ -28,7 +28,8 @@ function setup(){
 test('supporting evidence uses real dock panels with no modal or popup presentation',async()=>{
   const html=await readFile(new URL('../site/index.html',import.meta.url),'utf8');
   assert(!html.includes('<calcite-dialog'));
-  for(const id of ['hanford-dialog','river-dialog','release-trend-dialog','source-health-dialog','road-dialog','power-dialog','facility-dialog','context-menu','map-tools-menu'])assert(new RegExp(`<calcite-panel[^>]+id="${id}"[^>]+data-evidence`).test(html),id);
+  for(const id of ['hanford-dialog','river-dialog','release-trend-dialog','source-health-dialog','road-dialog','power-dialog','facility-dialog','context-menu'])assert(new RegExp(`<calcite-panel[^>]+id="${id}"[^>]+data-evidence`).test(html),id);
+  assert.match(html,/<calcite-popover id="map-tools-menu" reference-element="map-tools-open"/,'map tools open from the in-map corner button');
   assert.match(html,/<calcite-shell-panel id="evidence-shell"[^>]+display-mode="dock"/);assert.match(html,/id="evidence-mobile-host" hidden/);
 });
 test('opening and replacing evidence shows exactly one pane and runs prior source cleanup once',async()=>{
@@ -53,6 +54,6 @@ test('phone evidence reparents below the map without creating a modal or losing 
 test('close is idempotent, restores keyboard focus and hides the supporting layout',async()=>{
   const h=setup(),a=h.nodes.get('hanford-dialog');let cleanup=0;a.addEventListener('stormEvidenceClose',()=>cleanup++);a.setAttribute('open','');await h.flush();h.controller.close();h.controller.close();await h.flush();assert.equal(cleanup,1);assert.equal(h.doc.activeElement.id,'opener');assert.deepEqual(h.changes,[true,false]);
 });
-test('map-tool buttons toggle their dock panel and expose their expanded state',async()=>{
-  const h=setup(),b=h.nodes.get('map-tools-open');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.activeId,'map-tools-menu');assert.equal(b.attributes.get('aria-expanded'),'true');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.isOpen,false);assert.equal(b.attributes.get('aria-expanded'),'false');
+test('the Context layers button toggles its dock panel and exposes its expanded state',async()=>{
+  const h=setup(),b=h.nodes.get('context-open');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.activeId,'context-menu');assert.equal(b.attributes.get('aria-expanded'),'true');b.dispatchEvent(new Event('click'));await h.flush();assert.equal(h.controller.isOpen,false);assert.equal(b.attributes.get('aria-expanded'),'false');
 });
