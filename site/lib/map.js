@@ -24,6 +24,7 @@ import {viewEventData,isMapLoadCancellation} from './map-events.js';
 import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js';
 import {installBasemapGallery} from './basemap-gallery-ui.js';
 import {YARDS_URL,FUEL_URL,siteName} from './county-yards-model.js';
+import {badgeSymbol,badgeUrl} from './badge-symbols.js';
 import {glbCopyright,createCredits} from './google-tiles.js';
 
 let sdkPromise;
@@ -108,20 +109,24 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   let prepared=[];void fetch(new URL('../data/flood-scenarios/index.json',import.meta.url)).then(r=>r.ok?r.json():null).then(d=>{prepared=d?.scenarios||[];}).catch(()=>{});
   // "Play on the map" is a #scenario= link: mission-ui plays it on the shared map in whichever view is open.
   const scenarioLinks=name=>{const list=scenariosFor(name,prepared);return list.length?`<p><strong>Prepared failure scenarios · hypothetical</strong></p><ul>${list.map(s=>`<li>${esc(s.variant)} failure: <a href="#scenario=${encodeURIComponent(s.id)}">play on the map</a> · <a href="./flood-scenario.html?scenario=${encodeURIComponent(s.id)}" target="_blank" rel="noopener">full page</a></li>`).join('')}</ul>`:'';};
-  // County road yards (squares) and County fuel sites (amber diamonds): where County equipment is based and can refuel.
+  // Icon badges (badge-symbols.js): hexagon dam coloured by hazard potential; rounded-square County sites by type.
+  const DAM_BADGES={High:{glyph:'dam',shape:'hexagon',fill:'#e2b04a'},Significant:{glyph:'dam',shape:'hexagon',fill:'#c9b27c'},Low:{glyph:'dam',shape:'hexagon',fill:'#7d8790'}};
+  const SITE_BADGES={yard:{glyph:'garage',shape:'square',fill:'#6fd3e0'},fuel:{glyph:'fuel',shape:'square',fill:'#f5a524'}};
+  {const key=document.querySelector('#infra-key');if(key)key.replaceChildren(...[[DAM_BADGES.High,'Dam · high hazard potential'],[DAM_BADGES.Significant,'Dam · significant'],[DAM_BADGES.Low,'Dam · low / not rated'],[SITE_BADGES.yard,'County road yard'],[SITE_BADGES.fuel,'County fuel site']].map(([b,label])=>{const span=document.createElement('span'),img=document.createElement('img');img.src=badgeUrl(b);img.alt='';span.append(img,label);return span;}));}
+  // County road yards (cyan garage badges) and County fuel sites (amber fuel-pump badges): where County equipment is based and can refuel.
   const yardRows=a=>`<table class="esri-widget__table"><tbody>${row('Road yard area',a.RDYARD_NUM)}${row('Address',[a.RDYARD_ADDR1,a.RDYARD_ADDR2].filter(Boolean).join(', '))}</tbody></table><p>County Public Works road yard. Most yards are also County fuel sites (amber diamond at the same place).</p>`;
   registerLayer('countyYards',labelPolygons(new FeatureLayer({url:YARDS_URL,title:LAYER_LABELS.countyYards,outFields:['RDYARD_NUM','RDYARD_NM','RDYARD_ADDR1','RDYARD_ADDR2'],
-    renderer:{type:'simple',symbol:{type:'simple-marker',style:'square',size:11,color:'#6fd3e0',outline:{color:'#17232b',width:1.5}}},
+    renderer:{type:'simple',symbol:badgeSymbol(SITE_BADGES.yard,24)},
     popupTemplate:{title:f=>`${esc(siteName(f.graphic.attributes.RDYARD_NM))} · County road yard`,content:({graphic})=>yardRows(graphic.attributes)}}),{expression:"Proper($feature.RDYARD_NM)",minScale:1_000_000,placement:'above-center',color:'#9fe3ec'}),true);
   registerLayer('countyYards',labelPolygons(new FeatureLayer({url:FUEL_URL,title:'County fuel sites',outFields:['fuel_site','street_num','pre_direct','street_nam','suffix','city','zip','telephone','last_edited_date'],
-    renderer:{type:'simple',symbol:{type:'simple-marker',style:'diamond',size:10,color:'#f5a524',outline:{color:'#17232b',width:1}}},
+    renderer:{type:'simple',symbol:badgeSymbol(SITE_BADGES.fuel,22)},
     popupTemplate:{title:f=>`${esc(f.graphic.attributes.fuel_site)} · County fuel site`,content:({graphic})=>{const a=graphic.attributes;const addr=[a.street_num,a.pre_direct,a.street_nam,a.suffix].map(v=>String(v??'').trim()).filter(Boolean).join(' ');
       return `<table class="esri-widget__table"><tbody>${row('Address',[addr,a.city,a.zip].filter(Boolean).join(', '))}${row('Phone',a.telephone)}${row('List updated',Number.isFinite(a.last_edited_date)?new Date(a.last_edited_date).toLocaleDateString():null)}</tbody></table><p>County fuel for County-owned equipment. Hours, fuel types and generator backup are not in this list; confirm with Fleet Services.</p>`;}}}),
     {expression:"Replace($feature.fuel_site, ' Public Works Yard', '')",minScale:250_000,placement:'below-center',color:'#ffd27a'}),true);
   registerLayer('dams',new FeatureLayer({url:DAMS_URL,title:LAYER_LABELS.dams,definitionExpression:"STATE='California'",outFields:['NAME','PRIMARY_OWNER_TYPE','FED_AGENCY_OWNERS','FED_AGENCY_OPERATIONS','PRIMARY_PURPOSE','HAZARD_POTENTIAL','EAP_PREPARED','NID_STORAGE','FEDERAL_ID'],
-    renderer:{type:'unique-value',field:'HAZARD_POTENTIAL',defaultSymbol:{type:'simple-marker',style:'square',size:7,color:'#9aa4ad',outline:{color:'#17232b',width:1}},uniqueValueInfos:[
-      {value:'High',label:'High hazard potential',symbol:{type:'simple-marker',style:'square',size:9,color:'#e2b04a',outline:{color:'#17232b',width:1}}},
-      {value:'Significant',label:'Significant hazard potential',symbol:{type:'simple-marker',style:'square',size:8,color:'#c9b27c',outline:{color:'#17232b',width:1}}}]},
+    renderer:{type:'unique-value',field:'HAZARD_POTENTIAL',defaultSymbol:badgeSymbol(DAM_BADGES.Low,20),uniqueValueInfos:[
+      {value:'High',label:'High hazard potential',symbol:badgeSymbol(DAM_BADGES.High,26)},
+      {value:'Significant',label:'Significant hazard potential',symbol:badgeSymbol(DAM_BADGES.Significant,23)}]},
     popupTemplate:{title:'{NAME} · dam',content:({graphic})=>{const a=graphic.attributes,o=damOperator(a);
       return `<table class="esri-widget__table"><tbody>${row('Operated by',o.operator)}${row('Source',o.basis)}${row('Owner type',a.PRIMARY_OWNER_TYPE)}${row('Federal owner',a.FED_AGENCY_OWNERS)}${row('Purpose',a.PRIMARY_PURPOSE)}${row('Hazard potential',a.HAZARD_POTENTIAL)}${row('Emergency Action Plan',a.EAP_PREPARED)}${row('Storage (acre-ft)',Number.isFinite(a.NID_STORAGE)?Math.round(a.NID_STORAGE).toLocaleString():null)}${row('NID ID',a.FEDERAL_ID)}</tbody></table><p>Hazard potential is the consequence if the dam failed, not its condition. Not a duty contact or operating status.</p>${scenarioLinks(a.NAME)}`;}}}),true);
   registerLayer('levees',new FeatureLayer({url:LEVEES_URL,title:LAYER_LABELS.levees,definitionExpression:"STATES LIKE '%California%'",minScale:1_000_000,maxScale:0,// publisher hides levees beyond 1:100,000
