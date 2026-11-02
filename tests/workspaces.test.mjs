@@ -45,7 +45,7 @@ test('Calcite shell retains unique live control ids and one pinned runtime after
   for(const id of ['context-menu','map-tools-menu','camera-sheet','source-health-dialog','notify-areas','notify-alerts','notify-power','notify-health'])assert(ids.includes(id));
   assert.equal((html.match(/type="module" src="https:\/\/js.arcgis.com\/5.1\/"/g)||[]).length,1);assert(!html.includes('cdn.jsdelivr.net/npm/@esri/calcite'));
 });
-test('Storm now starts with public drainage areas and private drainage, without unrelated stacks',()=>{
-  assert.deepEqual(Object.entries(workspaceDefaults('storm').layers).filter(([,v])=>v).map(([k])=>k).sort(),['alerts','areas','drainage','drainageAreas','gauges','riverNetwork','roads','weather']);
-  for(const id of Object.keys(WORKSPACES))if(id!=='storm')assert.equal(workspaceDefaults(id).layers.drainageAreas,false);
+test('Storm now starts with drainage layers off (Metro drainage focus turns them on), without unrelated stacks',()=>{
+  assert.deepEqual(Object.entries(workspaceDefaults('storm').layers).filter(([,v])=>v).map(([k])=>k).sort(),['alerts','areas','gauges','riverNetwork','roads','weather']);
+  for(const id of Object.keys(WORKSPACES))assert.equal(workspaceDefaults(id).layers.drainageAreas,false);
 });
