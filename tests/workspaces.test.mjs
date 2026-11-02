@@ -46,6 +46,6 @@ test('Calcite shell retains unique live control ids and one pinned runtime after
   assert.equal((html.match(/type="module" src="https:\/\/js.arcgis.com\/5.1\/"/g)||[]).length,1);assert(!html.includes('cdn.jsdelivr.net/npm/@esri/calcite'));
 });
 test('Storm now starts with drainage layers off (Metro drainage focus turns them on), without unrelated stacks',()=>{
-  assert.deepEqual(Object.entries(workspaceDefaults('storm').layers).filter(([,v])=>v).map(([k])=>k).sort(),['alerts','areas','gauges','riverNetwork','roads','weather']);
+  assert.deepEqual(Object.entries(workspaceDefaults('storm').layers).filter(([,v])=>v).map(([k])=>k).sort(),['alerts','areas','gauges','riverNetwork','roads','waze','weather']);
   for(const id of Object.keys(WORKSPACES))assert.equal(workspaceDefaults(id).layers.drainageAreas,false);
 });

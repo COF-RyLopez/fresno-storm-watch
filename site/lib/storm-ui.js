@@ -5,19 +5,33 @@ import {el,elAttrs,link} from './dom.js';
 import {indexNetwork,surgeSources,surgeFrames,timelineRange,speedNote,SURGE_CONFIG} from './river-network-model.js';
 import {wazeReports,wazeTraffic,WAZE_NOTE,WAZE_MAX_AGE} from './waze-model.js';
 import {CAMERA_FEED,nearbyCameras} from './camera-model.js';
+import {loadSdk} from './map.js';
+import {LAYER_LABELS} from './workspace-model.js';
 
 const $=id=>document.getElementById(id);
 const RAIN=Object.freeze({'Off':'off','Radar':'radar','72-h forecast':'qpf'});
 /** Storm now panel: renders stormFocus() rows and its visible controls. Rows open existing evidence through onOpen. */
 export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=>{},onCameras=()=>{}}={}){
   const inputs={alerts:[],alertCheck:null,areas:[],drainage:null,signedIn:false,roads:null,usgs:null,watchlist:[]};
-  let wazeSnap=null,wazeError=null,catalog=null,wazeOpen=0;
+  let wazeSnap=null,wazeError=null,catalog=null,wazeOpen=0,wazeLayer=null,Graphic=null,wazeDrawn='';
   let focus='all',map=null,signature='',rows=[];
   let net=null,netError=null,surgeOffset=0,playTimer=null,surgeRange=timelineRange([]);
   const clock=new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
   const time=t=>t===null?'source time unavailable':clock.format(t);
+  // Waze on the map: same filtered snapshot as the rows. Shapes as well as colours so categories survive colour-blindness.
+  // Triangles, X marks and orange lines are already gauges / watch areas / road closures, so Waze uses circle, square, diamond and violet lines.
+  const WAZE_MARKS={Flooding:['circle','#3fa9f5'],'Road closed':['square','#e5484d'],'Hazard on road':['diamond','#c86bfa']};
+  function drawWaze(){
+    if(!wazeLayer)return;const w=wazeInput(),stale=!!(w?.reports[0]?.stale||w?.traffic[0]?.stale);
+    const key=JSON.stringify([stale,w?.reports.map(r=>r.id),w?.traffic.map(t=>[t.id,t.updatedAt,t.major,t.rising])]);if(key===wazeDrawn)return;wazeDrawn=key;
+    wazeLayer.removeAll();wazeLayer.opacity=stale?0.45:1;if(!w)return;
+    for(const t of w.traffic){const hot=t.major||t.rising;
+      wazeLayer.add(new Graphic({attributes:{wazeId:t.id},geometry:{type:'polyline',paths:[t.line],spatialReference:{wkid:4326}},symbol:{type:'simple-line',color:hot?'#d946ef':'#c4a5fd',width:hot?4:3,style:hot?'solid':'short-dash',cap:'round'}}));}
+    for(const r of w.reports){const [style,color]=WAZE_MARKS[r.category];
+      wazeLayer.add(new Graphic({attributes:{wazeId:r.id},geometry:{type:'point',longitude:r.lon,latitude:r.lat},symbol:{type:'simple-marker',style,color,size:style==='diamond'?15:12,outline:{color:'#ffffff',width:1.5}}}));}
+  }
   function render(){
-    drawSurges();
+    drawSurges();drawWaze();
     rows=stormFocus({...inputs,waze:wazeInput(),focus},Date.now());
     $('storm-waze-credit').hidden=!rows.some(r=>r.key.startsWith('waze:'));
     const next=JSON.stringify([focus,rows.map(r=>[r.key,r.tier,r.why,r.time,r.stale,r.tag,Math.floor((r.age??0)/60_000)])]);
@@ -155,6 +169,7 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   for(const sw of document.querySelectorAll('#storm-layers calcite-switch'))sw.addEventListener('calciteSwitchChange',()=>sw.dataset.contextLayer==='cameras'?onCameras(sw.checked):map?.setLayerPreference(sw.dataset.contextLayer,sw.checked));
   $('storm-list').addEventListener('calciteListItemSelect',e=>open(e.target.value));
   window.addEventListener('frogUsgsSelect',e=>showGauge(e.detail.id));
+  window.addEventListener('frogWazeSelect',e=>showWaze(e.detail.id));
   // Controls stay pinned above the list on desk screens; on phones / short screens they scroll with it so rows stay reachable.
   const short=matchMedia('(max-width:900px),(max-height:760px)'),place=()=>{$('storm-controls').slot=short.matches?'':'content-top';};short.addEventListener('change',place);place();
   setInterval(()=>{if(!document.hidden)render();},60_000);
@@ -165,7 +180,10 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   render();
   return {
     set(values){Object.assign(inputs,values);render();},
-    setMap(controller){map=controller;signature='';if(net)map.setRiverNetwork(net);render();},
+    setMap(controller){map=controller;signature='';if(net)map.setRiverNetwork(net);render();
+      if(!wazeLayer)void loadSdk().then(sdk=>sdk.import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js'])).then(([GraphicsLayer,G])=>{
+        Graphic=G;wazeLayer=new GraphicsLayer({title:LAYER_LABELS.waze,elevationInfo:{mode:'on-the-ground'},popupEnabled:false});map.registerLayer('waze',wazeLayer);wazeDrawn='';drawWaze();
+      }).catch(()=>{/* Rows still list every Waze report. */});},
     setOverlay(kind){const label=Object.keys(RAIN).find(k=>RAIN[k]===kind);for(const item of $('storm-rain').children)item.checked=item.getAttribute('value')===label;}
   };
 }
