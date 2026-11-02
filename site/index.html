@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-8nidAEbmboqVcbtLHAlecqOc8DJvWuFc81iilFsedFs='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-bmmRMigrNatTOilW+FFswVWxQbQcIQEw+CrSLQpVF1E='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=06498c8f09"><link rel="stylesheet" href="./mission.css?v=3c82938e60"><link rel="stylesheet" href="./command.css?v=0d350bda6f"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
@@ -44,6 +44,7 @@
 "./lib/command-queue-model.js":"./lib/command-queue-model.js?v=574d4089a6",
 "./lib/county-sandbag-model.js":"./lib/county-sandbag-model.js?v=edda41f933",
 "./lib/county-sandbag-ui.js":"./lib/county-sandbag-ui.js?v=4aec4fbf4b",
+"./lib/county-yards-model.js":"./lib/county-yards-model.js?v=901a686d2e",
 "./lib/dom.js":"./lib/dom.js?v=46be0c1bb1",
 "./lib/drainage-connections.js":"./lib/drainage-connections.js?v=2ba4552290",
 "./lib/drainage-data.js":"./lib/drainage-data.js?v=9cbc8a9c9f",
@@ -92,7 +93,7 @@
 "./lib/map-labels.js":"./lib/map-labels.js?v=fba4179d48",
 "./lib/map-search-model.js":"./lib/map-search-model.js?v=15c71c913e",
 "./lib/map-search-ui.js":"./lib/map-search-ui.js?v=c738addf94",
-"./lib/map.js":"./lib/map.js?v=3256013d21",
+"./lib/map.js":"./lib/map.js?v=5eb870d6fb",
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=1e95ec3c73",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
 "./lib/mission-model.js":"./lib/mission-model.js?v=0cddfa629b",
@@ -170,7 +171,7 @@
 "./lib/scene-companion.js":"./lib/scene-companion.js?v=b9d56c0620",
 "./lib/selection-focus.js":"./lib/selection-focus.js?v=c1c3a8d19c",
 "./lib/snow-fleet-model.js":"./lib/snow-fleet-model.js?v=5eef045026",
-"./lib/snow-fleet-ui.js":"./lib/snow-fleet-ui.js?v=6352f151a8",
+"./lib/snow-fleet-ui.js":"./lib/snow-fleet-ui.js?v=eb0a75df8d",
 "./lib/snow-model.js":"./lib/snow-model.js?v=3a46a02fc3",
 "./lib/snow-ui.js":"./lib/snow-ui.js?v=a8bf1cd208",
 "./lib/source-health-model.js":"./lib/source-health-model.js?v=f00f2f4063",
@@ -187,7 +188,7 @@
 "./lib/weather-model.js":"./lib/weather-model.js?v=1bd1a127dc",
 "./lib/weather-ui.js":"./lib/weather-ui.js?v=6f935ae75b",
 "./lib/with-timeout.js":"./lib/with-timeout.js?v=1ddcc38435",
-"./lib/workspace-model.js":"./lib/workspace-model.js?v=0a84bc621a",
+"./lib/workspace-model.js":"./lib/workspace-model.js?v=794f91cd89",
 "./lib/workspace-ui.js":"./lib/workspace-ui.js?v=dbe0dbdb47",
 "./lib/zone-acs-data.js":"./lib/zone-acs-data.js?v=ac066b36b5",
 "./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
