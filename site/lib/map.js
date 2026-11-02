@@ -10,6 +10,7 @@ import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear,geometryType} from './nearby-search.js';
 import {withTimeout} from './with-timeout.js';
 import {createLabelLayer,gaugeLabel,setMapLabels,labelPolygons,labelPoint,DENSE_LABEL_MIN_SCALE} from './map-labels.js';
+import {DAMS_URL,LEVEES_URL,INUNDATION_URL,damOperator,leveeSponsors,scenariosFor} from './water-operators.js';
 import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { createFrameWindow } from './frame-window.js';
@@ -97,6 +98,29 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   for(const [key,layer]of Object.entries(drainageLayers))registerLayer(key,layer,false,1);
   // Public FMFCD "Drainage Boundaries" (master-planned drainage areas): live reference read from the publisher, never copied.
+  // Who operates water-control features: dams (NID), levee systems (NLD) and DSOD-approved dam-failure inundation areas. Reference
+  // only; not duty contacts, operating status or a current flood forecast. Popups say where each name comes from.
+  const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const row=(k,v)=>v===null||v===undefined||v===''?'':`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`;
+  // The app's prepared dam-failure scenarios, linked from the dam and its inundation area by dam name.
+  let prepared=[];void fetch(new URL('../data/flood-scenarios/index.json',import.meta.url)).then(r=>r.ok?r.json():null).then(d=>{prepared=d?.scenarios||[];}).catch(()=>{});
+  const scenarioLinks=name=>{const list=scenariosFor(name,prepared);return list.length?`<p><strong>Prepared scenarios in this app</strong></p><ul>${list.map(s=>`<li><a href="./flood-scenario.html?scenario=${encodeURIComponent(s.id)}" target="_blank" rel="noopener">${esc(s.variant)} failure</a></li>`).join('')}</ul>`:'';};
+  registerLayer('dams',new FeatureLayer({url:DAMS_URL,title:LAYER_LABELS.dams,definitionExpression:"STATE='California'",outFields:['NAME','PRIMARY_OWNER_TYPE','FED_AGENCY_OWNERS','FED_AGENCY_OPERATIONS','PRIMARY_PURPOSE','HAZARD_POTENTIAL','EAP_PREPARED','NID_STORAGE','FEDERAL_ID'],
+    renderer:{type:'unique-value',field:'HAZARD_POTENTIAL',defaultSymbol:{type:'simple-marker',style:'square',size:7,color:'#9aa4ad',outline:{color:'#17232b',width:1}},uniqueValueInfos:[
+      {value:'High',label:'High hazard potential',symbol:{type:'simple-marker',style:'square',size:9,color:'#e2b04a',outline:{color:'#17232b',width:1}}},
+      {value:'Significant',label:'Significant hazard potential',symbol:{type:'simple-marker',style:'square',size:8,color:'#c9b27c',outline:{color:'#17232b',width:1}}}]},
+    popupTemplate:{title:'{NAME} · dam',content:({graphic})=>{const a=graphic.attributes,o=damOperator(a);
+      return `<table class="esri-widget__table"><tbody>${row('Operated by',o.operator)}${row('Source',o.basis)}${row('Owner type',a.PRIMARY_OWNER_TYPE)}${row('Federal owner',a.FED_AGENCY_OWNERS)}${row('Purpose',a.PRIMARY_PURPOSE)}${row('Hazard potential',a.HAZARD_POTENTIAL)}${row('Emergency Action Plan',a.EAP_PREPARED)}${row('Storage (acre-ft)',Number.isFinite(a.NID_STORAGE)?Math.round(a.NID_STORAGE).toLocaleString():null)}${row('NID ID',a.FEDERAL_ID)}</tbody></table><p>Hazard potential is the consequence if the dam failed, not its condition. Not a duty contact or operating status.</p>${scenarioLinks(a.NAME)}`;}}}),true);
+  registerLayer('levees',new FeatureLayer({url:LEVEES_URL,title:LAYER_LABELS.levees,definitionExpression:"STATES LIKE '%California%'",minScale:1_000_000,maxScale:0,// publisher hides levees beyond 1:100,000
+    outFields:['SYSTEM_NAME','SPONSORS','SPONSOR_ROLE','RESPONSIBLE_ORGANIZATION','FEMA_ACCREDITATION_RATING','FLOOD_SOURCES','COUNTIES'],
+    renderer:{type:'simple',symbol:{type:'simple-line',color:'#d9a441',width:2.5}},
+    popupTemplate:{title:'{SYSTEM_NAME} · levee system',content:({graphic})=>{const a=graphic.attributes,s=leveeSponsors(a);
+      return `<table class="esri-widget__table"><tbody>${row('Operated by (sponsors)',s.listed?s.sponsors.join(' · '):'Not listed in the National Levee Database')}${row('Roles as listed',s.roles.join(' · '))}${row('Responsible organization',a.RESPONSIBLE_ORGANIZATION)}${row('Flood sources',a.FLOOD_SOURCES)}${row('FEMA accreditation',a.FEMA_ACCREDITATION_RATING)}${row('Counties',a.COUNTIES)}</tbody></table><p>USACE National Levee Database. NLD lists sponsors and roles separately, so they are shown as published. Not a duty contact.</p>`;}}}),true);
+  registerLayer('damInundation',new FeatureLayer({url:INUNDATION_URL,title:LAYER_LABELS.damInundation,outFields:['DamName','LoadingScn','HazardCl','PubDate','FailedStr','NID'],opacity:.55,
+    renderer:{type:'unique-value',field:'LoadingScn',defaultSymbol:{type:'simple-fill',color:[214,96,77,.35],outline:{color:'#d6604d',width:.6}},uniqueValueInfos:[
+      {value:'Storm Induced',label:'Storm-induced failure',symbol:{type:'simple-fill',color:[178,24,43,.4],outline:{color:'#b2182b',width:.6}}}]},
+    popupTemplate:{title:'{DamName} · dam-failure inundation area',content:({graphic})=>{const a=graphic.attributes;
+      return `<p>Area the California Division of Safety of Dams approved as flooded if this dam (or the listed structure) failed. Planning reference for evacuation, not a forecast. Federal dams such as Pine Flat and Friant are not in this state layer; check the dam's Emergency Action Plan.</p><table class="esri-widget__table"><tbody>${row('Dam',a.DamName)}${row('Failed structure',a.FailedStr)}${row('Failure scenario',a.LoadingScn)}${row('Hazard class',a.HazardCl)}${row('Map published',Number.isFinite(a.PubDate)?new Date(a.PubDate).toLocaleDateString():null)}${row('NID ID',a.NID)}</tbody></table>${scenarioLinks(a.DamName)}`;}}}),true,1);
   registerLayer('drainageAreas',labelPolygons(new FeatureLayer({url:FMFCD_DETAIL_URL+'/0',title:LAYER_LABELS.drainageAreas,outFields:['DRAINAGE','Acres'],opacity:.9,minScale:0,maxScale:0,// publisher hides above 1:50,000; 303 polygons draw fine at metro scale
 elevationInfo:{mode:'on-the-ground'},
     renderer:{type:'simple',symbol:{type:'simple-fill',color:[167,162,195,.08],outline:{color:DRAINAGE_COLORS.catchment,width:1}}},

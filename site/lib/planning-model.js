@@ -59,7 +59,7 @@ export function releaseEvidence(input,association,now){
   const maxHours=metric?.duration==='D'?25:1.5,minHours=metric?.duration==='D'?23:0.5;
   const comparable=current&&prior&&Number.isFinite(prior.value)&&!prior.flag&&prior.units===metric.units&&hours>=minHours&&hours<=maxHours;
   const delta=comparable?sample.value-prior.value:null;
-  return {station:station?.id||association.station,name:station?.name||association.station,label:metric?.label||association.metric,metric:association.metric,source:station?.source,duration:metric?.duration,sample,prior:comparable?prior:null,hours:comparable?hours:null,delta,current,increasing:delta!==null&&Math.round(delta)>0,reason:!collectionCurrent?'Collection failed, missing or overdue':!contract?'Metric identity/units changed':assessed.tone!=='normal'?assessed.label:!comparable?'No consecutive valid comparison':'Comparable source reports'};
+  return {station:station?.id||association.station,name:station?.name||association.station,operator:station?.operator||null,label:metric?.label||association.metric,metric:association.metric,source:station?.source,duration:metric?.duration,sample,prior:comparable?prior:null,hours:comparable?hours:null,delta,current,increasing:delta!==null&&Math.round(delta)>0,reason:!collectionCurrent?'Collection failed, missing or overdue':!contract?'Metric identity/units changed':assessed.tone!=='normal'?assessed.label:!comparable?'No consecutive valid comparison':'Comparable source reports'};
 }
 
 /** @param {number|null} value @param {string} units @returns {boolean} Report differences at display precision; this is not an action threshold. */
