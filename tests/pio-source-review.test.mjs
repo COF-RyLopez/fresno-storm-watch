@@ -76,7 +76,8 @@ test('public monitor shares zone reads, limits concurrency to two and caches wit
   monitor.clear();await monitor.check([a]);assert.equal(reads,4);
   let running=0,max=0;const rows=[1,2,3,4].map(oid=>({...row,oid,key:'county-zone:'+oid})),states=[];
   for(const r of rows){const s=state(String(r.oid));s.record.payload.pioOutreach.zone=await pioZoneSnapshot(r,now);s.record.payload.pioOutreach.afnEvidence.zone=s.record.payload.pioOutreach.zone;states.push(s);}
-  const bounded=createPioSourceMonitor({loadZones:async()=>({rows,checked:now}),readContext:async()=>{max=Math.max(max,++running);await new Promise(r=>setImmediate(r));running--;return topics();}});await bounded.check(states);assert.equal(max,2);
+  // Each worker awaits a threadpool SHA-256 before reading, so a lone reader parks until a sibling joins instead of assuming one tick is enough.
+  const gate=[],bounded=createPioSourceMonitor({loadZones:async()=>({rows,checked:now}),readContext:async()=>{max=Math.max(max,++running);if(running<2)await new Promise(r=>gate.push(r));else{await new Promise(r=>setImmediate(r));gate.splice(0).forEach(r=>r());}running--;return topics();}});await bounded.check(states);assert.equal(max,2);
 });
 
 test('source failure stays visible and forced retry can recover without changing saved evidence',async()=>{
