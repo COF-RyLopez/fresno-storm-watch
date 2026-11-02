@@ -5,6 +5,8 @@ export const FLEET_TYPES=Object.freeze({'plow-truck':'Plow truck','snow-blower':
 export const FLEET_STATUS=Object.freeze({
   working:{label:'Working',color:'#2ecc71'},traveling:{label:'Traveling',color:'#4aa3ff'},idle:{label:'Idle (engine on)',color:'#f5c542'},
   parked:{label:'Parked',color:'#a5a9ad'},'in-shop':{label:'In shop for repair',color:'#ff7a59'},off:{label:'Engine off',color:'#6b7378'},unknown:{label:'Unknown',color:'#a5a9ad'}});
+/** "Plow truck 43102": equipment type and County equipment ID, for sentences and popup titles. */
+export const unitName=v=>`${FLEET_TYPES[v.type]||'Unit'} ${v.id}`;
 /** Repair priority: a plow back from the shop clears the most road, then blowers, then the rest. */
 const TYPE_ORDER=['plow-truck','snow-blower','sander','grader','loader','plow-attachment'];
 const BOUNDS={west:-121,east:-118,south:35.8,north:37.6};
@@ -23,7 +25,8 @@ export function validateFleet(data){
   if(!Array.isArray(data.vehicles)||!Array.isArray(data.routes||[]))throw Error('Snow fleet file is missing its vehicle list.');
   const latest=generated-delayMinutes*60000+60000;let tooRecent=0;const ids=new Set();
   const vehicles=data.vehicles.map(v=>{
-    if(typeof v?.id!=='string'||!/^[A-Za-z][\w .-]{0,30}$/.test(v.id))throw Error('A snow fleet vehicle has no public name.');
+    // id is the County equipment ID as a string ("03107" keeps its leading zero; 03107 and 3107 are different units).
+    if(typeof v?.id!=='string'||!/^[A-Za-z0-9][\w .-]{0,30}$/.test(v.id))throw Error('A snow fleet vehicle has no equipment ID.');
     if(ids.has(v.id))throw Error(`Duplicate snow fleet vehicle ${v.id}.`);ids.add(v.id);
     if(!FLEET_TYPES[v.type])throw Error(`${v.id} has an unknown equipment type.`);
     if(!FLEET_STATUS[v.status])throw Error(`${v.id} has an unknown status.`);

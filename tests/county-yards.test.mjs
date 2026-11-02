@@ -11,7 +11,7 @@ test('straight-line miles are sane',()=>{
   assert.equal(miles(-119.5,37,-119.5,37),0);
 });
 
-test('sample units: Plow 2 is at Auberry Yard (Samsara "Area 11"), Plow 9 at Hamilton Yard (Fleet HQ), both with fuel on site',()=>{
+test('sample units: 03107 is at Auberry Yard (Samsara "Area 11"), 43103 at Hamilton Yard (Fleet HQ), both with fuel on site',()=>{
   const p2=siteContext(-119.484152,37.076776,{yards,fuel});
   assert.equal(p2.at,'Auberry Yard');assert.match(p2.fuel,/^Fuel on site: Auberry/);
   const p9=siteContext(-119.748443,36.725517,{yards,fuel});
