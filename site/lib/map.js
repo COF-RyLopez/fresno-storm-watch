@@ -9,7 +9,7 @@ import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear,geometryType} from './nearby-search.js';
 import {withTimeout} from './with-timeout.js';
-import {createLabelLayer,gaugeLabel,setMapLabels,labelPolygons} from './map-labels.js';
+import {createLabelLayer,gaugeLabel,setMapLabels,labelPolygons,labelPoint,DENSE_LABEL_MIN_SCALE} from './map-labels.js';
 import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { createFrameWindow } from './frame-window.js';
@@ -105,6 +105,8 @@ elevationInfo:{mode:'on-the-ground'},
   // Name labels: NWS and USGS gauges share one label layer so their names deconflict against each other.
   const gaugeLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River gauge names'}),areaLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River watch area names'});
   registerLayer('gauges',gaugeLabels.layer);registerLayer('areas',areaLabels.layer);
+  const roadLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Road closure names',minScale:DENSE_LABEL_MIN_SCALE}),cameraLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Camera names',minScale:DENSE_LABEL_MIN_SCALE,below:true});
+  registerLayer('roads',roadLabels.layer);registerLayer('cameras',cameraLabels.layer);
   document.querySelector('#map-name-labels')?.addEventListener('calciteSwitchChange',e=>setMapLabels(e.target.checked));
   let nwsLabelRows=[],usgsLabelRows=[];const setGaugeLabels=()=>void gaugeLabels.set([...nwsLabelRows,...usgsLabelRows]);
   const syncVisibility=()=>{
@@ -195,7 +197,7 @@ elevationInfo:{mode:'on-the-ground'},
   setGaugeLabels();
   };
   const drawCameras=()=>{
-    cameras.removeAll();
+    cameras.removeAll();void cameraLabels.set(cameraRows.map(row=>({longitude:row.longitude,latitude:row.latitude,label:row.name})));
     for(const row of cameraRows)cameras.add(new Graphic({
       geometry:{type:'point',longitude:row.longitude,latitude:row.latitude,spatialReference:{wkid:4326}},
       attributes:{cameraId:row.id},symbol:{type:'picture-marker',url:new URL(row.usable?'../assets/camera-pin.svg':'../assets/camera-pin-unavailable.svg',import.meta.url).href,
@@ -511,7 +513,8 @@ elevationInfo:{mode:'on-the-ground'},
     setPowerBuildings:rows=>powerBuildings.set(rows),clearPowerBuildings:()=>powerBuildings.clear(),setPowerBuildingLabels:value=>powerBuildings.setLabels(value),focusPowerBuilding:id=>powerBuildings.focus(id),powerBuildingsViewport:()=>{const extent=view.extent;if(!extent)return null;const geo=extent.spatialReference.isGeographic?extent:webMercatorUtils.webMercatorToGeographic(extent);return {rings:[[[geo.xmin,geo.ymin],[geo.xmin,geo.ymax],[geo.xmax,geo.ymax],[geo.xmax,geo.ymin],[geo.xmin,geo.ymin]]],spatialReference:{wkid:4326}};},
     setPower:rows=>{powerRows=rows;drawPower();},
     focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;const geometries=power.graphics.toArray().filter(item=>item.attributes.powerKey===key).map(item=>item.geometry);if(geometries.length===1&&g.geometry.type==='point')return focusGeometry(g.geometry,25000);return focusGeometry(new Extent(powerFocusExtent(geometries)));}return focusGeometry(null);},
-    setRoads:rows=>{roads.removeAll();for(const r of rows)if(r.geometry)roads.add(roadGraphic(r));},
+    setRoads:rows=>{roads.removeAll();for(const r of rows)if(r.geometry)roads.add(roadGraphic(r));
+      void roadLabels.set(rows.flatMap(r=>{const p=r.name!=='Unnamed county record'&&labelPoint(r.geometry);return p?[{...p,label:r.name}]:[];}));},
     setRoadsVisible:visible=>setLayerPreference('roads',visible),
     focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;setLayerPreference('roads',true);return focusGeometry(g.geometry,g.geometry.type==='point'?22000:null);}return focusGeometry(null);},
     sceneViewpoint:()=>{
