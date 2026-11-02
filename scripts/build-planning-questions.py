@@ -1,7 +1,8 @@
 """Build site/data/planning/questions.json: open planning questions derived from public data, by place.
 
-Python 3.12+ with scripts/exposure-requirements.txt (shapely, pyproj). Run by hand when the sources change
-(a few minutes; ~150 public ArcGIS queries). Live river-gauge questions are added in the browser.
+Python 3.12+ with scripts/exposure-requirements.txt (shapely, pyproj). Runs in the Pages workflow with --published:
+the deployed copy is reused while under a day old, otherwise rebuilt (~1 minute, ~150 public ArcGIS queries); a failed
+rebuild keeps the last good copy. Live river-gauge and snow-equipment questions are added in the browser.
 
 Generators (each question names the data that raised it and the agency that can answer it):
   dams      high-hazard dams with no public Emergency Action Plan record, or no state-approved failure map
@@ -37,6 +38,8 @@ BASINS = 'https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFC
 DAMS = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/NID_v1/FeatureServer/0'
 LEVEES = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/NLD2_PUBLIC_v1/FeatureServer/14'
 INUNDATION = 'https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/DSOD_Approved_Inundation_Boundaries_View/FeatureServer/0'
+PUBLISHED = 'https://cof-rylopez.github.io/fresno-storm-watch/data/planning/questions.json'
+REBUILD_AFTER_S = 24 * 3600
 MILE, ACRE = 1609.344, 4046.86
 SANDBAG_REACH_MI, MIN_PARCELS, MIN_POCKET_ACRES = 1.5, 20, 5
 # 24/7 County operations by building description; anything else is an office that can close in a storm.
@@ -248,11 +251,57 @@ def main() -> None:
     payload = {'schemaVersion': 1, 'generatedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'),
                'places': ['Fresno County', *sorted(cities)], 'exposure': exposure, 'questions': questions,
                'rules': {'sandbagReachMiles': SANDBAG_REACH_MI, 'minParcels': MIN_PARCELS, 'minPocketAcres': MIN_POCKET_ACRES}}
+    counts = {k: sum(q['kind'] == k for q in questions) for k in ('dams', 'levees', 'sandbags', 'power')}
+    # A source that silently returns nothing would quietly drop a whole topic; treat it as a failed build instead.
+    empty = [k for k in ('dams', 'levees', 'power') if not counts[k]]
+    if empty:
+        raise RuntimeError(f'No {", ".join(empty)} questions built; a source probably returned nothing')
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=1) + '\n', encoding='utf-8')
-    counts = {k: sum(q['kind'] == k for q in questions) for k in ('dams', 'levees', 'sandbags', 'power')}
     print(f'{len(questions)} questions {counts} → {OUT.relative_to(ROOT)}', file=sys.stderr)
 
 
+def usable(data, now: float) -> float | None:
+    """Age in seconds of a questions file that can be served as is, else None (wrong shape, empty, or future-dated)."""
+    try:
+        built = datetime.fromisoformat(data['generatedAt']).timestamp()
+    except (KeyError, TypeError, ValueError):
+        return None
+    if data.get('schemaVersion') != 1 or not data.get('questions') or built > now + 120:
+        return None
+    return now - built
+
+
+def published() -> dict | None:
+    try:
+        with urllib.request.urlopen(f'{PUBLISHED}?check={int(datetime.now().timestamp())}', timeout=30) as r:
+            return json.load(r)
+    except Exception as error:  # first deploy, or Pages unreachable: rebuild instead
+        print(f'Published planning questions unavailable: {error}', file=sys.stderr)
+        return None
+
+
+def run(argv: list[str], fetch=published, build=main, now: float | None = None) -> str:
+    """--published: reuse the deployed copy while under a day old; otherwise rebuild, keeping the newest good copy on failure."""
+    now = now if now is not None else datetime.now(timezone.utc).timestamp()
+    prior = fetch() if '--published' in argv else None
+    age = usable(prior, now) if prior else None
+    if age is not None and age < REBUILD_AFTER_S:
+        OUT.write_text(json.dumps(prior, indent=1) + '\n', encoding='utf-8')
+        print(f'Reused published planning questions ({age / 3600:.1f} h old)', file=sys.stderr)
+        return 'reused'
+    try:
+        build()
+        return 'built'
+    except Exception as error:
+        # Optional feed: serve the newest good copy (published, else the committed one) and say so in the run.
+        local = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else None
+        keep = max((d for d in (prior, local) if d and usable(d, now) is not None), key=lambda d: d['generatedAt'], default=None)
+        if keep:
+            OUT.write_text(json.dumps(keep, indent=1) + '\n', encoding='utf-8')
+        print(f'::warning title=Planning questions not rebuilt::{type(error).__name__}: {error}; serving the copy built {keep["generatedAt"] if keep else "never"}')
+        return 'kept'
+
+
 if __name__ == '__main__':
-    main()
+    run(sys.argv)
