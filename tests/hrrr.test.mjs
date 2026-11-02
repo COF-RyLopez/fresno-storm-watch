@@ -53,3 +53,20 @@ test('rain is optional for older collections, strict when present, and dry cells
  const p=hrrrPixels({...f,rain},'rain');assert.deepEqual([...p.mask.slice(0,6)],[0,0,0,1,1,0]);assert.ok(Math.abs(p.pixels[0][4]-0.4)<1e-6);
  assert.equal(hrrrPoint({...f,rain},m.grid,m.grid.x0+4*m.grid.dx,m.grid.y0).rain,0.4);assert.equal(hrrrPoint(f,m.grid,-119.75,36.92).rain,null);
 });
+
+import {validateMrmsManifest,validateMrmsGrid,mrmsReason,mrmsPixels} from '../site/lib/mrms-model.js';
+function mrms(){const last=Date.parse('2026-11-02T12:00:00Z');return {schemaVersion:1,product:'noaa-mrms-conus-analysis-hourly',license:'CC-BY-4.0',attribution:'NOAA MRMS processed by dynamical.org',hourlyUnits:'in/h',totalUnits:'in',total:'total-24h.json',generatedAt:'2026-11-02T12:40:00Z',grid:{wkid:4326,width:101,height:80,x0:-121.25,y0:38.12,dx:.03,dy:-.03},error:null,
+ frames:Array.from({length:24},(_,i)=>{const valid=new Date(last-(23-i)*HOUR).toISOString().replace('.000','');return {valid,file:`mrms-${valid.replace(/[-:]/g,'')}.json`};})};}
+const mNow=Date.parse('2026-11-02T13:00:00Z');
+test('MRMS contract: 24 consecutive hours on the HRRR grid, honest gaps, overdue hides the field',()=>{
+ const m=mrms();assert.equal(validateMrmsManifest(m,mNow),m);assert.equal(m.frames[23].file,'mrms-20261102T120000Z.json');
+ for(const patch of [{hourlyUnits:'mm/h'},{totalUnits:'mm'},{grid:{...m.grid,dx:.01}},{frames:m.frames.slice(1)},{license:'proprietary'}])assert.throws(()=>validateMrmsManifest({...m,...patch},mNow));
+ const gap=mrms();gap.frames[5]={...gap.frames[6]};assert.throws(()=>validateMrmsManifest(gap,mNow));
+ assert.equal(mrmsReason(m,mNow),null);assert.match(mrmsReason(m,Date.parse('2026-11-02T13:30:00Z')),/overdue/);
+ assert.match(mrmsReason({...m,generatedAt:'2026-11-02T16:40:00Z'},Date.parse('2026-11-02T17:00:00Z')),/old/);assert.match(mrmsReason({...m,error:'Collection failed'},mNow),/failed/);
+ const rain=Array(8080).fill(0);rain[1]=0.005;rain[2]=0.02;rain[3]=null;const f={schemaVersion:1,valid:m.frames[0].valid,width:101,height:80,rain};
+ assert.equal(validateMrmsGrid(f,m,m.frames[0].valid),f);assert.throws(()=>validateMrmsGrid(f,m,m.frames[1].valid));
+ for(const bad of [-1,25,NaN])assert.throws(()=>validateMrmsGrid({...f,rain:rain.map((v,i)=>i===9?bad:v)},m,m.frames[0].valid));
+ assert.equal(validateMrmsGrid({...f,hours:24,rain:rain.map((v,i)=>i===9?25:v)},m,m.frames[0].valid,true).hours,24);
+ assert.deepEqual([...mrmsPixels(f).mask.slice(0,4)],[0,0,1,0]);
+});

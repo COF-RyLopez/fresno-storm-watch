@@ -69,6 +69,12 @@ jobs:
           work/hrrr-env/bin/python -m pip install --disable-pip-version-check -r scripts/hrrr-requirements.txt
           work/hrrr-env/bin/python -m unittest discover -s tests -p 'test_hrrr_collector.py'
           work/hrrr-env/bin/python scripts/collect-hrrr.py
+      - name: Prepare regional public MRMS observed rainfall
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        timeout-minutes: 5
+        run: |
+          work/hrrr-env/bin/python -m unittest discover -s tests -p 'test_mrms_collector.py'
+          work/hrrr-env/bin/python scripts/collect-mrms.py
       - name: Collect public NWS and Dynamical river-area comparisons
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:comparisons
