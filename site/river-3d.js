@@ -31,11 +31,15 @@ if(google)esriConfig.request.interceptors.push({urls:/^https:\/\/tile\.googleapi
   const data=response?.data;if(data instanceof ArrayBuffer&&credits.add(glbCopyright(data)))creditBox.textContent=credits.line();}});
 // Over Google's mesh, place graphics 40 m above the Esri terrain rather than on the mesh itself: relative-to-scene had to
 // re-query the mesh on every redraw, so pulses lagged or hid under it. On the flat valley floor the two surfaces agree closely.
-const elevationInfo=()=>google?.visible?{mode:'relative-to-ground',offset:40}:{mode:'on-the-ground'};
+// Google tiles start off: they are the slowest part of the first load. The layer is added on first use, so no tile
+// session starts until someone asks for it.
+let googleOn=false;
+const elevationInfo=()=>googleOn?{mode:'relative-to-ground',offset:40}:{mode:'on-the-ground'};
 const base=new GraphicsLayer({title:'River network · USGS 3DHP',elevationInfo:elevationInfo()}),pulses=new GraphicsLayer({title:'Illustrative surge travel',elevationInfo:elevationInfo()}),
   markers=new GraphicsLayer({title:'Pulse sources',elevationInfo:elevationInfo()});
-const map=new ArcMap({basemap:new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})]}),ground:'world-elevation',layers:[...(google?[google]:[]),base,pulses,markers]});
-const view=new SceneView({container:'view',map,qualityProfile:'high',environment:{lighting:{type:'sun',directShadowsEnabled:true},atmosphereEnabled:true},
+const map=new ArcMap({basemap:new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})]}),ground:'world-elevation',layers:[base,pulses,markers]});
+// Medium quality, no shadows: lighter on laptop GPUs while the timeline plays.
+const view=new SceneView({container:'view',map,qualityProfile:'medium',environment:{lighting:{type:'sun',directShadowsEnabled:false},atmosphereEnabled:true},
   camera:{position:{longitude:-119.55,latitude:36.70,z:26000},heading:300,tilt:68}});
 
 base.addMany([...net.paths.values()].map(p=>new Graphic({geometry:{type:'polyline',paths:p.parts.map(q=>q.c),spatialReference:{wkid:4326}},attributes:{name:p.name},
@@ -111,10 +115,10 @@ $('surge-now').addEventListener('click',()=>{stop();set(0);});
 $('surge-play').addEventListener('click',()=>{if(playTimer)return stop();$('surge-play').textContent='Pause';$('surge-play').setAttribute('icon-start','pause');
   // Same pace as before (one 15-minute step per 400 ms) in quarter steps, so the front slides ~250 m at a time instead of jumping 1 km.
   const step=SURGE_CONFIG.stepMinutes/4;playTimer=setInterval(()=>set(offset+step>range.max?range.min:offset+step),100);});
-$('google-switch').toggleAttribute('disabled',!google);$('google-switch').toggleAttribute('checked',!!google);
-$('google-note').textContent=google?'3D tiles © Google. Map Tiles API; visualization only.':'Google 3D tiles are off: no browser key is configured for this site. Showing Esri World Imagery on world terrain.';
-if(google)view.ui.add([logo,creditBox],'bottom-left');
-$('google-switch').addEventListener('calciteSwitchChange',e=>{if(!google)return;google.visible=e.target.checked;logo.hidden=creditBox.hidden=!e.target.checked;base.elevationInfo=pulses.elevationInfo=markers.elevationInfo=elevationInfo();});
+$('google-switch').toggleAttribute('disabled',!google);
+$('google-note').textContent=google?'Off by default so the scene loads faster. 3D tiles © Google. Map Tiles API; visualization only.':'Google 3D tiles are off: no browser key is configured for this site. Showing Esri World Imagery on world terrain.';
+logo.hidden=creditBox.hidden=true;if(google)view.ui.add([logo,creditBox],'bottom-left');
+$('google-switch').addEventListener('calciteSwitchChange',e=>{if(!google)return;googleOn=e.target.checked;if(googleOn&&!map.layers.includes(google))map.add(google,0);google.visible=googleOn;logo.hidden=creditBox.hidden=!e.target.checked;base.elevationInfo=pulses.elevationInfo=markers.elevationInfo=elevationInfo();});
 if(exercise)$('notice').hidden=false;
 // Preloader (Google 3D best practices): say the scene is still sharpening until it first stops loading tiles.
 const loading=document.createElement('div');loading.className='scene-loading';loading.setAttribute('role','status');loading.textContent='Loading 3D imagery… the view sharpens as tiles arrive.';
