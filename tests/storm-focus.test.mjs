@@ -42,7 +42,7 @@ test('river areas map to tiers and old evidence never ranks above Verify',()=>{
   const rows=stormFocus({...quiet,areas:[area('threshold',4),area('rising',3,{rising:[g(0.6,3)]}),area('change',3),area('rain',2),area('gaps',1,{gaps:['x','y']}),area('none',0),area('old',4,{rainfall:{checked:NOW-3*H}})]},NOW);
   const tier=Object.fromEntries(rows.map(r=>[r.key.slice(5),r.tier]));
   assert.deepEqual(tier,{threshold:2,rising:2,change:3,rain:3,gaps:4,old:4});
-  assert.match(rows.find(r=>r.key==='area:rising').why,/\+0\.6 ft in 3\.0 h/);assert.match(rows.find(r=>r.key==='area:gaps').why,/2 evidence gaps/);
+  assert.match(rows.find(r=>r.key==='area:rising').why,/\+0\.60 ft in 3\.0 h/);assert.match(rows.find(r=>r.key==='area:gaps').why,/2 evidence gaps/);
   assert.equal(rows.find(r=>r.key==='area:old').stale,true);
 });
 
