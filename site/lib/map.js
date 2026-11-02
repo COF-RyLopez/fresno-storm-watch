@@ -24,6 +24,7 @@ import {viewEventData,isMapLoadCancellation} from './map-events.js';
 import {WORKSPACES,LAYER_LABELS,workspaceMemory,layerVisible} from './workspace-model.js';
 import {installBasemapGallery} from './basemap-gallery-ui.js';
 import {YARDS_URL,FUEL_URL,siteName} from './county-yards-model.js';
+import {glbCopyright,createCredits} from './google-tiles.js';
 
 let sdkPromise;
 /** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */
@@ -161,7 +162,27 @@ elevationInfo:{mode:'on-the-ground'},
   const imageryBasemap=new Basemap({id:'frog-basemap-imagery',title:'Imagery Hybrid · roads and labels',thumbnailUrl:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-120.9,36.3,-118.6,37.6&bboxSR=4326&imageSR=3857&size=240,160&format=png&transparent=false&f=image',baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})],referenceLayers:[new VectorTileLayer({portalItem:{id:'30d6b8271e1849cd9c3042060001f425',portal:{url:'https://www.arcgis.com'}},title:'Hybrid Reference — roads and labels'})]});
   let waterwayStyleError=null;
   const waterwayBasemap=await createWaterwayBasemap({Basemap,VectorTileLayer}).catch(error=>{waterwayStyleError=error.message;console.warn('County waterways style:',error.message);return null;});
-  const galleryBasemaps={dark:themedBasemap('Dark'),light:themedBasemap('Light'),imagery:imageryBasemap,...(waterwayBasemap?{waterways:waterwayBasemap.basemap}:{})};
+  // Google Photorealistic 3D Tiles: offered only when the site has a browser key (written by CI; same key as the 3D river page).
+  // The gallery entry is plain imagery; choosing it opens 3D and adds Google's mesh, which only a SceneView can draw.
+  const googleKey=await fetch(new URL('../data/google-tiles.json',import.meta.url),{cache:'no-store',signal:AbortSignal.timeout(8000)}).then(r=>r.ok?r.json():null).then(d=>typeof d?.key==='string'&&d.key?d.key:null).catch(()=>null);
+  const google3dBasemap=googleKey&&new Basemap({id:'frog-basemap-google3d',title:'Google 3D · photorealistic (opens 3D)',thumbnailUrl:new URL('../assets/google-3d-thumb.svg',import.meta.url).href,
+    baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',title:'Esri World Imagery (under Google 3D)'})]});
+  const galleryBasemaps={dark:themedBasemap('Dark'),light:themedBasemap('Light'),imagery:imageryBasemap,...(waterwayBasemap?{waterways:waterwayBasemap.basemap}:{}),...(google3dBasemap?{google3d:google3dBasemap}:{})};
+  let google3d=null;const googleCredits=createCredits(),googleCreditBox=document.createElement('div'),googleLogo=document.createElement('img');
+  googleCreditBox.className='google-credits';googleLogo.className='google-logo';googleLogo.src=new URL('../assets/google-maps-logo.svg',import.meta.url).href;googleLogo.alt='Google Maps';
+  /** Google mesh on only while its basemap is chosen and the view is 3D; logo and data providers shown whenever it is (Map Tiles API policy). */
+  async function syncGoogle3d(){
+    const on=basemapKey==='google3d'&&view?.type==='3d';
+    if(on&&!google3d){
+      const [IntegratedMesh3DTilesLayer,esriConfig]=await sdk.import(['@arcgis/core/layers/IntegratedMesh3DTilesLayer.js','@arcgis/core/config.js']);
+      if(!google3d){google3d=new IntegratedMesh3DTilesLayer({url:'https://tile.googleapis.com/v1/3dtiles/root.json',customParameters:{key:googleKey},title:'Google Photorealistic 3D Tiles',listMode:'hide'});
+        esriConfig.request.interceptors.push({urls:/^https:\/\/tile\.googleapis\.com\//,after(response){const data=response?.data;if(data instanceof ArrayBuffer&&googleCredits.add(glbCopyright(data)))googleCreditBox.textContent=googleCredits.line();}});}
+    }
+    if(on&&google3d&&!map.layers.includes(google3d))map.add(google3d,0);
+    if(!on&&google3d&&map.layers.includes(google3d))map.remove(google3d);
+    if(sceneView){if(on)sceneView.ui.add([googleLogo,googleCreditBox],'bottom-left');else sceneView.ui.remove([googleLogo,googleCreditBox]);}
+    const note=document.querySelector('#google3d-note');if(note){note.hidden=basemapKey!=='google3d';note.textContent=on?'Google 3D tiles: photorealistic context, not current conditions. Layers that lie flat on the ground (flood zones, inundation) can be hidden under buildings and trees; points and labels sit above.':'Google 3D needs the 3D view; opening it.';}
+  }
   let basemapKey='dark',imagery=false,imageryFailure=false,gallery=null;
   const imageryStatus=()=>{const host=document.querySelector('#imagery-status');host.hidden=!imagery;host.textContent=imageryFailure?'Imagery hybrid incomplete — road labels or imagery unavailable':'Imagery hybrid · roads and labels · historical imagery';};
   let imageryLoaded=false;
@@ -172,6 +193,8 @@ elevationInfo:{mode:'on-the-ground'},
     }
     map.basemap=galleryBasemaps[basemapKey];
     document.querySelector('#map').dataset.basemap=basemapKey;
+    if(basemapKey==='google3d'&&view?.type!=='3d'){const state=currentState?.();void setMode('3d').then(()=>{if(state)state.mode=view.type;});}
+    void syncGoogle3d();
     window.dispatchEvent(new CustomEvent('storm-basemap-change',{detail:{key:basemapKey}}));
     const reference=basemapKey===WATERWAY_BASEMAP.key,note=document.querySelector('#waterway-basemap-note'),missing=key===WATERWAY_BASEMAP.key&&!waterwayBasemap;
     note.hidden=!reference&&!missing;note.textContent=reference?waterwayBasemap.note:missing?`County waterways style unavailable — ${waterwayStyleError}. Dark gray context restored.`:'';
@@ -339,7 +362,7 @@ elevationInfo:{mode:'on-the-ground'},
   await reactiveUtils.whenOnce(() => view.width > 0 && view.height > 0);
   await view.goTo(scopeExtent().clone().expand(1.15), { animate: false });
   const modeStatus=()=>{
-    gallery?.setView();
+    gallery?.setView();void syncGoogle3d();
     mapContext.onViewChanged();
     document.querySelector('#view-mode-status').textContent=view.type==='3d'
       ? terrainError?'3D terrain unavailable · return to 2D for map context':'3D terrain context · no flood-depth model'
