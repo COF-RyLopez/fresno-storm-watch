@@ -30,9 +30,9 @@ export function createLabelLayer({FeatureLayer,Graphic},{title,below=false,minSc
 }
 
 /** Labels on a polygon FeatureLayer (it has labelingInfo itself), joined to the Map labels switch.
- * @param {object} layer FeatureLayer @param {{expression:string,minScale:number,color?:string}} options Arcade label (empty string = no label); polygons label only when zoomed in this far. */
-export function labelPolygons(layer,{expression,minScale,color=TEXT.color}){
-  layer.labelingInfo=[{labelExpressionInfo:{expression},labelPlacement:'always-horizontal',deconflictionStrategy:'static',minScale,maxScale:0,symbol:{...TEXT,color,font:{...TEXT.font,size:9}}}];
+ * @param {object} layer FeatureLayer @param {{expression:string,minScale:number,color?:string,placement?:string}} options Arcade label (empty string = no label); label only when zoomed in this far; lines use placement 'center-along'. */
+export function labelPolygons(layer,{expression,minScale,color=TEXT.color,placement='always-horizontal'}){
+  layer.labelingInfo=[{labelExpressionInfo:{expression},labelPlacement:placement,deconflictionStrategy:'static',minScale,maxScale:0,symbol:{...TEXT,color,font:{...TEXT.font,size:9}}}];
   layer.labelsVisible=labelsShown;labelLayers.add(layer);return layer;
 }
 
