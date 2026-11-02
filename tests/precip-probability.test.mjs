@@ -20,7 +20,7 @@ test('CONUS periods match publisher availability through all 24 cycle hours, inc
   }
 });
 test('thresholds keep percentage semantics, original colors, source CRS and archived-slide links',()=>{
-  assert.equal(PROBABILITY_STEPS.length,6);assert.equal(PROBABILITY_STEPS[0].page,6);assert.equal(PROBABILITY_STEPS[1].page,7);
+  assert.equal(PROBABILITY_STEPS.length,6);
   assert.match(PROBABILITY_STEPS[0].meaning,/not a flood probability/);assert.match(PROBABILITY_STEPS[0].relationship,/dates can differ/);
   assert.equal(PROBABILITY_LEGEND[0][1],'#003200');assert.equal(PROBABILITY_BOUNDS.spatialReference.wkid,4326);
   assert.match(probabilityImageUrl(cycle,'0p25',23),/pp24ige0p25_2026102001f023_tile_0_1\.png$/);

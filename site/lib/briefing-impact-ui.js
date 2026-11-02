@@ -11,7 +11,7 @@ export function createBriefingImpactView({exercise=false,onOpen,onData=()=>{}}){
     host.replaceChildren();block.description=exercise?'Live briefing context disabled':model.unreviewed?'New public revision · summary review needed':`${model.rows.filter(r=>r.period!=='past').length} dated outlooks · separate from area-review counts`;
     const status=el('calcite-notice');status.open=true;status.width='full';status.kind=model.unreviewed||error||model.missing?'warning':'info';status.icon='information';
     const title=el('span',exercise?'Fictional exercise · live summaries hidden':error?'Briefing summaries unavailable':model.unreviewed?'New public briefing needs Fresno impact review':model.missing?'Public briefing identity unavailable':'Fresno planning context · NWS Hanford');title.slot='title';
-    const note=el('span',exercise?'Read live briefings in the live workspace.':error|| (model.unreviewed?'The public PDF changed. Its previous summary is withheld; dated partner context below is separate. Read the new source before using it.':model.missing?'Current public summaries are withheld until the document revision is verified. Any partner context below is a dated archive.':'Regional forecasts applied as county review prompts, not predicted impacts at individual sites. Check dates and source qualifications.'));note.slot='message';status.append(title,note);host.append(status);
+    const note=el('span',exercise?'Read live briefings in the live workspace.':error|| (model.unreviewed?'The public PDF changed. Its previous summary is withheld. Read the new source before using it.':model.missing?'Current public summaries are withheld until the document revision is verified.':'Regional forecasts applied as county review prompts, not predicted impacts at individual sites. Check dates and source qualifications.'));note.slot='message';status.append(title,note);host.append(status);
     host.append(link('Current NWS Hanford source ↗',HNX_BRIEFING_PAGE));
     if(exercise)return;
     const outlooks=el('calcite-accordion');outlooks.scale='s';host.append(outlooks);
@@ -26,7 +26,7 @@ export function createBriefingImpactView({exercise=false,onOpen,onData=()=>{}}){
       item.append(el('p',row.planning),el('p','County planning prompt · app interpretation, not an NWS resource recommendation or county-approved assignment.'),el('p',row.geography),el('p',row.limitation));evidence.append(item);card.append(evidence);
       const citation=el('p',`${row.document.label} · page ${row.page}`);citation.className='briefing-impact-citation';card.append(citation);
       const read=button(`Read source · page ${row.page}`,()=>onOpen(row.document.kind,row.page,row.document.sha256));read.iconStart='file-text';card.append(read);
-      card.append(link(row.document.kind==='archive'?'Saved partner PDF ↗':'NWS public PDF ↗',row.document.sourcePdf+'#page='+row.page));
+      card.append(link('NWS public PDF ↗',row.document.sourcePdf+'#page='+row.page));
       if(row.document.kind==='latest')card.append(el('small','Publisher link can change. The in-app source button opens the checked PDF revision.'));
       outlook.append(card);outlooks.append(outlook);
     }

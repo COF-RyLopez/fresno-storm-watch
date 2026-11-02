@@ -10,11 +10,11 @@ export const PROBABILITY_LEGEND=Object.freeze([
   ['90%','#003200'],['80%','#00440a'],['70%','#185612'],['60%','#266a1b'],['50%','#347e24'],['40%','#51a736'],['30%','#85c16d'],['20%','#b4dca3'],['10%','#e2f6da'],['1%','#f5f5f5']
 ]);
 export const PROBABILITY_STEPS=Object.freeze([0,1,2].flatMap(period=>['0p25','0p50'].map(threshold=>({
-  id:`prob-${threshold}-${period+1}`,kind:'probability',period,threshold,page:threshold==='0p25'?6:7,
+  id:`prob-${threshold}-${period+1}`,kind:'probability',period,threshold,
   label:`Chance ≥ ${threshold==='0p25'?'0.25':'0.50'} in. · 24h period ${period+1}`,
   service:PROBABILITY_SOURCE,source:PROBABILITY_SOURCE,maxAge:PROBABILITY_MAX_CYCLE_AGE,
   meaning:`Probability (%) of at least ${threshold==='0p25'?'0.25':'0.50'} inches of liquid-equivalent precipitation during the displayed 24 hours. Includes melted frozen precipitation; not a flood probability or rainfall amount.`,
-  relationship:'Same threshold/product family as the partner rainfall-probability slides. Latest WPC portal cycle and available 24-hour windows; dates can differ from the archived briefing. Western CONUS image coverage only (south of 38°N), including Fresno County.'
+  relationship:'Same threshold as Hanford briefing rainfall probabilities. Latest WPC portal cycle and available 24-hour windows; dates can differ from a briefing. Western CONUS image coverage only (south of 38°N), including Fresno County.'
 }))));
 /** Read a cycle declaration as data, never execute the publisher JavaScript. */
 export function parseProbabilityCycle(text,now=Date.now()){

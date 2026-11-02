@@ -1,13 +1,12 @@
 import {briefingState,HNX_BRIEFING_PAGE,HNX_BRIEFING_PDF,isoDay as day} from './briefing-model.js';
 import {pacificDate} from './briefing-context-model.js';
 
-export const PARTNER_BRIEFING=Object.freeze({url:'./data/briefings/nws-hanford-2026-10-19.pdf',sha256:'28b42dc4cfc6c0e8890d2fe9e3c0466aec01fe469f00404eb4d35f46c3b8d5b4',bytes:6247407});
 /** @param {object} value @returns {object} Summaries cite an exact document, page and calendar window; no inferred county hazard geometry. */
 export function validateBriefingImpacts(value){
   if(value?.schemaVersion!==1||!Array.isArray(value.documents)||!Array.isArray(value.impacts)||value.documents.length>10||value.impacts.length>30)throw new Error('Invalid Fresno briefing summary register.');
   const docs=new Map(),ids=new Set(),text=v=>typeof v==='string'&&v.length>0&&v.length<=1200;
   for(const d of value.documents){
-    if(!text(d.id)||docs.has(d.id)||!['latest','archive'].includes(d.kind)||!text(d.label)||!day(d.date)||!/^[a-f0-9]{64}$/.test(d.sha256)||!Number.isInteger(d.pages)||d.pages<1||d.pages>40||d.sourcePage!==HNX_BRIEFING_PAGE||d.sourcePdf!==(d.kind==='latest'?HNX_BRIEFING_PDF:PARTNER_BRIEFING.url)||(d.kind==='archive'&&d.sha256!==PARTNER_BRIEFING.sha256))throw new Error('Invalid briefing summary document identity.');
+    if(!text(d.id)||docs.has(d.id)||d.kind!=='latest'||!text(d.label)||!day(d.date)||!/^[a-f0-9]{64}$/.test(d.sha256)||!Number.isInteger(d.pages)||d.pages<1||d.pages>40||d.sourcePage!==HNX_BRIEFING_PAGE||d.sourcePdf!==HNX_BRIEFING_PDF)throw new Error('Invalid briefing summary document identity.');
     docs.set(d.id,d);
   }
   for(const i of value.impacts){
@@ -24,10 +23,10 @@ export function briefingImpacts(register,snapshot,now=Date.now()){
   const current=snapshot?.document?.sha256,health=briefingState(snapshot,now),docs=new Map(register.documents.map(d=>[d.id,d]));
   const rows=register.impacts.flatMap(i=>{
     const document=docs.get(i.document);
-    if(document.kind==='latest'&&document.sha256!==current)return [];
+    if(document.sha256!==current)return [];
     const period=today>i.lastDate?'past':today<i.firstDate?'upcoming':'within';
-    const status=period==='past'?'Past forecast period':document.kind==='archive'?'Dated partner context · verify with NWS':health.tone==='gap'?health.label:period==='upcoming'?'Upcoming forecast period':'Within stated forecast dates';
-    return [{...i,document,period,status,qualification:document.kind==='latest'&&health.tone==='gap'?health.reason:null}];
+    const status=period==='past'?'Past forecast period':health.tone==='gap'?health.label:period==='upcoming'?'Upcoming forecast period':'Within stated forecast dates';
+    return [{...i,document,period,status,qualification:health.tone==='gap'?health.reason:null}];
   });
-  return {rows,unreviewed:!!current&&!register.documents.some(d=>d.kind==='latest'&&d.sha256===current),missing:!current};
+  return {rows,unreviewed:!!current&&!register.documents.some(d=>d.sha256===current),missing:!current};
 }
