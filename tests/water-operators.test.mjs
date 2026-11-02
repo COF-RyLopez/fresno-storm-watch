@@ -33,3 +33,10 @@ test('prepared dam-failure scenarios attach to the dam with the same name, every
   assert.deepEqual(ids('Alluvial Drain Detention'),['alluvial-drain']);assert.deepEqual(ids('Pine Flat Dam'),[]);assert.deepEqual(ids(''),[]);
   assert.deepEqual(scenariosFor('Big Dry Creek Dam',scenarios).map(s=>s.variant).sort(),['Little Dry Creek outlet','Main dam','Outlet 1','Spillway']);
 });
+
+import {districtName,DISTRICTS_WHERE} from '../site/lib/water-operators.js';
+test('district names are tidied and drinking-water systems are filtered out',()=>{
+  assert.equal(districtName('Fresno Irrigation District'),'Fresno Irrigation District');
+  assert.equal(districtName('Merced  City Of'),'Merced, City of');assert.equal(districtName('WHISPERING PINES APARTMENTS\r\n'),'WHISPERING PINES APARTMENTS');
+  for(const s of ['CDPH','SWRCB'])assert.ok(DISTRICTS_WHERE.includes(`'${s}'`));
+});

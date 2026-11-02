@@ -10,7 +10,7 @@ import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear,geometryType} from './nearby-search.js';
 import {withTimeout} from './with-timeout.js';
 import {createLabelLayer,gaugeLabel,setMapLabels,labelPolygons,labelPoint,DENSE_LABEL_MIN_SCALE} from './map-labels.js';
-import {DAMS_URL,LEVEES_URL,INUNDATION_URL,damOperator,leveeSponsors,scenariosFor} from './water-operators.js';
+import {DAMS_URL,LEVEES_URL,INUNDATION_URL,DISTRICTS_URL,DISTRICTS_WHERE,damOperator,leveeSponsors,scenariosFor,districtName} from './water-operators.js';
 import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { createFrameWindow } from './frame-window.js';
@@ -116,6 +116,11 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
     renderer:{type:'simple',symbol:{type:'simple-line',color:'#d9a441',width:2.5}},
     popupTemplate:{title:'{SYSTEM_NAME} · levee system',content:({graphic})=>{const a=graphic.attributes,s=leveeSponsors(a);
       return `<table class="esri-widget__table"><tbody>${row('Operated by (sponsors)',s.listed?s.sponsors.join(' · '):'Not listed in the National Levee Database')}${row('Roles as listed',s.roles.join(' · '))}${row('Responsible organization',a.RESPONSIBLE_ORGANIZATION)}${row('Flood sources',a.FLOOD_SOURCES)}${row('FEMA accreditation',a.FEMA_ACCREDITATION_RATING)}${row('Counties',a.COUNTIES)}</tbody></table><p>USACE National Levee Database. NLD lists sponsors and roles separately, so they are shown as published. Not a duty contact.</p>`;}}}),true);
+  // Water and irrigation districts (DWR i03): who runs the water at a place. Outlines only, so they sit over other layers.
+  registerLayer('waterDistricts',labelPolygons(new FeatureLayer({url:DISTRICTS_URL,title:LAYER_LABELS.waterDistricts,definitionExpression:DISTRICTS_WHERE,outFields:['AGENCYNAME','LASTMODIFIEDDATE'],
+    renderer:{type:'simple',symbol:{type:'simple-fill',color:[111,211,224,.06],outline:{color:'#6fd3e0',width:1.2,style:'short-dash'}}},
+    popupTemplate:{title:feature=>`${districtName(feature.graphic.attributes.AGENCYNAME)} · water / irrigation district`,content:({graphic})=>{const a=graphic.attributes;
+      return `<table class="esri-widget__table"><tbody>${row('Operated by',districtName(a.AGENCYNAME))}${row('Boundary updated',Number.isFinite(a.LASTMODIFIEDDATE)?new Date(a.LASTMODIFIEDDATE).toLocaleDateString():null)}</tbody></table><p>California DWR water district boundaries. Districts can overlap (for example a city inside an irrigation district); every district at the point you selected is listed above this one. Not a duty contact.</p>`;}}}),{expression:"Proper(Replace(Trim($feature.AGENCYNAME), '  ', ' '))",minScale:300_000,color:'#9fe3ec'}),true,1);
   registerLayer('damInundation',new FeatureLayer({url:INUNDATION_URL,title:LAYER_LABELS.damInundation,outFields:['DamName','LoadingScn','HazardCl','PubDate','FailedStr','NID'],opacity:.55,
     renderer:{type:'unique-value',field:'LoadingScn',defaultSymbol:{type:'simple-fill',color:[214,96,77,.35],outline:{color:'#d6604d',width:.6}},uniqueValueInfos:[
       {value:'Storm Induced',label:'Storm-induced failure',symbol:{type:'simple-fill',color:[178,24,43,.4],outline:{color:'#b2182b',width:.6}}}]},
