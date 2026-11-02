@@ -63,7 +63,7 @@ export function chainPaths(paths){
 export function profileSamples(samples){
   const byId=new Map();for(const s of samples||[]){const v=Number(s.value);if(Number.isFinite(v)&&!byId.has(s.locationId))byId.set(s.locationId,{x:s.location.x,y:s.location.y,m:v});}
   const pts=[...byId.entries()].sort((a,b)=>a[0]-b[0]).map(([,p])=>p);let d=0;
-  return pts.map((p,i)=>{if(i)d+=km([pts[i-1].x,pts[i-1].y],[p.x,p.y]);return {km:d,m:p.m};});
+  return pts.map((p,i)=>{if(i)d+=km([pts[i-1].x,pts[i-1].y],[p.x,p.y]);return {km:d,m:p.m,x:p.x,y:p.y};});
 }
 /** @returns {{lengthMi:number,lowFt:number,highFt:number,aboveMi:number|null}} aboveMi: length at or above the snow level (null without one). */
 export function profileStats(points,snowM){
@@ -72,4 +72,26 @@ export function profileStats(points,snowM){
     if(a.m>=snowM&&b.m>=snowM)above+=seg;else if(a.m>=snowM||b.m>=snowM){const f=(snowM-a.m)/(b.m-a.m);above+=a.m>=snowM?seg*f:seg*(1-f);}}
   const mi=k=>k/1.609344;
   return {lengthMi:mi(points.at(-1)?.km||0),lowFt:Math.min(...ms)*FT_PER_M,highFt:Math.max(...ms)*FT_PER_M,aboveMi:snowM===null?null:mi(above)};
+}
+
+/** USGS GNIS names near the road. Places get text labels; summits and gaps (passes) get ticks with the name on hover. */
+export const GNIS_URL='https://carto.nationalmap.gov/arcgis/rest/services/geonames/MapServer';
+export const LANDMARK_LAYERS=Object.freeze([{id:3,kind:'place',metres:600},{id:5,kind:'peak',metres:1500,where:"gaz_featureclass IN ('Summit','Gap')"}]);
+/** @param {{name:string,kind:string,x:number,y:number}[]} items @param {{km:number,m:number,x:number,y:number}[]} points profile
+ * @returns {{name:string,kind:string,km:number,m:number,offKm:number}[]} each at its nearest profile point, nearest copy of a name kept, in road order. */
+export function placeOnProfile(items,points){
+  const best=new Map();
+  for(const it of items){let near=null;for(const p of points){const d=km([it.x,it.y],[p.x,p.y]);if(!near||d<near.d)near={p,d};}
+    if(near&&(!best.has(it.name)||near.d<best.get(it.name).offKm))best.set(it.name,{name:it.name,kind:it.kind,km:near.p.km,m:near.p.m,offKm:near.d});}
+  return [...best.values()].sort((a,b)=>a.km-b.km);
+}
+/** Which places get a text label: greedy by closeness to the road, at most maxLabels, never overlapping on either of
+ * `rows` label rows (width estimated from name length). Everything else becomes a tick with its name on hover.
+ * @returns {{...item,row:number|null}[]} row index for labelled items, null for ticks. */
+export function labelRows(marks,{width,maxKm,charPx=6,rows=2,maxLabels=5}){
+  const taken=Array.from({length:rows},()=>[]),out=marks.map(m=>({...m,row:null}));
+  const order=out.map((m,i)=>i).filter(i=>out[i].kind==='place').sort((a,b)=>out[a].offKm-out[b].offKm);
+  let n=0;for(const i of order){if(n>=maxLabels)break;const c=out[i].km/(maxKm||1)*width,w=out[i].name.length*charPx+6,span=[Math.max(0,c-w/2),Math.min(width,c+w/2)];
+    const r=taken.findIndex(t=>t.every(([a,b])=>span[1]<a||span[0]>b));if(r<0)continue;taken[r].push(span);out[i].row=r;n++;}
+  return out;
 }

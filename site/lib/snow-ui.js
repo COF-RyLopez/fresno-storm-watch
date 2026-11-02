@@ -1,7 +1,7 @@
 import {loadSdk} from './map.js';
 import {reportHealth} from './source-health.js';
 import {labelPolygons} from './map-labels.js';
-import {SNOW_POINTS,SNOW_ROUTES_URL,ROUTE_PRIORITIES,snowLevels,snowLevelAt,snowRange,feet,snowLines,chainPaths,profileSamples,profileStats,km,FT_PER_M} from './snow-model.js';
+import {SNOW_POINTS,SNOW_ROUTES_URL,ROUTE_PRIORITIES,snowLevels,snowLevelAt,snowRange,feet,snowLines,chainPaths,profileSamples,profileStats,km,FT_PER_M,GNIS_URL,LANDMARK_LAYERS,placeOnProfile,labelRows} from './snow-model.js';
 
 const $=id=>document.getElementById(id);
 const ELEVATION_URL='https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer';
@@ -36,8 +36,9 @@ export function createSnowLevel({time,exercise,target}){
   function drawProfile(){
     const svg=$('snow-profile-chart');
     // SVG elements have no .hidden property; toggle the attribute.
-    if(!profile){svg.toggleAttribute('hidden',true);return;}
-    const pts=profile.points,s=profileStats(pts,threshold),W=320,H=150,L=52,B=22,T=8,R=8;
+    if(!profile){svg.toggleAttribute('hidden',true);$('snow-profile-places').replaceChildren();return;}
+    const marks=profile.marks||[],pts=profile.points,s=profileStats(pts,threshold),W=320,H=marks.length?180:150,L=52,B=22,T=marks.length?34:8,R=8,mi=k=>k/1.609344;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
     const lo=Math.min(...pts.map(p=>p.m),threshold??Infinity)-40,hi=Math.max(...pts.map(p=>p.m),threshold??-Infinity)+40,max=pts.at(-1).km||1;
     const x=k=>L+(k/max)*(W-L-R),y=m=>T+(1-(m-lo)/(hi-lo))*(H-T-B),line=pts.map(p=>`${x(p.km).toFixed(1)},${y(p.m).toFixed(1)}`).join(' ');
     const area=`${x(0)},${H-B} ${line} ${x(max)},${H-B}`,sy=threshold===null?null:y(threshold);
@@ -45,9 +46,31 @@ export function createSnowLevel({time,exercise,target}){
       `<polygon points="${area}" fill="var(--calcite-color-foreground-3)"/>`+(sy===null?'':`<polygon points="${area}" fill="#e2f0ff" clip-path="url(#snow-above)"/><line x1="${L}" x2="${W-R}" y1="${sy}" y2="${sy}" stroke="#6fb6ff" stroke-dasharray="4 3"/><text x="${L+4}" y="${sy-4}" font-size="11" fill="#6fb6ff">snow level ${feet(threshold).toLocaleString()} ft</text>`)+
       `<polyline points="${line}" fill="none" stroke="var(--calcite-color-text-1)" stroke-width="1.5"/>`+
       `<text x="${L-4}" y="${y(hi-40)+3}" text-anchor="end" font-size="11" fill="currentColor">${Math.round((hi-40)*FT_PER_M).toLocaleString()} ft</text><text x="${L-4}" y="${y(lo+40)+3}" text-anchor="end" font-size="11" fill="currentColor">${Math.round((lo+40)*FT_PER_M).toLocaleString()} ft</text>`+
+      landmarkSvg(labelRows(marks,{width:W-L-R,maxKm:max}),x,y,T,H-B,L,W-R)+
       `<text x="${L}" y="${H-6}" font-size="11" fill="currentColor">0</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="11" fill="currentColor">${s.lengthMi.toFixed(1)} mi</text>`;
+    $('snow-profile-places').replaceChildren(...marks.map(m=>{const li=document.createElement('li');const ft=Math.round(m.m*FT_PER_M).toLocaleString();li.textContent=m.kind==='peak'?`${m.name} (${m.name.includes('Gap')?'pass':'summit'}, ${mi(m.offKm).toFixed(1)} mi off the road) · mi ${mi(m.km).toFixed(1)} · road at ${ft} ft`:`${m.name} · mi ${mi(m.km).toFixed(1)} · ${ft} ft`;return li;}));
     svg.toggleAttribute('hidden',false);svg.setAttribute('aria-label',`Elevation profile of ${profile.name}: ${Math.round(s.lowFt).toLocaleString()} to ${Math.round(s.highFt).toLocaleString()} ft over ${s.lengthMi.toFixed(1)} miles`);
     $('snow-profile-status').textContent=`${profile.name}: ${Math.round(s.lowFt).toLocaleString()}–${Math.round(s.highFt).toLocaleString()} ft over ${s.lengthMi.toFixed(1)} mi`+(s.aboveMi===null?' · no snow level for this time':s.aboveMi<0.05?` · all below the ${feet(threshold).toLocaleString()} ft snow level`:` · ${s.aboveMi.toFixed(1)} mi at or above the ${feet(threshold).toLocaleString()} ft snow level`)+`. USGS 3DEP elevation along the county route${profile.parts>1?`, ${profile.parts} mapped pieces joined (gaps not counted)`:''}.`;
+  }
+  /** Labelled places on two rows above the profile with a leader line; peaks and extra places as ticks (name on hover). */
+  function landmarkSvg(marks,x,y,top,bottom,left,right){
+    const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    return marks.map(m=>{const cx=x(m.km),cy=y(m.m),title=`<title>${esc(m.name)} · ${Math.round(m.m*FT_PER_M).toLocaleString()} ft at the road</title>`;
+      if(m.kind==='peak')return `<g>${title}<path d="M${cx-4},${cy-3} L${cx},${cy-10} L${cx+4},${cy-3} Z" fill="#c9b27c"/></g>`;
+      if(m.row===null)return `<g>${title}<line x1="${cx}" x2="${cx}" y1="${bottom}" y2="${bottom-6}" stroke="currentColor"/></g>`;
+      const ly=12+m.row*12,w=m.name.length*6+6,tx=Math.min(Math.max(cx,left+w/2),right-w/2);
+      return `<g>${title}<line x1="${cx}" x2="${cx}" y1="${ly+3}" y2="${cy}" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 2"/><text x="${tx}" y="${ly}" text-anchor="middle" font-size="10" fill="currentColor">${esc(m.name)}</text></g>`;}).join('');
+  }
+  /** GNIS places (600 m) and summits/passes (1.5 km) near the road, placed on the profile. Optional: the profile stands without them. */
+  async function landmarks(parts,points){
+    const geometry=JSON.stringify({paths:parts,spatialReference:{wkid:4326}});
+    const sets=await Promise.all(LANDMARK_LAYERS.map(async l=>{
+      const body=new URLSearchParams({geometry,geometryType:'esriGeometryPolyline',inSR:'4326',distance:String(l.metres),units:'esriSRUnit_Meter',spatialRel:'esriSpatialRelIntersects',where:l.where||'1=1',outFields:'gaz_name',returnGeometry:'true',outSR:'4326',f:'json'});
+      const r=await fetch(`${GNIS_URL}/${l.id}/query`,{method:'POST',body,signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error(`GNIS HTTP ${r.status}`);
+      const j=await r.json();if(j.error)throw Error(j.error.message||'GNIS error');
+      // GNIS returns multipoints; every point is a candidate and placeOnProfile keeps the one nearest the road.
+      return placeOnProfile(j.features.filter(f=>f.attributes.gaz_name&&f.geometry).flatMap(f=>(f.geometry.points||[[f.geometry.x,f.geometry.y]]).map(([x,y])=>({name:f.attributes.gaz_name,kind:l.kind,x,y}))),points).filter(m=>m.offKm<=l.metres/1000+0.2);}));
+    return sets.flat().sort((a,b)=>a.km-b.km);
   }
   async function showProfile(name){
     const token=++profileToken;profile=null;highlight?.removeAll();drawProfile();
@@ -62,7 +85,8 @@ export function createSnowLevel({time,exercise,target}){
         const body=new URLSearchParams({geometry:JSON.stringify({paths:[p],spatialReference:{wkid:4326}}),geometryType:'esriGeometryPolyline',sampleCount:String(Math.max(20,Math.round(250*len[i]/total))),returnFirstValueOnly:'true',f:'json'});
         const r=await fetch(`${ELEVATION_URL}/getSamples`,{method:'POST',body,signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error(`3DEP HTTP ${r.status}`);
         return profileSamples((await r.json()).samples);}));
-      let offset=0;const points=sampled.flatMap(ps=>{const out=ps.map(p=>({km:p.km+offset,m:p.m}));offset=out.at(-1)?.km??offset;return out;});
+      // Keep x/y on each point: landmarks are matched to the road by position.
+      let offset=0;const points=sampled.flatMap(ps=>{const out=ps.map(p=>({...p,km:p.km+offset}));offset=out.at(-1)?.km??offset;return out;});
       if(points.length<2)throw Error('too few elevation samples');const line=parts.flat();
       if(token!==profileToken)return;
       profile={name:name.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase()),points};
@@ -70,6 +94,8 @@ export function createSnowLevel({time,exercise,target}){
       highlight?.add(new Graphic({geometry:{type:'polyline',paths:parts,spatialReference:{wkid:4326}},symbol:{type:'simple-line',color:[255,255,255,.85],width:7}}));
       const xs=line.map(p=>p[0]),ys=line.map(p=>p[1]);void controller?.fitExtent({xmin:Math.min(...xs)-.01,ymin:Math.min(...ys)-.01,xmax:Math.max(...xs)+.01,ymax:Math.max(...ys)+.01});
       drawProfile();
+      try{const marks=await landmarks(parts,points);if(token!==profileToken)return;profile.marks=marks;drawProfile();}
+      catch{/* Names are optional; the profile and its numbers stand alone. */}
     }catch(e){if(token===profileToken)$('snow-profile-status').textContent=`Elevation profile unavailable · ${e.message}`;}
   }
   async function refresh(){

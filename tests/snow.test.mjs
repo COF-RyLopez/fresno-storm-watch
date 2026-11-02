@@ -40,3 +40,17 @@ test('profile stats: length, range and miles above the snow level (interpolated 
   const s=profileStats(pts,1850);assert.ok(Math.abs(s.lengthMi-1.2427)<1e-3);assert.ok(Math.abs(s.aboveMi-0.5/1.609344)<1e-6);
   assert.equal(Math.round(s.lowFt),5577);assert.equal(profileStats(pts,null).aboveMi,null);assert.equal(profileStats(pts,1000).aboveMi.toFixed(4),s.lengthMi.toFixed(4));
 });
+import {placeOnProfile,labelRows} from '../site/lib/snow-model.js';
+test('landmarks land at their nearest point along the road, one per name, in road order',()=>{
+  const pts=[0,1,2,3].map(i=>({km:i,m:1000+i*100,x:0,y:i*0.009}));
+  const out=placeOnProfile([{name:'Lakeshore',kind:'place',x:0.001,y:0.027},{name:'Big Creek',kind:'place',x:0,y:0.0},{name:'Big Creek',kind:'place',x:0.05,y:0.01},{name:'Kerckhoff Dome',kind:'peak',x:0.01,y:0.018}],pts);
+  assert.deepEqual(out.map(o=>[o.name,o.km,o.m]),[['Big Creek',0,1000],['Kerckhoff Dome',2,1200],['Lakeshore',3,1300]]);
+  assert.ok(out[0].offKm<0.01);
+});
+test('labels never overlap; extras and peaks become ticks',()=>{
+  const marks=[{name:'Big Creek',kind:'place',km:0,offKm:.1},{name:'Camp Sierra',kind:'place',km:0.2,offKm:.3},{name:'Cedar Crest',kind:'place',km:0.4,offKm:.2},{name:'Kerckhoff Dome',kind:'peak',km:5,offKm:.5},{name:'Lakeshore',kind:'place',km:10,offKm:.1}];
+  const out=labelRows(marks,{width:260,maxKm:10,rows:2});
+  assert.equal(out.find(m=>m.name==='Kerckhoff Dome').row,null);
+  assert.deepEqual(out.filter(m=>m.row!==null).map(m=>m.name).sort(),['Big Creek','Cedar Crest','Lakeshore']);// Camp Sierra collides on both rows
+  assert.equal(labelRows(marks,{width:260,maxKm:10,maxLabels:1}).filter(m=>m.row!==null).length,1);
+});
