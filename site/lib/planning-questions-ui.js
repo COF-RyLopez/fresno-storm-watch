@@ -1,14 +1,14 @@
 import {el,button,dataTable} from './dom.js';
-import {QUESTION_KINDS,QUESTION_LAYERS,COUNTY,validateQuestions,gaugeQuestions,questionOwner,questionScenarios,questionsFor,questionEvidence,questionsCsv} from './planning-questions-model.js';
+import {QUESTION_KINDS,QUESTION_LAYERS,COUNTY,validateQuestions,gaugeQuestions,fleetQuestions,questionOwner,questionScenarios,questionsFor,questionEvidence,questionsCsv} from './planning-questions-model.js';
 
 const $=id=>document.getElementById(id);
 const PAGE=12;
 /** Planning panel: open questions by place and topic, the place's exposure, and hand-off to follow-ups or the briefing draft.
  * Nothing here contacts an agency; assigning creates a private follow-up through the existing mission workflow. */
 export function createPlanningQuestions({onAssign,onBriefing,followupSnapshot=()=>null}){
-  let data=null,error=null,live=[],scenarios=[],place=COUNTY,kind='all',shown=PAGE,map=null,note='';
+  let data=null,error=null,live=[],fleetLive=[],scenarios=[],place=COUNTY,kind='all',shown=PAGE,map=null,note='';
   const time=t=>new Date(t).toLocaleDateString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',year:'numeric'});
-  const all=()=>[...(data?.questions||[]),...live];
+  const all=()=>[...(data?.questions||[]),...fleetLive,...live];
   function status(q){const s=followupSnapshot(questionEvidence(q));if(!s?.assessed)return '';const r=s.rows[0];return r?`${r.status}${r.overdue?' · overdue':''} · ${r.owner}`:'Not assigned in this incident';}
   function exposure(){
     const host=$('plan-exposure');host.replaceChildren();const e=data?.exposure?.[place];if(!e)return;
@@ -48,6 +48,7 @@ export function createPlanningQuestions({onAssign,onBriefing,followupSnapshot=()
   $('plan-more').onclick=()=>{shown+=PAGE;render();};
   $('plan-csv').onclick=()=>{const rows=questionsFor(all(),place,kind),url=URL.createObjectURL(new Blob([questionsCsv(rows,status)],{type:'text/csv'})),a=el('a');a.href=url;a.download=`planning-questions-${place.toLowerCase().replaceAll(' ','-')}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   window.addEventListener('storm-mission-followups',render);
+  window.addEventListener('storm-snow-fleet',e=>{fleetLive=fleetQuestions(e.detail.fleet);render();});
   const get=path=>fetch(new URL(path,import.meta.url),{signal:AbortSignal.timeout(20000)}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.json();});
   void get('../data/planning/questions.json').then(d=>{data=validateQuestions(d);}).catch(e=>{error=e.message;}).finally(render);
   void get('../data/flood-scenarios/index.json').then(d=>{scenarios=d.scenarios||[];render();}).catch(()=>{/* Scenario links are optional. */});

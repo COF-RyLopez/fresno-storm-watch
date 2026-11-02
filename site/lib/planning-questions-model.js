@@ -1,9 +1,9 @@
 import {damOperator,scenariosFor} from './water-operators.js';
 
 /** Planning questions: what the data raises before a storm, and which agency can answer it. Labels in display order. */
-export const QUESTION_KINDS=Object.freeze({sandbags:'Flood zones & sandbags',dams:'Dams',levees:'Levees',power:'Critical-facility power',gauges:'River gauge thresholds'});
+export const QUESTION_KINDS=Object.freeze({sandbags:'Flood zones & sandbags',dams:'Dams',levees:'Levees',power:'Critical-facility power',equipment:'Snow equipment',gauges:'River gauge thresholds'});
 /** Map layers a question's Map button turns on, so the thing asked about is drawn. */
-export const QUESTION_LAYERS=Object.freeze({sandbags:['fema','countySandbags'],dams:['dams','damInundation'],levees:['levees'],power:['facilities'],gauges:['gauges']});
+export const QUESTION_LAYERS=Object.freeze({sandbags:['fema','countySandbags'],dams:['dams','damInundation'],levees:['levees'],power:['facilities'],equipment:['snowFleet'],gauges:['gauges']});
 export const COUNTY='Fresno County';
 
 /** @param {object} data site/data/planning/questions.json @returns {object} The same data, or throws on a shape the panel cannot show. */
@@ -38,6 +38,16 @@ export function gaugeQuestions(rows){
     detail:`NWS publishes no action or flood stage for this gauge, so the app cannot flag a threshold. Watch area${areas.length>1?'s':''}: ${areas.join(', ')}. Agree on a local action level and what happens at it.`,
     owner:'NWS Hanford · County OES',source:'NWS water prediction service gauges',lon:gauge.longitude,lat:gauge.latitude});
   return out;
+}
+
+/** Live questions from the snow fleet feed: every unit in the shop, so repairs can be ordered before snow (plows first).
+ * @param {object|null} fleet validated snow-fleet snapshot @returns {object[]} */
+export function fleetQuestions(fleet){
+  const v=fleet?.vehicles||[],shop=v.filter(x=>x.status==='in-shop');if(!shop.length)return [];
+  const ready=`${v.length-shop.length} of ${v.length} reporting snow units are available`;
+  return shop.map(x=>({id:`equipment:shop:${x.id}`,kind:'equipment',place:COUNTY,title:`When will ${x.id} be back from the shop?`,
+    detail:`${x.type==='snow-blower'?'Snow blower':x.type==='plow-truck'?'Plow truck':'Snow equipment'} in the shop for repair (${x.statusBasis||'fleet feed'})${x.expectedBack?`; expected back ${x.expectedBack.slice(0,10)}`:'; no return date in the feed'}. ${ready}. Decide whether this repair goes ahead of other shop work before snow.`,
+    owner:'County Fleet Services',source:fleet.sample?'Snow fleet feed (sample export)':'Snow fleet feed (Samsara + OpenGov EAM)',lon:x.lon,lat:x.lat}));
 }
 
 /** Dams name their operator with the same rules as the dam popup; a dam with no listed operator keeps the build's owner text. */

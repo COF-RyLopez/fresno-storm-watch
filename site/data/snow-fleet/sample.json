@@ -1,0 +1,106 @@
+{
+ "schemaVersion": 1,
+ "sample": true,
+ "generatedAt": "2026-10-29T13:36:17Z",
+ "delayMinutes": 15,
+ "source": "Samsara (County fleet) \u00b7 Oct 29 export joined to OpenGov EAM \u00b7 positions delayed",
+ "vehicles": [
+  {
+   "id": "Plow 2",
+   "type": "plow-truck",
+   "status": "off",
+   "statusBasis": "engine off",
+   "yard": "Area 11",
+   "seen": "2026-10-29T13:11:27Z",
+   "lon": -119.48415,
+   "lat": 37.07678,
+   "heading": null,
+   "onRoute": null,
+   "expectedBack": null,
+   "trail": []
+  },
+  {
+   "id": "Blower 2",
+   "type": "snow-blower",
+   "status": "off",
+   "statusBasis": "engine off",
+   "yard": "Shaver Lake",
+   "seen": "2026-10-29T13:21:17Z",
+   "lon": -119.31299,
+   "lat": 37.10638,
+   "heading": null,
+   "onRoute": null,
+   "expectedBack": null,
+   "trail": []
+  },
+  {
+   "id": "Plow 8",
+   "type": "plow-truck",
+   "status": "in-shop",
+   "statusBasis": "at Fleet HQ",
+   "yard": null,
+   "seen": "2026-10-29T13:14:49Z",
+   "lon": -119.74825,
+   "lat": 36.7254,
+   "heading": null,
+   "onRoute": null,
+   "expectedBack": null,
+   "trail": []
+  },
+  {
+   "id": "Plow 9",
+   "type": "plow-truck",
+   "status": "in-shop",
+   "statusBasis": "at Fleet HQ",
+   "yard": null,
+   "seen": "2026-10-29T12:41:23Z",
+   "lon": -119.74844,
+   "lat": 36.72552,
+   "heading": null,
+   "onRoute": null,
+   "expectedBack": null,
+   "trail": []
+  },
+  {
+   "id": "Blower 3",
+   "type": "snow-blower",
+   "status": "off",
+   "statusBasis": "engine off",
+   "yard": "Shaver Lake",
+   "seen": "2026-10-29T13:18:32Z",
+   "lon": -119.3129,
+   "lat": 37.10632,
+   "heading": null,
+   "onRoute": null,
+   "expectedBack": null,
+   "trail": []
+  },
+  {
+   "id": "Plow 10",
+   "type": "plow-truck",
+   "status": "off",
+   "statusBasis": "engine off",
+   "yard": "Shaver Lake",
+   "seen": "2026-10-29T13:00:34Z",
+   "lon": -119.31341,
+   "lat": 37.10657,
+   "heading": null,
+   "onRoute": null,
+   "expectedBack": null,
+   "trail": []
+  }
+ ],
+ "routes": [],
+ "accounting": {
+  "read": 28,
+  "published": 6,
+  "available": 4,
+  "inShop": 2,
+  "noGps": 21,
+  "excluded": {
+   "noGps": 21,
+   "duplicateVin": 1
+  }
+ },
+ "error": null
+}
