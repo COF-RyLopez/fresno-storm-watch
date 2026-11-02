@@ -1,6 +1,7 @@
 import {svgNode} from './river-chart.js';
 import {reportHealth} from './source-health.js';
 import {createHrrrWeather} from './hrrr-ui.js';
+import {createMrmsRainfall} from './mrms-ui.js';
 import {loadSdk} from './map.js';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
@@ -21,6 +22,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
   const sourceLink=site=>`https://forecast.weather.gov/MapClick.php?lat=${site.latitude}&lon=${site.longitude}`;
   const selectTime=stamp=>{fixed=stamp;render();onChange();};
   const hrrr=createHrrrWeather({time,exercise,target,onTime:selectTime,onMap});
+  const mrms=createMrmsRainfall({time,exercise});
 
   function chart(site){
     const host=$('wind-chart');host.replaceChildren();
@@ -134,7 +136,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     status(){return `${overlay==='satellite'?`${GOES_PRODUCTS.find(p=>p.id===product).label} · ${satelliteFrame()?time(satelliteFrame()):'no matching observation'}`:''}${windVisible()?' · wind/gust samples · '+time(target()):''}`;},
     async setMap(map){
       controller=map;
-      void hrrr.setMap(map);
+      void hrrr.setMap(map);void mrms.setMap(map);
       try{
         const sdk=await loadSdk();const [WMSLayer,GraphicsLayer,Graphic]=await sdk.import(['@arcgis/core/layers/WMSLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);
         const satellite=new WMSLayer({url:GOES_URL,title:'NOAA GOES observed imagery · selected frame',copyright:'NOAA nowCOAST · GOES imagery',sublayers:[{name:product}],opacity:0.65,visible:false,imageFormat:'image/png'});
