@@ -1,9 +1,12 @@
+/** Names the dam operators whose releases feed this area, so "operator guidance" says who to ask. */
+const nextReview=row=>{const ops=[...new Map((row.releases||[]).filter(r=>r.operator).map(r=>[r.operator,`${r.operator} (${r.name})`])).values()];
+  return ops.length?`Confirm release plans with ${ops.join(' and ')}, then field conditions, site power and approved access.`:'Confirm operator guidance, field conditions, site power and approved access.';};
 /** Presentation summaries reuse domain assessments; no new hazard score or thresholds. */
 export function concernSummary(row){
  const observed=(row.gauges||[]).map(g=>g.assessment?.observed?.time).filter(Number.isFinite);
  const forecast=(row.gauges||[]).map(g=>g.assessment?.peak?.time).filter(Number.isFinite);
  const changes=[row.status,...(row.scheduled||[]).map(n=>n.label||n.title||'Scheduled release notice'),row.forecastDifference?.review?'Forecast models differ; inspect timing':null].filter(Boolean);
- return {id:row.area.id,name:row.area.name,change:changes.join(' · '),review:!!row.review,rank:row.rank||0,quality:row.gaps?.length?`${row.gaps.length} evidence gaps`:'Inspect publisher times and coverage',observed:observed.length?Math.max(...observed):null,forecast:forecast.length?Math.min(...forecast):null,nextReview:'Confirm operator guidance, field conditions, site power and approved access.',points:(row.samplePoints||[]).map(p=>({id:p.id,longitude:p.longitude,latitude:p.latitude})),gaps:[...(row.gaps||[])]};
+ return {id:row.area.id,name:row.area.name,change:changes.join(' · '),review:!!row.review,rank:row.rank||0,quality:row.gaps?.length?`${row.gaps.length} evidence gaps`:'Inspect publisher times and coverage',observed:observed.length?Math.max(...observed):null,forecast:forecast.length?Math.min(...forecast):null,nextReview:nextReview(row),points:(row.samplePoints||[]).map(p=>({id:p.id,longitude:p.longitude,latitude:p.latitude})),gaps:[...(row.gaps||[])]};
 }
 /** A draft captures selected evidence at that moment; it never refreshes silently. */
 export function freezeConcern(row,context,now=Date.now()){
