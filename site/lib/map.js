@@ -9,6 +9,7 @@ import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear,geometryType} from './nearby-search.js';
 import {withTimeout} from './with-timeout.js';
+import {createLabelLayer,gaugeLabel,setMapLabels} from './map-labels.js';
 import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { createFrameWindow } from './frame-window.js';
@@ -101,6 +102,11 @@ elevationInfo:{mode:'on-the-ground'},
     renderer:{type:'simple',symbol:{type:'simple-fill',color:[167,162,195,.08],outline:{color:DRAINAGE_COLORS.catchment,width:1}}},
     popupTemplate:{title:'FMFCD drainage area {DRAINAGE}',content:[{type:'text',text:'Master-planned drainage area published by FMFCD. Reference only: not current flooding, capacity or pump status.'},{type:'fields',fieldInfos:[{fieldName:'DRAINAGE',label:'Drainage area'},{fieldName:'Acres',label:'Acres'}]}]}}),true,1);
   const usgsGauges=new GraphicsLayer({title:'USGS stream gauges',elevationInfo:{mode:'relative-to-ground'}});registerLayer('gauges',usgsGauges);
+  // Name labels: NWS and USGS gauges share one label layer so their names deconflict against each other.
+  const gaugeLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River gauge names'}),areaLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River watch area names'});
+  registerLayer('gauges',gaugeLabels.layer);registerLayer('areas',areaLabels.layer);
+  document.querySelector('#map-name-labels')?.addEventListener('calciteSwitchChange',e=>setMapLabels(e.target.checked));
+  let nwsLabelRows=[],usgsLabelRows=[];const setGaugeLabels=()=>void gaugeLabels.set([...nwsLabelRows,...usgsLabelRows]);
   const syncVisibility=()=>{
     for(const [layer,r]of registry)layer.visible=(!scenarioMode||['waterways','buildings'].includes(r.key))&&layerVisible(currentState(),r.key,r.eligible);
     const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways||basemapKey==='waterways')visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
@@ -179,11 +185,12 @@ elevationInfo:{mode:'on-the-ground'},
   };
   void fema.load().then(femaStatus).catch(()=>{femaError=true;femaStatus();});
   const drawGauges=()=>{
-    gauges.removeAll();
-    for(const row of gaugeRows.filter(r=>(activeProfile!=='rivers'||riverBasin==='All'||r.station.basin===riverBasin)&&(activeProfile!=='reservoirs'||currentState().layers.upstream||['SJXC1','RSBC1','GVAC1','SJMC1'].includes(r.station.id)))){const g=row.gauge||row.station,tone=row.assessment.tone;
+    gauges.removeAll();nwsLabelRows=[];
+    for(const row of gaugeRows.filter(r=>(activeProfile!=='rivers'||riverBasin==='All'||r.station.basin===riverBasin)&&(activeProfile!=='reservoirs'||currentState().layers.upstream||['SJXC1','RSBC1','GVAC1','SJMC1'].includes(r.station.id)))){const g=row.gauge||row.station,tone=row.assessment.tone;nwsLabelRows.push({longitude:g.longitude,latitude:g.latitude,label:row.station.name});
       gauges.add(new Graphic({geometry:{type:'point',longitude:g.longitude,latitude:g.latitude,spatialReference:{wkid:4326}},attributes:{gaugeId:row.station.id},
         symbol:{type:'simple-marker',style:{threshold:'triangle',change:'square',monitor:'circle',gap:'diamond'}[tone],size:row.station.id===selectedGauge?14:10,color:color(`--gauge-${tone}`)||RIVER_COLORS[tone],outline:{color:row.station.id===selectedGauge?color('--map-selection'):darkMode()?'#202427':'#ffffff',width:row.station.id===selectedGauge?2.5:1.3}}}));
     }
+  setGaugeLabels();
   };
   const drawCameras=()=>{
     cameras.removeAll();
@@ -353,7 +360,7 @@ elevationInfo:{mode:'on-the-ground'},
     for(const r of drainageRows){drainageLayers[drainageGroup(r)].add(new Graphic({geometry:{...r.geometry,type:r.geometry.rings?'polygon':'point'},attributes:{drainageKey:r.key},symbol:fmfcdInventorySymbol(r,{dark:basemapKey!=='light'})}));}
     drawDrainagePower();for(const layer of Object.values(drainageLayers))setLayerEligibility(layer,layer.graphics.length>0);
   }
-  function drawAreas(){areaLayer.removeAll();const seen=new Set();for(const row of planningRows.filter(r=>planningFilter==='all'||r.review))for(const p of row.samplePoints){const key=`${p.longitude}:${p.latitude}`;if(seen.has(key))continue;seen.add(key);areaLayer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},attributes:{areaId:row.area.id},symbol:{type:'simple-marker',style:row.review?'triangle':row.gaps.length?'diamond':'circle',size:12,color:color(row.review?'--gauge-change':row.gaps.length?'--gauge-gap':'--gauge-monitor'),outline:{color:'#202427',width:1.5}}}));}}
+  function drawAreas(){areaLayer.removeAll();const seen=new Set(),labels=[];for(const row of planningRows.filter(r=>planningFilter==='all'||r.review)){const p0=row.samplePoints[0];if(p0)labels.push({longitude:p0.longitude,latitude:p0.latitude,label:row.area.name});}void areaLabels.set(labels);for(const row of planningRows.filter(r=>planningFilter==='all'||r.review))for(const p of row.samplePoints){const key=`${p.longitude}:${p.latitude}`;if(seen.has(key))continue;seen.add(key);areaLayer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},attributes:{areaId:row.area.id},symbol:{type:'simple-marker',style:row.review?'triangle':row.gaps.length?'diamond':'circle',size:12,color:color(row.review?'--gauge-change':row.gaps.length?'--gauge-gap':'--gauge-monitor'),outline:{color:'#202427',width:1.5}}}));}}
   function syncControls(){
     for(const c of document.querySelectorAll('[data-context-layer]')){const builtIn=c.dataset.contextLayer==='waterways'&&basemapKey==='waterways';c.checked=builtIn||!!currentState().layers[c.dataset.contextLayer];c.disabled=builtIn;c.closest('calcite-label').hidden=c.dataset.contextLayer==='upstream'&&activeProfile!=='reservoirs';}
     document.querySelector('#waterway-basemap-context-note').hidden=basemapKey!=='waterways';
@@ -518,7 +525,7 @@ elevationInfo:{mode:'on-the-ground'},
     focusEnvironment:(longitude,latitude)=>focusLocation(longitude,latitude,45000,'reservoirs'),
     focusWind:(longitude,latitude)=>focusLocation(longitude,latitude,90000,'wind'),
     fitExtent:bounds=>{followRegion=false;return focusNavigate(geographicTarget(bounds));},
-    setUsgsGauges:rows=>{usgsGauges.removeAll();for(const r of rows)if(validLocation(r))usgsGauges.add(new Graphic({geometry:{type:'point',longitude:r.longitude,latitude:r.latitude,spatialReference:{wkid:4326}},attributes:{usgsSite:r.site},symbol:{type:'simple-marker',style:'circle',size:11,color:r.reading?.stage?'#8bd6e8':'#a5a9ad',outline:{color:darkMode()?'#202427':'#ffffff',width:1.5}}}));},
+    setUsgsGauges:rows=>{usgsGauges.removeAll();usgsLabelRows=rows.filter(validLocation).map(r=>({longitude:r.longitude,latitude:r.latitude,label:gaugeLabel(r.name)}));setGaugeLabels();for(const r of rows)if(validLocation(r))usgsGauges.add(new Graphic({geometry:{type:'point',longitude:r.longitude,latitude:r.latitude,spatialReference:{wkid:4326}},attributes:{usgsSite:r.site},symbol:{type:'simple-marker',style:'circle',size:11,color:r.reading?.stage?'#8bd6e8':'#a5a9ad',outline:{color:darkMode()?'#202427':'#ffffff',width:1.5}}}));},
     fitEnvironment:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.2,ymin:35.5,xmax:-118.2,ymax:38.2}));},
     fitHrrr:()=>{followRegion=false;return focusNavigate(geographicTarget({xmin:-121.265,ymin:35.735,xmax:-118.235,ymax:38.135}));},
     focusPlanningPoints:points=>{setLayerPreference('areas',true);return focusPoints(points);},

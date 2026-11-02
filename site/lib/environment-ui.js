@@ -1,4 +1,5 @@
 import {reportHealth} from './source-health.js';
+import {createLabelLayer} from './map-labels.js';
 import { loadSdk } from './map.js';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot,upstreamStorage } from './environment-model.js';
@@ -160,6 +161,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   function drawReservoirs(){
     if(!selection||!layers)return;
     layers.reservoirs.removeAll();
+    void layers.reservoirLabels.set([...(selection.upstream?.stations||[]),...selection.stations].map(s=>({longitude:s.longitude,latitude:s.latitude,label:s.name})));
     for(const s of selection.upstream?.stations||[])layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:17,height:17},attributes:{name:s.name,river:'San Joaquin (upstream)'}}));
     for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
@@ -193,13 +195,14 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
         renderer:{type:'class-breaks',field:'qpf',defaultSymbol:{type:'simple-fill',color:'#99999955',outline:{color:'#666',width:0.5}},classBreakInfos:QPF_BANDS.map(b=>({minValue:b.min,maxValue:b.max,label:`${b.label} in`,symbol:{type:'simple-fill',color:b.color,outline:{color:'#234b6c',width:0.35}}}))},
         popupTemplate:{title:'WPC forecast polygon · {qpf} {units}',content:[{type:'text',text:'Publisher QPF polygon value (liquid equivalent), not a basin average, runoff amount or flood depth. Source times below are UTC.'},{type:'fields',fieldInfos:[{fieldName:'issue_time',label:'Issued (UTC)'},{fieldName:'start_time',label:'Period starts (UTC)'},{fieldName:'end_time',label:'Period ends (UTC)'}]}]}})]));
       const reservoirs=new GraphicsLayer({title:'CDEC reservoir reporting locations',elevationInfo:{mode:'relative-to-ground'}});
-      layers={radar:radarLayer,qpf:forecasts,reservoirs,Graphic,frameId:null};
+      const reservoirLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Reservoir names',below:true});
+      layers={radar:radarLayer,qpf:forecasts,reservoirs,reservoirLabels,Graphic,frameId:null};
       for(const [id,layer] of [['radar',radarLayer],...forecasts]){
         layer.on('layerview-create-error',event=>{layerErrors.set(`${id}:${event.view.type}`,true);renderWeather();});
         layer.on('layerview-create',event=>{layerErrors.delete(`${id}:${event.view.type}`);renderWeather();});
       }
       map.onViewChanged(renderWeather);
-      map.registerLayer('weather',radarLayer,false,1);for(const l of forecasts.values())map.registerLayer('weather',l,false,1);map.registerLayer('reservoirs',reservoirs);drawReservoirs();renderWeather();
+      map.registerLayer('weather',radarLayer,false,1);for(const l of forecasts.values())map.registerLayer('weather',l,false,1);map.registerLayer('reservoirs',reservoirs);map.registerLayer('reservoirs',reservoirLabels.layer);drawReservoirs();renderWeather();
       $('environment-extent').removeAttribute('disabled');
     }catch(error){layerError=error.message;renderWeather();}
   }};
