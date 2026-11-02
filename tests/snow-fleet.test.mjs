@@ -1,18 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {validateFleet,fleetSummary,repairPriority,passTone,needsPass,passExpression} from '../site/lib/snow-fleet-model.js';
+import {validateFleet,unitName,fleetSummary,repairPriority,passTone,needsPass,passExpression} from '../site/lib/snow-fleet-model.js';
 import {fleetQuestions} from '../site/lib/planning-questions-model.js';
 
 const sample=JSON.parse(readFileSync(new URL('../site/data/snow-fleet/sample.json',import.meta.url)));
 const base={schemaVersion:1,generatedAt:'2026-12-14T15:20:00Z',delayMinutes:15,source:'test',routes:[],accounting:{noGps:2}};
-const unit=o=>({id:'Plow 1',type:'plow-truck',status:'off',seen:'2026-12-14T15:00:00Z',lon:-119.3,lat:37.1,trail:[],...o});
+const unit=o=>({id:'52701',type:'plow-truck',status:'off',seen:'2026-12-14T15:00:00Z',lon:-119.3,lat:37.1,trail:[],...o});
 
-test('the Oct 29 sample validates: 6 published, Plow 8 and 9 in the shop, 4 available, 21 not reporting',()=>{
+test('the Oct 29 sample validates: 6 published, 43102 and 43103 in the shop, 4 available, 21 not reporting',()=>{
   const f=validateFleet(sample);
   assert.equal(f.sample,true);assert.equal(f.vehicles.length,6);
   assert.deepEqual(fleetSummary(f),{available:4,inShop:2,notReporting:21,byType:[{type:'plow-truck',label:'Plow truck',available:2,inShop:2},{type:'snow-blower',label:'Snow blower',available:2,inShop:0}]});
-  assert.deepEqual(repairPriority(f).map(v=>v.id),['Plow 8','Plow 9']);
+  assert.deepEqual(repairPriority(f).map(v=>v.id),['43102','43103']);
+});
+
+test('equipment IDs stay strings with their leading zeros; a bare number or empty id is rejected',()=>{
+  assert.equal(validateFleet(sample).vehicles.find(v=>v.yard==='Area 11').id,'03107');
+  assert.throws(()=>validateFleet({...base,vehicles:[unit({id:3107})]}),/equipment ID/);
+  assert.throws(()=>validateFleet({...base,vehicles:[unit({id:''})]}),/equipment ID/);
+  assert.equal(unitName({id:'03107',type:'plow-truck'}),'Plow truck 03107');
 });
 
 test('only allowed fields survive: a driver name or odometer in the file is dropped',()=>{
@@ -30,9 +37,9 @@ test('the published delay is enforced: a position newer than generatedAt − del
 });
 
 test('repair priority: plows before blowers, then earliest expected return, unknown last',()=>{
-  const f=validateFleet({...base,vehicles:[unit({id:'Blower 1',type:'snow-blower',status:'in-shop',expectedBack:'2026-12-15T00:00:00Z'}),
-    unit({id:'Plow 3',status:'in-shop'}),unit({id:'Plow 2',status:'in-shop',expectedBack:'2026-12-16T00:00:00Z'}),unit({id:'Plow 4'})]});
-  assert.deepEqual(repairPriority(f).map(v=>v.id),['Plow 2','Plow 3','Blower 1']);
+  const f=validateFleet({...base,vehicles:[unit({id:'48256',type:'snow-blower',status:'in-shop',expectedBack:'2026-12-15T00:00:00Z'}),
+    unit({id:'43103',status:'in-shop'}),unit({id:'03107',status:'in-shop',expectedBack:'2026-12-16T00:00:00Z'}),unit({id:'52701'})]});
+  assert.deepEqual(repairPriority(f).map(v=>v.id),['03107','43103','48256']);
 });
 
 test('route last pass: tones, needs-a-pass list and a safely quoted renderer expression',()=>{
@@ -47,7 +54,7 @@ test('route last pass: tones, needs-a-pass list and a safely quoted renderer exp
 
 test('planning asks Fleet Services about every unit in the shop',()=>{
   const q=fleetQuestions(validateFleet(sample));
-  assert.deepEqual(q.map(x=>x.title),['When will Plow 8 be back from the shop?','When will Plow 9 be back from the shop?']);
+  assert.deepEqual(q.map(x=>x.title),['When will plow truck 43102 be back from the shop?','When will plow truck 43103 be back from the shop?']);
   assert.match(q[0].detail,/4 of 6 reporting snow units are available/);assert.equal(q[0].owner,'County Fleet Services');
   assert.deepEqual(fleetQuestions(null),[]);
 });

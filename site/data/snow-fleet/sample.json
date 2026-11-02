@@ -6,7 +6,7 @@
  "source": "Samsara (County fleet) \u00b7 Oct 29 export joined to OpenGov EAM \u00b7 positions delayed",
  "vehicles": [
   {
-   "id": "Plow 2",
+   "id": "03107",
    "type": "plow-truck",
    "status": "off",
    "statusBasis": "engine off",
@@ -20,7 +20,7 @@
    "trail": []
   },
   {
-   "id": "Blower 2",
+   "id": "38256",
    "type": "snow-blower",
    "status": "off",
    "statusBasis": "engine off",
@@ -34,7 +34,7 @@
    "trail": []
   },
   {
-   "id": "Plow 8",
+   "id": "43102",
    "type": "plow-truck",
    "status": "in-shop",
    "statusBasis": "at Fleet HQ",
@@ -48,7 +48,7 @@
    "trail": []
   },
   {
-   "id": "Plow 9",
+   "id": "43103",
    "type": "plow-truck",
    "status": "in-shop",
    "statusBasis": "at Fleet HQ",
@@ -62,7 +62,7 @@
    "trail": []
   },
   {
-   "id": "Blower 3",
+   "id": "48256",
    "type": "snow-blower",
    "status": "off",
    "statusBasis": "engine off",
@@ -76,7 +76,7 @@
    "trail": []
   },
   {
-   "id": "Plow 10",
+   "id": "52701",
    "type": "plow-truck",
    "status": "off",
    "statusBasis": "engine off",

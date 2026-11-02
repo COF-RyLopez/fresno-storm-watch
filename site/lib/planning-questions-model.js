@@ -1,4 +1,5 @@
 import {damOperator,scenariosFor} from './water-operators.js';
+import {unitName} from './snow-fleet-model.js';
 
 /** Planning questions: what the data raises before a storm, and which agency can answer it. Labels in display order. */
 export const QUESTION_KINDS=Object.freeze({sandbags:'Flood zones & sandbags',dams:'Dams',levees:'Levees',power:'Critical-facility power',equipment:'Snow equipment',gauges:'River gauge thresholds'});
@@ -45,8 +46,8 @@ export function gaugeQuestions(rows){
 export function fleetQuestions(fleet){
   const v=fleet?.vehicles||[],shop=v.filter(x=>x.status==='in-shop');if(!shop.length)return [];
   const ready=`${v.length-shop.length} of ${v.length} reporting snow units are available`;
-  return shop.map(x=>({id:`equipment:shop:${x.id}`,kind:'equipment',place:COUNTY,title:`When will ${x.id} be back from the shop?`,
-    detail:`${x.type==='snow-blower'?'Snow blower':x.type==='plow-truck'?'Plow truck':'Snow equipment'} in the shop for repair (${x.statusBasis||'fleet feed'})${x.expectedBack?`; expected back ${x.expectedBack.slice(0,10)}`:'; no return date in the feed'}. ${ready}. Decide whether this repair goes ahead of other shop work before snow.`,
+  return shop.map(x=>({id:`equipment:shop:${x.id}`,kind:'equipment',place:COUNTY,title:`When will ${unitName(x).replace(/^\w/,c=>c.toLowerCase())} be back from the shop?`,
+    detail:`${unitName(x)} is in the shop for repair (${x.statusBasis||'fleet feed'})${x.expectedBack?`; expected back ${x.expectedBack.slice(0,10)}`:'; no return date in the feed'}. ${ready}. Decide whether this repair goes ahead of other shop work before snow.`,
     owner:'County Fleet Services',source:fleet.sample?'Snow fleet feed (sample export)':'Snow fleet feed (Samsara + OpenGov EAM)',lon:x.lon,lat:x.lat}));
 }
 
