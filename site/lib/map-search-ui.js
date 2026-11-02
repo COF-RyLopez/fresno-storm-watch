@@ -2,12 +2,21 @@ import {sandbagSearchEntries} from './county-sandbag-model.js';
 import {findMapEntries,geometryShardUrl,roadSearchEntries,facilitySearchEntries,gaugeSearchEntries,reservoirSearchEntries} from './map-search-model.js';
 import {elIfText as el,link,disclosure} from './dom.js';
 import {formatDateTime} from './model.js';
+import {loadSdk} from './map.js';
 const $=id=>document.getElementById(id);
 const BASE=new URL('../data/search/v0.31.0/',import.meta.url),WATERBODY_BASE=new URL('../data/search/waterbodies-v0.34.0/',import.meta.url);
-const KIND={sandbag:'County sandbag site',waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point'};
+const KIND={sandbag:'County sandbag site',waterbody:'Lake / reservoir outline',waterway:'Stream / canal',street:'County street reference','road-record':'Road status record',asset:'Loaded asset',gauge:'NWS gauge',reservoir:'Reservoir reporting point',address:'Address / place · Esri World Geocoder'};
+// Classic World Geocoder: anonymous search is allowed when results are not stored (geocode-api.arcgis.com requires a key).
+const GEOCODER='https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer',FRESNO_AREA={xmin:-120.92,ymin:35.9,xmax:-118.36,ymax:37.59,spatialReference:{wkid:4326}};
 
-/** Shared nonmodal search. No query is sent to a geocoder, source service or storage. */
-export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}}={}){
+/** SDK SearchViewModel (logic only, no Search widget UI) over the classic World Geocoder, limited to the Fresno County area. */
+async function sdkGeocoder(){
+  const sdk=await loadSdk(),[SearchViewModel,LocatorSearchSource,Extent]=await sdk.import(['@arcgis/core/widgets/Search/SearchViewModel.js','@arcgis/core/widgets/Search/LocatorSearchSource.js','@arcgis/core/geometry/Extent.js']);
+  return new SearchViewModel({includeDefaultSources:false,sources:[new LocatorSearchSource({url:GEOCODER,name:'Esri World Geocoder',singleLineFieldName:'SingleLine',countryCode:'US',maxResults:8,filter:{geometry:new Extent(FRESNO_AREA)},outFields:['Addr_type','Match_addr','Type']})]});
+}
+
+/** Shared nonmodal search. Typing searches local data only; a query goes to the Esri geocoder only when "Search addresses & places" is pressed. Nothing is stored. */
+export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{},loadGeocoder=sdkGeocoder}={}){
   let map=null,publicIndex=null,indexError=null,waterbodyIndex=null,waterbodyError=null,pending=null,generation=0,selected=null,selectionBusy=false,typingTimer,selectedShape=null,nearbyRevision=0;
   const groups=new Map(),groupSignatures=new Map(),shards=new Map(),panel=$('map-search-evidence'),input=$('map-search-input'),results=$('map-search-results'),status=$('map-search-status');
   const nearbyHost=$('map-search-nearby'),nearbyList=$('map-search-nearby-list'),nearbyStatus=$('map-search-nearby-status'),nearbyDetail=$('map-search-nearby-detail'),quick=$('map-search-quick'),sourceNotes={gauges:'Gauge sources loading / not available',roads:'Road source loading / not available',assets:'No authorized assets loaded'};
@@ -24,7 +33,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
     if(indexError)$('map-search-coverage').textContent+=` ${indexError}. Reopen search to retry.`;
   }
   function render(){
-    const found=findMapEntries(all(),input.value,$('map-search-scope').value);results.replaceChildren();coverage();
+    const found=findMapEntries(all().filter(row=>row.kind!=='address'),input.value,$('map-search-scope').value);results.replaceChildren();coverage();
     if(input.value.trim().length<2){status.textContent='Enter at least two characters, such as Millerton, Pine Flat Reservoir, Kings River, Shaw Ave, a gauge ID or a loaded asset name.';return;}
     status.textContent=found.total?`${found.total} matches${found.total>found.rows.length?` · showing first ${found.rows.length}; refine your search`:''}. Select a result to highlight and zoom.`:publicIndex||waterbodyIndex||[...groups.values()].some(rows=>rows.length)?'No matches in available search data. Missing sources and unloaded assets can leave gaps.':'Search sources are not available yet. Reopen to retry or load authorized assets.';
     if(selectionBusy)status.textContent='Loading and locating the selected feature…';
@@ -83,7 +92,7 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
   async function renderNearby(){
     const revision=++nearbyRevision,shape=selectedShape;
     nearbyList.replaceChildren();nearbyDetail.replaceChildren();map?.setSearchContext?.([]);
-    nearbyHost.hidden=!shape||!['waterbody','waterway','street','road-record'].includes(selected?.kind);
+    nearbyHost.hidden=!shape||!['waterbody','waterway','street','road-record','address'].includes(selected?.kind);
     if(nearbyHost.hidden)return;
     const current=()=>revision===nearbyRevision&&shape===selectedShape;
     nearbyStatus.textContent='Checking loaded planning references…';
@@ -124,6 +133,27 @@ export function createMapSearch({showMap=()=>{},fetchImpl=fetch,onInspect=()=>{}
     if(fromQuick){input.value=quick.value;clearSelection('');}
     showMap();panel.setAttribute('open','');render();void loadIndex();void customElements.whenDefined('calcite-input').then(()=>input.setFocus());
   }
+  /** Addresses & places through the SDK's SearchViewModel (no Search widget UI); results reuse the highlight + nearby flow. */
+  let searchVm=null,placesRun=0;
+  const geocoder=async()=>searchVm??=await loadGeocoder();
+  async function searchPlaces(){
+    const term=input.value.trim(),run=++placesRun,list=$('map-search-places-list'),placeStatus=$('map-search-places-status');list.replaceChildren();
+    if(term.length<3){placeStatus.textContent='Enter at least three characters, such as an address, intersection or place name.';return;}
+    placeStatus.textContent='Searching the Esri World Geocoder…';$('map-search-places-run').loading=true;
+    try{
+      const vm=await geocoder(),response=await vm.search(term);if(run!==placesRun)return;
+      const found=(response?.results??[]).flatMap(r=>r.results??[]).filter(r=>r.feature?.geometry);
+      const rows=found.map((r,i)=>{const g=r.feature.geometry,lon=g.longitude??g.x,lat=g.latitude??g.y,a=r.feature.attributes??{};
+        return {key:`geocode:${run}:${i}`,name:r.name,kind:'address',detail:a.Addr_type?`${a.Addr_type.replace(/([a-z])([A-Z])/g,'$1 $2')}${a.Type?' · '+a.Type:''}`:'Geocoded location',geometry:{x:lon,y:lat,spatialReference:{wkid:4326}},
+          reference:'Esri World Geocoder location for the text you entered. Approximate and unverified: confirm the site before using it for access or deployment decisions.',sourceUrl:'https://www.esri.com/en-us/arcgis/products/arcgis-world-geocoding/overview',sourceTime:Date.now()};});
+      setEntries('geocoder',rows);
+      placeStatus.textContent=rows.length?`${rows.length} address / place matches in the Fresno County area. Select one to highlight it and list nearby gauges, closures and loaded assets.`:'No address or place matches in the Fresno County area.';
+      for(const row of rows){const item=el('calcite-list-item');item.label=row.name;item.description=row.detail;item.setAttribute('value',row.key);
+        item.addEventListener('click',()=>void select(row.key));item.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();void select(row.key);}});list.append(item);}
+    }catch(error){if(run===placesRun)placeStatus.textContent=`Address search unavailable: ${error.message}. Local names above still work.`;}
+    finally{if(run===placesRun)$('map-search-places-run').loading=false;}
+  }
+  $('map-search-places-run').addEventListener('click',()=>void searchPlaces());
   $('map-search-open').addEventListener('click',()=>openSearch());
   $('map-search-submit').addEventListener('click',()=>openSearch(true));
   quick.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();openSearch(true);}});

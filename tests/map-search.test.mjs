@@ -52,12 +52,12 @@ test('every public search geometry is accounted for, bounded and in the declared
 });
 
 /** Exercise the actual controller's asynchronous invalidation with no private persistence. */
-function setup(fetchImpl,nearby=null){
+function setup(fetchImpl,nearby=null,loadGeocoder=async()=>{throw new Error('No geocoder call expected');}){
   class Node extends FakeElement{constructor(id){super();this.id=id;this.value='';}}
-  const nodes=new Map(),ids=['map-search-quick','map-search-submit','map-search-nearby','map-search-nearby-status','map-search-nearby-list','map-search-nearby-detail','map-search-radius','map-search-history','map-search-evidence','map-search-input','map-search-scope','map-search-results','map-search-status','map-search-selection','map-search-clear','search-selection-note','search-selection-label','map-search-coverage','map-search-open','search-clear-highlight'];
+  const nodes=new Map(),ids=['map-search-quick','map-search-submit','map-search-nearby','map-search-nearby-status','map-search-nearby-list','map-search-nearby-detail','map-search-radius','map-search-history','map-search-evidence','map-search-input','map-search-scope','map-search-results','map-search-status','map-search-selection','map-search-clear','search-selection-note','search-selection-label','map-search-coverage','map-search-open','search-clear-highlight','map-search-places-run','map-search-places-status','map-search-places-list'];
   ids.forEach(id=>nodes.set(id,new Node(id)));nodes.get('map-search-scope').value='all';nodes.get('map-search-evidence').setAttribute('open','');
   globalThis.document={getElementById:id=>nodes.get(id),createElement:tag=>new Node(tag)};globalThis.customElements={whenDefined:()=>Promise.resolve()};
-  const controller=createMapSearch({fetchImpl}),calls=[];controller.setMap({clearSearchSelection:()=>calls.push('clear'),setSearchContext:rows=>calls.push({context:rows}),findNearbySearch:nearby,focusSearchContext:async()=>true,focusSearchSelection:async g=>{calls.push(g);return true;}});
+  const controller=createMapSearch({fetchImpl,loadGeocoder}),calls=[];controller.setMap({clearSearchSelection:()=>calls.push('clear'),setSearchContext:rows=>calls.push({context:rows}),findNearbySearch:nearby,focusSearchContext:async()=>true,focusSearchSelection:async g=>{calls.push(g);return true;}});
   const search=text=>{nodes.get('map-search-input').value=text;nodes.get('map-search-input').dispatchEvent(Object.assign(new Event('keydown'),{key:'Enter'}));};
   return {nodes,controller,calls,search,flush:()=>new Promise(r=>setImmediate(r))};
 }
@@ -133,4 +133,15 @@ test('lake-index failure keeps available street results and displays its separat
   const h=setup(async url=>url.pathname.includes('waterbodies-v')?{ok:false,status:503}:{ok:true,json:async()=>({countyGeoid:'06019',entries:[row]})});
   h.nodes.get('map-search-open').dispatchEvent(new Event('click'));await h.flush();h.search('Shaw');
   assert.equal(h.nodes.get('map-search-results').children.length,1);assert.match(h.nodes.get('map-search-coverage').textContent,/Lake outline index unavailable/);
+});
+
+test('typing searches local data only; the geocoder runs on its button and results highlight like other references',async()=>{
+  const terms=[];const vm={search:async term=>{terms.push(term);return {results:[{results:[{name:'2281 Tulare St, Fresno, California, 93721',feature:{geometry:{x:-119.7879,y:36.736},attributes:{Addr_type:'PointAddress'}}}]}]};}};
+  const h=setup(async()=>{throw new Error('No fetch expected');},null,async()=>vm);
+  h.search('2281 Tulare');await h.flush();assert.deepEqual(terms,[],'typing must not send the query to the geocoder');
+  h.nodes.get('map-search-places-run').dispatchEvent(new Event('click'));await h.flush();await h.flush();
+  assert.deepEqual(terms,['2281 Tulare']);const list=h.nodes.get('map-search-places-list');assert.equal(list.children.length,1);assert.equal(list.children[0].label,'2281 Tulare St, Fresno, California, 93721');
+  assert.equal(h.nodes.get('map-search-results').children.length,0,'geocoder rows stay out of the local name results');
+  list.children[0].dispatchEvent(new Event('click'));await h.flush();await h.flush();
+  assert(h.calls.some(c=>c?.x===-119.7879&&c?.y===36.736&&c?.spatialReference?.wkid===4326),'selected address is highlighted and zoomed');
 });
