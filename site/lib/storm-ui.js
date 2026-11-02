@@ -150,7 +150,6 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   $('storm-rain').addEventListener('calciteSegmentedControlChange',e=>onRain(RAIN[e.target.value]||'off'));
   for(const sw of document.querySelectorAll('#storm-layers calcite-switch'))sw.addEventListener('calciteSwitchChange',()=>sw.dataset.contextLayer==='cameras'?onCameras(sw.checked):map?.setLayerPreference(sw.dataset.contextLayer,sw.checked));
   $('storm-list').addEventListener('calciteListItemSelect',e=>open(e.target.value));
-  $('storm-issues').addEventListener('click',()=>$('notify-health').click());
   window.addEventListener('frogUsgsSelect',e=>showGauge(e.detail.id));
   // Controls stay pinned above the list on desk screens; on phones / short screens they scroll with it so rows stay reachable.
   const short=matchMedia('(max-width:900px),(max-height:760px)'),place=()=>{$('storm-controls').slot=short.matches?'':'content-top';};short.addEventListener('change',place);place();
@@ -163,7 +162,6 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
   return {
     set(values){Object.assign(inputs,values);render();},
     setMap(controller){map=controller;signature='';if(net)map.setRiverNetwork(net);render();},
-    setIssues(n){$('storm-issues').textContent=n===null?(exercise?'Source health · exercise':'Source issues · checking'):`${n} source ${n===1?'issue':'issues'}`;$('storm-issues').setAttribute('icon-start',n?'exclamation-mark-triangle':'information');},
     setOverlay(kind){const label=Object.keys(RAIN).find(k=>RAIN[k]===kind);for(const item of $('storm-rain').children)item.checked=item.getAttribute('value')===label;}
   };
 }
