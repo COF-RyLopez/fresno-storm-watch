@@ -115,3 +115,13 @@ test('frontKm uses measured reach speeds on their own path and the assumed speed
   n.reaches=reachSpeeds(travel([['B',8,2,2]]));assert.match(speedNote(n),/Measured gauge-to-gauge travel times on 1 San Joaquin reaches; assumed 2\.5 mph elsewhere/);
   n.reaches=[];assert.match(speedNote(n),/^Assumed 2\.5 mph travel/);
 });
+
+test('published travel times: contiguous San Joaquin main-stem reaches with plausible measured speeds',async()=>{
+  const {reachSpeeds}=await import('../site/lib/river-network-model.js');
+  const doc=await siteJson('travel-times.json'),n=indexNetwork(await siteJson('river-network.json'),doc);
+  assert.match(doc.source,/CDEC/);assert.match(doc.method,/Cross-correlation/);
+  assert.equal(n.reaches.length,doc.reaches.length,'every published reach is usable');assert(n.reaches.length>=5);
+  for(let i=0;i<n.reaches.length;i++){const r=n.reaches[i];assert(n.paths.has(r.path));assert(r.speedKmh>0.5&&r.speedKmh<10,r.label);if(i)assert(Math.abs(n.reaches[i-1].lo-r.hi)<1e-9,'reaches meet end to end');}
+  for(const r of doc.reaches)assert(r.events>=3&&Math.abs(r.distanceKm/r.lagHours-r.speedKmh)<0.01);
+  assert.deepEqual(reachSpeeds(doc).map(r=>r.path),n.reaches.map(r=>r.path));
+});
