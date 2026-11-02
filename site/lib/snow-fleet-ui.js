@@ -2,6 +2,7 @@ import {loadSdk} from './map.js';
 import {el} from './dom.js';
 import {createLabelLayer} from './map-labels.js';
 import {SNOW_ROUTES_URL} from './snow-model.js';
+import {YARDS_URL,FUEL_URL,siteContext,siteName} from './county-yards-model.js';
 import {FLEET_TYPES,FLEET_STATUS,PASS_TONES,validateFleet,fleetSummary,repairPriority,needsPass,passExpression} from './snow-fleet-model.js';
 
 const $=id=>document.getElementById(id);
@@ -9,7 +10,7 @@ const $=id=>document.getElementById(id);
  * route last-pass colours. Reads only the collector's public snapshot; `?snowfleet=sample` previews the Oct 29 export. */
 export function createSnowFleet({time,exercise}){
   const sample=new URLSearchParams(location.search).get('snowfleet')==='sample';
-  let fleet=null,error=null,map=null,units=null,labels=null,passLayer=null,sdk=null,checked=null;
+  let fleet=null,error=null,map=null,units=null,labels=null,passLayer=null,sdk=null,checked=null,sites={yards:[],fuel:[]};
   const ago=t=>{const h=(Date.now()-Date.parse(t))/3600000;return !Number.isFinite(h)?'unknown':h<1?`${Math.max(1,Math.round(h*60))} min ago`:h<48?`${Math.round(h)} h ago`:`${Math.round(h/24)} days ago`;};
   function counts(){
     const s=fleetSummary(fleet);
@@ -28,7 +29,7 @@ export function createSnowFleet({time,exercise}){
     if(s.byType.length){const ul=el('ul');ul.className='snow-fleet-types';for(const t of s.byType)ul.append(el('li',`${t.label}s: ${t.available} available${t.inShop?` · ${t.inShop} in shop`:''}`));host.append(ul);}
     const shop=repairPriority(fleet);
     if(shop.length){host.append(el('h4','Repair priority · in the shop'));const ol=el('ol');ol.className='snow-fleet-shop';
-      for(const v of shop)ol.append(el('li',`${v.id} (${FLEET_TYPES[v.type].toLowerCase()})${v.expectedBack?` · expected back ${time(Date.parse(v.expectedBack))}`:' · return date not set'}`));
+      for(const v of shop){const at=siteContext(v.lon,v.lat,sites).at;ol.append(el('li',`${v.id} (${FLEET_TYPES[v.type].toLowerCase()})${at?` at ${at}`:''}${v.expectedBack?` · expected back ${time(Date.parse(v.expectedBack))}`:' · return date not set'}`));}
       host.append(ol,el('small','Plows first, then blowers; earliest expected return first. From the fleet feed, not a work order system.'));}
     const need=needsPass(fleet.routes);
     if(fleet.routes.length&&need.length){host.append(el('h4','Needs a pass · priority 1–2 routes, none in 6 h'));const ul=el('ul');for(const r of need.slice(0,10))ul.append(el('li',`${r.name.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase())}${r.lastPass?` · last ${ago(r.lastPass)}${r.by?` by ${r.by}`:''}`:' · no pass recorded'}`));host.append(ul);}
@@ -46,13 +47,20 @@ export function createSnowFleet({time,exercise}){
       units.add(new Graphic({geometry:{type:'point',longitude:v.lon,latitude:v.lat,spatialReference:{wkid:4326}},
         symbol:{type:'simple-marker',style:shop?'square':v.type==='snow-blower'?'diamond':'circle',size:shop?13:12,color:st.color,outline:{color:'#17232b',width:1.5}},
         attributes:{id:v.id},popupTemplate:{title:`${v.id} · ${FLEET_TYPES[v.type]}`,content:()=>{const t=document.createElement('table');t.className='esri-widget__table';
-          for(const [k,val]of [['Status',`${st.label}${v.statusBasis?` (${v.statusBasis})`:''}`],['Expected back',v.expectedBack&&time(Date.parse(v.expectedBack))],['Home yard',v.yard],['On snow route',v.onRoute],['Position as of',v.seen&&`${time(Date.parse(v.seen))} · ${ago(v.seen)}`]]){if(!val)continue;const r=t.insertRow();r.insertCell().textContent=k;r.insertCell().textContent=val;}
+          const where=siteContext(v.lon,v.lat,sites);
+          for(const [k,val]of [['Status',`${st.label}${v.statusBasis?` (${v.statusBasis})`:''}`],['At County yard',where.at],['Fuel',where.fuel],['Expected back',v.expectedBack&&time(Date.parse(v.expectedBack))],['Home yard',v.yard],['On snow route',v.onRoute],['Position as of',v.seen&&`${time(Date.parse(v.seen))} · ${ago(v.seen)}`]]){if(!val)continue;const r=t.insertRow();r.insertCell().textContent=k;r.insertCell().textContent=val;}
           const wrap=document.createElement('div');wrap.append(t,Object.assign(document.createElement('p'),{textContent:`${fleet.source}. Positions are delayed at least ${fleet.delayMinutes} minutes; no driver information is published.`}));return wrap;}}}));
     }
     void labels.set(fleet.vehicles.filter(v=>v.lon!==null).map(v=>({longitude:v.lon,latitude:v.lat,label:v.status==='in-shop'?`${v.id} · in shop`:v.id})));
     const expression=passExpression(fleet.routes);
     if(expression&&!passLayer){passLayer=new FeatureLayer({url:SNOW_ROUTES_URL,title:'Snow routes · time since last plow pass',outFields:['name'],popupEnabled:false,legendEnabled:false});map.registerLayer('snowFleet',passLayer,true,1);}
     if(passLayer)passLayer.renderer={type:'unique-value',valueExpression:expression||"'none'",defaultSymbol:null,uniqueValueInfos:Object.entries(PASS_TONES).map(([value,t])=>({value,label:t.label,symbol:{type:'simple-line',color:t.color,width:4}}))};
+  }
+  /** County yards and fuel sites, once: popups say "At Auberry Yard" or name the nearest County fuel (straight-line). */
+  async function loadSites(){
+    const get=async(url,fields,name)=>{const q=new URLSearchParams({where:'1=1',outFields:fields,returnGeometry:'true',outSR:'4326',f:'json'});const r=await fetch(`${url}/query?${q}`,{signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error(`HTTP ${r.status}`);
+      return ((await r.json()).features||[]).map(f=>({name:name(f.attributes),lon:f.geometry?.x,lat:f.geometry?.y})).filter(x=>Number.isFinite(x.lon)&&Number.isFinite(x.lat));};
+    try{sites={yards:await get(YARDS_URL,'RDYARD_NM',a=>siteName(a.RDYARD_NM)),fuel:await get(FUEL_URL,'fuel_site',a=>a.fuel_site)};render();}catch{/* Yard context is optional; the fleet still draws. */}
   }
   async function refresh(){
     if(exercise)return render();
@@ -67,7 +75,7 @@ export function createSnowFleet({time,exercise}){
   $('snow-fleet-toggle').addEventListener('calciteCheckboxChange',e=>map?.setLayerPreference('snowFleet',e.target.checked));
   const key=$('snow-fleet-key');key.replaceChildren(...['working','traveling','idle','parked','off','in-shop'].map(s=>{const i=el('i');i.style.background=FLEET_STATUS[s].color;i.className=s==='in-shop'?'square':'';const span=el('span');span.append(i,FLEET_STATUS[s].label);return span;}));
   setInterval(()=>{if(!document.hidden)void refresh();},5*60000);
-  queueMicrotask(()=>void refresh());
+  queueMicrotask(()=>{void refresh();if(!exercise)void loadSites();});
   return {async setMap(controller){map=controller;try{
     const c=await (await loadSdk()).import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/FeatureLayer.js']);sdk=c;
     units=new c[0]({title:'County snow fleet · delayed positions',elevationInfo:{mode:'on-the-ground'}});map.registerLayer('snowFleet',units);
