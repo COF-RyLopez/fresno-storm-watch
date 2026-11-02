@@ -9,7 +9,7 @@ import {DRAINAGE_COLORS} from './drainage-model.js';
 import {createDrainageRainClipper} from './drainage-review-data.js';
 import {nearbyEntries,searchGeometry,envelopesNear,geometryType} from './nearby-search.js';
 import {withTimeout} from './with-timeout.js';
-import {createLabelLayer,gaugeLabel,setMapLabels} from './map-labels.js';
+import {createLabelLayer,gaugeLabel,setMapLabels,labelPolygons} from './map-labels.js';
 import {createSelectionFocus,validLocation,searchDestination} from './selection-focus.js';
 import { CATEGORIES, COUNTIES, countyGeometry } from './model.js';
 import { createFrameWindow } from './frame-window.js';
@@ -97,10 +97,10 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   for(const [key,layer]of Object.entries(drainageLayers))registerLayer(key,layer,false,1);
   // Public FMFCD "Drainage Boundaries" (master-planned drainage areas): live reference read from the publisher, never copied.
-  registerLayer('drainageAreas',new FeatureLayer({url:FMFCD_DETAIL_URL+'/0',title:LAYER_LABELS.drainageAreas,outFields:['DRAINAGE','Acres'],opacity:.9,minScale:0,maxScale:0,// publisher hides above 1:50,000; 303 polygons draw fine at metro scale
+  registerLayer('drainageAreas',labelPolygons(new FeatureLayer({url:FMFCD_DETAIL_URL+'/0',title:LAYER_LABELS.drainageAreas,outFields:['DRAINAGE','Acres'],opacity:.9,minScale:0,maxScale:0,// publisher hides above 1:50,000; 303 polygons draw fine at metro scale
 elevationInfo:{mode:'on-the-ground'},
     renderer:{type:'simple',symbol:{type:'simple-fill',color:[167,162,195,.08],outline:{color:DRAINAGE_COLORS.catchment,width:1}}},
-    popupTemplate:{title:'FMFCD drainage area {DRAINAGE}',content:[{type:'text',text:'Master-planned drainage area published by FMFCD. Reference only: not current flooding, capacity or pump status.'},{type:'fields',fieldInfos:[{fieldName:'DRAINAGE',label:'Drainage area'},{fieldName:'Acres',label:'Acres'}]}]}}),true,1);
+    popupTemplate:{title:'FMFCD drainage area {DRAINAGE}',content:[{type:'text',text:'Master-planned drainage area published by FMFCD. Reference only: not current flooding, capacity or pump status.'},{type:'fields',fieldInfos:[{fieldName:'DRAINAGE',label:'Drainage area'},{fieldName:'Acres',label:'Acres'}]}]}}),{expression:"IIf($feature.DRAINAGE == 'EXEMPT', '', $feature.DRAINAGE)",minScale:150_000}),true,1);
   const usgsGauges=new GraphicsLayer({title:'USGS stream gauges',elevationInfo:{mode:'relative-to-ground'}});registerLayer('gauges',usgsGauges);
   // Name labels: NWS and USGS gauges share one label layer so their names deconflict against each other.
   const gaugeLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River gauge names'}),areaLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River watch area names'});
@@ -183,6 +183,8 @@ elevationInfo:{mode:'on-the-ground'},
     const host=document.querySelector('#fema-status');
     host.textContent=!fema.visible?'FEMA overlay off':femaError||femaViews.get(view)==='error'?'FEMA unavailable in this view — check publisher source':fema.loadStatus!=='loaded'||!femaViews.get(view)?'Loading FEMA reference':view.scale>1_000_000?'FEMA flood zones · zoom in to see them':'FEMA zones intersecting Fresno County';
   };
+  // "Zone A/AE/AO/AH" for the 1% area, "0.2% zone", "Zone D"; lavender like the fill so they don't read as drainage-area codes.
+  labelPolygons(fema,{expression:"IIf($feature.SFHA_TF == 'T', 'Zone ' + $feature.FLD_ZONE, IIf($feature.FLD_ZONE == 'D', 'Zone D', '0.2% zone'))",minScale:72_000,color:'#e2d3ff'});
   void fema.load().then(femaStatus).catch(()=>{femaError=true;femaStatus();});
   const drawGauges=()=>{
     gauges.removeAll();nwsLabelRows=[];
