@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ff0I5QjLeFucV2oTNIrRQMtvCoTGT8/iZIYu/shPFME='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-/Gac8xHsYMnkva6cyNUZPkIZAGCLbjRejSNPBbbjJEM='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
 <meta name="description" content="3D view of Fresno County's river network with illustrative surge travel from rising gauges. Planning aid, not a forecast.">
 <title>Storm Watch · River network 3D</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69">
@@ -17,14 +17,14 @@
 "./lib/power-geometry.js":"./lib/power-geometry.js?v=abecba4c1b",
 "./lib/river-model.js":"./lib/river-model.js?v=f4cfa150af",
 "./lib/river-network-map.js":"./lib/river-network-map.js?v=bcb0b73e47",
-"./lib/river-network-model.js":"./lib/river-network-model.js?v=300280b9ab",
+"./lib/river-network-model.js":"./lib/river-network-model.js?v=871fbedd9d",
 "./lib/usgs-gauges.js":"./lib/usgs-gauges.js?v=ee6db16686",
-"./river-3d.js":"./river-3d.js?v=b5720245d0"
+"./river-3d.js":"./river-3d.js?v=585b2fa2c3"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./river-3d.js?v=b5720245d0"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./river-3d.js?v=585b2fa2c3"></script>
 <link rel="stylesheet" href="./flood-scenario.css?v=7d26f48832">
-<style>/* Google Maps attribution: logo 16-19 px tall with clear space; data providers stacked under it (the side panel covers the view's right edge). */.google-logo{height:18px;width:auto;margin:10px 10px 5px}.google-credits{font-size:11px;line-height:1.4;white-space:normal;box-sizing:border-box;margin:0 10px 5px;color:#fff;background:rgba(0,0,0,.45);padding:2px 6px;border-radius:2px;max-width:min(50vw,520px)}.google-credits:empty{display:none}.scene-loading{font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:2px;margin:10px}</style>
+<style>/* Google Maps attribution: logo 16-19 px tall with clear space; data providers stacked under it (the side panel covers the view's right edge). */.google-logo{height:18px;width:auto;margin:10px 10px 5px}.google-credits{font-size:11px;line-height:1.4;white-space:normal;box-sizing:border-box;margin:0 10px 5px;color:#fff;background:rgba(0,0,0,.45);padding:2px 6px;border-radius:2px;max-width:min(50vw,520px)}.google-credits:empty{display:none}#profile-chart{width:100%;height:auto;display:block;background:rgba(0,0,0,.25);border-radius:2px}.scene-loading{font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:2px;margin:10px}</style>
 </head><body>
 <calcite-shell>
   <header slot="header">
@@ -38,7 +38,7 @@
         <calcite-label>Time · <span id="surge-time">now</span><calcite-slider id="surge-slider" min="-360" max="720" step="15" value="0" min-label="Surge timeline, minutes from now" scale="s"></calcite-slider></calcite-label>
         <div><calcite-button id="surge-play" icon-start="play" scale="s" appearance="outline">Play</calcite-button> <calcite-button id="surge-now" scale="s" appearance="transparent">Back to now</calcite-button></div>
         <p id="surge-status" class="note" role="status">Loading gauges…</p>
-        <calcite-list id="surge-list" label="Pulse sources" selection-mode="none"></calcite-list>
+        <calcite-list id="surge-list" label="Pulse sources" selection-mode="none"></calcite-list><calcite-block id="profile-block" heading="River profile" description="Ground elevation along the route downstream" expanded collapsible scale="s"><svg id="profile-chart" viewBox="0 0 300 110" role="img" aria-labelledby="profile-title"><title id="profile-title">River elevation profile</title><path id="profile-line" fill="none" stroke="#6ebef0" stroke-width="2"></path><circle id="profile-marker" r="5" fill="#ffd166" stroke="#1b1f23" stroke-width="1.5" visibility="hidden"></circle></svg><p id="profile-status" class="note" role="status">Select a pulse source to profile its route.</p></calcite-block>
         <calcite-label layout="inline"><calcite-switch id="google-switch" scale="s"></calcite-switch>Google Photorealistic 3D Tiles</calcite-label>
         <p id="google-note" class="note"></p>
         <p class="note">Yellow: a gauge rising 0.2 ft/h or more. Pink, dashed in 2D: a published NWS forecast crest. Each pulse moves downstream along the USGS 3DHP network at an assumed 4 km/h (about 2.5 mph). Travel times are not measured; diversions, canals and bypass operations are not modeled. Canals and small channels are drawn in the 2D waterway basemap only.</p>
