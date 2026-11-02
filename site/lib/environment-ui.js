@@ -55,7 +55,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   function renderWeather(){
     if(!exercise){reportHealth('radar','NOAA radar',{checked:radarChecked,error:radarError,state:!radarChecked?'checking':!radar[0]?'coverage':Date.now()-radar[0].time>config.radarMaxAgeMs?'stale':null,detail:radar[0]?'Catalog check; the selected observation time remains on the map.':'No recent CONUS image returned.'});reportHealth('wpc-cycle','WPC rainfall forecast cycle',{checked:qpfChecked,error:qpfError,state:!qpfChecked?'checking':!qpf?'coverage':Date.now()-qpf.issue>config.qpfMaxAgeMs||qpf.end<Date.now()?'stale':null,detail:qpf?'Forecast issue and valid window remain on the map.':'No forecast cycle returned.'});}
     weather.setOverlay(overlay);weather.setContext({radar,radarError:radarError||(checkOverdue(radarChecked)?'Catalog check overdue':null),qpf,qpfError:qpfError||(checkOverdue(qpfChecked)?'Cycle check overdue':null)});
-    for(const kind of ['off','radar','qpf','satellite']){$(`env-${kind}`).setAttribute('aria-pressed',String(overlay===kind));$(`env-${kind}`).setAttribute('appearance',overlay===kind?'solid':'outline');}
+    for(const item of $('env-overlay').children)item.checked=item.getAttribute('value')===overlay;
     $('radar-controls').hidden=overlay!=='radar';$('qpf-controls').hidden=overlay!=='qpf';
     const frame=currentFrame();
     frameChoice=weather.live?'latest':frame?String(frame.id):'unavailable';
@@ -165,7 +165,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   }
 
   function selectOverlay(kind,notify=true){if(!['off','radar','qpf','satellite'].includes(kind))return;if(kind!=='qpf')rainfallTimeRequest=null;map?.clearEnvironmentPopup();overlay=kind;if(notify)onOverlayChange(kind);renderWeather();}
-  for(const kind of ['off','radar','qpf','satellite'])$(`env-${kind}`).addEventListener('click',()=>selectOverlay(kind));
+  $('env-overlay').addEventListener('calciteSegmentedControlChange',e=>selectOverlay(e.target.value));
   $('radar-frame').addEventListener('calciteSelectChange',e=>{const frame=radar.find(f=>String(f.id)===e.target.value);if(e.target.value==='latest')weather.selectTime(null);else if(frame)weather.selectTime(frame.time);});
   const setPeriod=p=>{period=p;qpf=null;qpfError=null;qpfChecked=null;cycleRequest++;};
   $('qpf-period').addEventListener('calciteSelectChange',e=>{

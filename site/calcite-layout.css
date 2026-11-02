@@ -272,9 +272,7 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 @media(max-width:600px){#facility-mapping{grid-template-columns:1fr;}#facility-banner-text{font-size:0.72rem;}}
 
 /* Shared weather time and explicitly sampled forecasts use the active theme. */
-.weather-slider-label{font-size:0.85rem;display:block;margin-bottom:0.5rem;}
-#weather-time{width:100%;accent-color:var(--app-link);min-height:32px;cursor:pointer;}
-#weather-time:focus-visible{outline:2px solid var(--app-link);outline-offset:3px;}
+.weather-slider-label{font-size:0.85rem;}
 .weather-range-labels{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--app-muted);}
 .weather-availability{font-size:0.8rem;line-height:1.5;display:grid;grid-template-columns:5.4rem 1fr;gap:0.5rem;margin:1rem 0;}
 .weather-availability dt{font-weight:600;}.weather-availability dd{margin:0;overflow-wrap:anywhere;color:var(--app-muted);}
