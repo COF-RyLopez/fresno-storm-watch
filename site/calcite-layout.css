@@ -100,7 +100,6 @@ calcite-panel {
 .map-toolbar-stack { display: flex; flex-direction: column; width: 100%; }
 .environment-map-status { font-size: 12px; line-height: 1.5; }
 .environment-map-status[data-tone=gap] { color: var(--caution-text); }
-#scope-note { font-size: 12px; line-height: 1.5; }
 .map-wrap { position: relative; width: 100%; height: 100%; min-height: 0; background: var(--app-map-background); }
 #map { position: absolute; inset: 0; width: 100%; height: 100%; }
 #map-status { position: absolute; top: 12px; left: 55px; right: 12px; padding: 12px; background: var(--app-surface); border: 1px solid var(--app-border); font-size: 13px; z-index: 2; }
@@ -266,7 +265,6 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 #facility-mapping{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;}
 #imagery-status{font-size:0.75rem;color:var(--calcite-color-text-2);}
 .map-panel.map-expanded{position:fixed;inset:0;z-index:500;height:100dvh;width:100vw;max-width:none;}
-.map-panel.map-expanded #scope-note{display:none;}
 #expanded-map-note{font-size:12px;color:var(--caution-text);}
 .waterway-channel,.waterway-canal,.waterway-connector{border-top:2px solid #70b9f4;padding-top:3px;}
 .waterway-canal{border-top:2px dashed #83d4e6;}
@@ -299,7 +297,7 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .workspace-tabs{background:var(--calcite-color-surface-2);width:100%;}
 .workspace-tabs>calcite-tab{height:0;min-height:0;overflow:hidden;}
 .workspace-tabs calcite-tab-nav{width:100%;}
-.county-strip{display:flex;background:var(--calcite-color-surface-1);border-bottom:1px solid var(--calcite-color-border-2);}
+.county-strip{display:flex;}
 #tools-shell{--calcite-shell-panel-width:370px;--calcite-shell-panel-max-width:100vw;}
 .map-action-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
 .map-action-bar{width:auto;max-width:100%;--calcite-action-bar-expanded-max-width:100%;}
@@ -319,7 +317,6 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
  .scope-bar{font-size:11px;}
 }
 @media(max-width:600px){
- #scope-note{display:none;}
  .navigation-actions calcite-action{text-overflow:clip;}
 }
 
@@ -381,7 +378,6 @@ calcite-panel>.notification-wrap{margin-bottom:8px;}
 #basemap-gallery-status{font-size:12px;line-height:1.5;}
 .briefing-document-details{margin-block:12px;font-size:13px;line-height:1.6;}
 #map-feature-content{min-width:0;overflow-wrap:anywhere;}
-@container(max-width:520px){#scope-note{display:none;}}
 @media(max-width:900px){
   #planning-workspace.evidence-stacked{display:grid;grid-template-rows:minmax(150px,1fr) minmax(210px,48%);}
   #planning-workspace.evidence-stacked:has(#hanford-dialog[open]){grid-template-rows:minmax(150px,1fr) minmax(210px,58%);}

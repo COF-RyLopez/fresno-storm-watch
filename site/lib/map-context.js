@@ -20,7 +20,7 @@ export function installMapContext({map, FeatureLayer, sdk, reactiveUtils, fresno
   const expandMap = (expanded, restoreFocus=true) => {
     panel.classList.toggle('map-expanded',expanded);
     expandedNote.hidden=!expanded;
-    expandButton.text=expanded?'Restore workspace':matchMedia('(max-width:900px)').matches?'Expand':'Expand map';
+    expandButton.text=expanded?'Restore workspace':'Expand map';
     expandButton.icon=expanded?'full-screen-exit':'full-screen';
     expandButton.setAttribute('aria-expanded',String(expanded));
     // Keep keyboard focus on the reversible control, not behind the enlarged map.

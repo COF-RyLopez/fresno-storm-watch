@@ -6,9 +6,8 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   const cameraStates=new Map(),cameraPanel=$('camera-panel');
   function mapLabels(){
     const narrow=compact.matches||$('map-panel').getBoundingClientRect().width<520;
-    $('fit-region').setAttribute('text',narrow?'Fit':'Fit workspace');
-    for(const [id,short,long]of [['map-search-open','Results','Search results'],['context-open','Layers','Context layers'],['map-tools-open','Map tools','Map tools']])$(id).setAttribute('text',narrow?short:long);
-    if(!$('map-panel').classList.contains('map-expanded'))$('expand-map').setAttribute('text',narrow?'Expand':'Expand map');
+    // Narrow maps show the toolbar as icons; each action's text stays its accessible name.
+    for(const a of document.querySelectorAll('.map-action-bar calcite-action'))a.textEnabled=!narrow;
   }
   function render(){
     const nav=document.querySelector('.mission-nav'),navHost=compact.matches?$('mobile-mission-nav'):$('command-navigation');if(nav.parentElement!==navHost)navHost.append(nav);
@@ -27,7 +26,6 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     for(const title of document.querySelectorAll('[data-workspace]')){title.selected=title.dataset.workspace===section;title.toggleAttribute('selected',title.selected);}
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
     $('storm-shell').dataset.workspace=section;$('storm-shell').dataset.destination=mission;$('workspace-tabs').hidden=true;
-    $('map-panel').setAttribute('heading',mission==='scenarios'?'Hypothetical scenario map':mission==='briefing'?'Briefing map':WORKSPACES[section].title+' map');$('scope-note').textContent=mission==='scenarios'?'Hypothetical model/library domain · independent scenario clock':mission==='briefing'?'Captured evidence · verify source timing and access':WORKSPACES[section].description;
     $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Planning':'Briefing'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     mapLabels();
   }

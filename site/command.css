@@ -39,7 +39,6 @@
 @container(min-width:900px){
  #map-panel .map-toolbar-stack{display:grid;grid-template-columns:minmax(260px,1fr) auto;align-items:center}
  .map-search-launch{min-width:0}
- #map-panel .source-notes{grid-column:1/-1}
 }
 #map-panel .map-toolbar-stack{padding-block:4px;gap:4px}
 #map-panel .map-search-launch{gap:4px}
@@ -48,7 +47,7 @@
  .mission-nav{justify-content:space-between;gap:2px;padding:2px 6px}
  .mission-nav calcite-button{flex:auto}
  .scope-bar{padding:0 8px;gap:2px 8px}
- .scope-bar .scope-label,.scope-bar #eyebrow{display:none}
+ .scope-bar #eyebrow{display:none}
  .scope-bar .mission-clock{margin-inline-start:0;font-size:10px}
  .scope-bar #mission-tools-toggle{margin-inline-start:auto}
  .county-strip{justify-content:flex-start;padding:0 4px;gap:0 2px}
@@ -57,6 +56,7 @@
 #scenario-library-map-status[data-problem=true]{border-inline-start:3px solid var(--calcite-color-status-warning);padding-inline-start:8px;color:var(--calcite-color-text-1)}
 
 .scenario-map-caption{grid-column:1/-1;font-size:12px;line-height:1.4;color:var(--calcite-color-text-1);margin:0}
+#map-panel #expanded-map-note{grid-column:1/-1;margin:0}
 .source-health-group{margin-inline:12px;font-size:13px;line-height:1.5}
 .source-health-group article{padding:8px 0;border-bottom:1px solid var(--calcite-color-border-3)}
 .source-health-group h3{font-size:14px;margin:0}
