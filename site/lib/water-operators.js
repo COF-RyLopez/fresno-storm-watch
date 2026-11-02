@@ -2,6 +2,12 @@
  * (Cal OES copy of DSOD-approved maps). Public reference data; not duty contacts and not current operating status. */
 export const DAMS_URL='https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/NID_v1/FeatureServer/0';
 export const LEVEES_URL='https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/NLD2_PUBLIC_v1/FeatureServer/14';
+export const DISTRICTS_URL='https://utility.arcgis.com/usrsvcs/servers/538bfc2e4ad64ff78ff18fbb8ca36033/rest/services/Boundaries/i03_WaterDistricts/MapServer/0';
+/** DWR i03 also holds small drinking-water systems (apartments, schools, parks) from CDPH / SWRCB; they are not the irrigation,
+ * water and flood agencies this layer is for. The SWRCB spellings are as published. */
+export const DISTRICTS_WHERE="SOURCE NOT IN ('CDPH','SWRCB','SWCRB','SWRCBO','Copid from SWRCB')";
+/** @param {string} name DWR AGENCYNAME @returns {string} Tidy display name: trims stray whitespace/line breaks and "Fresno  City Of" -> "Fresno, City of". */
+export const districtName=name=>String(name||'').replace(/\s+/g,' ').trim().replace(/^(.*?) City Of$/i,'$1, City of');
 export const INUNDATION_URL='https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/DSOD_Approved_Inundation_Boundaries_View/FeatureServer/0';
 /** Fresno County plus the reservoirs upstream of it (Madera side of Millerton, upper San Joaquin and Kings). */
 export const REGION=Object.freeze({xmin:-121.0,ymin:35.9,xmax:-118.3,ymax:37.6});
