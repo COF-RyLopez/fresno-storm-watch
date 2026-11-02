@@ -43,3 +43,13 @@ test('HRRR starts only in Weather and eligibility cannot reveal unrelated map co
  for(const id of ['watch','rivers','reservoirs','alerts','power','roads'])assert.equal(layerVisible(workspaceDefaults(id),'hrrr',true),false);
  assert.equal(layerVisible(workspaceDefaults('weather'),'hrrr',false),false);
 });
+test('rain is optional for older collections, strict when present, and dry cells stay transparent',()=>{
+ const m=manifest(),f=frame(m);assert.equal(validateHrrrFrame(f,m,m.frames[4]),f);
+ const rain=Array(8080).fill(0);rain[2]=0.005;rain[3]=0.01;rain[4]=0.4;rain[5]=null;
+ assert.equal(validateHrrrFrame({...f,rain},m,m.frames[4]).rain,rain);
+ for(const bad of [-0.1,21,NaN,'0.2'])assert.throws(()=>validateHrrrFrame({...f,rain:rain.map((v,i)=>i===6?bad:v)},m,m.frames[4]));
+ assert.throws(()=>validateHrrrFrame({...f,rain:[0]},m,m.frames[4]));
+ assert.throws(()=>validateHrrrManifest({...m,rainUnits:'mm/h'},now));assert.equal(validateHrrrManifest({...m,rainUnits:'in/h'},now).rainUnits,'in/h');
+ const p=hrrrPixels({...f,rain},'rain');assert.deepEqual([...p.mask.slice(0,6)],[0,0,0,1,1,0]);assert.ok(Math.abs(p.pixels[0][4]-0.4)<1e-6);
+ assert.equal(hrrrPoint({...f,rain},m.grid,m.grid.x0+4*m.grid.dx,m.grid.y0).rain,0.4);assert.equal(hrrrPoint(f,m.grid,-119.75,36.92).rain,null);
+});

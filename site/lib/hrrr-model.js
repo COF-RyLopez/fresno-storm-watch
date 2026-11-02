@@ -2,19 +2,23 @@
 export const HOUR=3_600_000;
 export const MPH=2.2369362920544;
 export const GUST_STOPS=Object.freeze([[0,'#304560'],[15,'#436d9b'],[30,'#629bc0'],[45,'#9bc5be'],[60,'#ded59b'],[75,'#e6a16e']]);
+/** Rain rate (in/h), evenly spaced like the legend; 0.5+ is heavy for the valley floor. Cells under RAIN_MIN are transparent. */
+export const RAIN_STOPS=Object.freeze([[0,'#7fd1a0'],[.1,'#3fa66a'],[.2,'#2f86b8'],[.3,'#6c5cc4'],[.4,'#b04fae'],[.5,'#e2558a']]);
+export const RAIN_MIN=.01;
 /** Validate public provenance, fixed regional coverage and a single coherent run. */
 export function validateHrrrManifest(m,now=Date.now()){
   const g=m?.grid,run=Date.parse(m?.run),checked=Date.parse(m?.generatedAt);
-  if(m?.schemaVersion!==1||m.product!=='noaa-hrrr-forecast-48-hour'||m.units!=='m/s'||m.vectorConvention!=='earth-east-north'||m.license!=='CC-BY-4.0'||typeof m.attribution!=='string'||!Number.isFinite(run)||!Number.isFinite(checked)||run>now+120000||checked>now+120000)throw Error('HRRR identity, units, wind convention or timestamps changed.');
+  if(m?.schemaVersion!==1||m.product!=='noaa-hrrr-forecast-48-hour'||m.units!=='m/s'||(m.rainUnits!==undefined&&m.rainUnits!=='in/h')||m.vectorConvention!=='earth-east-north'||m.license!=='CC-BY-4.0'||typeof m.attribution!=='string'||!Number.isFinite(run)||!Number.isFinite(checked)||run>now+120000||checked>now+120000)throw Error('HRRR identity, units, wind convention or timestamps changed.');
   if(!g||g.wkid!==4326||g.width!==101||g.height!==80||g.x0!==-121.25||g.y0!==38.12||g.dx!==0.03||g.dy!==-0.03)throw Error('HRRR regional grid changed; review coverage.');
   if(!Array.isArray(m.frames)||m.frames.length!==49||m.frames.some((f,i)=>f.leadHours!==i||Date.parse(f.valid)!==run+i*HOUR||!/^\d{8}T\d{6}Z-f\d{2}\.json$/.test(f.file)||f.file!==m.run.replace(/[-:]/g,'')+`-f${String(i).padStart(2,'0')}.json`))throw Error('HRRR forecast run/frame inventory is inconsistent.');
   return m;
 }
-/** Reject mismatched files and preserve missing cells independently of valid zeros. */
+/** Reject mismatched files and preserve missing cells independently of valid zeros. Rain (in/h) is optional: collections before it was added have none. */
 export function validateHrrrFrame(f,m,entry){
   const n=m.grid.width*m.grid.height;
   if(f?.schemaVersion!==1||f.run!==m.run||f.valid!==entry.valid||f.leadHours!==entry.leadHours||f.width!==m.grid.width||f.height!==m.grid.height)throw Error('HRRR frame does not match the selected run.');
   for(const k of ['u','v','gust'])if(!Array.isArray(f[k])||f[k].length!==n||f[k].some(v=>v!==null&&(!Number.isFinite(v)||Math.abs(v)>(k==='gust'?200:150)||(k==='gust'&&v<0))))throw Error('HRRR frame pixels or units are invalid.');
+  if(f.rain!==undefined&&(!Array.isArray(f.rain)||f.rain.length!==n||f.rain.some(v=>v!==null&&(!Number.isFinite(v)||v<0||v>20))))throw Error('HRRR rain pixels or units are invalid.');
   return f;
 }
 /** Half-open one-hour display slots; never extrapolate beyond available model steps. */
@@ -31,11 +35,12 @@ export function hrrrPoint(f,g,lon,lat){
   const x=Math.round((lon-g.x0)/g.dx),y=Math.round((lat-g.y0)/g.dy);
   if(x<0||x>=g.width||y<0||y>=g.height)return null;
   const i=y*g.width+x,u=f.u[i],v=f.v[i];
-  return {speed:u===null||v===null?null:Math.hypot(u,v)*MPH,gust:f.gust[i]===null?null:f.gust[i]*MPH,longitude:g.x0+x*g.dx,latitude:g.y0+y*g.dy};
+  return {speed:u===null||v===null?null:Math.hypot(u,v)*MPH,gust:f.gust[i]===null?null:f.gust[i]*MPH,rain:f.rain?.[i]??null,longitude:g.x0+x*g.dx,latitude:g.y0+y*g.dy};
 }
 /** Build top-down masked bands; Esri's vector raster expects earth east/north UV. */
 export function hrrrPixels(f,kind){
-  const arrays=kind==='wind'?[f.u,f.v]:[f.gust.map(v=>v===null?null:v*MPH)];
-  const mask=Uint8Array.from(f.u,(_,i)=>arrays.every(a=>a[i]!==null)?1:0);
+  const arrays=kind==='wind'?[f.u,f.v]:kind==='rain'?[f.rain]:[f.gust.map(v=>v===null?null:v*MPH)];
+  // Rain: missing and below-threshold cells are both transparent; the legend says so.
+  const mask=Uint8Array.from(f.u,(_,i)=>arrays.every(a=>a[i]!==null)&&(kind!=='rain'||arrays[0][i]>=RAIN_MIN)?1:0);
   return {width:f.width,height:f.height,pixelType:'f32',pixels:arrays.map(a=>Float32Array.from(a,v=>v??0)),mask};
 }
