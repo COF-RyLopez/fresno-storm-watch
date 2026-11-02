@@ -1,5 +1,6 @@
 import {loadSdk} from './map.js';
 import {el} from './dom.js';
+import {badgeSymbol,badgeUrl} from './badge-symbols.js';
 import {createLabelLayer} from './map-labels.js';
 import {SNOW_ROUTES_URL} from './snow-model.js';
 import {YARDS_URL,FUEL_URL,siteContext,siteName} from './county-yards-model.js';
@@ -36,6 +37,9 @@ export function createSnowFleet({time,exercise}){
     else if(!fleet.routes.length)host.append(el('small','Route last-pass needs location history with coordinates; not in this feed yet.'));
     if(fleet.tooRecent)host.append(el('small',`${fleet.tooRecent} position(s) newer than the published delay were withheld.`));
   }
+  /** Plow or blower glyph coloured by status; a wrench for units in the shop; a direction tick only while moving. */
+  const unitBadge=v=>({glyph:v.status==='in-shop'?'wrench':v.type==='snow-blower'?'blower':'plow',fill:FLEET_STATUS[v.status].color,
+    heading:['working','traveling'].includes(v.status)&&Number.isFinite(v.heading)?v.heading:null});
   async function draw(){
     if(!map||!sdk||!fleet)return;
     const [GraphicsLayer,Graphic,FeatureLayer]=sdk;
@@ -45,7 +49,7 @@ export function createSnowFleet({time,exercise}){
       if(v.lon===null)continue;
       const shop=v.status==='in-shop',st=FLEET_STATUS[v.status];
       units.add(new Graphic({geometry:{type:'point',longitude:v.lon,latitude:v.lat,spatialReference:{wkid:4326}},
-        symbol:{type:'simple-marker',style:shop?'square':v.type==='snow-blower'?'diamond':'circle',size:shop?13:12,color:st.color,outline:{color:'#17232b',width:1.5}},
+        symbol:badgeSymbol(unitBadge(v),shop?28:26),
         attributes:{id:v.id},popupTemplate:{title:`${v.id} · ${FLEET_TYPES[v.type]}`,content:()=>{const t=document.createElement('table');t.className='esri-widget__table';
           const where=siteContext(v.lon,v.lat,sites);
           for(const [k,val]of [['Status',`${st.label}${v.statusBasis?` (${v.statusBasis})`:''}`],['At County yard',where.at],['Fuel',where.fuel],['Expected back',v.expectedBack&&time(Date.parse(v.expectedBack))],['Home yard',v.yard],['On snow route',v.onRoute],['Position as of',v.seen&&`${time(Date.parse(v.seen))} · ${ago(v.seen)}`]]){if(!val)continue;const r=t.insertRow();r.insertCell().textContent=k;r.insertCell().textContent=val;}
@@ -73,7 +77,7 @@ export function createSnowFleet({time,exercise}){
     window.dispatchEvent(new CustomEvent('storm-snow-fleet',{detail:{fleet,checked}}));
   }
   $('snow-fleet-toggle').addEventListener('calciteCheckboxChange',e=>map?.setLayerPreference('snowFleet',e.target.checked));
-  const key=$('snow-fleet-key');key.replaceChildren(...['working','traveling','idle','parked','off','in-shop'].map(s=>{const i=el('i');i.style.background=FLEET_STATUS[s].color;i.className=s==='in-shop'?'square':'';const span=el('span');span.append(i,FLEET_STATUS[s].label);return span;}));
+  const key=$('snow-fleet-key');key.classList.add('badge-key');key.replaceChildren(...[['working','plow'],['traveling','plow'],['idle','plow'],['parked','plow'],['off','plow'],['off','blower'],['in-shop','wrench']].map(([s,glyph])=>{const img=el('img');img.src=badgeUrl({glyph,fill:FLEET_STATUS[s].color,heading:s==='traveling'?45:null});img.alt='';const span=el('span');span.append(img,glyph==='blower'?'Snow blower':FLEET_STATUS[s].label);return span;}));
   setInterval(()=>{if(!document.hidden)void refresh();},5*60000);
   queueMicrotask(()=>{void refresh();if(!exercise)void loadSites();});
   return {async setMap(controller){map=controller;try{
