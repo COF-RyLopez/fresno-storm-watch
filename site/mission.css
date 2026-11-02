@@ -6,7 +6,7 @@
 .mission-content{min-width:0;overflow-wrap:anywhere}.mission-content calcite-button{min-width:0;max-width:100%}.mission-content .mission-actions{min-width:0}
 /* Storm now: wider list on EOC screens; controls stay visible in content-top. */
 @media(min-width:901px){#storm-shell[data-workspace="storm"][data-destination="watch"] #tools-shell{--calcite-shell-panel-width:clamp(400px,24vw,480px)}}
-.storm-controls{display:grid;gap:var(--calcite-space-sm);padding:var(--calcite-space-sm) var(--calcite-space-md)}
+.storm-controls{display:grid;gap:var(--calcite-space-sm);padding:var(--calcite-space-sm) var(--calcite-space-md);max-height:50vh;overflow-y:auto;box-sizing:border-box;width:100%}
 .storm-controls calcite-label{--calcite-label-margin-bottom:0}
 .storm-layers{display:grid;grid-template-columns:1fr 1fr;gap:var(--calcite-space-2xs) var(--calcite-space-md);border:0;margin:0;padding:0;min-width:0}
 .storm-layers legend{padding:0;margin-block-end:var(--calcite-space-2xs);font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-1)}
