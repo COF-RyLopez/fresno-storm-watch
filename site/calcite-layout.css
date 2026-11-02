@@ -304,8 +304,10 @@ calcite-dialog p { font-size: 14px; line-height: 1.65; margin-bottom: 14px; }
 .popover-options{padding:12px 16px;min-width:250px;max-height:65dvh;overflow:auto;display:flex;flex-direction:column;gap:10px;}
 .popover-options calcite-label{margin:0;}
 /* Map tools open from the map's top-right corner (SDK Expand-widget position; zoom sits top-left). */
-.map-corner-tool{position:absolute;top:15px;right:15px;z-index:2;background:var(--calcite-color-foreground-1);box-shadow:0 1px 2px rgba(0,0,0,.3);}
+.map-corner-tools{position:absolute;top:15px;right:15px;z-index:2;display:flex;flex-direction:column;gap:8px;}
+.map-corner-tools calcite-action{background:var(--calcite-color-foreground-1);box-shadow:0 1px 2px rgba(0,0,0,.3);}
 #map-tools-menu .popover-options{width:300px;}
+#context-menu>*{margin-inline:16px;}#context-menu>#context-options{margin:0;width:320px;max-height:55dvh;}
 .source-notes{font-size:12px;color:var(--calcite-color-text-2);}
 .map-source-notes{display:flex;flex-direction:column;gap:5px;padding:8px 0;}
 .workspace-layer-off{display:none!important;}
