@@ -74,8 +74,10 @@ test('valid zero release and unchanged release are not increase cues',()=>{
   const x=input('baseline');const r=releaseEvidence({...x.reservoirs,config:CONFIG.environment},{station:'MIL',metric:'spill'},now);
   assert.equal(r.sample.value,0);assert.equal(r.delta,0);assert.equal(r.increasing,false);
 });
-test('positive differences use display precision without a rapid-rise category',()=>{
-  assert.equal(positiveChange(0.004,'ft'),false);assert.equal(positiveChange(0.006,'ft'),true);assert.equal(positiveChange(0.0006,'kcfs'),true);assert.equal(positiveChange(null,'ft'),false);assert.equal(positiveChange(-1,'ft'),false);
+test('a river change needs a meaningful rise: noise never cues a review',()=>{
+  // Observed: 0.25 ft / 0.1 kcfs over the trend window. Forecast peak: 0.5 ft / 0.25 kcfs above now.
+  for(const [v,u,k,want] of [[0.01,'ft','observed',false],[0.24,'ft','observed',false],[0.25,'ft','observed',true],[0.4,'ft','forecast',false],[0.5,'ft','forecast',true],[0.05,'kcfs','observed',false],[0.1,'kcfs','observed',true],[0.2,'kcfs','forecast',false],[0.25,'kcfs','forecast',true],[5,'cfs','observed',false]])assert.equal(positiveChange(v,u,k),want,`${v} ${u} ${k}`);
+  assert.equal(positiveChange(null,'ft'),false);assert.equal(positiveChange(-1,'ft'),false);
 });
 test('changing unrelated UI horizon does not alter the fixed 72-hour planning assessment',()=>{
   const x=input('baseline');const g=x.gaugeEntries.get('SJXC1').gauge;g.forecast.points.at(-2).value=13;

@@ -63,7 +63,12 @@ export function releaseEvidence(input,association,now){
 }
 
 /** @param {number|null} value @param {string} units @returns {boolean} Report differences at display precision; this is not an action threshold. */
-export function positiveChange(value,units){return Number.isFinite(value)&&Math.round(value*(units==='kcfs'?1000:100))>0;}
+/** Smallest river change worth a review cue. Smaller moves are gauge noise and must not rank an area "Now".
+ * observed: rise over the 2.5–4 h trend window; forecast: forecast peak above the current reading.
+ * ft for stage gauges; kcfs for flow gauges (0.1 / 0.25 kcfs = 100 / 250 cfs). Other units never cue a change. */
+export const MIN_CHANGE=Object.freeze({observed:{ft:0.25,kcfs:0.1},forecast:{ft:0.5,kcfs:0.25}});
+/** @param {number} value @param {string} units @param {'observed'|'forecast'} kind @returns {boolean} */
+export function positiveChange(value,units,kind='observed'){const min=MIN_CHANGE[kind]?.[units];return Number.isFinite(value)&&Number.isFinite(min)&&value>=min-1e-9;}
 
 /** @param {object} input @param {number} now @returns {object[]} Fixed scope and 72-hour gauge horizon; filters and map position never enter this function. */
 export function evaluateAreas(input,now=Date.now()){
@@ -79,7 +84,7 @@ export function evaluateAreas(input,now=Date.now()){
     const scheduled=schedules.flatMap(s=>s.cues);
     const threshold=gauges.some(g=>g.assessment.tone==='threshold');
     const rising=gauges.filter(g=>g.assessment.current&&positiveChange(g.assessment.trend?.delta,g.gauge.observed.units));
-    const higher=gauges.filter(g=>positiveChange(g.assessment.delta,g.gauge?.forecast.units));
+    const higher=gauges.filter(g=>positiveChange(g.assessment.delta,g.gauge?.forecast.units,'forecast'));
     const increased=releases.filter(r=>r.increasing);
     const change=!!(rising.length||higher.length||increased.length||scheduled.length);
     const gaps=[];

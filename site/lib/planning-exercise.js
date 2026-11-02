@@ -7,8 +7,9 @@ export function planningExercise(gauges,points,selection,scenario,now){
   const entries=new Map(exerciseRivers(gauges,'baseline',now).map(r=>{
     r.gauge.observed.points.forEach(p=>{p.value=10;});r.gauge.forecast.points.forEach(p=>{p.value=10;});
     if(r.id==='SJXC1'&&['combined','threshold'].includes(scenario)){
-      r.gauge.observed.points.forEach((p,i)=>{p.value=9.2+i/30;});
-      r.gauge.forecast.points.forEach((p,i)=>{p.value=scenario==='threshold'?10+Math.min(i,8)*0.3:10.4;});
+      // Fictional: 0.1 ft/h, ending at 10.0 ft (0.3 ft over the 3 h trend window), forecast 0.6 ft higher; both above the review minimums.
+      r.gauge.observed.points.forEach((p,i,a)=>{p.value=10-(a.length-1-i)*0.1;});
+      r.gauge.forecast.points.forEach((p,i)=>{p.value=scenario==='threshold'?10+Math.min(i,8)*0.3:10.6;});
     }
     if(scenario==='stale'){r.gauge.fetched-=2*HOUR;r.gauge.observed.points.forEach(p=>p.time-=30*HOUR);r.gauge.forecast.issued-=30*HOUR;}
     return [r.id,{gauge:r.gauge,error:scenario==='missing'?'Fictional station failure':null}];

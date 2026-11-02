@@ -34,7 +34,7 @@ export const FOCUS=Object.freeze({all:'All',metro:'Metro drainage',creeks:'Creek
 
 const num=v=>Number.isFinite(v)?v:null;
 const latest=values=>{const v=values.filter(Number.isFinite);return v.length?Math.max(...v):null;};
-const ft=(d,h)=>`${d>=0?'+':''}${d.toFixed(1)} ft in ${h.toFixed(1)} h`;
+const ft=(d,h)=>`${d>=0?'+':''}${d.toFixed(2)} ft in ${h.toFixed(1)} h`;
 function item(key,{tier,place,why,source,time=null,stale=false,focus,rise=null,peak=null,open,tag=null},now){
   const age=time===null?null:Math.max(0,now-time);
   // Old evidence never ranks above Verify; NWS warnings stay first but carry an overdue tag.
