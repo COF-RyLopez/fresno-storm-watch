@@ -20,3 +20,4 @@
 .waze-cameras figure{margin:0 0 var(--calcite-space-xs)}.waze-cameras img{display:block;width:100%;height:auto;border-radius:var(--calcite-corner-radius-sm)}.waze-cameras figcaption{font-size:var(--calcite-font-size-sm);color:var(--calcite-color-text-2)}
 .storm-empty{margin:0;padding:var(--calcite-space-md)}
 .storm-rules{width:100%}.storm-rules ol{margin:0;padding-inline-start:var(--calcite-space-xl)}.storm-rules li,.storm-rules p{font-size:var(--calcite-font-size-sm);line-height:1.45}
+.plan-question h4{margin:0 0 .35rem;font-size:.95rem;line-height:1.35}.plan-question-meta{color:var(--calcite-color-text-2)}.plan-question-status{font-weight:600}.plan-question .mission-actions{align-items:center}#plan-exposure{margin-block:.6rem}#plan-exposure small{display:block;margin-top:.3rem}

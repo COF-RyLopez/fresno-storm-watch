@@ -9,6 +9,7 @@ import {pumpSummaryExercise} from './lib/pump-summary-exercise.js';
 import {createPumpReadiness} from './lib/pump-readiness-ui.js';
 import {createDrainageReviews} from './lib/drainage-review-ui.js';
 import {createMission} from './lib/mission-ui.js';
+import {createPlanningQuestions} from './lib/planning-questions-ui.js';
 import {createForecastReview} from './lib/forecast-review-ui.js';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js';
 import {createMapSearch} from './lib/map-search-ui.js';
@@ -82,6 +83,7 @@ function openPlanning(){workspace.showPanel('watch');}
 function openRoads(){workspace.showPanel('roads');}
 function openPower(){workspace.showPanel('power');}
 const mission=createMission({workspace,exercise,onSelectArea:id=>{openPlanning();planning?.selectArea(id);},onGauge:id=>rivers?.select(id),onRoad:key=>roads?.select(key),onFacility:key=>facilities.select(key,{keepWorkspace:true}),onBriefing:(...args)=>briefings.open(...args),onTopic:topic=>workspace.showPanel(topic),onCare:key=>care.select(key),onDrainage:(id,pump)=>drainageReviews.inspect(id,pump),onPower:key=>power?.select(key,{keepWorkspace:true}),onPopulation:()=>population.open(),onQueueRoad:key=>roads?.select(key,{keepWorkspace:true})});
+const planQuestions=createPlanningQuestions({onAssign:(item,host)=>mission.assignEvidence(item,host),onBriefing:item=>mission.addEvidence(item),followupSnapshot:item=>mission.followupSnapshot(item)});
 const strip=createCountyStrip({onOpen:topic=>workspace.showPanel(topic),exercise,timeZone:CONFIG.timeZone});
 const population=createPopulationWatch({exercise,onMap:workspace.showMap,onOpenWatch:()=>workspace.showPanel('watch',{history:false})});
 const care=createCareWatch({exercise,onZone:key=>population.selectZone(key),onMap:workspace.showMap,onCapture:item=>mission.addEvidence(item),onClearPrivate:()=>mission.clearCareEvidence(),exerciseNow:exerciseClock,onReviews:value=>mission.setCare(value),onSummary:n=>strip.care(n),onPower:key=>power?.select(key),onRoad:key=>roads?.select(key)});
@@ -103,7 +105,7 @@ createIrrigationReference({onLocate:id=>{workspace.showMap();if(!map)return fals
 const forecastReview=createForecastReview({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onData:data=>{latestForecastReviews=data;planning?.setForecastDifferences(data);},onCompare:(id,point)=>forecastComparison.open(id,point),onArea:id=>{openPlanning();planning?.selectArea(id);}});
 const forecastComparison=createForecastComparison({getSnapshot:forecastReview.getPoint,onPointUpdate:forecastReview.updatePoint,timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onLocate:p=>map?.focusWind(p.longitude,p.latitude)});
 const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onLocate:(id,gauge)=>{workspace.showMap();if(gauge)map?.focusGauge(gauge);else environment?.focusReservoir(id);}});
-planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:data=>{storm.set({areas:data.rows});context.setPlanning(data);mission.setPlanning(data);dwrSupplyPlanning.setPlanning(data);countySandbags.setPlanning(data);},onAreaSelected:id=>{dwrSupplyPlanning.selectArea(id);countySandbags.selectArea(id);},onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onCompare:id=>forecastComparison.open(id),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
+planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:data=>{storm.set({areas:data.rows});context.setPlanning(data);mission.setPlanning(data);planQuestions.setAreas(data.rows);dwrSupplyPlanning.setPlanning(data);countySandbags.setPlanning(data);},onAreaSelected:id=>{dwrSupplyPlanning.selectArea(id);countySandbags.selectArea(id);},onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onCompare:id=>forecastComparison.open(id),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
 if(latestForecastReviews)planning.setForecastDifferences(latestForecastReviews);
 environment=createEnvironmentWatch({config:CONFIG.environment,timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onOverlayChange:kind=>{storm.setOverlay(kind);briefingLayers?.stop(false);},onTrends:id=>{openReservoirs();releaseTrends.open(id);},onReservoirData:data=>{mapSearch.setReservoirs(data);planning.setReservoirData(data);if(!exercise)releaseTrends.setReservoirData(data);},onWindData:data=>planning.setWindData(data),onWeatherData:data=>drainage.setWeather(data)});
@@ -287,7 +289,7 @@ try {
   for(const c of[power,facilities,care,population])c.setCounty(fresno);
   createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key),key=>void countySandbags.select(key)).then(controller => {
     map = controller;
-    for(const c of[workspace,mission,storm])c.setMap(map);
+    for(const c of[workspace,mission,storm,planQuestions])c.setMap(map);
     dwrFloodFight.setMap(map,fresno);
     for(const c of[dwrSupplyPlanning,countySandbags,population,mapSearch])void c.setMap(map);
     for(const c of[rivers,cameras])c?.setMap(map);
