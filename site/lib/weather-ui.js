@@ -64,8 +64,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     if(!exercise){reportHealth('goes','NOAA GOES catalog',{checked:satelliteChecked,error:satelliteError,state:!catalog?'checking':!catalog[product]?.length?'coverage':now-Math.max(...catalog[product])>30*60000?'stale':null,detail:'Catalog check; observed imagery is not a future forecast.'});for(const site of wind?.sites||[]){const state=windAt(site,now,now,overdue());reportHealth('wind:'+site.id,'NWS wind · '+site.name,{checked:windChecked,error:windError||site.error,state:overdue()?'stale':!site.forecast?'coverage':state.reason?'stale':state.speed===null||state.gust===null?'coverage':null,detail:state.reason||'NWS point forecast; missing wind or gust values remain unknown.'});}}
     $('weather-selected-time').textContent=`${fixed===null?'Now · follows clock':future?'Forecast planning time':'Past planning time'} · ${time(stamp)}`;
     $('weather-live').setAttribute('appearance',fixed===null?'solid':'outline');
-    $('weather-time').value=String(fixed===null?12:stops.reduce((best,t,i)=>Math.abs(t-stamp)<Math.abs(stops[best]-stamp)?i:best,0));
-    $('weather-time').setAttribute('aria-valuetext',time(stamp));
+    $('weather-time').value=fixed===null?12:stops.reduce((best,t,i)=>Math.abs(t-stamp)<Math.abs(stops[best]-stamp)?i:best,0);
     const radar=observationAt((context.radar||[]).map(f=>f.time),stamp,now,{maxAgeMs:20*60_000});
     $('timeline-radar').textContent=exercise?'Exercise · live feed disabled':context.radarError?'Source check failed':future?'No future radar observation':radar?`Observed ${time(radar)}`:'No matching recent observation';
     const frame=satelliteFrame();
@@ -111,7 +110,7 @@ export function createWeatherTimeline({time,exercise,onChange,onMap,onWindData=(
     busy=false;next=Date.now()+300_000;render();onChange();
   }
 
-  $('weather-time').addEventListener('input',e=>selectTime(stops[Number(e.target.value)]));
+  $('weather-time').addEventListener('calciteSliderInput',e=>selectTime(stops[Number(e.target.value)]));
   $('weather-live').addEventListener('click',()=>{stops=weatherStops();selectTime(null);});
   $('weather-before').addEventListener('click',()=>{const index=Math.max(0,Number($('weather-time').value)-1);selectTime(stops[index]);});
   $('weather-after').addEventListener('click',()=>{const index=Math.min(stops.length-1,Number($('weather-time').value)+1);selectTime(stops[index]);});
