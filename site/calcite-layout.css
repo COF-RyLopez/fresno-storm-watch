@@ -68,7 +68,8 @@ calcite-panel {
 .river-threshold { border-color: var(--gauge-threshold); --calcite-list-icon-color: var(--gauge-threshold); }
 .river-change { border-color: var(--gauge-change); --calcite-list-icon-color: var(--gauge-change); }
 .river-gap { border-color: var(--gauge-gap); --calcite-list-icon-color: var(--gauge-gap); }
-.alert-meta, .river-mini { font-size: 12px; line-height: 1.65; color: var(--calcite-color-text-2); padding-top: 4px; }
+/* Lines in a list item's content-bottom slot start at the item edge; indent them under the label (icon-start items). */
+.alert-meta, .river-mini { font-size: 12px; line-height: 1.65; color: var(--calcite-color-text-2); padding-top: 4px; padding-inline: 36px 12px; }
 .empty-state { padding: 28px 20px; text-align: center; }
 .empty-state calcite-icon { margin-bottom: 12px; }
 .empty-state h3 { font-size: 16px; margin-bottom: 8px; }

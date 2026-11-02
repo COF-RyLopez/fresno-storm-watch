@@ -28,7 +28,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
     $('storm-shell').dataset.workspace=section;$('storm-shell').dataset.destination=mission;$('workspace-tabs').hidden=true;
     $('map-panel').setAttribute('heading',mission==='scenarios'?'Hypothetical scenario map':mission==='briefing'?'Briefing map':WORKSPACES[section].title+' map');$('scope-note').textContent=mission==='scenarios'?'Hypothetical model/library domain · independent scenario clock':mission==='briefing'?'Captured evidence · verify source timing and access':WORKSPACES[section].description;
-    $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Planning':'Briefing & Handoff'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
+    $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Planning':'Briefing'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     mapLabels();
   }
   function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
