@@ -76,7 +76,10 @@ test('public monitor shares zone reads, limits concurrency to two and caches wit
   monitor.clear();await monitor.check([a]);assert.equal(reads,4);
   let running=0,max=0;const rows=[1,2,3,4].map(oid=>({...row,oid,key:'county-zone:'+oid})),states=[];
   for(const r of rows){const s=state(String(r.oid));s.record.payload.pioOutreach.zone=await pioZoneSnapshot(r,now);s.record.payload.pioOutreach.afnEvidence.zone=s.record.payload.pioOutreach.zone;states.push(s);}
-  const bounded=createPioSourceMonitor({loadZones:async()=>({rows,checked:now}),readContext:async()=>{max=Math.max(max,++running);await new Promise(r=>setImmediate(r));running--;return topics();}});await bounded.check(states);assert.equal(max,2);
+  // Hold every read for 300 ms so each worker the pool allows has time to arrive (a worker reaches readContext only after
+  // its zone digest returns from the crypto threadpool); the peak then equals the pool size. Holding for a single tick
+  // was racy (max 1 under load) and could not see a pool larger than two.
+  const bounded=createPioSourceMonitor({loadZones:async()=>({rows,checked:now}),readContext:async()=>{max=Math.max(max,++running);await new Promise(r=>setTimeout(r,300));running--;return topics();}});await bounded.check(states);assert.equal(max,2);
 });
 
 test('source failure stays visible and forced retry can recover without changing saved evidence',async()=>{
