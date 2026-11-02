@@ -14,12 +14,17 @@ const exercise=new URLSearchParams(location.search).get('exercise')==='1';
 const json=url=>fetch(url,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`${url} HTTP ${r.status}`);return r.json();});
 const time=t=>formatTime(t,CONFIG.timeZone);
 
+// Data and the first gauge readings start downloading now, alongside the SDK, instead of after it.
+const lists=Promise.all([json('./data/river-watchlist.json'),json('./data/usgs-watchlist.json')]);
+const data=Promise.all([json('./data/river-network.json'),lists,
+  // Written at deploy time from the GOOGLE_MAP_TILES_KEY repo variable; absent locally and until the key exists.
+  fetch('./data/google-tiles.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)]);
+const gaugeFetch=(w,u)=>Promise.allSettled([fetchRiverWatch(w.stations,CONFIG.rivers),fetchUsgs(u.sites.map(s=>s.site))]);
+let firstGauges=exercise?null:lists.then(([w,u])=>gaugeFetch(w,u));
 const sdk=await import('https://js.arcgis.com/5.1/').then(()=>globalThis.$arcgis);
 const [ArcMap,SceneView,Basemap,TileLayer,GraphicsLayer,Graphic,IntegratedMesh3DTilesLayer,esriConfig,reactiveUtils]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/SceneView.js',
   '@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/IntegratedMesh3DTilesLayer.js','@arcgis/core/config.js','@arcgis/core/core/reactiveUtils.js']);
-const [doc,watch,usgsWatch,tiles]=await Promise.all([json('./data/river-network.json'),json('./data/river-watchlist.json'),json('./data/usgs-watchlist.json'),
-  // Written at deploy time from the GOOGLE_MAP_TILES_KEY repo variable; absent locally and until the key exists.
-  fetch('./data/google-tiles.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)]);
+const [doc,[watch,usgsWatch],tiles]=await data;
 const net=indexNetwork(doc);
 
 // Google tiles are a full textured mesh (terrain included), so graphics sit on the scene, not the hidden ground.
@@ -66,16 +71,17 @@ async function refresh(){
     usgs={readings:new Map([...parsed].map(([k,s])=>[k,usgsReading(s)]))};areas=[];
   }else{
     const now=Date.now();
-    const [nwps,us]=await Promise.allSettled([fetchRiverWatch(watch.stations,CONFIG.rivers),fetchUsgs(usgsWatch.sites.map(s=>s.site))]);
+    const [nwps,us]=await (firstGauges||gaugeFetch(watch,usgsWatch));firstGauges=null;
     if(nwps.status==='fulfilled')areas=[{gauges:nwps.value.map(o=>({id:o.id,gauge:o.gauge,assessment:assessGauge(o.gauge,CONFIG.rivers,72,now,o.error)}))}];else problems.push('NWS river gauges: '+nwps.reason.message);
     if(us.status==='fulfilled')usgs={readings:us.value};else problems.push('USGS gauges: '+us.reason.message);
   }
-  checked=Date.now();draw();
+  // Sources and the timeline bounds change only with new readings, so they are worked out here rather than every Play tick.
+  checked=Date.now();sources=surgeSources({areas,usgs,net,now:checked});range=timelineRange(sources,checked);
+  $('surge-slider').min=range.min;$('surge-slider').max=range.max;draw();
 }
-let range=timelineRange([]);
+let range=timelineRange([]),sources=[];
 function draw(){
-  const now=Date.now(),t=now+offset*60_000,sources=surgeSources({areas,usgs,net,now}),frames=surgeFrames(net,sources,t);
-  range=timelineRange(sources,now);$('surge-slider').min=range.min;$('surge-slider').max=range.max;
+  const now=Date.now(),t=now+offset*60_000,frames=surgeFrames(net,sources,t);
   // Labelled source markers change only when a pulse starts or the sources change, so they are not rebuilt every tick.
   const sig=sources.map(s=>`${s.key}:${t>=s.t0}`).join('|');
   if(sig!==markerSig){markerSig=sig;markers.removeAll();
@@ -98,7 +104,7 @@ function draw(){
   const list=$('surge-list');list.replaceChildren();
   for(const s of sources){const it=document.createElement('calcite-list-item');it.label=s.name;it.description=`${s.kind==='forecast'?'Forecast':'Observed'} · ${s.label} · starts ${time(s.t0)}`;it.value=s.key;list.append(it);}
 }
-$('surge-list').addEventListener('calciteListItemSelect',e=>{const s=surgeSources({areas,usgs,net,now:Date.now()}).find(x=>x.key===e.target.value),pt=s&&net.points.get(s.id);
+$('surge-list').addEventListener('calciteListItemSelect',e=>{const s=sources.find(x=>x.key===e.target.value),pt=s&&net.points.get(s.id);
   if(s){stop();set(Math.max(range.min,Math.min(range.max,startOffset(s))));}
   // Frame the reach the pulse covers in its first 6 hours, not just the gauge, so Play keeps it in view.
   const ahead=s&&routeSlice(net,s.path,s.km,s.km-SURGE_CONFIG.speedKmh*6);
@@ -127,6 +133,6 @@ view.ui.add(loading,'top-right');
 Promise.race([reactiveUtils.whenOnce(()=>view.ready&&!view.updating),new Promise(r=>setTimeout(r,45_000))]).then(()=>view.ui.remove(loading));
 await refresh();
 // Open on the first pulse source when there is one, looking downstream.
-const first=surgeSources({areas,usgs,net,now:Date.now()})[0],fp=first&&net.points.get(first.id);
+const first=sources[0],fp=first&&net.points.get(first.id);
 if(fp)view.when(()=>view.goTo({target:[fp.longitude,fp.latitude],zoom:11,heading:210,tilt:45})).catch(()=>{});
 setInterval(()=>{if(!document.hidden)void refresh();},300_000);
