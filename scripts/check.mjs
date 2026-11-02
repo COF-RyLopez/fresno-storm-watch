@@ -32,6 +32,8 @@ assert(html.includes('https://js.arcgis.com/5.1/'), 'Pinned SDK stylesheet expec
 for (const file of (await readdir(new URL('site/', root))).filter(name => name.endsWith('.html'))) {
   const page=await readFile(new URL(`site/${file}`,root),'utf8');
   for (const match of page.matchAll(/(?:href|src)="(\.\/[^"?#]+)"/g)) await readFile(new URL(match[1], new URL('site/', root)));
+  // theme.css colors are Calcite tokens; without the Esri theme sheet they are empty and text renders black on dark.
+  assert(!page.includes('theme.css')||page.includes('id="esri-theme"'),`${file} loads theme.css without the Esri theme stylesheet`);
 }
 const watch=await siteJson('river-watchlist.json');
 assert.equal(watch.stations.length,10);
