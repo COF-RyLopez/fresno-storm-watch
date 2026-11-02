@@ -11,7 +11,7 @@ export function createEvidencePane({onChange=()=>{},timeZone='America/Los_Angele
     if(compact.matches){shell.hidden=true;if(host.parentElement!==mobile)mobile.append(host);mobile.hidden=!visible;}
     else{mobile.hidden=true;if(host.parentElement!==shell)shell.append(host);shell.hidden=!visible;}
     $('planning-workspace').classList.toggle('evidence-stacked',visible&&compact.matches);
-    for(const [id,target]of [['context-open','context-menu'],['map-tools-open','map-tools-menu']])$(id).setAttribute('aria-expanded',String(active?.id===target));
+    $('context-open').setAttribute('aria-expanded',String(active?.id==='context-menu'));
   }
   function notifyClosed(pane){pane.dispatchEvent(new CustomEvent('stormEvidenceClose'));}
   function close({restoreFocus=true}={}){
@@ -35,7 +35,7 @@ export function createEvidencePane({onChange=()=>{},timeZone='America/Los_Angele
     pane.hidden=true;observer.observe(pane,{attributes:true,attributeFilter:['open']});
     pane.addEventListener('calcitePanelClose',e=>{e.preventDefault();pane.removeAttribute('open');});
   }
-  for(const [button,id]of [['context-open','context-menu'],['map-tools-open','map-tools-menu']])$(button).addEventListener('click',()=>$(id).toggleAttribute('open',active?.id!==id));
+  $('context-open').addEventListener('click',()=>$('context-menu').toggleAttribute('open',active?.id!=='context-menu'));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented&&active&&e.composedPath().includes(active)){e.preventDefault();close();}});
   compact.addEventListener('change',layout);
   /** Destroy component state and invalidate delayed imports when a selection is closed or replaced. */
