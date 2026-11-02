@@ -28,6 +28,10 @@ class HrrrCollectorTests(unittest.TestCase):
     def test_serialization_keeps_nodata_distinct_from_zero(self):
         self.assertEqual(collector.numbers(np.array([[np.nan, 0., 2.345]])), [None, 0., 2.35])
 
+    def test_rain_rate_converts_mm_per_second_to_inches_per_hour_at_three_decimals(self):
+        rate = np.array([np.nan, 0., 25.4/3600, 0.5*25.4/3600])
+        self.assertEqual(collector.numbers(rate*collector.IN_PER_HOUR, 3), [None, 0., 1., 0.5])
+
 
 if __name__ == "__main__":
     unittest.main()

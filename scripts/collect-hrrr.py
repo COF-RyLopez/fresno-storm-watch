@@ -1,4 +1,4 @@
-"""Prepare a bounded public HRRR wind field for the static F.R.O.G. app.
+"""Prepare bounded public HRRR wind, gust and rain-rate fields for the static F.R.O.G. app.
 
 Python 3.12+. Select variables, one run and a regional window before reading.
 Native grid vectors are rotated to true east/north before bilinear resampling.
@@ -19,7 +19,10 @@ from scipy.interpolate import RegularGridInterpolator
 
 PRODUCT = "noaa-hrrr-forecast-48-hour"
 CATALOG = f"https://stac.dynamical.org/{PRODUCT}/collection.json"
-VARIABLES = ["wind_u_10m", "wind_v_10m", "wind_gust_surface"]
+VARIABLES = ["wind_u_10m", "wind_v_10m", "wind_gust_surface", "precipitation_surface"]
+WIND = VARIABLES[:3]
+# Precipitation rate (mm/s, averaged over the hour ending at the step) -> inches per hour.
+IN_PER_HOUR = 3600 / 25.4
 # Rectangular weather context, covering Fresno and upper San Joaquin/Kings.
 # This is explicitly not a delineated drainage basin or an impact polygon.
 BOUNDS = [-121.25, 35.75, -118.25, 38.12]
@@ -46,9 +49,9 @@ def rotate(u: np.ndarray, v: np.ndarray, x: np.ndarray, y: np.ndarray,
     return u * np.sin(ax) + v * np.sin(ay), u * np.cos(ax) + v * np.cos(ay)
 
 
-def numbers(values: np.ndarray) -> list[float | None]:
-    """Preserve missing pixels; round velocities to 0.01 m/s."""
-    return [round(float(v), 2) if np.isfinite(v) else None for v in values.ravel()]
+def numbers(values: np.ndarray, digits: int = 2) -> list[float | None]:
+    """Preserve missing pixels; round velocities to 0.01 m/s (rain rate to 0.001 in/h)."""
+    return [round(float(v), digits) if np.isfinite(v) else None for v in values.ravel()]
 
 
 def collect(output: Path = OUTPUT) -> dict:
@@ -59,9 +62,11 @@ def collect(output: Path = OUTPUT) -> dict:
         meta = json.load(response)
     if meta["id"] != PRODUCT or meta["license"] != "CC-BY-4.0":
         raise ValueError("HRRR catalog identity or license changed")
-    for key in VARIABLES:
+    for key in WIND:
         if meta["cube:variables"][key]["unit"] != "m s-1":
             raise ValueError(f"HRRR {key} units changed")
+    if meta["cube:variables"]["precipitation_surface"]["unit"] != "kg m-2 s-1":
+        raise ValueError("HRRR precipitation units changed")
     ds = dynamical_catalog.open(PRODUCT, chunks=None)
     for key, expected in zip(VARIABLES, ("x_wind", "y_wind")):
         if ds[key].attrs.get("standard_name") != expected:
@@ -90,27 +95,32 @@ def collect(output: Path = OUTPUT) -> dict:
             raise ValueError("Expected hourly HRRR leads 0–48")
         # Bounded ~110x100 source cells; no full-domain reads.
         run = run.load()
-        if not all(np.isfinite(run[k].values).all() for k in VARIABLES):
+        # Rain rate is an average over the previous hour, so lead 0 has none; every later lead must be complete.
+        if not all(np.isfinite(run[k].values).all() for k in WIND) or not np.isfinite(run[VARIABLES[3]].values[1:]).all():
             LOG.warning("Run %s incomplete; checking earlier coherent run", iso(run.init_time.values))
             continue
         native_x, native_y = np.meshgrid(run.x.values, run.y.values)
         east, north = rotate(run[VARIABLES[0]].values, run[VARIABLES[1]].values,
                              native_x, native_y, inverse)
-        fields = [east, north, run[VARIABLES[2]].values]
+        rain = run[VARIABLES[3]].values * IN_PER_HOUR
+        fields = [east, north, run[VARIABLES[2]].values, rain]
         if np.any(fields[2] < 0) or np.any(np.hypot(east, north) > 150) or np.any(fields[2] > 200):
             raise ValueError("Implausible HRRR velocities")
+        if np.nanmin(rain) < 0 or np.nanmax(rain) > 20:
+            raise ValueError("Implausible HRRR rain rate")
         run_id = iso(run.init_time.values)
         name = run_id.replace("-", "").replace(":", "")
         frames = []
         for hour in range(49):
             arrays = [RegularGridInterpolator((run.y.values, run.x.values), f[hour],
                       bounds_error=False, fill_value=np.nan)((target_y, target_x)) for f in fields]
-            if not all(np.isfinite(a).all() for a in arrays):
+            if not all(np.isfinite(a).all() for a in arrays[:3]) or (hour and not np.isfinite(arrays[3]).all()):
                 raise ValueError("Regional output contains unsupported/missing pixels")
             payload = {"schemaVersion": 1, "run": run_id, "leadHours": hour,
                        "valid": iso(run.init_time.values + np.timedelta64(hour, "h")),
                        "width": len(xs), "height": len(ys),
-                       "u": numbers(arrays[0]), "v": numbers(arrays[1]), "gust": numbers(arrays[2])}
+                       "u": numbers(arrays[0]), "v": numbers(arrays[1]), "gust": numbers(arrays[2]),
+                       "rain": numbers(arrays[3], 3)}
             file = f"{name}-f{hour:02}.json"
             temporary = output / (file + ".tmp")
             temporary.write_text(json.dumps(payload, separators=(",", ":"), allow_nan=False), encoding="utf-8")
@@ -118,11 +128,11 @@ def collect(output: Path = OUTPUT) -> dict:
             frames.append({"file": file, "valid": payload["valid"], "leadHours": hour})
         manifest = {"schemaVersion": 1, "generatedAt": now.isoformat(), "run": run_id,
                     "product": PRODUCT, "catalog": CATALOG, "license": meta["license"],
-                    "attribution": meta["attribution"], "units": "m/s", "vectorConvention": "earth-east-north",
+                    "attribution": meta["attribution"], "units": "m/s", "rainUnits": "in/h", "vectorConvention": "earth-east-north",
                     "nativeResolutionKm": 3, "grid": {"wkid": 4326, "width": len(xs), "height": len(ys),
                     "x0": float(xs[0]), "y0": float(ys[0]), "dx": STEP, "dy": -STEP},
                     "coverageNote": "Rectangular Fresno County and upper San Joaquin/Kings weather context; not watershed boundaries.",
-                    "processing": "Grid-relative winds rotated to earth east/north, then bilinearly resampled to 0.03 degree cells; hourly instantaneous model snapshots.",
+                    "processing": "Grid-relative winds rotated to earth east/north, then bilinearly resampled to 0.03 degree cells; hourly instantaneous model snapshots. Rain: model precipitation rate averaged over the hour ending at each step, in inches per hour; none at the first step.",
                     "frames": frames, "error": None}
         temporary = output / "latest.json.tmp"
         temporary.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
