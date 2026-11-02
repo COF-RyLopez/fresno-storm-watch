@@ -125,3 +125,13 @@ test('published travel times: contiguous San Joaquin main-stem reaches with plau
   for(const r of doc.reaches)assert(r.events>=3&&Math.abs(r.distanceKm/r.lagHours-r.speedKmh)<0.01);
   assert.deepEqual(reachSpeeds(doc).map(r=>r.path),n.reaches.map(r=>r.path));
 });
+
+test('flow-band speeds follow the flow below Friant; without a flow the all-flow median applies',async()=>{
+  const {frontKm,reachSpeeds,speedNote}=await import('../site/lib/river-network-model.js');
+  const doc={version:1,flowSplitCfs:1500,reaches:[{path:'B',kmFrom:8,kmTo:0,speedKmh:2,fromName:'X',toName:'Y',byFlow:[{side:'below',speedKmh:1},{side:'atOrAbove',speedKmh:4}]}]};
+  const n=net();n.reaches=reachSpeeds(doc);const s={path:'B',km:8};
+  n.flowCfs=null;assert.equal(frontKm(n,s,1),6,'no flow: all-flow median 2 km/h');assert.match(speedNote(n),/Flow below Friant unavailable/);
+  n.flowCfs=800;assert.equal(frontKm(n,s,1),7,'below 1,500 cfs: 1 km/h');assert.match(speedNote(n),/1 use their lower-flow speeds for the 800 cfs now below Friant/);
+  n.flowCfs=2400;assert.equal(frontKm(n,s,1),4,'at or above 1,500 cfs: 4 km/h');assert.match(speedNote(n),/higher-flow speeds for the 2,400 cfs/);
+  doc.reaches[0].byFlow[1].speedKmh=0;assert.equal(reachSpeeds(doc)[0].byFlow,undefined,'an invalid band drops the banding, not the reach');
+});

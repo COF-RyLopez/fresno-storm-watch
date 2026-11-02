@@ -59,6 +59,8 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
     const status=$('storm-surge-status'),t=Date.now()+surgeOffset*60_000;
     $('storm-surge-time').textContent=surgeOffset===0?'now':`${surgeOffset>0?'+':'−'}${Math.floor(Math.abs(surgeOffset)/60)} h ${Math.abs(surgeOffset)%60} min · ${time(t)}`;
     if(!net){status.textContent=netError?`River network unavailable: ${netError}`:'Loading river network…';return;}
+    // Live flow below Friant (USGS 11251000, cfs) picks the measured flow-band speeds.
+    net.flowCfs=inputs.usgs?.readings?.get('11251000')?.flow?.value??null;
     const sources=surgeSources({areas:inputs.areas,usgs:inputs.usgs,net,now:Date.now()}),frames=surgeFrames(net,sources,t);
     surgeRange=timelineRange(sources);$('storm-surge-slider').min=surgeRange.min;$('storm-surge-slider').max=surgeRange.max;
     map?.setRiverSurges(frames);

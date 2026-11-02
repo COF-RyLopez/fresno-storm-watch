@@ -78,6 +78,7 @@ async function refresh(){
     if(us.status==='fulfilled')usgs={readings:us.value};else problems.push('USGS gauges: '+us.reason.message);
   }
   // Sources and the timeline bounds change only with new readings, so they are worked out here rather than every Play tick.
+  net.flowCfs=usgs?.readings?.get('11251000')?.flow?.value??null; // live flow below Friant picks measured flow-band speeds
   checked=Date.now();sources=surgeSources({areas,usgs,net,now:checked});range=timelineRange(sources,checked);
   $('surge-slider').min=range.min;$('surge-slider').max=range.max;draw();
 }

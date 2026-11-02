@@ -18,8 +18,12 @@ export const SURGE_CONFIG=Object.freeze({
 /** @param {object|null} doc travel-times.json @returns {object[]} Measured reaches usable for speeds (bad rows dropped). */
 export function reachSpeeds(doc){
   if(doc?.version!==1||!Array.isArray(doc.reaches))return [];
-  return doc.reaches.filter(r=>typeof r.path==='string'&&Number.isFinite(r.kmFrom)&&Number.isFinite(r.kmTo)&&r.kmFrom>r.kmTo&&Number.isFinite(r.speedKmh)&&r.speedKmh>0&&r.speedKmh<40)
-    .map(r=>({path:r.path,hi:r.kmFrom,lo:r.kmTo,speedKmh:r.speedKmh,lagHours:r.lagHours,label:`${r.fromName} → ${r.toName}`}));
+  const ok=v=>Number.isFinite(v)&&v>0&&v<40,split=Number.isFinite(doc.flowSplitCfs)?doc.flowSplitCfs:null;
+  return doc.reaches.filter(r=>typeof r.path==='string'&&Number.isFinite(r.kmFrom)&&Number.isFinite(r.kmTo)&&r.kmFrom>r.kmTo&&ok(r.speedKmh)).map(r=>{
+    const band=side=>r.byFlow?.find(b=>b.side===side)?.speedKmh,below=band('below'),above=band('atOrAbove');
+    return {path:r.path,hi:r.kmFrom,lo:r.kmTo,speedKmh:r.speedKmh,lagHours:r.lagHours,label:`${r.fromName} → ${r.toName}`,
+      ...(split&&ok(below)&&ok(above)?{byFlow:{split,below,atOrAbove:above}}:{})};
+  });
 }
 /** @param {object} doc river-network.json @param {object|null} travel travel-times.json @returns {object} Indexed network; throws on a malformed file. */
 export function indexNetwork(doc,travel=null){
@@ -72,6 +76,9 @@ export function surgeSources({areas=[],usgs=null,net,now=Date.now()}){
   return out;
 }
 
+/** Measured speed for the current flow below Friant (net.flowCfs): the flow band's speed where one was measured, else the
+ * all-flow median. ponytail: one reference gauge for the whole main stem; per-reach live flows would need more gauges live. */
+const reachSpeed=(r,flow)=>r.byFlow&&Number.isFinite(flow)?(flow<r.byFlow.split?r.byFlow.below:r.byFlow.atOrAbove):r.speedKmh;
 /** @returns {number} Distance-to-terminal of a pulse front `hours` after it starts: measured reach speeds on the reach's own
  * path, the assumed speed elsewhere. A measured reach never applies while the pulse is still on a tributary above it. */
 export function frontKm(net,s,hours,cfg=SURGE_CONFIG){
@@ -81,7 +88,7 @@ export function frontKm(net,s,hours,cfg=SURGE_CONFIG){
     while(i<route.length-1&&km<=route[i].parts.at(-1).end)i++;
     const p=route[i],bottom=i<route.length-1?p.parts.at(-1).end:-Infinity,mine=reaches.filter(r=>r.path===p?.id);
     const r=mine.find(r=>km<=r.hi&&km>r.lo),lower=mine.filter(r=>r.hi<km).reduce((m,r)=>Math.max(m,r.hi),-Infinity);
-    const next=Math.max(r?r.lo:lower,bottom),speed=r?r.speedKmh:cfg.speedKmh;
+    const next=Math.max(r?r.lo:lower,bottom),speed=r?reachSpeed(r,net.flowCfs):cfg.speedKmh;
     if(next===-Infinity||(km-next)/speed>=t){km-=speed*t;break;}
     t-=(km-next)/speed;km=next;
   }
@@ -89,8 +96,10 @@ export function frontKm(net,s,hours,cfg=SURGE_CONFIG){
 }
 /** @returns {string} How pulse speeds were set, for status lines. */
 export function speedNote(net,cfg=SURGE_CONFIG){
-  const n=(net?.reaches??[]).length,mph=(cfg.speedKmh*0.621371).toFixed(1);
-  return n?`Measured gauge-to-gauge travel times on ${n} San Joaquin reaches; assumed ${mph} mph elsewhere. Illustrative, not a forecast.`:`Assumed ${mph} mph travel. Illustrative, not a forecast.`;
+  const reaches=net?.reaches??[],n=reaches.length,mph=(cfg.speedKmh*0.621371).toFixed(1),banded=reaches.filter(r=>r.byFlow),flow=net?.flowCfs;
+  if(!n)return `Assumed ${mph} mph travel. Illustrative, not a forecast.`;
+  const band=!banded.length?'':Number.isFinite(flow)?` ${banded.length} use their ${flow<banded[0].byFlow.split?'lower':'higher'}-flow speeds for the ${Math.round(flow).toLocaleString('en-US')} cfs now below Friant.`:' Flow below Friant unavailable: all-flow medians used.';
+  return `Measured gauge-to-gauge travel times on ${n} San Joaquin reaches; assumed ${mph} mph elsewhere.${band} Illustrative, not a forecast.`;
 }
 /** @param {object} net @param {object[]} sources @param {number} t timeline time @returns {object[]} Where each pulse is at t (none before it starts). */
 export function surgeFrames(net,sources,t,cfg=SURGE_CONFIG){
