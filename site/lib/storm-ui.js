@@ -2,7 +2,7 @@ import {stormFocus,ageLabel,TIERS,FOCUS,STORM_CONFIG} from './storm-focus-model.
 import {fetchUsgs,parseUsgsIv,usgsReading} from './usgs-gauges.js';
 import {reportHealth} from './source-health.js';
 import {el,elAttrs,link} from './dom.js';
-import {indexNetwork,surgeSources,surgeFrames,timelineRange,SURGE_CONFIG} from './river-network-model.js';
+import {indexNetwork,surgeSources,surgeFrames,timelineRange,speedNote,SURGE_CONFIG} from './river-network-model.js';
 import {wazeReports,wazeTraffic,WAZE_NOTE,WAZE_MAX_AGE} from './waze-model.js';
 import {CAMERA_FEED,nearbyCameras} from './camera-model.js';
 
@@ -62,9 +62,9 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
     const sources=surgeSources({areas:inputs.areas,usgs:inputs.usgs,net,now:Date.now()}),frames=surgeFrames(net,sources,t);
     surgeRange=timelineRange(sources);$('storm-surge-slider').min=surgeRange.min;$('storm-surge-slider').max=surgeRange.max;
     map?.setRiverSurges(frames);
-    const moving=frames.filter(f=>f.lines.length).length,mph=(SURGE_CONFIG.speedKmh*0.621371).toFixed(1);
+    const moving=frames.filter(f=>f.lines.length).length;
     status.textContent=!sources.length?'No gauge is rising 0.2 ft/h or more and no forecast crest is ahead: nothing to trace. Not an all-clear.'
-      :`${moving?`${moving} of ${sources.length} pulses moving at this time`:`Nothing moving yet; drag the timeline or press Play`} (${sources.map(s=>`${s.name}: ${s.label}, starts ${time(s.t0)}`).join('; ')}). Assumed ${mph} mph travel, illustrative, not a forecast.`;
+      :`${moving?`${moving} of ${sources.length} pulses moving at this time`:`Nothing moving yet; drag the timeline or press Play`} (${sources.map(s=>`${s.name}: ${s.label}, starts ${time(s.t0)}`).join('; ')}). ${speedNote(net)}`;
   }
   function stopPlay(){clearInterval(playTimer);playTimer=null;$('storm-surge-play').textContent='Play';$('storm-surge-play').setAttribute('icon-start','play');}
   function setOffset(v){surgeOffset=v;$('storm-surge-slider').value=v;drawSurges();}
@@ -75,8 +75,10 @@ export function createStormNow({exercise=false,timeZone,onOpen=()=>{},onRain=()=
     $('storm-surge-play').textContent='Pause';$('storm-surge-play').setAttribute('icon-start','pause');
     playTimer=setInterval(()=>setOffset(surgeOffset+SURGE_CONFIG.stepMinutes>surgeRange.max?surgeRange.min:surgeOffset+SURGE_CONFIG.stepMinutes),500);
   });
+  // Measured travel times are optional: without them every reach uses the assumed speed.
+  const travel=fetch(new URL('../data/travel-times.json',import.meta.url)).then(r=>r.ok?r.json():null).catch(()=>null);
   void fetch(new URL('../data/river-network.json',import.meta.url)).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();})
-    .then(doc=>{net=indexNetwork(doc);map?.setRiverNetwork(net);drawSurges();}).catch(e=>{netError=e.message;drawSurges();});
+    .then(async doc=>{net=indexNetwork(doc,await travel);map?.setRiverNetwork(net);drawSurges();}).catch(e=>{netError=e.message;drawSurges();});
   // A 404 means the county feed is not published (WAZE_PUBLISH off): no rows, no error.
   function wazeInput(){
     if(wazeError)return {checkedAt:null,error:wazeError,reports:[],traffic:[]};

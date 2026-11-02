@@ -1,12 +1,13 @@
 /** River network (data/river-network.json) and illustrative surge travel. Planning aid only: no hydraulic routing.
  * Every point on the network has D = km to the network terminal; D is shared across confluences, so a pulse moving
- * downstream is just D falling at an assumed speed, following each path's downstream link. */
+ * downstream is just D falling, following each path's downstream link. Reaches with measured gauge-to-gauge travel times
+ * (data/travel-times.json) use their measured speed; everywhere else uses the assumed SURGE_CONFIG.speedKmh. */
 const R=6371.0088,rad=Math.PI/180,HOUR=3_600_000;
 const km=(a,b)=>{const dLat=(b[1]-a[1])*rad,dLon=(b[0]-a[0])*rad,h=Math.sin(dLat/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
 
 /** Owner-adjustable. ponytail: one assumed speed for every channel; per-reach celerity needs a hydraulic model or measured lags. */
 export const SURGE_CONFIG=Object.freeze({
-  speedKmh:4,          // assumed flood-wave travel speed (~2.5 mph); illustrative, not measured
+  speedKmh:4,          // assumed flood-wave speed (~2.5 mph) where no measured reach applies; illustrative
   tailKm:6,            // drawn length of each pulse
   riseFtPerHour:0.2,   // a gauge rising at least this fast (same as Storm now "Next") starts a pulse
   forecastRiseFt:0.5,  // a published forecast crest at least this far above the current stage starts a pulse
@@ -14,8 +15,14 @@ export const SURGE_CONFIG=Object.freeze({
   backHours:6,aheadHours:12,stepMinutes:15
 });
 
-/** @param {object} doc river-network.json @returns {object} Indexed network; throws on a malformed file. */
-export function indexNetwork(doc){
+/** @param {object|null} doc travel-times.json @returns {object[]} Measured reaches usable for speeds (bad rows dropped). */
+export function reachSpeeds(doc){
+  if(doc?.version!==1||!Array.isArray(doc.reaches))return [];
+  return doc.reaches.filter(r=>typeof r.path==='string'&&Number.isFinite(r.kmFrom)&&Number.isFinite(r.kmTo)&&r.kmFrom>r.kmTo&&Number.isFinite(r.speedKmh)&&r.speedKmh>0&&r.speedKmh<40)
+    .map(r=>({path:r.path,hi:r.kmFrom,lo:r.kmTo,speedKmh:r.speedKmh,lagHours:r.lagHours,label:`${r.fromName} → ${r.toName}`}));
+}
+/** @param {object} doc river-network.json @param {object|null} travel travel-times.json @returns {object} Indexed network; throws on a malformed file. */
+export function indexNetwork(doc,travel=null){
   if(doc?.version!==1||!Array.isArray(doc.paths)||!Array.isArray(doc.points))throw new Error('River network file is invalid.');
   const paths=new Map();
   for(const p of doc.paths){
@@ -27,7 +34,7 @@ export function indexNetwork(doc){
     }).sort((a,b)=>b.end-a.end); // upstream part first
     paths.set(p.id,{...p,parts});
   }
-  return {paths,points:new Map(doc.points.map(pt=>[pt.id,pt])),doc};
+  return {paths,points:new Map(doc.points.map(pt=>[pt.id,pt])),doc,reaches:reachSpeeds(travel)};
 }
 
 /** Sub-line of a part between distances-from-upstream a<b. */
@@ -65,10 +72,30 @@ export function surgeSources({areas=[],usgs=null,net,now=Date.now()}){
   return out;
 }
 
+/** @returns {number} Distance-to-terminal of a pulse front `hours` after it starts: measured reach speeds on the reach's own
+ * path, the assumed speed elsewhere. A measured reach never applies while the pulse is still on a tributary above it. */
+export function frontKm(net,s,hours,cfg=SURGE_CONFIG){
+  const route=[];for(let id=s.path,seen=new Set();id&&!seen.has(id)&&net.paths.has(id);id=net.paths.get(id).dn){seen.add(id);route.push(net.paths.get(id));}
+  const reaches=net.reaches??[];let km=s.km,t=hours,i=0;
+  while(t>1e-9){
+    while(i<route.length-1&&km<=route[i].parts.at(-1).end)i++;
+    const p=route[i],bottom=i<route.length-1?p.parts.at(-1).end:-Infinity,mine=reaches.filter(r=>r.path===p?.id);
+    const r=mine.find(r=>km<=r.hi&&km>r.lo),lower=mine.filter(r=>r.hi<km).reduce((m,r)=>Math.max(m,r.hi),-Infinity);
+    const next=Math.max(r?r.lo:lower,bottom),speed=r?r.speedKmh:cfg.speedKmh;
+    if(next===-Infinity||(km-next)/speed>=t){km-=speed*t;break;}
+    t-=(km-next)/speed;km=next;
+  }
+  return km;
+}
+/** @returns {string} How pulse speeds were set, for status lines. */
+export function speedNote(net,cfg=SURGE_CONFIG){
+  const n=(net?.reaches??[]).length,mph=(cfg.speedKmh*0.621371).toFixed(1);
+  return n?`Measured gauge-to-gauge travel times on ${n} San Joaquin reaches; assumed ${mph} mph elsewhere. Illustrative, not a forecast.`:`Assumed ${mph} mph travel. Illustrative, not a forecast.`;
+}
 /** @param {object} net @param {object[]} sources @param {number} t timeline time @returns {object[]} Where each pulse is at t (none before it starts). */
 export function surgeFrames(net,sources,t,cfg=SURGE_CONFIG){
   return sources.filter(s=>t>=s.t0).map(s=>{
-    const front=s.km-cfg.speedKmh*(t-s.t0)/HOUR;
+    const front=frontKm(net,s,(t-s.t0)/HOUR,cfg);
     const lines=routeSlice(net,s.path,Math.min(s.km,front+cfg.tailKm),front);
     return {...s,front,lines,left:!lines.length&&front<s.km};
   });

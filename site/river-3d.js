@@ -4,7 +4,7 @@ import {CONFIG} from './config.js';
 import {fetchRiverWatch} from './lib/nwps.js';
 import {assessGauge} from './lib/river-model.js';
 import {fetchUsgs,parseUsgsIv,usgsReading} from './lib/usgs-gauges.js';
-import {indexNetwork,surgeSources,surgeFrames,routeSlice,routeLine,profilePath,timelineRange,startOffset,SURGE_CONFIG} from './lib/river-network-model.js';
+import {indexNetwork,surgeSources,surgeFrames,frontKm,speedNote,routeSlice,routeLine,profilePath,timelineRange,startOffset,SURGE_CONFIG} from './lib/river-network-model.js';
 import {SURGE_COLORS} from './lib/river-network-map.js';
 import {formatTime} from './lib/model.js';
 import {glbCopyright,createCredits} from './lib/google-tiles.js';
@@ -17,6 +17,8 @@ const time=t=>formatTime(t,CONFIG.timeZone);
 // Data and the first gauge readings start downloading now, alongside the SDK, instead of after it.
 const lists=Promise.all([json('./data/river-watchlist.json'),json('./data/usgs-watchlist.json')]);
 const data=Promise.all([json('./data/river-network.json'),lists,
+  // Measured gauge-to-gauge travel times (optional; the assumed speed applies without them).
+  fetch('./data/travel-times.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
   // Written at deploy time from the GOOGLE_MAP_TILES_KEY repo variable; absent locally and until the key exists.
   fetch('./data/google-tiles.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)]);
 const gaugeFetch=(w,u)=>Promise.allSettled([fetchRiverWatch(w.stations,CONFIG.rivers),fetchUsgs(u.sites.map(s=>s.site))]);
@@ -24,8 +26,8 @@ let firstGauges=exercise?null:lists.then(([w,u])=>gaugeFetch(w,u));
 const sdk=await import('https://js.arcgis.com/5.1/').then(()=>globalThis.$arcgis);
 const [ArcMap,SceneView,Basemap,TileLayer,GraphicsLayer,Graphic,IntegratedMesh3DTilesLayer,esriConfig,reactiveUtils,ElevationProfileViewModel]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/SceneView.js',
   '@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/IntegratedMesh3DTilesLayer.js','@arcgis/core/config.js','@arcgis/core/core/reactiveUtils.js','@arcgis/core/widgets/ElevationProfile/ElevationProfileViewModel.js']);
-const [doc,[watch,usgsWatch],tiles]=await data;
-const net=indexNetwork(doc);
+const [doc,[watch,usgsWatch],travel,tiles]=await data;
+const net=indexNetwork(doc,travel);
 
 // Google tiles are a full textured mesh (terrain included), so graphics sit on the scene, not the hidden ground.
 const google=typeof tiles?.key==='string'&&tiles.key?new IntegratedMesh3DTilesLayer({url:'https://tile.googleapis.com/v1/3dtiles/root.json',customParameters:{key:tiles.key},title:'Google Photorealistic 3D Tiles'}):null;
@@ -97,9 +99,8 @@ function draw(){
   profileMarker(t);
   const m=Math.round(offset);
   $('surge-time').textContent=m===0?'now':`${m>0?'+':'−'}${Math.floor(Math.abs(m)/60)} h ${Math.abs(m)%60} min · ${time(t)}`;
-  const mph=(SURGE_CONFIG.speedKmh*0.621371).toFixed(1);
   const moving=frames.filter(f=>f.lines.length).length,next=sources.filter(s=>s.t0>t).sort((a,b)=>a.t0-b.t0)[0];
-  $('surge-status').textContent=(exercise?'FICTIONAL EXERCISE gauge data. ':'')+(sources.length?(moving?`${moving} of ${sources.length} pulses moving at this time.`:next?`Nothing moving yet. Next: ${next.name}, ${next.kind==='forecast'?'forecast crest':'rise'} at ${time(next.t0)}. Select it below to jump there, then press Play.`:'The pulses have left the mapped network at this time.')+` Assumed ${mph} mph travel: illustrative, not a forecast.`
+  $('surge-status').textContent=(exercise?'FICTIONAL EXERCISE gauge data. ':'')+(sources.length?(moving?`${moving} of ${sources.length} pulses moving at this time.`:next?`Nothing moving yet. Next: ${next.name}, ${next.kind==='forecast'?'forecast crest':'rise'} at ${time(next.t0)}. Select it below to jump there, then press Play.`:'The pulses have left the mapped network at this time.')+` ${speedNote(net)}`
     :'No gauge is rising 0.2 ft/h or more and no forecast crest is ahead: nothing to trace. Not an all-clear.')+(problems.length?` Source problems: ${problems.join('; ')}.`:'')+` Gauges checked ${checked?time(checked):'—'}.`;
   const ls=sources.map(s=>s.key+s.t0).join('|');if(ls===listSig)return;listSig=ls;
   const list=$('surge-list');list.replaceChildren();
@@ -108,7 +109,7 @@ function draw(){
 $('surge-list').addEventListener('calciteListItemSelect',e=>{const s=sources.find(x=>x.key===e.target.value),pt=s&&net.points.get(s.id);
   if(s){setProfile(s);stop();set(Math.max(range.min,Math.min(range.max,startOffset(s))));}
   // Frame the reach the pulse covers in its first 6 hours, not just the gauge, so Play keeps it in view.
-  const ahead=s&&routeSlice(net,s.path,s.km,s.km-SURGE_CONFIG.speedKmh*6);
+  const ahead=s&&routeSlice(net,s.path,s.km,frontKm(net,s,6));
   // goTo only moved the camera reliably with a [lon,lat] target here (plain or unattached geometry was ignored), so aim at
   // the route's midpoint, facing downstream.
   const pts=ahead?.flat()||[],a=pts[0],z=pts.at(-1),mid=pts[Math.floor(pts.length/2)];
@@ -145,7 +146,7 @@ function setProfile(target){
 function profileMarker(t){
   const s=profileTarget,m=$('profile-marker');
   if(!profileShape||!Number.isFinite(s?.t0)||t<s.t0){m.setAttribute('visibility','hidden');return;}
-  const d=SURGE_CONFIG.speedKmh*(t-s.t0)/3_600_000*1000;if(d>profileShape.maxD){m.setAttribute('visibility','hidden');return;}
+  const d=(s.km-frontKm(net,s,(t-s.t0)/3_600_000))*1000;if(d>profileShape.maxD){m.setAttribute('visibility','hidden');return;}
   const i=profileShape.samples.findIndex(p=>p.distance>=d),p=profileShape.samples[Math.max(0,i)];
   m.setAttribute('cx',profileShape.x(d).toFixed(1));m.setAttribute('cy',profileShape.y(p.elevation).toFixed(1));m.setAttribute('visibility','visible');
 }

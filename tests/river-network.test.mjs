@@ -101,3 +101,17 @@ test('routeLine joins a downstream route into one line; profilePath scales sampl
   assert.equal(p.d,'M0.0 0.0L150.0 80.0L300.0 100.0');assert.deepEqual([p.maxD,p.lo,p.hi],[1000,50,100]);
   assert.equal(profilePath([{distance:0,elevation:1}],300,100),null);
 });
+
+test('frontKm uses measured reach speeds on their own path and the assumed speed elsewhere',async()=>{
+  const {frontKm,reachSpeeds,speedNote}=await import('../site/lib/river-network-model.js');
+  const travel=r=>({version:1,reaches:r.map(([path,kmFrom,kmTo,speedKmh])=>({path,kmFrom,kmTo,speedKmh,fromName:'X',toName:'Y'}))});
+  const n=net();n.reaches=reachSpeeds(travel([['B',8,2,2]]));
+  const s={path:'A',km:15};
+  assert.equal(frontKm(n,s,1),11,'tributary A: assumed 4 km/h');
+  assert(Math.abs(frontKm(n,s,2)-7.5)<1e-9,'15→10 on A (1.25 h), 10→8 on B at 4 km/h (0.5 h), then 0.25 h at the measured 2 km/h');
+  n.reaches=reachSpeeds(travel([['B',14,9,1]]));assert.equal(frontKm(n,s,0.5),13,'a reach on B never applies while the pulse is still on A');
+  assert.deepEqual(reachSpeeds(travel([['B',2,8,3],['B',8,2,0],['B',8,2,Number.NaN]])),[],'inverted, zero and missing speeds are dropped');
+  assert.equal(reachSpeeds({version:2,reaches:[]}).length,0);
+  n.reaches=reachSpeeds(travel([['B',8,2,2]]));assert.match(speedNote(n),/Measured gauge-to-gauge travel times on 1 San Joaquin reaches; assumed 2\.5 mph elsewhere/);
+  n.reaches=[];assert.match(speedNote(n),/^Assumed 2\.5 mph travel/);
+});
