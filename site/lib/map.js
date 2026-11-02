@@ -92,9 +92,9 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   map.add(searchContext);map.add(searchSelection);
   const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
   let drainagePowerKeys=new Set(),drainagePowerPumps=new Set(),drainagePowerSignature='';
-  let scenarioMode=false;let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
+  let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
   const currentState=()=>memory.get(activeProfile);
-  const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=(!scenarioMode||['waterways','buildings'].includes(key))&&layerVisible(currentState(),key,eligible);};
+  const registerLayer=(key,layer,eligible=true,index)=>{registry.set(layer,{key,eligible});if(!map.layers.includes(layer))map.add(layer,index);layer.visible=layerVisible(currentState(),key,eligible);};
   for(const [key,layer]of [['fema',fema],['alerts',alertLayer],['alerts',selectedLayer],['gauges',gauges],['cameras',cameras],['power',power],['facilities',facilities],['roads',roads],['areas',areaLayer],['briefingContext',briefingContext]])registerLayer(key,layer);
   for(const [key,layer]of Object.entries(drainageLayers))registerLayer(key,layer,false,1);
   // Public FMFCD "Drainage Boundaries" (master-planned drainage areas): live reference read from the publisher, never copied.
@@ -104,7 +104,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   const row=(k,v)=>v===null||v===undefined||v===''?'':`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`;
   // The app's prepared dam-failure scenarios, linked from the dam and its inundation area by dam name.
   let prepared=[];void fetch(new URL('../data/flood-scenarios/index.json',import.meta.url)).then(r=>r.ok?r.json():null).then(d=>{prepared=d?.scenarios||[];}).catch(()=>{});
-  const scenarioLinks=name=>{const list=scenariosFor(name,prepared);return list.length?`<p><strong>Prepared scenarios in this app</strong></p><ul>${list.map(s=>`<li><a href="./flood-scenario.html?scenario=${encodeURIComponent(s.id)}" target="_blank" rel="noopener">${esc(s.variant)} failure</a></li>`).join('')}</ul>`:'';};
+  // "Play on the map" is a #scenario= link: mission-ui plays it on the shared map in whichever view is open.
+  const scenarioLinks=name=>{const list=scenariosFor(name,prepared);return list.length?`<p><strong>Prepared failure scenarios · hypothetical</strong></p><ul>${list.map(s=>`<li>${esc(s.variant)} failure: <a href="#scenario=${encodeURIComponent(s.id)}">play on the map</a> · <a href="./flood-scenario.html?scenario=${encodeURIComponent(s.id)}" target="_blank" rel="noopener">full page</a></li>`).join('')}</ul>`:'';};
   registerLayer('dams',new FeatureLayer({url:DAMS_URL,title:LAYER_LABELS.dams,definitionExpression:"STATE='California'",outFields:['NAME','PRIMARY_OWNER_TYPE','FED_AGENCY_OWNERS','FED_AGENCY_OPERATIONS','PRIMARY_PURPOSE','HAZARD_POTENTIAL','EAP_PREPARED','NID_STORAGE','FEDERAL_ID'],
     renderer:{type:'unique-value',field:'HAZARD_POTENTIAL',defaultSymbol:{type:'simple-marker',style:'square',size:7,color:'#9aa4ad',outline:{color:'#17232b',width:1}},uniqueValueInfos:[
       {value:'High',label:'High hazard potential',symbol:{type:'simple-marker',style:'square',size:9,color:'#e2b04a',outline:{color:'#17232b',width:1}}},
@@ -139,7 +140,7 @@ elevationInfo:{mode:'on-the-ground'},
   document.querySelector('#map-name-labels')?.addEventListener('calciteSwitchChange',e=>setMapLabels(e.target.checked));
   let nwsLabelRows=[],usgsLabelRows=[];const setGaugeLabels=()=>void gaugeLabels.set([...nwsLabelRows,...usgsLabelRows]);
   const syncVisibility=()=>{
-    for(const [layer,r]of registry)layer.visible=(!scenarioMode||['waterways','buildings'].includes(r.key))&&layerVisible(currentState(),r.key,r.eligible);
+    for(const [layer,r]of registry)layer.visible=layerVisible(currentState(),r.key,r.eligible);
     const visibleKeys=[...new Set([...registry].filter(([l])=>l.visible).map(([,r])=>r.key))];if(currentState().layers.waterways||basemapKey==='waterways')visibleKeys.push('waterways');if(currentState().layers.buildings&&view?.type==='3d')visibleKeys.push('buildings');
     document.querySelector('#map').dataset.layers=visibleKeys.join(' ');document.querySelector('#map').dataset.workspace=activeProfile;
     for(const el of document.querySelectorAll('[data-layer-key]'))el.classList.toggle('workspace-layer-off',!visibleKeys.includes(el.dataset.layerKey));
@@ -518,7 +519,7 @@ elevationInfo:{mode:'on-the-ground'},
   const scenarioDomain=new GraphicsLayer({title:'Reviewed model domain',listMode:'hide',elevationInfo:{mode:'on-the-ground'}});map.add(scenarioDomain);viewListeners.add(drawStructures);
   return {
     setScenarioDomain(geometry){scenarioDomain.removeAll();if(!geometry)return;const polygon=new Polygon(countyGeometry(geometry));scenarioDomain.add(new Graphic({geometry:polygon,symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#f6c85f',width:2,style:'dash'}}}));void focusNavigate(polygon.extent.clone().expand(1.1));},setScenarioBuildings(features){structureFeatures=features;structureFrame=0;drawStructures();},setScenarioBuildingFrame(index){if(index!==structureFrame){structureFrame=index;drawStructures();}},
-    getViewMode:()=>view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setScenarioMode(active){scenarioMode=!!active;scenarioDomain.visible=scenarioMode;scenarioStructures.visible=scenarioMode;searchSelection.visible=!active;searchContext.visible=!active;syncVisibility();},setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints:points=>{setLayerPreference('areas',true);const valid=points.filter(validLocation);if(!valid.length)return Promise.resolve(false);const extent=pointsExtent(valid,.025);return focusNavigate(view.type==='3d'?{target:extent,tilt:45}:extent);},focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
+    getViewMode:()=>view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints:points=>{setLayerPreference('areas',true);const valid=points.filter(validLocation);if(!valid.length)return Promise.resolve(false);const extent=pointsExtent(valid,.025);return focusNavigate(view.type==='3d'?{target:extent,tilt:45}:extent);},focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));
