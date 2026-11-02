@@ -72,6 +72,8 @@ export function createSnowFleet({time,exercise}){
     const c=await (await loadSdk()).import(['@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/layers/FeatureLayer.js']);sdk=c;
     units=new c[0]({title:'County snow fleet · delayed positions',elevationInfo:{mode:'on-the-ground'}});map.registerLayer('snowFleet',units);
     labels=createLabelLayer({FeatureLayer:c[2],Graphic:c[1]},{title:'Snow fleet names'});map.registerLayer('snowFleet',labels.layer);
+    // A ?snowfleet=sample link is a request to see the fleet, so switch the layer on (the live layer stays off by default).
+    if(sample)map.setLayerPreference('snowFleet',true);
     void draw();
   }catch(e){error=`Snow fleet map unavailable · ${e.message}`;render();}}};
 }
