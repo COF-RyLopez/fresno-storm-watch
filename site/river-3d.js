@@ -32,8 +32,9 @@ if(google)esriConfig.request.interceptors.push({urls:/^https:\/\/tile\.googleapi
 // Over Google's mesh, place graphics 40 m above the Esri terrain rather than on the mesh itself: relative-to-scene had to
 // re-query the mesh on every redraw, so pulses lagged or hid under it. On the flat valley floor the two surfaces agree closely.
 const elevationInfo=()=>google?.visible?{mode:'relative-to-ground',offset:40}:{mode:'on-the-ground'};
-const base=new GraphicsLayer({title:'River network · USGS 3DHP',elevationInfo:elevationInfo()}),pulses=new GraphicsLayer({title:'Illustrative surge travel',elevationInfo:elevationInfo()});
-const map=new ArcMap({basemap:new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})]}),ground:'world-elevation',layers:[...(google?[google]:[]),base,pulses]});
+const base=new GraphicsLayer({title:'River network · USGS 3DHP',elevationInfo:elevationInfo()}),pulses=new GraphicsLayer({title:'Illustrative surge travel',elevationInfo:elevationInfo()}),
+  markers=new GraphicsLayer({title:'Pulse sources',elevationInfo:elevationInfo()});
+const map=new ArcMap({basemap:new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'})]}),ground:'world-elevation',layers:[...(google?[google]:[]),base,pulses,markers]});
 const view=new SceneView({container:'view',map,qualityProfile:'high',environment:{lighting:{type:'sun',directShadowsEnabled:true},atmosphereEnabled:true},
   camera:{position:{longitude:-119.55,latitude:36.70,z:26000},heading:300,tilt:68}});
 
@@ -49,7 +50,10 @@ const head=kind=>({type:'point-3d',callout:{type:'line',size:1.5,color:SURGE_COL
 const pin=(lon,lat)=>({type:'point',longitude:lon,latitude:lat,z:150,spatialReference:{wkid:4326}});
 
 // Live inputs, as in Storm now: NWPS assessments shaped like area rows, USGS readings by site.
-let areas=[],usgs=null,checked=null,problems=[],offset=0,playTimer=null;
+let areas=[],usgs=null,checked=null,problems=[],offset=0,playTimer=null,markerSig='',listSig='';
+// Pulse graphics are kept per source and moved in place: removing and re-adding 3D graphics every tick made them flash
+// while the SceneView rebuilt them.
+const live=new Map();
 async function refresh(){
   problems=[];
   if(exercise){
@@ -68,17 +72,25 @@ let range=timelineRange([]);
 function draw(){
   const now=Date.now(),t=now+offset*60_000,sources=surgeSources({areas,usgs,net,now}),frames=surgeFrames(net,sources,t);
   range=timelineRange(sources,now);$('surge-slider').min=range.min;$('surge-slider').max=range.max;
-  pulses.removeAll();
-  for(const s of sources){const pt=net.points.get(s.id);if(pt)pulses.add(new Graphic({geometry:pin(pt.longitude,pt.latitude),symbol:marker(s,t>=s.t0)}));}
+  // Labelled source markers change only when a pulse starts or the sources change, so they are not rebuilt every tick.
+  const sig=sources.map(s=>`${s.key}:${t>=s.t0}`).join('|');
+  if(sig!==markerSig){markerSig=sig;markers.removeAll();
+    for(const s of sources){const pt=net.points.get(s.id);if(pt)markers.add(new Graphic({geometry:pin(pt.longitude,pt.latitude),symbol:marker(s,t>=s.t0)}));}}
+  const seen=new Set();
   for(const f of frames){
-    if(f.lines.length)pulses.add(new Graphic({geometry:{type:'polyline',paths:f.lines,spatialReference:{wkid:4326}},symbol:tube(f.kind)}));
-    const pt=f.lines.at(-1)?.at(-1);if(pt)pulses.add(new Graphic({geometry:pin(pt[0],pt[1]),symbol:head(f.kind)}));
+    const pt=f.lines.at(-1)?.at(-1);if(!pt)continue;seen.add(f.key);
+    let g=live.get(f.key);
+    if(!g){g={tube:new Graphic({symbol:tube(f.kind)}),head:new Graphic({symbol:head(f.kind)})};pulses.addMany([g.tube,g.head]);live.set(f.key,g);}
+    g.tube.geometry={type:'polyline',paths:f.lines,spatialReference:{wkid:4326}};g.head.geometry=pin(pt[0],pt[1]);
   }
-  $('surge-time').textContent=offset===0?'now':`${offset>0?'+':'−'}${Math.floor(Math.abs(offset)/60)} h ${Math.abs(offset)%60} min · ${time(t)}`;
+  for(const [k,g] of live)if(!seen.has(k)){pulses.removeMany([g.tube,g.head]);live.delete(k);}
+  const m=Math.round(offset);
+  $('surge-time').textContent=m===0?'now':`${m>0?'+':'−'}${Math.floor(Math.abs(m)/60)} h ${Math.abs(m)%60} min · ${time(t)}`;
   const mph=(SURGE_CONFIG.speedKmh*0.621371).toFixed(1);
   const moving=frames.filter(f=>f.lines.length).length,next=sources.filter(s=>s.t0>t).sort((a,b)=>a.t0-b.t0)[0];
   $('surge-status').textContent=(exercise?'FICTIONAL EXERCISE gauge data. ':'')+(sources.length?(moving?`${moving} of ${sources.length} pulses moving at this time.`:next?`Nothing moving yet. Next: ${next.name}, ${next.kind==='forecast'?'forecast crest':'rise'} at ${time(next.t0)}. Select it below to jump there, then press Play.`:'The pulses have left the mapped network at this time.')+` Assumed ${mph} mph travel: illustrative, not a forecast.`
     :'No gauge is rising 0.2 ft/h or more and no forecast crest is ahead: nothing to trace. Not an all-clear.')+(problems.length?` Source problems: ${problems.join('; ')}.`:'')+` Gauges checked ${checked?time(checked):'—'}.`;
+  const ls=sources.map(s=>s.key+s.t0).join('|');if(ls===listSig)return;listSig=ls;
   const list=$('surge-list');list.replaceChildren();
   for(const s of sources){const it=document.createElement('calcite-list-item');it.label=s.name;it.description=`${s.kind==='forecast'?'Forecast':'Observed'} · ${s.label} · starts ${time(s.t0)}`;it.value=s.key;list.append(it);}
 }
@@ -93,15 +105,16 @@ $('surge-list').addEventListener('calciteListItemSelect',e=>{const s=surgeSource
   if(mid)view.goTo({target:mid,zoom:12,heading,tilt:60}).catch(()=>{});
   else if(pt)view.goTo({target:[pt.longitude,pt.latitude],zoom:13,tilt:65}).catch(()=>{});});
 const stop=()=>{clearInterval(playTimer);playTimer=null;$('surge-play').textContent='Play';$('surge-play').setAttribute('icon-start','play');};
-const set=v=>{offset=v;$('surge-slider').value=v;draw();};
+const set=v=>{offset=v;$('surge-slider').value=Math.round(v/SURGE_CONFIG.stepMinutes)*SURGE_CONFIG.stepMinutes;draw();};
 $('surge-slider').addEventListener('calciteSliderInput',e=>{stop();set(Number(e.target.value));});
 $('surge-now').addEventListener('click',()=>{stop();set(0);});
 $('surge-play').addEventListener('click',()=>{if(playTimer)return stop();$('surge-play').textContent='Pause';$('surge-play').setAttribute('icon-start','pause');
-  playTimer=setInterval(()=>set(offset+SURGE_CONFIG.stepMinutes>range.max?range.min:offset+SURGE_CONFIG.stepMinutes),400);});
+  // Same pace as before (one 15-minute step per 400 ms) in quarter steps, so the front slides ~250 m at a time instead of jumping 1 km.
+  const step=SURGE_CONFIG.stepMinutes/4;playTimer=setInterval(()=>set(offset+step>range.max?range.min:offset+step),100);});
 $('google-switch').toggleAttribute('disabled',!google);$('google-switch').toggleAttribute('checked',!!google);
 $('google-note').textContent=google?'3D tiles © Google. Map Tiles API; visualization only.':'Google 3D tiles are off: no browser key is configured for this site. Showing Esri World Imagery on world terrain.';
 if(google)view.ui.add([logo,creditBox],'bottom-left');
-$('google-switch').addEventListener('calciteSwitchChange',e=>{if(!google)return;google.visible=e.target.checked;logo.hidden=creditBox.hidden=!e.target.checked;base.elevationInfo=pulses.elevationInfo=elevationInfo();});
+$('google-switch').addEventListener('calciteSwitchChange',e=>{if(!google)return;google.visible=e.target.checked;logo.hidden=creditBox.hidden=!e.target.checked;base.elevationInfo=pulses.elevationInfo=markers.elevationInfo=elevationInfo();});
 if(exercise)$('notice').hidden=false;
 // Preloader (Google 3D best practices): say the scene is still sharpening until it first stops loading tiles.
 const loading=document.createElement('div');loading.className='scene-loading';loading.setAttribute('role','status');loading.textContent='Loading 3D imagery… the view sharpens as tiles arrive.';
