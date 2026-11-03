@@ -358,15 +358,18 @@ def published() -> dict | None:
 
 
 def run(argv: list[str], fetch=published, build=main, now: float | None = None) -> str:
-    """--published: reuse the deployed copy while under a day old; otherwise rebuild, keeping the newest good copy on failure."""
+    """--published: serve the newer of the deployed and committed copies while it is under a day old; otherwise rebuild,
+    keeping the newest good copy on failure. Newest wins so a freshly committed build (new fields) is never replaced by an
+    older deployed one."""
     now = now if now is not None else datetime.now(timezone.utc).timestamp()
     prior = fetch() if '--published' in argv else None
-    age = usable(prior, now) if prior else None
-    if age is not None and age < REBUILD_AFTER_S:
-        OUT.write_text(json.dumps(prior, indent=1) + '\n', encoding='utf-8')
-        print(f'Reused published planning questions ({age / 3600:.1f} h old)', file=sys.stderr)
-        return 'reused'
     local = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else None
+    fresh = [d for d in (prior, local) if d and (age := usable(d, now)) is not None and age < REBUILD_AFTER_S]
+    if '--published' in argv and fresh:
+        best = max(fresh, key=lambda d: d['generatedAt'])
+        OUT.write_text(json.dumps(best, indent=1) + '\n', encoding='utf-8')
+        print(f'Reused {"published" if best is prior else "committed"} planning questions ({usable(best, now) / 3600:.1f} h old)', file=sys.stderr)
+        return 'reused'
     try:
         build(prior or local)  # the last copy carries the flood-pocket ids answers are attached to
         return 'built'
