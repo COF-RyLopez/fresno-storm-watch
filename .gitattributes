@@ -9,3 +9,5 @@ site/data/zone-population/*.csv -text whitespace=cr-at-eol
 site/data/reported-locations/locations.geojson -text whitespace=cr-at-eol
 site/data/reported-locations/location-register.csv -text whitespace=cr-at-eol
 site/vendor/leaflet-1.9.4/*.js -text
+site/vendor/leaflet-1.9.4/*.css -text whitespace=cr-at-eol
+site/reports/*.pdf binary
