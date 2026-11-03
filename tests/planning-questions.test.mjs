@@ -51,3 +51,16 @@ test('evidence carries a stable follow-up key and the CSV quotes commas and quot
   const csv=questionsCsv([{...q,title:'Who, "exactly"?'}],()=>'Open');
   assert.match(csv,/"Who, ""exactly""\?"/);assert.match(csv.split('\r\n')[1],/,Open,/);
 });
+
+test('flood-pocket questions carry their outline and nearby options; bad ones are rejected',async()=>{
+  const {nearbyBadge}=await import('../site/lib/planning-questions-model.js');
+  const pockets=data.questions.filter(q=>q.kind==='sandbags');
+  assert(pockets.length&&pockets.every(q=>q.geometry?.rings?.length&&q.nearby?.length>=3));
+  assert(pockets.every(q=>q.nearby.every((n,i,a)=>!i||a[i-1].miles<=n.miles)));// nearest first
+  const q=pockets[0];
+  assert.throws(()=>validateQuestions({...data,questions:[{...q,geometry:{rings:[[[-119.8,36.7]]]}}]}),/flood-pocket outline/);
+  assert.throws(()=>validateQuestions({...data,questions:[{...q,nearby:[{name:'X',kind:'County building',miles:1,lon:-100,lat:36}]}]}),/nearby-site list/);
+  assert.deepEqual(nearbyBadge('County road yard').glyph,'garage');
+  assert.equal(nearbyBadge('Fire station (City-owned)').fill,'#a5a9ad');assert.equal(nearbyBadge('Fire station').glyph,'fire');
+  assert.equal(nearbyBadge('County building').glyph,'building');
+});
