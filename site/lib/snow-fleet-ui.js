@@ -4,7 +4,7 @@ import {badgeSymbol,badgeUrl} from './badge-symbols.js';
 import {createLabelLayer} from './map-labels.js';
 import {SNOW_ROUTES_URL} from './snow-model.js';
 import {YARDS_URL,FUEL_URL,siteContext,siteName} from './county-yards-model.js';
-import {FLEET_TYPES,FLEET_STATUS,unitName,PASS_TONES,validateFleet,fleetSummary,repairPriority,needsPass,passExpression} from './snow-fleet-model.js';
+import {FLEET_TYPES,FLEET_STATUS,unitName,feedAge,PASS_TONES,validateFleet,fleetSummary,repairPriority,needsPass,passExpression} from './snow-fleet-model.js';
 
 const $=id=>document.getElementById(id);
 /** County snow fleet on the map: units by status (in-shop units as orange squares), readiness counts, repair priority and
@@ -21,10 +21,13 @@ export function createSnowFleet({time,exercise}){
     const status=$('snow-fleet-status'),host=$('snow-fleet-readiness');host.replaceChildren();
     if(exercise){status.textContent='Exercise · live fleet positions disabled';return;}
     if(!fleet){status.textContent=error||'Checking the snow fleet feed…';$('snow-fleet-count').textContent=status.textContent;return;}
-    const stamp=`${fleet.sample?'SAMPLE · Samsara export, not live · ':''}positions as of ${time(Date.parse(fleet.generatedAt)-fleet.delayMinutes*60000)} (at least ${fleet.delayMinutes} min delayed)`;
-    status.textContent=fleet.error?`Snow fleet feed problem: ${fleet.error}`:stamp;
-    $('snow-fleet-count').textContent=fleet.error?'Data unavailable':counts();
-    if(fleet.error)return;
+    const stamp=`${fleet.sample?'SAMPLE · Samsara export, not live · positions':'Positions'} as of ${time(Date.parse(fleet.generatedAt)-fleet.delayMinutes*60000)} (at least ${fleet.delayMinutes} min delayed)`;
+    const age=feedAge(fleet),old=age.hours<48?`${Math.round(age.hours)} h`:`${Math.round(age.hours/24)} days`;
+    const warning=age.state==='stopped'?`Snow fleet feed stopped: last update ${old} ago. Units hidden; old positions would mislead.`:age.state==='stale'?`Fleet feed is ${old} old: positions may be out of date. `:'';
+    status.textContent=fleet.error?`Snow fleet feed problem: ${fleet.error}`:age.state==='stopped'?warning:warning+stamp;
+    status.dataset.problem=String(!!fleet.error||age.state!=='fresh');
+    $('snow-fleet-count').textContent=fleet.error?'Data unavailable':age.state==='stopped'?warning:`${age.state==='stale'?`Stale (${old} old) · `:''}${counts()}`;
+    if(fleet.error||age.state==='stopped')return;
     const s=fleetSummary(fleet);
     host.append(el('p',`Snow fleet: ${counts()}.`));
     if(s.byType.length){const ul=el('ul');ul.className='snow-fleet-types';for(const t of s.byType)ul.append(el('li',`${t.label}s: ${t.available} available${t.inShop?` · ${t.inShop} in shop`:''}`));host.append(ul);}
@@ -44,12 +47,15 @@ export function createSnowFleet({time,exercise}){
     if(!map||!sdk||!fleet)return;
     const [GraphicsLayer,Graphic,FeatureLayer]=sdk;
     units.removeAll();
+    const age=feedAge(fleet);
+    if(age.state==='stopped'){void labels.set([]);return;}
+    const grey=age.state==='stale';
     for(const v of fleet.vehicles){
       if(v.trail.length>1)units.add(new Graphic({geometry:{type:'polyline',paths:[[...v.trail.map(p=>[p[0],p[1]]),...(v.lon===null?[]:[[v.lon,v.lat]])]],spatialReference:{wkid:4326}},symbol:{type:'simple-line',color:[74,163,255,.7],width:2}}));
       if(v.lon===null)continue;
       const shop=v.status==='in-shop',st=FLEET_STATUS[v.status];
       units.add(new Graphic({geometry:{type:'point',longitude:v.lon,latitude:v.lat,spatialReference:{wkid:4326}},
-        symbol:badgeSymbol(unitBadge(v),shop?28:26),
+        symbol:badgeSymbol(grey?{...unitBadge(v),fill:'#7d8790',heading:null}:unitBadge(v),shop?28:26),
         attributes:{id:v.id},popupTemplate:{title:unitName(v),content:()=>{const t=document.createElement('table');t.className='esri-widget__table';
           const where=siteContext(v.lon,v.lat,sites);
           for(const [k,val]of [['Status',`${st.label}${v.statusBasis?` (${v.statusBasis})`:''}`],['At County yard',where.at],['Fuel',where.fuel],['Expected back',v.expectedBack&&time(Date.parse(v.expectedBack))],['Home yard',v.yard],['On snow route',v.onRoute],['Position as of',v.seen&&`${time(Date.parse(v.seen))} · ${ago(v.seen)}`]]){if(!val)continue;const r=t.insertRow();r.insertCell().textContent=k;r.insertCell().textContent=val;}
@@ -74,7 +80,8 @@ export function createSnowFleet({time,exercise}){
       else{if(!r.ok)throw Error(`HTTP ${r.status}`);fleet=validateFleet(await r.json());error=null;}
     }catch(e){error=`Snow fleet unavailable · ${e.message}`;fleet=null;}
     checked=Date.now();render();void draw();
-    window.dispatchEvent(new CustomEvent('storm-snow-fleet',{detail:{fleet,checked}}));
+    // A stopped feed raises no Planning questions: who is in the shop may have changed since.
+    window.dispatchEvent(new CustomEvent('storm-snow-fleet',{detail:{fleet:fleet&&feedAge(fleet).state!=='stopped'?fleet:null,checked}}));
   }
   $('snow-fleet-toggle').addEventListener('calciteCheckboxChange',e=>map?.setLayerPreference('snowFleet',e.target.checked));
   const key=$('snow-fleet-key');key.classList.add('badge-key');key.replaceChildren(...[['working','plow'],['traveling','plow'],['idle','plow'],['parked','plow'],['off','plow'],['off','blower'],['in-shop','wrench']].map(([s,glyph])=>{const img=el('img');img.src=badgeUrl({glyph,fill:FLEET_STATUS[s].color,heading:s==='traveling'?45:null});img.alt='';const span=el('span');span.append(img,glyph==='blower'?'Snow blower':FLEET_STATUS[s].label);return span;}));

@@ -5,6 +5,15 @@ export const FLEET_TYPES=Object.freeze({'plow-truck':'Plow truck','snow-blower':
 export const FLEET_STATUS=Object.freeze({
   working:{label:'Working',color:'#2ecc71'},traveling:{label:'Traveling',color:'#4aa3ff'},idle:{label:'Idle (engine on)',color:'#f5c542'},
   parked:{label:'Parked',color:'#a5a9ad'},'in-shop':{label:'In shop for repair',color:'#ff7a59'},off:{label:'Engine off',color:'#6b7378'},unknown:{label:'Unknown',color:'#a5a9ad'}});
+/** A feed copied on a schedule can stop silently. After STALE_HOURS the map greys the units and says so; after
+ * STOPPED_HOURS it hides them (old positions would mislead). The labelled sample never goes stale. */
+export const STALE_HOURS=2,STOPPED_HOURS=24;
+/** @returns {{hours:number,state:'fresh'|'stale'|'stopped'}} Age of the snapshot (generatedAt) and what the map should do with it. */
+export function feedAge(fleet,now=Date.now()){
+  const hours=Math.max(0,(now-Date.parse(fleet?.generatedAt))/3600000);
+  if(!Number.isFinite(hours))return {hours:NaN,state:'stopped'};
+  return {hours,state:fleet.sample||hours<STALE_HOURS?'fresh':hours<STOPPED_HOURS?'stale':'stopped'};
+}
 /** "Plow truck 43102": equipment type and County equipment ID, for sentences and popup titles. */
 export const unitName=v=>`${FLEET_TYPES[v.type]||'Unit'} ${v.id}`;
 /** Repair priority: a plow back from the shop clears the most road, then blowers, then the rest. */

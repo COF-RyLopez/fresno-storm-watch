@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {validateFleet,unitName,fleetSummary,repairPriority,passTone,needsPass,passExpression} from '../site/lib/snow-fleet-model.js';
+import {validateFleet,unitName,feedAge,STALE_HOURS,STOPPED_HOURS,fleetSummary,repairPriority,passTone,needsPass,passExpression} from '../site/lib/snow-fleet-model.js';
 import {fleetQuestions} from '../site/lib/planning-questions-model.js';
 
 const sample=JSON.parse(readFileSync(new URL('../site/data/snow-fleet/sample.json',import.meta.url)));
@@ -57,4 +57,15 @@ test('planning asks Fleet Services about every unit in the shop',()=>{
   assert.deepEqual(q.map(x=>x.title),['When will plow truck 43102 be back from the shop?','When will plow truck 43103 be back from the shop?']);
   assert.match(q[0].detail,/4 of 6 reporting snow units are available/);assert.equal(q[0].owner,'County Fleet Services');
   assert.deepEqual(fleetQuestions(null),[]);
+});
+
+test('feed age: fresh under 2 h, stale (greyed, warned) under 24 h, stopped (hidden) after; the labelled sample never ages',()=>{
+  const at=h=>Date.parse(base.generatedAt)+h*3600000,f={...base,vehicles:[]};
+  assert.deepEqual([STALE_HOURS,STOPPED_HOURS],[2,24]);
+  assert.equal(feedAge(f,at(1.9)).state,'fresh');
+  assert.equal(feedAge(f,at(2)).state,'stale');assert.equal(Math.round(feedAge(f,at(5)).hours),5);
+  assert.equal(feedAge(f,at(24)).state,'stopped');
+  assert.equal(feedAge({...f,sample:true},at(500)).state,'fresh');
+  assert.equal(feedAge({...f,generatedAt:'nope'},at(1)).state,'stopped');
+  assert.equal(feedAge(f,at(-1)).hours,0);// a clock a little ahead never reads as negative age
 });
