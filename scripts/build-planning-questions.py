@@ -86,13 +86,27 @@ def envelope(geom_ll) -> dict:
             'geometryType': 'esriGeometryEnvelope', 'spatialRel': 'esriSpatialRelIntersects', 'inSR': 4326}
 
 
-def parcel_count(g) -> int:
-    """Parcels touching a metric polygon (simplified to keep the request small)."""
+def parcel_apns(g) -> list[str]:
+    """APNs of parcels touching a metric polygon (simplified to keep the request small)."""
     g4 = transform(to_ll, g.simplify(10))
     rings = [list(map(list, p.exterior.coords)) for p in getattr(g4, 'geoms', [g4])]
-    return get(f'{PARCELS}/query', {'where': '1=1', 'geometry': json.dumps({'rings': rings, 'spatialReference': {'wkid': 4326}}),
-                                    'geometryType': 'esriGeometryPolygon', 'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects',
-                                    'returnCountOnly': 'true', 'f': 'json'})['count']
+    r = get(f'{PARCELS}/query', {'where': '1=1', 'geometry': json.dumps({'rings': rings, 'spatialReference': {'wkid': 4326}}),
+                                 'geometryType': 'esriGeometryPolygon', 'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects',
+                                 'outFields': 'apn', 'returnGeometry': 'false', 'f': 'json'})
+    if r.get('exceededTransferLimit'):
+        raise RuntimeError('Flood pocket has more parcels than one parcel query returns')
+    return sorted({str(f['attributes']['apn']) for f in r['features'] if f['attributes'].get('apn')})
+
+
+def pocket_id(city: str, apns: list[str], previous: list[dict], taken: set[str]) -> str:
+    """Keep a flood pocket's id while it is mostly the same parcels (an answer stays attached when FEMA or parcel edits
+    move its edge); a new pocket is named by its lowest APN."""
+    mine = set(apns)
+    best = max((q for q in previous if q['id'] not in taken and q.get('apns')),
+               key=lambda q: len(mine & set(q['apns'])) / len(mine | set(q['apns'])), default=None)
+    if best and len(mine & set(best['apns'])) / len(mine | set(best['apns'])) >= 0.5:
+        return best['id']
+    return f'sandbags:{norm(city)}:{apns[0]}'
 
 
 def reverse(lon: float, lat: float) -> str:
@@ -169,7 +183,7 @@ def ll(pt) -> dict:
     return {'lon': round(lon, 5), 'lat': round(lat, 5)}
 
 
-def main() -> None:
+def main(previous: dict | None = None) -> None:
     limits = query(CITY_LIMITS, outFields='AGENCY_NAME')
     county_m = unary_union([metric(f) for f in limits])  # the 'County of Fresno' polygon is unincorporated land only
     cities: dict[str, object] = {}
@@ -190,6 +204,8 @@ def main() -> None:
     questions: list[dict] = []
     exposure: dict[str, dict] = {}
     candidates = nearby_candidates(buildings, fire_rows)
+    old_pockets = [q for q in (previous or {}).get('questions', []) if q.get('kind') == 'sandbags']
+    taken: set[str] = set()
 
     # --- Flood zones inside cities, and sandbag coverage --------------------------------------------
     sfha_all, mod_all = [], []
@@ -206,7 +222,8 @@ def main() -> None:
             dry = p.difference(basins)
             if dry.area < 0.5 * p.area:
                 continue  # mostly a ponding basin: built to hold water
-            n = parcel_count(dry)
+            apns = parcel_apns(dry)
+            n = len(apns)
             parcels_total += n
             if n < MIN_PARCELS:
                 continue
@@ -216,8 +233,10 @@ def main() -> None:
                 continue
             at = p.representative_point()
             near = reverse(**{k: v for k, v in zip(('lon', 'lat'), to_ll(at.x, at.y))})
+            qid = pocket_id(city, apns, old_pockets, taken)
+            taken.add(qid)
             questions.append({
-                'id': f'sandbags:{norm(city)}:{round(at.x)}:{round(at.y)}', 'kind': 'sandbags', 'place': city,
+                'id': qid, 'kind': 'sandbags', 'place': city, 'apns': apns,
                 'title': f'Where will residents near {near} ({city}) get sandbags?' if near else f'Where will residents of a {n}-parcel flood pocket in {city} get sandbags?',
                 'detail': f'{n} parcels touch the FEMA 1% annual-chance zone here ({round(p.area / ACRE)} acres, outside ponding basins). '
                           f'Nearest active County sandbag site: {name.title()}, {miles:.1f} mi.',
@@ -347,12 +366,12 @@ def run(argv: list[str], fetch=published, build=main, now: float | None = None) 
         OUT.write_text(json.dumps(prior, indent=1) + '\n', encoding='utf-8')
         print(f'Reused published planning questions ({age / 3600:.1f} h old)', file=sys.stderr)
         return 'reused'
+    local = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else None
     try:
-        build()
+        build(prior or local)  # the last copy carries the flood-pocket ids answers are attached to
         return 'built'
     except Exception as error:
         # Optional feed: serve the newest good copy (published, else the committed one) and say so in the run.
-        local = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else None
         keep = max((d for d in (prior, local) if d and usable(d, now) is not None), key=lambda d: d['generatedAt'], default=None)
         if keep:
             OUT.write_text(json.dumps(keep, indent=1) + '\n', encoding='utf-8')
