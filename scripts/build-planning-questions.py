@@ -24,6 +24,7 @@ from pathlib import Path
 
 from pyproj import Transformer
 from shapely.geometry import Point, mapping, shape
+from shapely.geometry.polygon import orient
 from shapely.ops import transform, unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +37,7 @@ COUNTY_BUILDINGS = 'https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/se
 FEMA = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Flood_Hazard_Reduced_Set_gdb/FeatureServer/0'
 BASINS = 'https://services.arcgis.com/Z7HrzLV55ji5SaOw/arcgis/rest/services/FMFCD_Layers/FeatureServer/11'
 DAMS = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/NID_v1/FeatureServer/0'
+YARDS = f'{G}/CY_FRESNO/RDYARD/MapServer/0'
 LEVEES = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/NLD2_PUBLIC_v1/FeatureServer/14'
 INUNDATION = 'https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/DSOD_Approved_Inundation_Boundaries_View/FeatureServer/0'
 PUBLISHED = 'https://cof-rylopez.github.io/fresno-storm-watch/data/planning/questions.json'
@@ -45,6 +47,9 @@ SANDBAG_REACH_MI, MIN_PARCELS, MIN_POCKET_ACRES = 1.5, 20, 5
 # 24/7 County operations by building description; anything else is an office that can close in a storm.
 CRITICAL = re.compile(r'jail|juvenile|jjc|psychiatric|crisis|sheriff|coroner|animal control|ems\b|dispatch|communications|data center|itsd|central kitchen|public health lab', re.I)
 NOT_CRITICAL = re.compile(r'rental|cottage|civil|\bsid\b|court|garage|storage|modular', re.I)
+# Sites offered as nearby sandbag options: County buildings minus secure or 24/7 care sites the public cannot use.
+NOT_A_SITE = re.compile(r'^area \d|jail|court|juvenile|jjc|psychiatric|crisis|coroner|detention|sheriff|modular|storage|plant|garage|annex', re.I)
+NEARBY_MI = 1.5
 ACRONYMS = re.compile(r'\b(Jjc|Ems|Dbh|Itsd|Dss|Pw)\b')
 
 to_m = Transformer.from_crs(4326, 32611, always_xy=True).transform
@@ -111,6 +116,54 @@ def norm(name: str) -> str:
     return re.sub(r'[^a-z0-9]', '', re.sub(r'\b(dam|detention|basin|reservoir)\b', '', str(name or '').lower()))
 
 
+def rings(g) -> dict:
+    """ArcGIS polygon JSON in WGS84 (outer rings clockwise), simplified to ~15 m and rounded to ~1 m."""
+    out = []
+    for poly in getattr(g.simplify(15), 'geoms', [g.simplify(15)]):
+        if poly.is_empty or poly.geom_type != 'Polygon':
+            continue
+        poly = orient(transform(to_ll, poly), sign=-1.0)
+        out += [[[round(x, 5), round(y, 5)] for x, y in ring.coords] for ring in [poly.exterior, *poly.interiors]]
+    return {'rings': out}
+
+
+def nearby_candidates(buildings: list[dict], fire_rows: list[dict]) -> list[tuple]:
+    """(name, kind, address, metric point) for County buildings the public can use, road yards and fire stations."""
+    out, seen = [], set()
+    for b in buildings:
+        a = b['properties']
+        desc, addr = (a.get('buildingDescription') or '').strip(), (a.get('addressLine1') or '').strip()
+        if not desc or NOT_A_SITE.search(desc) or addr.upper() in seen:
+            continue
+        seen.add(addr.upper())
+        out.append((ACRONYMS.sub(lambda m: m[1].upper(), desc.title()), 'County building', f"{addr}, {a.get('city') or ''}".strip(', '), metric(b).representative_point()))
+    for f in query(YARDS, outFields='RDYARD_NM,RDYARD_ADDR1'):
+        a = f['properties']
+        out.append((a['RDYARD_NM'].title(), 'County road yard', a.get('RDYARD_ADDR1') or '', Point(to_m(*shape(f['geometry']).coords[0]))))
+    for f in fire_rows:
+        a = f['properties']
+        juris = (a.get('jurisdicti') or '').strip()
+        city_owned = (a.get('facility') or '').strip().upper() == 'CITY'  # CITY / CO (county district) / VOL (volunteer)
+        out.append((f"Fire Station {a.get('station_id') or ''} · {juris}".strip(), 'Fire station (City-owned)' if city_owned else 'Fire station', '', Point(to_m(*shape(f['geometry']).coords[0]))))
+    return out
+
+
+def nearby(g, candidates: list[tuple]) -> list[dict]:
+    """Closest options to a flood pocket, a few of each kind so fire stations and yards are not crowded out by offices:
+    up to 5 County buildings and 2 fire stations within NEARBY_MI, and the nearest road yard within 3 mi; never fewer than 3."""
+    ranked = sorted(((g.distance(pt) / MILE, name, kind, addr, pt) for name, kind, addr, pt in candidates), key=lambda r: r[0])
+    quota = {'County building': (5, NEARBY_MI), 'County road yard': (1, 3.0), 'Fire station': (2, NEARBY_MI)}
+    keep, used = [], {}
+    for r in ranked:
+        group = 'Fire station' if r[2].startswith('Fire station') else r[2]
+        cap, reach = quota[group]
+        if r[0] <= reach and used.get(group, 0) < cap:
+            keep.append(r); used[group] = used.get(group, 0) + 1
+    if len(keep) < 3:
+        keep = ranked[:3]
+    return [{'name': name, 'kind': kind, 'address': addr, 'miles': round(d, 2), **ll(pt)} for d, name, kind, addr, pt in sorted(keep, key=lambda r: r[0])]
+
+
 def ll(pt) -> dict:
     lon, lat = to_ll(pt.x, pt.y)
     return {'lon': round(lon, 5), 'lat': round(lat, 5)}
@@ -130,11 +183,13 @@ def main() -> None:
     place_of = lambda p: next((n for n, g in cities.items() if g.contains(p)), None)  # noqa: E731
     sandbags = [r for r in json.loads((ROOT / 'site/data/county-sandbags-latest.json').read_text())['rows'] if r.get('geometry') and r['state'] == 'active']
     bag_pts = [(r['name'], r['address'], Point(to_m(r['geometry']['x'], r['geometry']['y']))) for r in sandbags]
-    fire = [Point(to_m(*shape(f['geometry']).coords[0])) for f in query(FIRE, outFields='name') if f.get('geometry')]
+    fire_rows = [f for f in query(FIRE, outFields='name,station_id,jurisdicti,facility') if f.get('geometry')]
+    fire = [Point(to_m(*shape(f['geometry']).coords[0])) for f in fire_rows]
     buildings = [f for f in query(COUNTY_BUILDINGS, where='isInactive=0', outFields='buildingDescription,addressLine1,city,APN') if f.get('geometry')]
 
     questions: list[dict] = []
     exposure: dict[str, dict] = {}
+    candidates = nearby_candidates(buildings, fire_rows)
 
     # --- Flood zones inside cities, and sandbag coverage --------------------------------------------
     sfha_all, mod_all = [], []
@@ -166,7 +221,9 @@ def main() -> None:
                 'title': f'Where will residents near {near} ({city}) get sandbags?' if near else f'Where will residents of a {n}-parcel flood pocket in {city} get sandbags?',
                 'detail': f'{n} parcels touch the FEMA 1% annual-chance zone here ({round(p.area / ACRE)} acres, outside ponding basins). '
                           f'Nearest active County sandbag site: {name.title()}, {miles:.1f} mi.',
-                'owner': f'County OES with {city}', 'source': 'FEMA NFHL · County parcels · County sandbag sites', **ll(at), 'parcels': n})
+                'owner': f'County OES with {city}', 'source': 'FEMA NFHL · County parcels · County sandbag sites', **ll(at), 'parcels': n,
+                # The pocket itself (outside ponding basins), so the panel can highlight its parcels, and the closest options.
+                'geometry': rings(dry), 'nearby': nearby(dry, candidates)})
         exposure[city] = {
             'sqMi': round(g.area / MILE**2, 1), 'sfhaSqMi': round(sfha.area / MILE**2, 2), 'moderateSqMi': round(mod.area / MILE**2, 1),
             'sfhaParcels': parcels_total, 'sandbagSites': sum(g.contains(b[2]) for b in bag_pts), 'fireStations': sum(g.contains(p) for p in fire),

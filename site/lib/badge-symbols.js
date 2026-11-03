@@ -15,6 +15,8 @@ const GLYPHS=Object.freeze({
   wrench:ink=>`<path fill="${ink}" d="M22.6 10.2a4.4 4.4 0 0 0-5.5 5.6l-6.8 6.8a1.7 1.7 0 0 0 2.4 2.4l6.8-6.8a4.4 4.4 0 0 0 5.6-5.5l-2.7 2.7-2.4-.6-.6-2.4Z"/>`,
   garage:(ink,fill)=>`<path fill="${ink}" d="M9.5 17.2 18 11l8.5 6.2V26h-17Z"/><rect x="13.5" y="19" width="9" height="7" fill="${fill}"/><path stroke="${ink}" stroke-width="1" d="M13.5 21.3h9M13.5 23.6h9"/>`,
   fuel:(ink,fill)=>`<rect x="10.5" y="10.5" width="9" height="15.5" rx="1.2" fill="${ink}"/><rect x="12.2" y="12.4" width="5.6" height="4.2" fill="${fill}"/><path fill="none" stroke="${ink}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.2h2.3l1.9 2v6.4a1.2 1.2 0 0 0 2.4 0v-7.8l-2-2.2"/>`,
+  building:(ink,fill)=>`<path fill="${ink}" d="M9.5 15.2 18 10l8.5 5.2v1.6h-17Z"/><rect x="10.5" y="24" width="15" height="2" fill="${ink}"/><path stroke="${ink}" stroke-width="2" d="M12.5 17.6v5.6M16.2 17.6v5.6M19.8 17.6v5.6M23.5 17.6v5.6"/>`,
+  fire:ink=>`<path fill="${ink}" d="M18.4 9.5c.6 3.2 4.6 5.1 4.6 9.6a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.7.1 1.7.9 2.8 2 3.1-.6-3.1.3-5.8 1.2-8Z"/>`,
   dam:ink=>`<path fill="${ink}" d="M18.5 11h4l3 15h-10Z"/><path fill="none" stroke="${ink}" stroke-width="1.6" stroke-linecap="round" d="M9 15.5q1.6-1.6 3.2 0t3.2 0M9 20.5q1.6-1.6 3.2 0t3.2 0"/>`,
 });
 export const BADGE_GLYPHS=Object.freeze(Object.keys(GLYPHS));

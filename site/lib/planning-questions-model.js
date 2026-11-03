@@ -6,6 +6,15 @@ export const QUESTION_KINDS=Object.freeze({sandbags:'Flood zones & sandbags',dam
 /** Map layers a question's Map button turns on, so the thing asked about is drawn. */
 export const QUESTION_LAYERS=Object.freeze({sandbags:['fema','countySandbags'],dams:['dams','damInundation'],levees:['levees'],power:['facilities'],equipment:['snowFleet'],gauges:['gauges']});
 export const COUNTY='Fresno County';
+/** County parcels (public): drawn for a flood-pocket question so the parcels it counts are visible. */
+export const PARCELS_URL='https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Parcels/FeatureServer/0';
+const inCounty=(lon,lat)=>Number.isFinite(lon)&&Number.isFinite(lat)&&lon>=-121&&lon<=-118&&lat>=35.8&&lat<=37.6;
+/** Badge for a nearby-site row: County building, road yard, or fire station (City-owned ones in a muted colour). */
+export function nearbyBadge(kind){
+  if(kind==='County road yard')return {glyph:'garage',shape:'square',fill:'#6fd3e0'};
+  if(kind.startsWith('Fire station'))return {glyph:'fire',shape:'square',fill:/City-owned/.test(kind)?'#a5a9ad':'#e4572e'};
+  return {glyph:'building',shape:'square',fill:'#2ecc71'};
+}
 
 /** @param {object} data site/data/planning/questions.json @returns {object} The same data, or throws on a shape the panel cannot show. */
 export function validateQuestions(data){
@@ -14,7 +23,9 @@ export function validateQuestions(data){
   for(const q of data.questions){
     if(typeof q?.id!=='string'||!QUESTION_KINDS[q.kind]||typeof q.title!=='string'||typeof q.place!=='string'||typeof q.owner!=='string')throw Error('A planning question is missing its id, topic, title, place or owner.');
     if(ids.has(q.id))throw Error(`Duplicate planning question ${q.id}.`);ids.add(q.id);
-    if(!Number.isFinite(q.lon)||!Number.isFinite(q.lat)||q.lon<-121||q.lon>-118||q.lat<35.8||q.lat>37.6)throw Error(`Planning question ${q.id} is placed outside Fresno County.`);
+    if(!inCounty(q.lon,q.lat))throw Error(`Planning question ${q.id} is placed outside Fresno County.`);
+    if(q.geometry!==undefined&&!(Array.isArray(q.geometry?.rings)&&q.geometry.rings.length&&q.geometry.rings.every(r=>Array.isArray(r)&&r.length>=4&&r.every(p=>inCounty(p?.[0],p?.[1])))))throw Error(`Planning question ${q.id} has an invalid flood-pocket outline.`);
+    if(q.nearby!==undefined&&!(Array.isArray(q.nearby)&&q.nearby.every(n=>typeof n?.name==='string'&&typeof n.kind==='string'&&Number.isFinite(n.miles)&&inCounty(n.lon,n.lat))))throw Error(`Planning question ${q.id} has an invalid nearby-site list.`);
   }
   return data;
 }
