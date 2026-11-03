@@ -1,0 +1,3384 @@
+{
+  "type": "FeatureCollection",
+  "name": "Reported storm problem locations - locator references",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "D1-01",
+      "properties": {
+        "id": "D1-01",
+        "name": "Mendota - Panoche Creek / Belmont",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-01",
+        "reported_text": "MENDOTA: Belmont Avenue where Panoche Creek comes down from the hills. Water goes to Mendota from west of Douglas Avenue.",
+        "reported_concern": "Reported runoff / flood-routing concern",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "General area only",
+        "geometry_role": "Reference location only",
+        "position_basis": "Belmont / Douglas junction is a named-area reference. Report concerns runoff west of Douglas; this is not the creek crossing or a verified flow route.",
+        "confirmation": "Confirm the creek crossing, affected Belmont reach and downstream path.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.495249303288,
+          36.748817109852
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "D1-02",
+      "properties": {
+        "id": "D1-02",
+        "name": "Easton - Elm / Jefferson",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-02",
+        "reported_text": "EASTON: Elm Avenue and Jefferson in the Easton area. Pumps have been deployed in the past and have done the job.",
+        "reported_concern": "Reported ponding / pumping response; documented emergency response activity",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "2023 DR-4699 response coordinate 36.65621, -119.79084 selected as a geographic reference, not a damage pin. DR-4683 coordinate retained separately.",
+        "confirmation": "Affected location and limits remain approximate.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.79084,
+          36.65621
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "D1-03",
+      "properties": {
+        "id": "D1-03",
+        "name": "El Porvenir - El Progresso Avenue",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-03",
+        "reported_text": "EL PORVENIR: Along El Progresso Ave. This was repaired, but good to keep tabs on.",
+        "reported_concern": "Reported repaired location needing monitoring",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "All three County-export EL PROGRESSO AVE features; reference road coverage is not the repair extent.",
+        "confirmation": "Affected location and limits remain approximate.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              -120.39275,
+              36.50273
+            ],
+            [
+              -120.39292,
+              36.50198
+            ]
+          ],
+          [
+            [
+              -120.39275,
+              36.50273
+            ],
+            [
+              -120.39299,
+              36.50291
+            ]
+          ],
+          [
+            [
+              -120.39073,
+              36.50288
+            ],
+            [
+              -120.39275,
+              36.50273
+            ]
+          ],
+          [
+            [
+              -120.38902,
+              36.50235
+            ],
+            [
+              -120.38975,
+              36.50252
+            ]
+          ],
+          [
+            [
+              -120.38975,
+              36.50252
+            ],
+            [
+              -120.39073,
+              36.50288
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "D1-04",
+      "properties": {
+        "id": "D1-04",
+        "name": "Westpark - Prospect north of Jensen",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-04",
+        "reported_text": "WESTPARK: Prospect Avenue, north of Jensen Avenue. Poor drainage.",
+        "reported_concern": "Reported local drainage concern",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "Two connected Prospect road features adjoining Jensen; mapped road length does not assert the extent of poor drainage.",
+        "confirmation": "Affected location and limits remain approximate.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              -119.85141,
+              36.71018999999999
+            ],
+            [
+              -119.85139,
+              36.70658
+            ]
+          ],
+          [
+            [
+              -119.85143000000001,
+              36.71381
+            ],
+            [
+              -119.85141,
+              36.71018999999999
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "D1-05",
+      "properties": {
+        "id": "D1-05",
+        "name": "San Joaquin River - west of Highway 145",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-05",
+        "reported_text": "SAN JOAQUIN RIVER: West of 145 \u2013 erosion of the banks in 2023 caused some difficulties.",
+        "reported_concern": "Reported 2023 bank erosion",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "General area only",
+        "geometry_role": "Reference location only",
+        "position_basis": "Skaggs Bridge Park near Highway 145 is a reference landmark only. Erosion was reported west of the highway; neither the eroded bank nor its endpoints is located here.",
+        "confirmation": "Identify bank side and upstream/downstream reach endpoints; preserve the 2023 event date.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.0605307,
+          36.8204996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "D1-06",
+      "properties": {
+        "id": "D1-06",
+        "name": "Tranquillity - slough along reported James Avenue",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-06",
+        "reported_text": "TRANQUILLITY: In heavy water years in the past \u2013 not 2023 \u2013 the slough along James Avenue came close to overflowing its banks.",
+        "reported_concern": "Reported historical near-overflow",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "General area only",
+        "geometry_role": "Reference location only",
+        "position_basis": "Tranquillity community reference only. James Avenue versus James Road and the reported slough are unresolved; no substitute channel is asserted.",
+        "confirmation": "Identify the slough and reach. The reported near-overflow was in earlier heavy-water years, explicitly not 2023.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.256008,
+          36.64734
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "D1-07",
+      "properties": {
+        "id": "D1-07",
+        "name": "Mendota Slough / Mendota Pool Park concern",
+        "section": "Earlier District 1",
+        "source_group": "District 1 (also in email)",
+        "source": "District 1 Chief of Staff list, previously supplied; repeated in OES email of 2026-11-03",
+        "source_item": "D1-07",
+        "reported_text": "MENDOTA: Our office has been in contact with state about the Mendota Slough and the concern that water hyacinth could back up water into the Mendota Pool Park area.",
+        "reported_concern": "Reported vegetation-related backwater concern",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "District 1 list and RE Potential problem areas.msg",
+        "source_date": "Original date not supplied; repeated 2026-11-03",
+        "position_status": "General area only",
+        "geometry_role": "Reference location only",
+        "position_basis": "Mendota Pool Park reference only; no vegetation obstruction, slough reach or backwater area was mapped.",
+        "confirmation": "Identify the slough / vegetation location and its connection to the park.",
+        "photo_status": "No new photo reviewed for this record",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.373278,
+          36.77928
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "A01",
+      "properties": {
+        "id": "A01",
+        "name": "47390 Lost Hills Rd",
+        "section": "Additional westside reports",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "A01",
+        "reported_text": "47390 Lost Hills Rd",
+        "reported_concern": "47390 Lost Hills Rd",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Multiple candidates",
+        "geometry_role": "Reference location only",
+        "position_basis": "The address resolves to two different StreetAddress candidates, with and without a W prefix. Both are shown; neither is accepted as the actual address.",
+        "confirmation": "Confirm the address / cross street or provide a map pin. Two candidate symbols represent one report.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [
+            -120.211110168706,
+            36.059545627409
+          ],
+          [
+            -120.326148897864,
+            36.114947021783
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "A02",
+      "properties": {
+        "id": "A02",
+        "name": "Tranquility, Manning between Derrick and I-5",
+        "section": "Additional westside reports",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "A02",
+        "reported_text": "Tranquility, Manning between Derrick and I-5",
+        "reported_concern": "Tranquility, Manning between Derrick and I-5",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "County road reference line between the named Derrick and I-5 limits. Geocoder cross streets bound the selection. The mapped road is not a damage or inundation extent.",
+        "confirmation": "Confirm the affected feature and extent.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              -120.42458,
+              36.60343
+            ],
+            [
+              -120.42471,
+              36.60343
+            ]
+          ],
+          [
+            [
+              -120.41567,
+              36.6035
+            ],
+            [
+              -120.42458,
+              36.60343
+            ]
+          ],
+          [
+            [
+              -120.46953,
+              36.60358
+            ],
+            [
+              -120.47858,
+              36.60366
+            ]
+          ],
+          [
+            [
+              -120.45166,
+              36.60349
+            ],
+            [
+              -120.46041,
+              36.60353
+            ]
+          ],
+          [
+            [
+              -120.49653,
+              36.60366
+            ],
+            [
+              -120.51464,
+              36.60362
+            ]
+          ],
+          [
+            [
+              -120.47858,
+              36.60366
+            ],
+            [
+              -120.4883,
+              36.60372
+            ]
+          ],
+          [
+            [
+              -120.4883,
+              36.60372
+            ],
+            [
+              -120.49653,
+              36.60366
+            ]
+          ],
+          [
+            [
+              -120.40673,
+              36.6035
+            ],
+            [
+              -120.41567,
+              36.6035
+            ]
+          ],
+          [
+            [
+              -120.388561170729,
+              36.603499953896154
+            ],
+            [
+              -120.39745,
+              36.60349
+            ]
+          ],
+          [
+            [
+              -120.43367,
+              36.6035
+            ],
+            [
+              -120.44248,
+              36.60347
+            ]
+          ],
+          [
+            [
+              -120.44268,
+              36.60347
+            ],
+            [
+              -120.45166,
+              36.60349
+            ]
+          ],
+          [
+            [
+              -120.42471,
+              36.60343
+            ],
+            [
+              -120.43367,
+              36.6035
+            ]
+          ],
+          [
+            [
+              -120.53265,
+              36.60388
+            ],
+            [
+              -120.55073,
+              36.60417
+            ]
+          ],
+          [
+            [
+              -120.55968,
+              36.60439
+            ],
+            [
+              -120.56863,
+              36.60445
+            ]
+          ],
+          [
+            [
+              -120.46041,
+              36.60353
+            ],
+            [
+              -120.46064,
+              36.60353
+            ]
+          ],
+          [
+            [
+              -120.55073,
+              36.60417
+            ],
+            [
+              -120.55968,
+              36.60439
+            ]
+          ],
+          [
+            [
+              -120.56863,
+              36.60445
+            ],
+            [
+              -120.58421,
+              36.60456
+            ]
+          ],
+          [
+            [
+              -120.39745,
+              36.60349
+            ],
+            [
+              -120.40673,
+              36.6035
+            ]
+          ],
+          [
+            [
+              -120.51464,
+              36.60362
+            ],
+            [
+              -120.53265,
+              36.60388
+            ]
+          ],
+          [
+            [
+              -120.46064,
+              36.60353
+            ],
+            [
+              -120.46953,
+              36.60358
+            ]
+          ],
+          [
+            [
+              -120.44248,
+              36.60347
+            ],
+            [
+              -120.44268,
+              36.60347
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "A03",
+      "properties": {
+        "id": "A03",
+        "name": "Kamm between Derrick and I-5",
+        "section": "Additional westside reports",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "A03",
+        "reported_text": "Kamm between Derrick and I-5",
+        "reported_concern": "Kamm between Derrick and I-5",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "County road reference line between the named Derrick and I-5 limits. Geocoder cross streets bound the selection. The mapped road is not a damage or inundation extent.",
+        "confirmation": "Confirm the affected feature and extent.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              -120.389040028858,
+              36.53071
+            ],
+            [
+              -120.42496,
+              36.53071
+            ]
+          ],
+          [
+            [
+              -120.46118,
+              36.53081
+            ],
+            [
+              -120.48532,
+              36.5312
+            ]
+          ],
+          [
+            [
+              -120.42496,
+              36.53071
+            ],
+            [
+              -120.44296,
+              36.5308
+            ]
+          ],
+          [
+            [
+              -120.44296,
+              36.5308
+            ],
+            [
+              -120.46118,
+              36.53081
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "A04",
+      "properties": {
+        "id": "A04",
+        "name": "Lassen north of Huron.",
+        "section": "Additional westside reports",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "A04",
+        "reported_text": "Lassen north of Huron.",
+        "reported_concern": "Lassen north of Huron.",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "General area only",
+        "geometry_role": "Reference location only",
+        "position_basis": "Huron community reference only. The report says Lassen north of Huron but gives no northern endpoint. No precise affected location is asserted.",
+        "confirmation": "Confirm the affected Lassen Avenue reach north of Huron.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.103513,
+          36.204983
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "H01",
+      "properties": {
+        "id": "H01",
+        "name": "Hwy 180/Oliver Road",
+        "section": "Highway 180",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "H01",
+        "reported_text": "Hwy 180/Oliver Road\n36.734014, -119.493441",
+        "reported_concern": "Hwy 180/Oliver Road\n36.734014, -119.493441",
+        "coordinate_text": "36.734014, -119.493441",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TRIMMER SPRINGS RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.493441,
+          36.734014
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "H02",
+      "properties": {
+        "id": "H02",
+        "name": "Hwy 180/Piedra Road",
+        "section": "Highway 180",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "H02",
+        "reported_text": "Hwy 180/Piedra Road\n36.731582, -119.470612",
+        "reported_concern": "Hwy 180/Piedra Road\n36.731582, -119.470612",
+        "coordinate_text": "36.731582, -119.470612",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "KINGS CANYON RD (N FR) FTRD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.470612,
+          36.731582
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "H03",
+      "properties": {
+        "id": "H03",
+        "name": "Hwy 180 east of Silver Ln",
+        "section": "Highway 180",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "H03",
+        "reported_text": "Hwy 180 east of Silver Ln\n36.754342, -119.213279",
+        "reported_concern": "Hwy 180 east of Silver Ln\n36.754342, -119.213279",
+        "coordinate_text": "36.754342, -119.213279",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "CRANE LN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.213279,
+          36.754342
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "H04",
+      "properties": {
+        "id": "H04",
+        "name": "Hwy 180 east of Dunlap Road (Overpass)",
+        "section": "Highway 180",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "H04",
+        "reported_text": "Hwy 180 east of Dunlap Road (Overpass)\n36.756920, -119.163212",
+        "reported_concern": "Hwy 180 east of Dunlap Road (Overpass)\n36.756920, -119.163212",
+        "coordinate_text": "36.756920, -119.163212",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "DUNLAP RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.163212,
+          36.75692
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K01",
+      "properties": {
+        "id": "K01",
+        "name": "K21/K11 #1: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K01",
+        "reported_text": "1. 36.922921, -119.710091 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "36.922921, -119.710091",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.710091,
+          36.922921
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K02",
+      "properties": {
+        "id": "K02",
+        "name": "K21/K11 #2: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K02",
+        "reported_text": "2. 36.931039, -119.705454 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "36.931039, -119.705454",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.705454,
+          36.931039
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K03",
+      "properties": {
+        "id": "K03",
+        "name": "K21/K11 #3: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K03",
+        "reported_text": "3. 36.934947, -119.698634 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.934947, -119.698634",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.698634,
+          36.934947
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K04",
+      "properties": {
+        "id": "K04",
+        "name": "K21/K11 #4: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K04",
+        "reported_text": "4. 36.939454, -119.686105 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "36.939454, -119.686105",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.686105,
+          36.939454
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K05",
+      "properties": {
+        "id": "K05",
+        "name": "K21/K11 #5: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K05",
+        "reported_text": "5. 36.939674, -119.682531 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.939674, -119.682531",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.682531,
+          36.939674
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K06",
+      "properties": {
+        "id": "K06",
+        "name": "K21/K11 #6: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K06",
+        "reported_text": "6. 36.941567, -119.679813 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.941567, -119.679813",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.679813,
+          36.941567
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K07",
+      "properties": {
+        "id": "K07",
+        "name": "K21/K11 #7: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K07",
+        "reported_text": "7. 36.947787, -119.673259 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.947787, -119.673259",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.673259,
+          36.947787
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K08",
+      "properties": {
+        "id": "K08",
+        "name": "K21/K11 #8: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K08",
+        "reported_text": "8. 36.948303, -119.671875 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.948303, -119.671875",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.671875,
+          36.948303
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K09",
+      "properties": {
+        "id": "K09",
+        "name": "K21/K11 #9: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K09",
+        "reported_text": "9. 36.947226, -119.668457 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "36.947226, -119.668457",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.668457,
+          36.947226
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K10",
+      "properties": {
+        "id": "K10",
+        "name": "K21/K11 #10: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K10",
+        "reported_text": "10. 36.947433, -119.66224 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.947433, -119.66224",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.66224,
+          36.947433
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K11",
+      "properties": {
+        "id": "K11",
+        "name": "K21/K11 #11: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K11",
+        "reported_text": "11. 36.96583, -119.646798 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.96583, -119.646798",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.646798,
+          36.96583
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K12",
+      "properties": {
+        "id": "K12",
+        "name": "K21/K11 #12: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K12",
+        "reported_text": "12. 36.969757, -119.617408 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.969757, -119.617408",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.617408,
+          36.969757
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K13",
+      "properties": {
+        "id": "K13",
+        "name": "K21/K11 #13: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K13",
+        "reported_text": "13. 36.969173, -119.610121 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.969173, -119.610121",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.610121,
+          36.969173
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K14",
+      "properties": {
+        "id": "K14",
+        "name": "K21/K11 #14: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K14",
+        "reported_text": "14. 36.985605, -119.598924 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "36.985605, -119.598924",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.598924,
+          36.985605
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K15",
+      "properties": {
+        "id": "K15",
+        "name": "K21/K11 #15: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K15",
+        "reported_text": "15. 37.013876, -119.567363 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.013876, -119.567363",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.567363,
+          37.013876
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K16",
+      "properties": {
+        "id": "K16",
+        "name": "K21/K11 #16: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K16",
+        "reported_text": "16. 37.0375, -119.514485 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.0375, -119.514485",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.514485,
+          37.0375
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K17",
+      "properties": {
+        "id": "K17",
+        "name": "K21/K11 #17: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K17",
+        "reported_text": "17. 37.065794, -119.494144 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.065794, -119.494144",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.494144,
+          37.065794
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K18",
+      "properties": {
+        "id": "K18",
+        "name": "K21/K11 #18: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K18",
+        "reported_text": "18. 37.07535, -119.485327 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.07535, -119.485327",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "SJ AND E RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.485327,
+          37.07535
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K19",
+      "properties": {
+        "id": "K19",
+        "name": "K21/K11 #19: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K19",
+        "reported_text": "19. 37.081663, -119.482366 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.081663, -119.482366",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.482366,
+          37.081663
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K20",
+      "properties": {
+        "id": "K20",
+        "name": "K21/K11 #20: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K20",
+        "reported_text": "20. 37.085829, -119.466726 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.085829, -119.466726",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.466726,
+          37.085829
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K21",
+      "properties": {
+        "id": "K21",
+        "name": "K21/K11 #21: Wash out",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K21",
+        "reported_text": "21. 37.094612, -119.461458 / Wash out",
+        "reported_concern": "Wash out",
+        "coordinate_text": "37.094612, -119.461458",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.461458,
+          37.094612
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K22",
+      "properties": {
+        "id": "K22",
+        "name": "K21/K11 #22: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K22",
+        "reported_text": "22. 37.099309, -119.454743 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.099309, -119.454743",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.454743,
+          37.099309
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K23",
+      "properties": {
+        "id": "K23",
+        "name": "K21/K11 #23: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K23",
+        "reported_text": "23. 37.104854, -119.45244 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.104854, -119.45244",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.45244,
+          37.104854
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K24",
+      "properties": {
+        "id": "K24",
+        "name": "K21/K11 #24: Wash out",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K24",
+        "reported_text": "24. 37.120945, -119.44819 / Wash out",
+        "reported_concern": "Wash out",
+        "coordinate_text": "37.120945, -119.44819",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.44819,
+          37.120945
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K25",
+      "properties": {
+        "id": "K25",
+        "name": "K21/K11 #25: Mudslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K25",
+        "reported_text": "25. 37.127286, -119.440499 / Mudslide",
+        "reported_concern": "Mudslide",
+        "coordinate_text": "37.127286, -119.440499",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.440499,
+          37.127286
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K26",
+      "properties": {
+        "id": "K26",
+        "name": "K21/K11 #26: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K26",
+        "reported_text": "26. 37.127933, -119.433834 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.127933, -119.433834",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.433834,
+          37.127933
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K27",
+      "properties": {
+        "id": "K27",
+        "name": "K21/K11 #27: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K27",
+        "reported_text": "27. 37.131659, -119.400367 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.131659, -119.400367",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.400367,
+          37.131659
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K28",
+      "properties": {
+        "id": "K28",
+        "name": "K21/K11 #28: Wash out",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K28",
+        "reported_text": "28. 37.12676, -119.442503 / Wash out",
+        "reported_concern": "Wash out",
+        "coordinate_text": "37.12676, -119.442503",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "JOSE BASIN RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.442503,
+          37.12676
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K29",
+      "properties": {
+        "id": "K29",
+        "name": "K21/K11 #29: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K29",
+        "reported_text": "29. 37.074303, -119.457618 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.074303, -119.457618",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.457618,
+          37.074303
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K30",
+      "properties": {
+        "id": "K30",
+        "name": "K21/K11 #30: Mudslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K30",
+        "reported_text": "30. 37.072601, -119.441443 / Mudslide",
+        "reported_concern": "Mudslide",
+        "coordinate_text": "37.072601, -119.441443",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.441443,
+          37.072601
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K31",
+      "properties": {
+        "id": "K31",
+        "name": "K21/K11 #31: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K31",
+        "reported_text": "31. 37.057711, -119.374505 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.057711, -119.374505",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.374505,
+          37.057711
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K32",
+      "properties": {
+        "id": "K32",
+        "name": "K21/K11 #32: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K32",
+        "reported_text": "32. 37.053793, -119.391655 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.053793, -119.391655",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.391655,
+          37.053793
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K33",
+      "properties": {
+        "id": "K33",
+        "name": "K21/K11 #33: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K33",
+        "reported_text": "33. 37.043772, -119.403758 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.043772, -119.403758",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.403758,
+          37.043772
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K34",
+      "properties": {
+        "id": "K34",
+        "name": "K21/K11 #34: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K34",
+        "reported_text": "34. 37.043981, -119.426839 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.043981, -119.426839",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "WIEMILLER RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.426839,
+          37.043981
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K35",
+      "properties": {
+        "id": "K35",
+        "name": "K21/K11 #35: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K35",
+        "reported_text": "35. 37.058107, -119.447259 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.058107, -119.447259",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.447259,
+          37.058107
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K36",
+      "properties": {
+        "id": "K36",
+        "name": "K21/K11 #36: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K36",
+        "reported_text": "36. 37.062224, -119.458698 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.062224, -119.458698",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.458698,
+          37.062224
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K37",
+      "properties": {
+        "id": "K37",
+        "name": "K21/K11 #37: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K37",
+        "reported_text": "37. 37.043131, -119.472403 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.043131, -119.472403",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "LODGE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.472403,
+          37.043131
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K38",
+      "properties": {
+        "id": "K38",
+        "name": "K21/K11 #38: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K38",
+        "reported_text": "38. 37.029576, -119.445028 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.029576, -119.445028",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "LODGE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.445028,
+          37.029576
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K39",
+      "properties": {
+        "id": "K39",
+        "name": "K21/K11 #39: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K39",
+        "reported_text": "39. 37.0053, -119.406015 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.0053, -119.406015",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.406015,
+          37.0053
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K40",
+      "properties": {
+        "id": "K40",
+        "name": "K21/K11 #40: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K40",
+        "reported_text": "40. 36.99266, -119.413556 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "36.99266, -119.413556",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "BURROUGH VALLEY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.413556,
+          36.99266
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K41",
+      "properties": {
+        "id": "K41",
+        "name": "K21/K11 #41: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K41",
+        "reported_text": "41. 36.972394, -119.369915 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "36.972394, -119.369915",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "BURROUGH VALLEY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.369915,
+          36.972394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K42",
+      "properties": {
+        "id": "K42",
+        "name": "K21/K11 #42: Mudslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K42",
+        "reported_text": "42. 36.963984, -119.349968 / Mudslide",
+        "reported_concern": "Mudslide",
+        "coordinate_text": "36.963984, -119.349968",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "WATTS VALLEY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.349968,
+          36.963984
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K43",
+      "properties": {
+        "id": "K43",
+        "name": "K21/K11 #43: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K43",
+        "reported_text": "43. 36.9684, -119.354357 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "36.9684, -119.354357",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "SYCAMORE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.354357,
+          36.9684
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K44",
+      "properties": {
+        "id": "K44",
+        "name": "K21/K11 #44: Bridge",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K44",
+        "reported_text": "44. 37.00612, -119.406274 / Bridge",
+        "reported_concern": "Bridge",
+        "coordinate_text": "37.00612, -119.406274",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.406274,
+          37.00612
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K45",
+      "properties": {
+        "id": "K45",
+        "name": "K21/K11 #45: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K45",
+        "reported_text": "45. 37.008132, -119.405744 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.008132, -119.405744",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.405744,
+          37.008132
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K46",
+      "properties": {
+        "id": "K46",
+        "name": "K21/K11 #46: Mudslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K46",
+        "reported_text": "46. 37.017991, -119.389004 / Mudslide",
+        "reported_concern": "Mudslide",
+        "coordinate_text": "37.017991, -119.389004",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.389004,
+          37.017991
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K47",
+      "properties": {
+        "id": "K47",
+        "name": "K21/K11 #47: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K47",
+        "reported_text": "47. 37.02096, -119.38781 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.02096, -119.38781",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.38781,
+          37.02096
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K48",
+      "properties": {
+        "id": "K48",
+        "name": "K21/K11 #48: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K48",
+        "reported_text": "48. 37.025685, -119.391737 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.025685, -119.391737",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.391737,
+          37.025685
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K49",
+      "properties": {
+        "id": "K49",
+        "name": "K21/K11 #49: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K49",
+        "reported_text": "49. 37.026671, -119.389772 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.026671, -119.389772",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.389772,
+          37.026671
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K50",
+      "properties": {
+        "id": "K50",
+        "name": "K21/K11 #50: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K50",
+        "reported_text": "50. 37.026878, -119.391006 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.026878, -119.391006",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.391006,
+          37.026878
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K51",
+      "properties": {
+        "id": "K51",
+        "name": "K21/K11 #51: Culvert",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K51",
+        "reported_text": "51. 37.028821, -119.394469 / Culvert",
+        "reported_concern": "Culvert",
+        "coordinate_text": "37.028821, -119.394469",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.394469,
+          37.028821
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K52",
+      "properties": {
+        "id": "K52",
+        "name": "K21/K11 #52: Mudslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K52",
+        "reported_text": "52. 37.033667, -119.393608 / Mudslide",
+        "reported_concern": "Mudslide",
+        "coordinate_text": "37.033667, -119.393608",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.393608,
+          37.033667
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K53",
+      "properties": {
+        "id": "K53",
+        "name": "K21/K11 #53: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K53",
+        "reported_text": "53. 37.038658, -119.396368 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.038658, -119.396368",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.396368,
+          37.038658
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K54",
+      "properties": {
+        "id": "K54",
+        "name": "K21/K11 #54: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K54",
+        "reported_text": "54. 37.03791, -119.389735 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.03791, -119.389735",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.389735,
+          37.03791
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K55",
+      "properties": {
+        "id": "K55",
+        "name": "K21/K11 #55: Low spot",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K55",
+        "reported_text": "55. 37.058104, -119.369605 / Low spot",
+        "reported_concern": "Low spot",
+        "coordinate_text": "37.058104, -119.369605",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.369605,
+          37.058104
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K56",
+      "properties": {
+        "id": "K56",
+        "name": "K21/K11 #56: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K56",
+        "reported_text": "56. 37.052375, -119.43982 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.052375, -119.43982",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "WIEMILLER RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.43982,
+          37.052375
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "K57",
+      "properties": {
+        "id": "K57",
+        "name": "K21/K11 #57: Rockslide",
+        "section": "North: K21 / K11",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "K57",
+        "reported_text": "57. 37.061277, -119.449716 / Rockslide",
+        "reported_concern": "Rockslide",
+        "coordinate_text": "37.061277, -119.449716",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "AUBERRY RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.449716,
+          37.061277
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "N01",
+      "properties": {
+        "id": "N01",
+        "name": "Tollhouse Rd S/O Sierra Marina construction zone",
+        "section": "North: higher elevation",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "N01",
+        "reported_text": "Tollhouse Rd S/O Sierra Marina construction zone\n37.15165, -119.29954",
+        "reported_concern": "Tollhouse Rd S/O Sierra Marina construction zone\n37.15165, -119.29954",
+        "coordinate_text": "37.15165, -119.29954",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "HUNTINGTON LAKE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.29954,
+          37.15165
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "N02",
+      "properties": {
+        "id": "N02",
+        "name": "Balsam Creek and Big Creek Rd",
+        "section": "North: higher elevation",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "N02",
+        "reported_text": "Balsam Creek and Big Creek Rd\n37.18788, -119.25838",
+        "reported_concern": "Balsam Creek and Big Creek Rd\n37.18788, -119.25838",
+        "coordinate_text": "37.18788, -119.25838",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "HUNTINGTON LAKE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.25838,
+          37.18788
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "N03",
+      "properties": {
+        "id": "N03",
+        "name": "Italian Bar Rd bridge at SJ River",
+        "section": "North: higher elevation",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "N03",
+        "reported_text": "Italian Bar Rd bridge at SJ River\n37.15836, -119.40560",
+        "reported_concern": "Italian Bar Rd bridge at SJ River\n37.15836, -119.40560",
+        "coordinate_text": "37.15836, -119.40560",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "ITALIAN BAR RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.4056,
+          37.15836
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "N04",
+      "properties": {
+        "id": "N04",
+        "name": "Hwy-168 (four lanes): heavy slide potential and rock fall",
+        "section": "North: higher elevation",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "N04",
+        "reported_text": "Hwy-168(four lanes)\nHeavey slide potential and rock fall",
+        "reported_concern": "Hwy-168 (four lanes): heavy slide potential and rock fall",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "General area only",
+        "geometry_role": "Reference location only",
+        "position_basis": "Pineridge community reference only, near the upper Highway 168 corridor. The email supplies no coordinate or endpoints. This marker does not locate a particular slide.",
+        "confirmation": "Confirm the intended four-lane segment and beginning/end limits.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.357443,
+          37.061267
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "N05",
+      "properties": {
+        "id": "N05",
+        "name": "Sycamore Rd / Vincent Fire Rd",
+        "section": "North: higher elevation",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "N05",
+        "reported_text": "Sycamore Rd / Vincent Fire Rd\n36.96643, -119.31905",
+        "reported_concern": "Sycamore Rd / Vincent Fire Rd\n36.96643, -119.31905",
+        "coordinate_text": "36.96643, -119.31905",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "SYCAMORE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.31905,
+          36.96643
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "N06",
+      "properties": {
+        "id": "N06",
+        "name": "Hwy-168 and Dry Creek",
+        "section": "North: higher elevation",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "N06",
+        "reported_text": "Hwy-168 and Dry Creek\n36.946185, -119.506433",
+        "reported_concern": "Hwy-168 and Dry Creek\n36.946185, -119.506433",
+        "coordinate_text": "36.946185, -119.506433",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TOLLHOUSE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.506433,
+          36.946185
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S01",
+      "properties": {
+        "id": "S01",
+        "name": "Ennis Rd, North if George Smith, Yokuts Valley",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S01",
+        "reported_text": "Ennis Rd, North if George Smith, Yokuts Valley\n36.698065,-119.223325",
+        "reported_concern": "Ennis Rd, North if George Smith, Yokuts Valley\n36.698065,-119.223325",
+        "coordinate_text": "36.698065,-119.223325",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "ENNIS RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.223325,
+          36.698065
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S02",
+      "properties": {
+        "id": "S02",
+        "name": "Culvert under Ruth Hill 90-degree turn",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S02",
+        "reported_text": "Culvert under Ruth Hill 90-degree turn\n36.728586,-119.189446",
+        "reported_concern": "Culvert under Ruth Hill 90-degree turn\n36.728586,-119.189446",
+        "coordinate_text": "36.728586,-119.189446",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "RUTH HILL RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.189446,
+          36.728586
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S03",
+      "properties": {
+        "id": "S03",
+        "name": "Bridge at Ennis and Sand Creek",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S03",
+        "reported_text": "Bridge at Ennis and Sand Creek\n36.683691,-119.209296",
+        "reported_concern": "Bridge at Ennis and Sand Creek\n36.683691,-119.209296",
+        "coordinate_text": "36.683691,-119.209296",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "ENNIS RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.209296,
+          36.683691
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S04",
+      "properties": {
+        "id": "S04",
+        "name": "Intersection of Chuck Wagon RD/Butternut LN/Sand Creek RD",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S04",
+        "reported_text": "Intersection of Chuck Wagon RD/Butternut LN/Sand Creek RD\n36.700118,-119.133586",
+        "reported_concern": "Intersection of Chuck Wagon RD/Butternut LN/Sand Creek RD\n36.700118,-119.133586",
+        "coordinate_text": "36.700118,-119.133586",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "SAND CREEK RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.133586,
+          36.700118
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S05",
+      "properties": {
+        "id": "S05",
+        "name": "Low water crossing on Brookside Rd",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S05",
+        "reported_text": "Low water crossing on Brookside Rd\n36.702294,-119.061720",
+        "reported_concern": "Low water crossing on Brookside Rd\n36.702294,-119.061720",
+        "coordinate_text": "36.702294,-119.061720",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "BROOKSIDE RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.06172,
+          36.702294
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S06",
+      "properties": {
+        "id": "S06",
+        "name": "Telen memorial bridge in Miramonte",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S06",
+        "reported_text": "Telen memorial bridge in Miramonte\n36.692701,-119.053849",
+        "reported_concern": "Telen memorial bridge in Miramonte\n36.692701,-119.053849",
+        "coordinate_text": "36.692701,-119.053849",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "ORCHARD DR"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.053849,
+          36.692701
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S07",
+      "properties": {
+        "id": "S07",
+        "name": "HWY 245/Dunlap RD - hairpin turn on a downhill slope",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S07",
+        "reported_text": "HWY 245/Dunlap RD - hairpin turn on a downhill slope\n36.683001,-119.022444",
+        "reported_concern": "HWY 245/Dunlap RD - hairpin turn on a downhill slope\n36.683001,-119.022444",
+        "coordinate_text": "36.683001,-119.022444",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "DUNLAP RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.022444,
+          36.683001
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S08",
+      "properties": {
+        "id": "S08",
+        "name": "HWY 245 - Culvert",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S08",
+        "reported_text": "HWY 245 - Culvert\n36.695235,-119.004616",
+        "reported_concern": "HWY 245 - Culvert\n36.695235,-119.004616",
+        "coordinate_text": "36.695235,-119.004616",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "HOGBACK RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.004616,
+          36.695235
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S09",
+      "properties": {
+        "id": "S09",
+        "name": "Piedra Rd/Trimmer Springs Mobile Home Area",
+        "section": "South / southeast foothills",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "S09",
+        "reported_text": "Piedra Rd/Trimmer Springs Mobile Home Area\n36.818668, -119.377569",
+        "reported_concern": "Piedra Rd/Trimmer Springs Mobile Home Area\n36.818668, -119.377569",
+        "coordinate_text": "36.818668, -119.377569",
+        "has_reported_coordinate": true,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "No photo reviewed for this record",
+        "position_status": "Reported coordinate",
+        "geometry_role": "Coordinate supplied in email",
+        "position_basis": "Original latitude/longitude retained without moving or snapping. Datum is not stated; displayed as WGS84 for this locator map.",
+        "confirmation": "Coordinate identifies a reported location; affected limits and current condition are not field verified.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": "TRIMMER SPRINGS RD"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.377569,
+          36.818668
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "W01",
+      "properties": {
+        "id": "W01",
+        "name": "Three Rocks: Derrick / Clarkson",
+        "section": "Westside / valley",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "W01",
+        "reported_text": "Three Rocks: Derrick Ave and Clarkson Ave",
+        "reported_concern": "Three Rocks: Derrick Ave and Clarkson Ave",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "Photo links appear in email; photographs not opened or geolocation-verified in this map review.",
+        "position_status": "Multiple candidates",
+        "geometry_role": "Reference location only",
+        "position_basis": "Two geocoder matches at staggered Clarkson / Derrick junctions. Both are retained; no single junction selected.",
+        "confirmation": "Confirm which Clarkson junction and the affected reach; two reference symbols represent one report.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [
+            -120.389075987222,
+            36.50148998783
+          ],
+          [
+            -120.389082022192,
+            36.499698984669
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "W02",
+      "properties": {
+        "id": "W02",
+        "name": "Belmont / Lyon",
+        "section": "Westside / valley",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "W02",
+        "reported_text": "Belmont and Lyon (This location has a \u201cSubject to flooding\u201d signs posted at intersections).",
+        "reported_concern": "Belmont and Lyon (This location has a \u201cSubject to flooding\u201d signs posted at intersections).",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "Photo links appear in email; photographs not opened or geolocation-verified in this map review.",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "Intersection of named County road reference lines; independently consistent with geocoder. County lines were generalized to 400 feet, not surveyed damage limits.",
+        "confirmation": "Confirm the affected feature and extent.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.47773,
+          36.74887
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "W03",
+      "properties": {
+        "id": "W03",
+        "name": "Belmont / San Diego",
+        "section": "Westside / valley",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "W03",
+        "reported_text": "Belmont and San Diego (This location has an additional flooding sign. Location also has an electrical tower that could possibly be damaged).",
+        "reported_concern": "Belmont and San Diego (This location has an additional flooding sign. Location also has an electrical tower that could possibly be damaged).",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "Photo links appear in email; photographs not opened or geolocation-verified in this map review.",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "Intersection of named County road reference lines; independently consistent with geocoder. County lines were generalized to 400 feet, not surveyed damage limits.",
+        "confirmation": "Confirm the affected feature and extent.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.44138,
+          36.74905
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "W04",
+      "properties": {
+        "id": "W04",
+        "name": "Manning: Sonoma to Napa",
+        "section": "Westside / valley",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "W04",
+        "reported_text": "South side of Manning Avenue between Sonoma Avenue and Napa Avenue",
+        "reported_concern": "South side of Manning Avenue between Sonoma Avenue and Napa Avenue",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "Photo links appear in email; photographs not opened or geolocation-verified in this map review.",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "Named Manning road segment between Sonoma and Napa from County reference lines. South side is reported; displayed centerline is a locator, not a flooded width.",
+        "confirmation": "Confirm the affected feature and extent.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              -120.22541,
+              36.60249
+            ],
+            [
+              -120.23439,
+              36.60254
+            ]
+          ],
+          [
+            [
+              -120.23439,
+              36.60254
+            ],
+            [
+              -120.24335,
+              36.60259
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "W05",
+      "properties": {
+        "id": "W05",
+        "name": "Shields / Dickenson: westbound lanes",
+        "section": "Westside / valley",
+        "source_group": "OES additions",
+        "source": "Terri Mejorado / County OES email, 2026-11-03",
+        "source_item": "W05",
+        "reported_text": "Westbound lanes at Shields and Dickenson",
+        "reported_concern": "Westbound lanes at Shields and Dickenson",
+        "coordinate_text": "",
+        "has_reported_coordinate": false,
+        "source_document": "RE Potential problem areas.msg",
+        "source_date": "2026-11-03",
+        "photo_status": "Photo links appear in email; photographs not opened or geolocation-verified in this map review.",
+        "position_status": "Approximate reference",
+        "geometry_role": "Reference location only",
+        "position_basis": "Intersection of named County road reference lines; independently consistent with geocoder. County lines were generalized to 400 feet, not surveyed damage limits.",
+        "confirmation": "Confirm the affected feature and extent.",
+        "county_check": "Within or within 500 m of County outline",
+        "map_crs": "EPSG:4326 display assumption; source datum unstated for email coordinates",
+        "nearest_county_road_context": ""
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.97008,
+          36.77868
+        ]
+      }
+    }
+  ]
+}

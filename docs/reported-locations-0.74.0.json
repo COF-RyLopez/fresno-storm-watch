@@ -1,0 +1,44 @@
+{
+  "compiled": "2026-11-03",
+  "counts": {
+    "reports": 92,
+    "district1": 7,
+    "oesAdditions": 85,
+    "reportedCoordinates": 75,
+    "referenceLocations": 17
+  },
+  "originalSource": "RE Potential problem areas.msg and earlier District 1 list",
+  "semantics": "Reported potential problem locations; not current incidents, hazards, closures, flood extents, verified road crossings or LiDAR missions. District 1 identifies the report source, not a verified boundary. No private photo links distributed.",
+  "files": [
+    {
+      "path": "data/reported-locations/locations.geojson",
+      "bytes": 144510,
+      "sha256": "33c7ca7ffa528c3bb0d86f31795d006aa0abbd3104a8cb2f754b49efcd0804c6"
+    },
+    {
+      "path": "data/reported-locations/county.geojson",
+      "bytes": 409481,
+      "sha256": "3c890045943cc145a67a0eeef36992fb83b5b599cb1b7d92f2e1665d4c5f327c"
+    },
+    {
+      "path": "data/reported-locations/roads.geojson",
+      "bytes": 2567507,
+      "sha256": "20a496e56c6dd7d8919077c170723a5bc52ae522a7e4e7c0458c9608fd7d3d6b"
+    },
+    {
+      "path": "data/reported-locations/location-register.csv",
+      "bytes": 65434,
+      "sha256": "90a733fce812453fb5b7ef4f4effa41015447ba489fa9df3fcc6bb433227f869"
+    },
+    {
+      "path": "vendor/leaflet-1.9.4/leaflet.js",
+      "bytes": 147552,
+      "sha256": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a"
+    },
+    {
+      "path": "vendor/leaflet-1.9.4/leaflet.css",
+      "bytes": 14806,
+      "sha256": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6"
+    }
+  ]
+}

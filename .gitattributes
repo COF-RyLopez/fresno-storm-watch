@@ -5,3 +5,7 @@ site/vendor/*.js -text
 *.pbf binary
 # Preserve the CSV bytes referenced by the public population manifest.
 site/data/zone-population/*.csv -text whitespace=cr-at-eol
+# Preserve the reviewed map snapshot and its source manifest hashes.
+site/data/reported-locations/locations.geojson -text whitespace=cr-at-eol
+site/data/reported-locations/location-register.csv -text whitespace=cr-at-eol
+site/vendor/leaflet-1.9.4/*.js -text
