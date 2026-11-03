@@ -32,6 +32,10 @@ class Refresh(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             bpq.OUT = Path(tmp) / 'questions.json'
             self.assertEqual(bpq.run(['--published'], fetch=lambda: file(2), build=boom, now=NOW), 'reused')
+            bpq.OUT.write_text(json.dumps(file(1, tag='committed')))  # a PR committed a newer build (new fields)
+            self.assertEqual(bpq.run(['--published'], fetch=lambda: file(2, tag='published'), build=boom, now=NOW), 'reused')
+            self.assertEqual(json.loads(bpq.OUT.read_text())['tag'], 'committed')  # never replaced by the older deployed copy
+            bpq.OUT.unlink()
             built = []
             self.assertEqual(bpq.run(['--published'], fetch=lambda: file(30, tag='published'), build=lambda previous: built.append(previous['tag']), now=NOW), 'built')
             self.assertEqual(built, ['published'])  # the build sees the last copy, for stable flood-pocket ids
