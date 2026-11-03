@@ -6,8 +6,6 @@ export const QUESTION_KINDS=Object.freeze({sandbags:'Flood zones & sandbags',dam
 /** Map layers a question's Map button turns on, so the thing asked about is drawn. */
 export const QUESTION_LAYERS=Object.freeze({sandbags:['fema','countySandbags'],dams:['dams','damInundation'],levees:['levees'],power:['facilities'],equipment:['snowFleet'],gauges:['gauges']});
 export const COUNTY='Fresno County';
-/** County parcels (public): drawn for a flood-pocket question so the parcels it counts are visible. */
-export const PARCELS_URL='https://gisprod10.co.fresno.ca.us/server/rest/services/Hosted/Parcels/FeatureServer/0';
 const inCounty=(lon,lat)=>Number.isFinite(lon)&&Number.isFinite(lat)&&lon>=-121&&lon<=-118&&lat>=35.8&&lat<=37.6;
 /** Badge for a nearby-site row: County building, road yard, or fire station (City-owned ones in a muted colour). */
 export function nearbyBadge(kind){
@@ -25,6 +23,8 @@ export function validateQuestions(data){
     if(ids.has(q.id))throw Error(`Duplicate planning question ${q.id}.`);ids.add(q.id);
     if(!inCounty(q.lon,q.lat))throw Error(`Planning question ${q.id} is placed outside Fresno County.`);
     if(q.geometry!==undefined&&!(Array.isArray(q.geometry?.rings)&&q.geometry.rings.length&&q.geometry.rings.every(r=>Array.isArray(r)&&r.length>=4&&r.every(p=>inCounty(p?.[0],p?.[1])))))throw Error(`Planning question ${q.id} has an invalid flood-pocket outline.`);
+    // Parcel shapes for a flood pocket, one entry per APN in the same order.
+    if(q.parcelRings!==undefined&&!(Array.isArray(q.parcelRings)&&q.parcelRings.length===q.apns?.length&&q.parcelRings.every(rs=>Array.isArray(rs)&&rs.every(r=>Array.isArray(r)&&r.length>=4&&r.every(p=>inCounty(p?.[0],p?.[1]))))))throw Error(`Planning question ${q.id} has invalid parcel shapes.`);
     if(q.nearby!==undefined&&!(Array.isArray(q.nearby)&&q.nearby.every(n=>typeof n?.name==='string'&&typeof n.kind==='string'&&Number.isFinite(n.miles)&&inCounty(n.lon,n.lat))))throw Error(`Planning question ${q.id} has an invalid nearby-site list.`);
   }
   return data;

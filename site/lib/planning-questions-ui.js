@@ -2,7 +2,7 @@ import {el,button,dataTable} from './dom.js';
 import {loadSdk} from './map.js';
 import {createLabelLayer} from './map-labels.js';
 import {badgeSymbol} from './badge-symbols.js';
-import {QUESTION_KINDS,QUESTION_LAYERS,COUNTY,PARCELS_URL,nearbyBadge,validateQuestions,gaugeQuestions,fleetQuestions,questionOwner,questionScenarios,questionsFor,questionsByState,questionAnswer,questionEvidence,questionsCsv} from './planning-questions-model.js';
+import {QUESTION_KINDS,QUESTION_LAYERS,COUNTY,nearbyBadge,validateQuestions,gaugeQuestions,fleetQuestions,questionOwner,questionScenarios,questionsFor,questionsByState,questionAnswer,questionEvidence,questionsCsv} from './planning-questions-model.js';
 
 const $=id=>document.getElementById(id);
 const PAGE=12;
@@ -50,21 +50,19 @@ export function createPlanningQuestions({onAssign,onBriefing,followupSnapshot=()
         focus={Graphic,layer:new GraphicsLayer({title:'Planning question focus · flood pocket, parcels and nearby options',elevationInfo:{mode:'on-the-ground'}}),labels:createLabelLayer({FeatureLayer,Graphic},{title:'Nearby option names',minScale:120_000})};
         map.registerLayer('planningFocus',focus.layer);map.registerLayer('planningFocus',focus.labels.layer);}
       const {Graphic,layer,labels}=focus,ring={rings:q.geometry.rings,spatialReference:{wkid:4326}};
-      const body=new URLSearchParams({where:'1=1',geometry:JSON.stringify(ring),geometryType:'esriGeometryPolygon',inSR:'4326',spatialRel:'esriSpatialRelIntersects',outFields:'apn',returnGeometry:'true',outSR:'4326',resultRecordCount:'2000',f:'json'});
-      let parcels=[],parcelError=null;
-      try{const r=await fetch(`${PARCELS_URL}/query`,{method:'POST',body,signal:AbortSignal.timeout(25000)});const j=await r.json();if(!r.ok||j.error)throw Error(j.error?.message||`HTTP ${r.status}`);parcels=j.features||[];}
-      catch(e){parcelError=e.message;}
       if(epoch!==focusEpoch)return;
       layer.removeAll();
-      for(const f of parcels)if(f.geometry?.rings)layer.add(new Graphic({geometry:{type:'polygon',rings:f.geometry.rings,spatialReference:{wkid:4326}},attributes:{apn:f.attributes?.apn},
-        symbol:{type:'simple-fill',color:[255,255,255,.34],outline:{color:'#ffffff',width:1.4}},popupTemplate:{title:'Parcel in the flood pocket',content:`APN ${f.attributes?.apn??'not listed'}. Touches the FEMA 1% annual-chance zone counted by this planning question; not a forecast that it floods.`}}));
+      // Parcel shapes ship with the question (daily build), so this works where County networks block live County queries.
+      const parcels=q.parcelRings||[];
+      parcels.forEach((rings,i)=>layer.add(new Graphic({geometry:{type:'polygon',rings,spatialReference:{wkid:4326}},attributes:{apn:q.apns?.[i]},
+        symbol:{type:'simple-fill',color:[255,255,255,.34],outline:{color:'#ffffff',width:1.4}},popupTemplate:{title:'Parcel in the flood pocket',content:`APN ${q.apns?.[i]??'not listed'}. Touches the FEMA 1% annual-chance zone counted by this planning question; not a forecast that it floods.`}})));
       layer.add(new Graphic({geometry:{type:'polygon',...ring},symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#e4572e',width:2.6,style:'dash'}},popupTemplate:{title:q.title,content:q.detail}}));
       for(const n of q.nearby||[])layer.add(new Graphic({geometry:{type:'point',longitude:n.lon,latitude:n.lat,spatialReference:{wkid:4326}},symbol:badgeSymbol(nearbyBadge(n.kind),24),
         popupTemplate:{title:n.name,content:`${n.kind}${n.address?` · ${n.address}`:''} · ${n.miles.toFixed(1)} mi straight-line from the flood pocket. A possible sandbag site only if the owner agrees; check access, parking and staffing.`}}));
       void labels.set((q.nearby||[]).map(n=>({longitude:n.lon,latitude:n.lat,label:n.name})));
       map.setLayerPreference('planningFocus',true);map.setLayerPreference('fema',true);
       void map.focusReferenceGeometry(ring);
-      note=parcelError?`Flood pocket shown; parcels unavailable (${parcelError}).`:`Showing ${parcels.length} parcels in the flood pocket and ${(q.nearby||[]).length} nearby options: ${q.title}`;
+      note=!parcels.length?'Flood pocket shown; parcel shapes are not in this build yet.':`Showing ${parcels.length} parcels in the flood pocket and ${(q.nearby||[]).length} nearby options: ${q.title}`;
       $('plan-clear').hidden=false;render();
     }catch(e){if(epoch===focusEpoch){note=`Could not show the flood pocket: ${e.message}`;render();}}
   }

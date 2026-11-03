@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from pyproj import Transformer
-from shapely.geometry import Point, mapping, shape
+from shapely.geometry import LinearRing, Point, mapping, shape
 from shapely.geometry.polygon import orient
 from shapely.ops import transform, unary_union
 
@@ -86,16 +86,33 @@ def envelope(geom_ll) -> dict:
             'geometryType': 'esriGeometryEnvelope', 'spatialRel': 'esriSpatialRelIntersects', 'inSR': 4326}
 
 
-def parcel_apns(g) -> list[str]:
-    """APNs of parcels touching a metric polygon (simplified to keep the request small)."""
+def pocket_parcels(g) -> dict[str, list]:
+    """Parcels touching a metric polygon: {apn: rings} in lon/lat, rounded to ~1 m and simplified for display. The shapes ship
+    with the question so the browser never queries the County server (County networks can block that from a public page)."""
     g4 = transform(to_ll, g.simplify(10))
     rings = [list(map(list, p.exterior.coords)) for p in getattr(g4, 'geoms', [g4])]
     r = get(f'{PARCELS}/query', {'where': '1=1', 'geometry': json.dumps({'rings': rings, 'spatialReference': {'wkid': 4326}}),
                                  'geometryType': 'esriGeometryPolygon', 'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects',
-                                 'outFields': 'apn', 'returnGeometry': 'false', 'f': 'json'})
+                                 'outFields': 'apn', 'returnGeometry': 'true', 'outSR': 4326, 'f': 'json'})
     if r.get('exceededTransferLimit'):
         raise RuntimeError('Flood pocket has more parcels than one parcel query returns')
-    return sorted({str(f['attributes']['apn']) for f in r['features'] if f['attributes'].get('apn')})
+    out: dict[str, list] = {}
+    for f in r['features']:
+        apn = f['attributes'].get('apn')
+        if apn:
+            out.setdefault(str(apn), []).extend(compact_ring(ring) for ring in (f.get('geometry') or {}).get('rings', []))
+    return dict(sorted(out.items()))
+
+
+def compact_ring(ring: list) -> list:
+    """A ring rounded to 5 decimals (~1 m) and simplified within ~1 m; tiny rings are kept as they are."""
+    small = LinearRing(ring).simplify(0.000008)
+    coords = list(small.coords) if len(small.coords) >= 4 else ring
+    return [[round(x, 5), round(y, 5)] for x, y, *_ in coords]
+
+
+def dump(data: dict) -> str:
+    return json.dumps(data, separators=(',', ':')) + '\n'  # compact: parcel shapes would triple the file indented
 
 
 def pocket_id(city: str, apns: list[str], previous: list[dict], taken: set[str]) -> str:
@@ -222,8 +239,8 @@ def main(previous: dict | None = None) -> None:
             dry = p.difference(basins)
             if dry.area < 0.5 * p.area:
                 continue  # mostly a ponding basin: built to hold water
-            apns = parcel_apns(dry)
-            n = len(apns)
+            shapes = pocket_parcels(dry)
+            apns, n = list(shapes), len(shapes)
             parcels_total += n
             if n < MIN_PARCELS:
                 continue
@@ -242,7 +259,7 @@ def main(previous: dict | None = None) -> None:
                           f'Nearest active County sandbag site: {name.title()}, {miles:.1f} mi.',
                 'owner': f'County OES with {city}', 'source': 'FEMA NFHL · County parcels · County sandbag sites', **ll(at), 'parcels': n,
                 # The pocket itself (outside ponding basins), so the panel can highlight its parcels, and the closest options.
-                'geometry': rings(dry), 'nearby': nearby(dry, candidates)})
+                'geometry': rings(dry), 'nearby': nearby(dry, candidates), 'parcelRings': list(shapes.values())})
         exposure[city] = {
             'sqMi': round(g.area / MILE**2, 1), 'sfhaSqMi': round(sfha.area / MILE**2, 2), 'moderateSqMi': round(mod.area / MILE**2, 1),
             'sfhaParcels': parcels_total, 'sandbagSites': sum(g.contains(b[2]) for b in bag_pts), 'fireStations': sum(g.contains(p) for p in fire),
@@ -333,7 +350,7 @@ def main(previous: dict | None = None) -> None:
     if empty:
         raise RuntimeError(f'No {", ".join(empty)} questions built; a source probably returned nothing')
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(payload, indent=1) + '\n', encoding='utf-8')
+    OUT.write_text(dump(payload), encoding='utf-8')
     print(f'{len(questions)} questions {counts} → {OUT.relative_to(ROOT)}', file=sys.stderr)
 
 
@@ -367,7 +384,7 @@ def run(argv: list[str], fetch=published, build=main, now: float | None = None) 
     fresh = [d for d in (prior, local) if d and (age := usable(d, now)) is not None and age < REBUILD_AFTER_S]
     if '--published' in argv and fresh:
         best = max(fresh, key=lambda d: d['generatedAt'])
-        OUT.write_text(json.dumps(best, indent=1) + '\n', encoding='utf-8')
+        OUT.write_text(dump(best), encoding='utf-8')
         print(f'Reused {"published" if best is prior else "committed"} planning questions ({usable(best, now) / 3600:.1f} h old)', file=sys.stderr)
         return 'reused'
     try:
@@ -377,7 +394,7 @@ def run(argv: list[str], fetch=published, build=main, now: float | None = None) 
         # Optional feed: serve the newest good copy (published, else the committed one) and say so in the run.
         keep = max((d for d in (prior, local) if d and usable(d, now) is not None), key=lambda d: d['generatedAt'], default=None)
         if keep:
-            OUT.write_text(json.dumps(keep, indent=1) + '\n', encoding='utf-8')
+            OUT.write_text(dump(keep), encoding='utf-8')
         print(f'::warning title=Planning questions not rebuilt::{type(error).__name__}: {error}; serving the copy built {keep["generatedAt"] if keep else "never"}')
         return 'kept'
 

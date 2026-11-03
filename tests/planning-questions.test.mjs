@@ -78,5 +78,10 @@ test('answers: latest closed follow-up answers a question, an open one or change
 });
 
 test('flood-pocket questions carry the parcel numbers their stable ids are matched on',()=>{
-  for(const q of data.questions.filter(x=>x.kind==='sandbags')){assert.equal(q.apns.length,q.parcels,q.id);assert.match(q.id,/^sandbags:[a-z0-9]+:\S+$/);}
+  for(const q of data.questions.filter(x=>x.kind==='sandbags')){assert.equal(q.apns.length,q.parcels,q.id);assert.equal(q.parcelRings.length,q.parcels,q.id);assert.match(q.id,/^sandbags:[a-z0-9]+:\S+$/);}
+});
+
+test('a flood pocket whose parcel shapes do not line up with its APNs is rejected',()=>{
+  const q=data.questions.find(x=>x.kind==='sandbags');
+  assert.throws(()=>validateQuestions({...data,questions:[{...q,parcelRings:q.parcelRings.slice(1)}]}),/invalid parcel shapes/);
 });
