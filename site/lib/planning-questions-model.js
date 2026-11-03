@@ -77,12 +77,28 @@ export function questionsFor(questions,place,kind='all'){
   return questions.filter(q=>(place===COUNTY||q.place===place)&&(kind==='all'||q.kind===kind))
     .sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind)||(b.parcels||0)-(a.parcels||0));// topic order, then most flood-zone parcels first
 }
+/** @param {object[]} questions @param {(q:object)=>string} stateOf questionAnswer state @param {'open'|'answered'|'all'} want
+ * @returns {object[]} 'changed' answers count as open (recheck them); in 'all', answered questions go last. */
+export function questionsByState(questions,stateOf,want='open'){
+  const done=q=>stateOf(q)==='answered';
+  return want==='all'?[...questions.filter(q=>!done(q)),...questions.filter(done)]:questions.filter(q=>done(q)===(want==='answered'));
+}
 
 /** Briefing / follow-up evidence. kind + id make the stable key mission-followup-model uses to attach follow-ups. */
 export function questionEvidence(q,now=Date.now()){
   const owner=questionOwner(q);
   return {kind:'planning-question',id:q.id,name:q.title,classification:'Planning question · unanswered',capturedAt:now,topic:QUESTION_KINDS[q.kind],place:q.place,
     question:q.detail,answerFrom:owner,source:q.source,location:Number.isFinite(q.lon)?{longitude:q.lon,latitude:q.lat}:null,nextReview:`${q.detail} Answer from: ${owner}.`};
+}
+
+/** Where a question stands in the selected EOC incident, from its follow-ups (mission-followup-model rows).
+ * Answered = the latest follow-up is Complete or Canceled with no other still open. If the question's text (its counts and
+ * nearest site) has changed since that follow-up was assigned, the answer may be out of date: 'changed' reads as open.
+ * @returns {{state:'open'|'answered'|'changed',row:object|null}} */
+export function questionAnswer(q,rows){
+  const list=rows||[],open=list.find(r=>r.active||r.conflict);if(open)return {state:'open',row:open};
+  const row=[...list].sort((a,b)=>b.recorded-a.recorded)[0];if(!row)return {state:'open',row:null};
+  return {state:row.source?.question&&row.source.question!==q.detail?'changed':'answered',row};
 }
 
 const cell=v=>{const s=String(v??'');return /[",\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s;};

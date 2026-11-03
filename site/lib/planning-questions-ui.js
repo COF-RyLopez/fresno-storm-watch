@@ -2,17 +2,20 @@ import {el,button,dataTable} from './dom.js';
 import {loadSdk} from './map.js';
 import {createLabelLayer} from './map-labels.js';
 import {badgeSymbol} from './badge-symbols.js';
-import {QUESTION_KINDS,QUESTION_LAYERS,COUNTY,PARCELS_URL,nearbyBadge,validateQuestions,gaugeQuestions,fleetQuestions,questionOwner,questionScenarios,questionsFor,questionEvidence,questionsCsv} from './planning-questions-model.js';
+import {QUESTION_KINDS,QUESTION_LAYERS,COUNTY,PARCELS_URL,nearbyBadge,validateQuestions,gaugeQuestions,fleetQuestions,questionOwner,questionScenarios,questionsFor,questionsByState,questionAnswer,questionEvidence,questionsCsv} from './planning-questions-model.js';
 
 const $=id=>document.getElementById(id);
 const PAGE=12;
 /** Planning panel: open questions by place and topic, the place's exposure, and hand-off to follow-ups or the briefing draft.
  * Nothing here contacts an agency; assigning creates a private follow-up through the existing mission workflow. */
 export function createPlanningQuestions({onAssign,onBriefing,followupSnapshot=()=>null}){
-  let data=null,error=null,live=[],fleetLive=[],scenarios=[],place=COUNTY,kind='all',shown=PAGE,map=null,note='',focus=null,focusedId=null,focusEpoch=0;
+  let data=null,error=null,live=[],fleetLive=[],scenarios=[],place=COUNTY,kind='all',state='open',shown=PAGE,map=null,note='',focus=null,focusedId=null,focusEpoch=0;
   const time=t=>new Date(t).toLocaleDateString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',year:'numeric'});
   const all=()=>[...(data?.questions||[]),...fleetLive,...live];
-  function status(q){const s=followupSnapshot(questionEvidence(q));if(!s?.assessed)return '';const r=s.rows[0];return r?`${r.status}${r.overdue?' · overdue':''} · ${r.owner}`:'Not assigned in this incident';}
+  /** Follow-ups for this question in the selected EOC incident; null when not signed in or not checked recently. */
+  const followups=q=>{const s=followupSnapshot(questionEvidence(q));return s?.assessed?s:null;};
+  const answerOf=q=>questionAnswer(q,followups(q)?.rows);
+  function status(q){const s=followups(q);if(!s)return '';const r=s.rows[0];return r?`${r.status}${r.overdue?' · overdue':''} · ${r.owner}`:'Not assigned in this incident';}
   function exposure(){
     const host=$('plan-exposure');host.replaceChildren();const e=data?.exposure?.[place];if(!e)return;
     const rows=[['Area',`${e.sqMi.toLocaleString()} sq mi`],['FEMA 1% flood zone',`${e.sfhaSqMi} sq mi`],['FEMA 0.2% zone',`${e.moderateSqMi} sq mi`],
@@ -28,6 +31,9 @@ export function createPlanningQuestions({onAssign,onBriefing,followupSnapshot=()
     if(q.nearby?.length){const list=el('ul');list.className='plan-nearby';list.setAttribute('aria-label','Nearby options, straight-line distance');
       for(const n of q.nearby)list.append(el('li',`${n.miles.toFixed(1)} mi · ${n.name} (${n.kind})`));c.append(el('p','Nearby options (straight-line, confirm with the owner):'),list);}
     const s=status(q);if(s){const p=el('p',`Follow-up: ${s}`);p.className='plan-question-status';c.append(p);}
+    const {state:answered,row}=answerOf(q);
+    if(row&&answered!=='open'){const p=el('p',`${row.status==='Canceled'?'Closed without an answer':'Answer'}: ${row.answer||'(no evidence text)'}\n— ${row.author||row.owner} · ${time(row.recorded)}`);p.className='plan-answer';
+      if(answered==='changed'){p.dataset.changed='';p.textContent+='\nData changed since this was answered; recheck it.';}c.append(p);}
     const actions=el('div'),form=el('div');actions.className='mission-actions';
     if(q.geometry){const b=button(focusedId===q.id?'Showing parcels':'Show parcels',()=>void showPocket(q));b.appearance='solid';b.iconStart='layer-polygon';actions.append(b);}
     else if(Number.isFinite(q.lon))actions.append(button('Map',()=>{for(const key of QUESTION_LAYERS[q.kind])map?.setLayerPreference(key,true);void map?.focusReferenceGeometry({x:q.lon,y:q.lat,spatialReference:{wkid:4326}},q.kind==='dams'?24000:12000);}));
@@ -68,19 +74,20 @@ export function createPlanningQuestions({onAssign,onBriefing,followupSnapshot=()
     const places=data?.places||[COUNTY],placePick=$('plan-place');
     if(placePick.childElementCount!==places.length){placePick.replaceChildren(...places.map(p=>{const o=el('calcite-option',p);o.value=p;o.selected=p===place;return o;}));}
     exposure();
-    const rows=questionsFor(all(),place,kind);
-    $('plan-status').textContent=error?`Planning questions unavailable: ${error}`:!data?'Loading planning questions…':note||`${rows.length} open question${rows.length===1?'':'s'}${kind==='all'?'':` about ${QUESTION_KINDS[kind].toLowerCase()}`} for ${place}.`;
+    const rows=questionsByState(questionsFor(all(),place,kind),q=>answerOf(q).state,state);
+    $('plan-status').textContent=error?`Planning questions unavailable: ${error}`:!data?'Loading planning questions…':note||`${rows.length} ${state==='all'?'':`${state} `}question${rows.length===1?'':'s'}${kind==='all'?'':` about ${QUESTION_KINDS[kind].toLowerCase()}`} for ${place}.`;
     list.replaceChildren(...rows.slice(0,shown).map(card));
-    if(data&&!rows.length)list.append(el('p','No questions for this place and topic.'));
+    if(data&&!rows.length)list.append(el('p',state==='answered'&&!followupSnapshot({})?.assessed?'Sign in to the EOC workspace to see answers recorded in the selected incident.':'No questions for this place, topic and status.'));
     $('plan-more').hidden=rows.length<=shown;$('plan-more').textContent=`Show ${Math.min(PAGE,rows.length-shown)} more`;
     $('plan-csv').disabled=!rows.length;
-    $('plan-built').textContent=data?`Questions built ${time(data.generatedAt)} from public data (dams, levees, FEMA zones, parcels, County buildings and sandbag sites); river-gauge questions update live. Rules: no sandbag site within ${data.rules.sandbagReachMiles} mi of ${data.rules.minParcels}+ flood-zone parcels.`:'';
+    $('plan-built').textContent=data?`Questions built ${time(data.generatedAt)} from public data (dams, levees, FEMA zones, parcels, County buildings and sandbag sites); river-gauge questions update live. Rules: no sandbag site within ${data.rules.sandbagReachMiles} mi of ${data.rules.minParcels}+ flood-zone parcels. Answers are the completion evidence on each question's follow-up in the selected EOC incident; keep them together in one standing planning incident (for example "2026–27 Winter Readiness").`:'';
   }
   $('plan-place').addEventListener('calciteSelectChange',e=>{place=e.target.value;shown=PAGE;note='';render();});
   $('plan-kind').addEventListener('calciteSelectChange',e=>{kind=e.target.value;shown=PAGE;note='';render();});
+  $('plan-state').addEventListener('calciteSelectChange',e=>{state=e.target.value;shown=PAGE;note='';render();});
   $('plan-more').onclick=()=>{shown+=PAGE;render();};
   $('plan-clear').onclick=clearPocket;
-  $('plan-csv').onclick=()=>{const rows=questionsFor(all(),place,kind),url=URL.createObjectURL(new Blob([questionsCsv(rows,status)],{type:'text/csv'})),a=el('a');a.href=url;a.download=`planning-questions-${place.toLowerCase().replaceAll(' ','-')}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  $('plan-csv').onclick=()=>{const rows=questionsByState(questionsFor(all(),place,kind),q=>answerOf(q).state,state),url=URL.createObjectURL(new Blob([questionsCsv(rows,q=>{const a=answerOf(q);return [status(q),a.row&&a.state!=='open'?`Answer: ${a.row.answer}${a.state==='changed'?' (data changed since)':''}`:''].filter(Boolean).join(' · ');})],{type:'text/csv'})),a=el('a');a.href=url;a.download=`planning-questions-${place.toLowerCase().replaceAll(' ','-')}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   window.addEventListener('storm-mission-followups',render);
   window.addEventListener('storm-snow-fleet',e=>{fleetLive=fleetQuestions(e.detail.fleet);render();});
   const get=path=>fetch(new URL(path,import.meta.url),{signal:AbortSignal.timeout(20000)}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.json();});

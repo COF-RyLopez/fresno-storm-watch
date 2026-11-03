@@ -15,6 +15,8 @@ test('follow-ups use exact evidence identities and retain corrections, conflicts
  assert.equal(followupsForEvidence(item,[conflict]).length,1);
  assert.equal(missionFollowups([record('d',{sourceKey:null,evidence:JSON.stringify(item)})],now)[0].key,missionEvidenceKey(item));
  assert.equal(missionFollowups([record('e',{sourceKey:null,evidence:'Unstructured legacy note'})],now)[0].key,null);
+ const legacy=missionFollowups([record('f',{evidence:JSON.stringify({...item,question:'Q'})})],now)[0];assert.equal(legacy.answer,'');assert.equal(legacy.source.question,'Q');// a snapshot is not an answer
+ const done=missionFollowups([record('g',{status:'Complete',sourceSnapshot:JSON.stringify(item),evidence:'  Site agreed with City  '})],now)[0];assert.equal(done.answer,'Site agreed with City');assert.equal(done.key,missionEvidenceKey(item));assert.equal(done.source.id,'kings');
  const text=incidentHandoffLines({incidentFollowups:{assessed:true,incident:'exercise',checked:now,rows:[conflict]}},String).join('\n');assert.match(text,/Conflicting versions/);assert.match(text,/owner Exercise team/);assert.match(text,/version /);
 });
 /** Minimal DOM for controller privacy/lifecycle tests; no ArcGIS calls or remote writes. */

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {validateQuestions,gaugeQuestions,questionOwner,questionScenarios,questionsFor,questionEvidence,questionsCsv,QUESTION_KINDS,COUNTY} from '../site/lib/planning-questions-model.js';
+import {validateQuestions,gaugeQuestions,questionOwner,questionScenarios,questionsFor,questionsByState,questionAnswer,questionEvidence,questionsCsv,QUESTION_KINDS,COUNTY} from '../site/lib/planning-questions-model.js';
 import {missionEvidenceKey} from '../site/lib/mission-followup-model.js';
 
 const data=JSON.parse(readFileSync(new URL('../site/data/planning/questions.json',import.meta.url)));
@@ -63,4 +63,20 @@ test('flood-pocket questions carry their outline and nearby options; bad ones ar
   assert.deepEqual(nearbyBadge('County road yard').glyph,'garage');
   assert.equal(nearbyBadge('Fire station (City-owned)').fill,'#a5a9ad');assert.equal(nearbyBadge('Fire station').glyph,'fire');
   assert.equal(nearbyBadge('County building').glyph,'building');
+});
+
+test('answers: latest closed follow-up answers a question, an open one or changed data reopens it, answered sort last',()=>{
+  const q={id:'q',detail:'20 parcels; nearest site 2.0 mi.'},row=o=>({active:false,conflict:false,recorded:1,status:'Complete',answer:'Use fire station 3',source:{question:q.detail},...o});
+  assert.deepEqual(questionAnswer(q,null),{state:'open',row:null});
+  assert.equal(questionAnswer(q,[row()]).state,'answered');
+  assert.equal(questionAnswer(q,[row(),row({active:true,status:'Open'})]).state,'open');
+  assert.equal(questionAnswer(q,[row({source:{question:'18 parcels; nearest site 2.0 mi.'}})]).state,'changed');
+  assert.equal(questionAnswer(q,[row({source:null})]).state,'answered');// no snapshot: nothing to compare
+  assert.equal(questionAnswer(q,[row({recorded:1,answer:'old'}),row({recorded:2,status:'Canceled',answer:'new'})]).row.answer,'new');
+  const states={a:'answered',b:'open',c:'changed'},list=['a','b','c'].map(id=>({id})),by=w=>questionsByState(list,x=>states[x.id],w).map(x=>x.id);
+  assert.deepEqual(by('open'),['b','c']);assert.deepEqual(by('answered'),['a']);assert.deepEqual(by('all'),['b','c','a']);
+});
+
+test('flood-pocket questions carry the parcel numbers their stable ids are matched on',()=>{
+  for(const q of data.questions.filter(x=>x.kind==='sandbags')){assert.equal(q.apns.length,q.parcels,q.id);assert.match(q.id,/^sandbags:[a-z0-9]+:\S+$/);}
 });
