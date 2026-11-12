@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {emptyRecords,makeEvent,heads,current,reportStatus,buildNotifications,reviewState,briefingSnapshot,briefingText,approvalFor,digest,validatePayload,safeLink,changeSummary} from '../site/lib/eoc-model.js';
 import {createExerciseStore,createPrivateStore,privateObjectIds} from '../site/lib/eoc-store.js';
 import {normalizeRoad,normalizeRoads,fetchRoads,roadInCurrentView,roadHealth,missingRoadRecords} from '../site/lib/roads.js';
@@ -61,6 +62,27 @@ test('invalid activation, staging confirmation, period and unsafe reference inpu
   assert.throws(()=>validatePayload('periods',{...period,end:period.start}),/follow/);
   assert.throws(()=>validatePayload('staging',{location:'test',owner:'test',status:'Owner confirmed',evidence:'test'}),/time/);
   assert.equal(safeLink('javascript:alert(1)'),null);assert.equal(safeLink('https://user:secret@example.com'),null);
+});
+test('activation guidance is in the EOC workspace and links to the exact County and FEMA pages',()=>{
+  const html=readFileSync(new URL('../site/eoc.html',import.meta.url),'utf8');
+  const guidance=html.match(/<details id="activation-guidance" hidden>[\s\S]*?<\/details>/)?.[0];
+  assert.ok(guidance,'Expected a collapsed reference in the private workspace');
+  for(const page of [62,63,64])assert.match(guidance,new RegExp(`fresnocounty\\.legistar\\.com/[^"]+#page=${page}"`));
+  for(const page of [48,49,50])assert.match(guidance,new RegExp(`fema_eoc-quick-reference-guide\\.pdf#page=${page}"`));
+});
+test('a weather alert and a revised gauge cue leave the recorded activation unchanged',async()=>{
+  const store=createExerciseStore(),data=emptyRecords();
+  const alert={key:'nws:test',revision:'v1',category:'Official agency alerts',change:'Flood warning'};
+  const gauge={key:'area:test',revision:'v1',category:'Planning review cues',change:'Gauge rising'};
+  assert.equal(buildNotifications(data,[alert,gauge],now).length,2);
+  assert.equal(current(data.incidents),null);
+
+  const decision=await add(store,data,'incidents',{
+    name:'Exercise flood',level:'Level 2 partial',authority:'County Emergency Manager',
+    decisionBy:'Exercise decision maker',evidence:'Exercise decision log',effective:now
+  });
+  assert.equal(buildNotifications(data,[alert,{...gauge,revision:'v2'}],now).length,2);
+  assert.equal(current(data.incidents).id,decision.id);
 });
 test('private configuration fails closed before loading SDK or records',async()=>{await assert.rejects(createPrivateStore({enabled:false},{}),/not enabled/);await assert.rejects(createPrivateStore({enabled:true,environment:'exercise',orgId:'county'},{portal:{id:'other'}}),/county organization/);});
 test('null private table IDs require a separate successful zero count',async()=>{
