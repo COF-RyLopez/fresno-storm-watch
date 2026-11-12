@@ -52,7 +52,10 @@ function selectSection(name){section=name;renderSection();}
 function renderHeader(){
   const activation=current(records.incidents),conflict=liveHeads('incidents').some(h=>h.conflict);
   $('activation-level').textContent=conflict?'Activation record conflict — verify':activation?.payload.level||'Activation status unconfirmed';
-  $('activation-detail').textContent=activation?`${activation.payload.authority} · ${activation.payload.decisionBy} · effective ${time(activation.payload.effective)} · recorded by ${activation.author}`:'Only an authorized record changes this status.';
+  $('activation-detail').textContent=activation?`${activation.payload.authority} · ${activation.payload.decisionBy} · effective ${time(activation.payload.effective)} · recorded by ${activation.author}`:'Awaiting a recorded decision.';
+  const guidance=$('activation-guidance');
+  guidance.hidden=!store;
+  if(!store)guidance.open=false;
   $('incident-name').textContent=activation?.payload.name||(exercise?'Fictional Fresno river tabletop':'No private incident selected');
   const picker=$('incident-picker');picker.replaceChildren();const distinct=new Map();for(const i of incidents)distinct.set(i.incident,i.payload.name);if(exercise&&!distinct.size)distinct.set(incident,'Fictional Fresno river tabletop');for(const [id,name]of distinct){const o=el('calcite-option',name);o.value=id;o.selected=id===(incident||'');picker.append(o);}if(!distinct.size){const placeholder=el('calcite-option','No private incident loaded');placeholder.value='';placeholder.selected=true;picker.append(placeholder);}picker.value=incident||'';picker.disabled=!store;
   const period=$('period-picker');period.replaceChildren();for(const h of liveHeads('periods')){const o=el('calcite-option',`${h.conflict?'CONFLICT · ':''}${h.record.payload.label}`);o.value=h.record.id;o.selected=h.record.id===(periodId||'');period.append(o);}if(!period.children.length){const placeholder=el('calcite-option','No recorded period');placeholder.value='';placeholder.selected=true;period.append(placeholder);}period.value=periodId||'';period.disabled=!store;
