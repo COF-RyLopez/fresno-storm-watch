@@ -35,7 +35,7 @@ async function main(){
 await mkdir(target,{recursive:true});const records=[];
 for(const [name,folder,metaName,manifestName]of [['waterways','tiles-v0.29.0','tilejson.json','manifest.json'],['waterbodies','waterbodies-v0.33.0','waterbodies-tilejson.json','waterbodies-manifest.json']]){
  const meta=JSON.parse(await readFile(new URL(metaName,source),'utf8')),original=JSON.parse(await readFile(new URL(manifestName,source),'utf8'));
- delete meta.tiles;meta.attribution='USGS 3DHP · October 2026 reference';
+ delete meta.tiles;meta.attribution='USGS 3DHP · reference retrieved '+original.retrievedAt;
  const result=await pack(folder,meta);if(original.tileCount&&result.tileCount!==original.tileCount)throw Error('Source tile inventory mismatch');
  await writeFile(new URL(name+'.pmtiles',target),result.bytes);records.push({name,...result,bytes:result.bytes.length,source:original.source,sourceRetrievedAt:original.retrievedAt,sourceFeatures:original.accepted,limits:original.limitations});console.log(name,result.tileCount,result.bytes.length,result.sha256);
 }

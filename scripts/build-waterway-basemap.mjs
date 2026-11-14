@@ -47,7 +47,7 @@ for(const feature of data.features){
 const names={type:'FeatureCollection',features:[...named.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([,v],i)=>({type:'Feature',id:i+1,properties:v.properties,geometry:{type:'Point',coordinates:v.point}}))};
 const options={maxZoom:maxzoom,indexMaxZoom:8,indexMaxPoints:50000,extent:4096,buffer:128,tolerance:2};
 const {tiles,bytes,represented,tilesSha256}=await writeTiles(output,tileDirectory,bounds,maxzoom,{flowlines:geojsonvt(data,options),names:geojsonvt(names,options)});
-const tilejson={tilejson:'3.0.0',name:'F.R.O.G. Waterways — Dark',scheme:'xyz',tiles:[publicUrl+tileDirectory+'/{z}/{x}/{y}.pbf'],minzoom:0,maxzoom,bounds,tileSize:512,
+const tilejson={tilejson:'3.0.0',name:'F.R.O.G. Waterways — Dark',scheme:'xyz',tiles:[publicUrl+tileDirectory+'/{z}/{x}/{y}.pbf?v='+encodeURIComponent(manifest.retrievedAt)],minzoom:0,maxzoom,bounds,tileSize:512,
   attribution:'USGS 3DHP; Esri and its data providers',vector_layers:[{id:'flowlines',geometry_type:'line',fields:{name:'String',kind:'Number',role:'String',rank:'Number',source_id:'String'}},{id:'names',geometry_type:'point',fields:{name:'String',kind:'Number',role:'String',rank:'Number',source_id:'String'}}]};
 await writeFile(new URL('tilejson.json',output),JSON.stringify(tilejson,null,2)+'\n');
 style.name='F.R.O.G. Waterways — Dark';
@@ -81,7 +81,7 @@ const nameStyle={id:'frog-waterway-names',type:'symbol',source:'frog','source-la
 style.layers.push({...structuredClone(nameStyle),id:'frog-overview-names',minzoom:6,filter:['==','rank',0],layout:{...nameStyle.layout,'text-size':16,'text-anchor':'bottom','text-offset':[0,-1.3]}},
   {...nameStyle,filter:['all',['!=','name','Madera Canal'],['!=','rank',0]]},
   {...structuredClone(nameStyle),id:'frog-madera-intake-name',filter:['==','name','Madera Canal'],layout:{...nameStyle.layout,'text-anchor':'bottom-right','text-offset':[-1,-1]}});
-style.metadata={...(style.metadata??{}),frog:{version,retrievedAt:manifest.retrievedAt,bounds,countyGeoid:manifest.countyGeoid}};
+style.metadata={...(style.metadata??{}),frog:{version,revision:manifest.retrievedAt,retrievedAt:manifest.retrievedAt,bounds,countyGeoid:manifest.countyGeoid}};
 const waterbodies=JSON.parse(await readFile(new URL('waterbodies-manifest.json',output),'utf8'));
 style=addWaterbodyStyle(style,waterbodies,publicUrl);
 await writeFile(new URL('root.json',output),JSON.stringify(style,null,2)+'\n');

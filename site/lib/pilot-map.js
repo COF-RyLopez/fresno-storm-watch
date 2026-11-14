@@ -7,11 +7,11 @@ let archiveProtocol;
 export const styleId=()=> 'frog-waterways-0.33.0';
 /** Both engines reference the same publisher tiles and existing cached county tiles. */
 export async function pilotStyle(view,delivery='tiles',fetchImpl=fetch){
- const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetchImpl(new URL('root.json?v=0.33.0',base),{credentials:'omit',signal:AbortSignal.timeout(15000)});
+ const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetchImpl(new URL('root.json?v=0.33.0',base),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw Error('Waterways basemap unavailable');
  const style=waterwayStyle(await r.json(),base);
  if(delivery==='pmtiles'){
-  for(const [id,file]of [['frog','waterways'],['frogWaterbodies','waterbodies']])style.sources[id]={...style.sources[id],url:'pmtiles://'+new URL('archives/'+file+'.pmtiles',base).href};
+  for(const [id,file]of [['frog','waterways'],['frogWaterbodies','waterbodies']])style.sources[id]={...style.sources[id],url:'pmtiles://'+new URL('archives/'+file+'.pmtiles?v='+encodeURIComponent(new URL(style.sources[id].url).searchParams.get('v')),base).href};
  }
  return style;
 }
@@ -28,7 +28,7 @@ export async function createPilotMap({engine,container,view,features,county,onSe
   if(delivery==='pmtiles'&&!archiveProtocol){const {Protocol}=await import('../vendor/pmtiles-4.5.0/pmtiles.js');archiveProtocol=new Protocol();ml.addProtocol('pmtiles',archiveProtocol.tile);}
   const displayStyle=libreStyle(style);
   if(mode==='3d'){
-   displayStyle.sources.terrain={type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,maxzoom:14,attribution:'Terrain Tiles · Mapzen / Tilezen · reference elevation'};
+   displayStyle.sources.terrain={type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,maxzoom:14,attribution:'Terrain Tiles Â· Mapzen / Tilezen Â· reference elevation'};
    displayStyle.terrain={source:'terrain',exaggeration:1};
    const shading={id:'terrain-shading',type:'hillshade',source:'terrain',paint:{'hillshade-exaggeration':.35,'hillshade-shadow-color':'#07131e','hillshade-highlight-color':'#a0b4b4','hillshade-accent-color':'#243340'}};
    const firstLine=displayStyle.layers.findIndex(layer=>layer.type==='line'||layer.type==='symbol');

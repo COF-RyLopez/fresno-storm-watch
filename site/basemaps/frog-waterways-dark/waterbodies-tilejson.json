@@ -3,7 +3,7 @@
   "name": "Fresno waterbody reference footprints",
   "scheme": "xyz",
   "tiles": [
-    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/waterbodies-v0.33.0/{z}/{x}/{y}.pbf"
+    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/waterbodies-v0.33.0/{z}/{x}/{y}.pbf?v=2026-11-14T23%3A38%3A48.714565%2B00%3A00"
   ],
   "minzoom": 0,
   "maxzoom": 12,

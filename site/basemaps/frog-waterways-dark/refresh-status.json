@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "state": "current",
+  "lastAttemptAt": "2026-11-14T23:40:08.400041+00:00",
+  "lastSuccessAt": "2026-11-14T23:40:08.400041+00:00",
+  "schedule": "Weekly, Sunday 12:30 UTC",
+  "message": "Both USGS sources freshly retrieved, geometry and tiles validated. Retrieval is not a new survey date.",
+  "flowlines": 142595,
+  "waterbodies": 7118
+}

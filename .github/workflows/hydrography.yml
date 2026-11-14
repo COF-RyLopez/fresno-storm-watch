@@ -1,0 +1,56 @@
+name: Refresh public USGS hydrography
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 12 * * 0'
+permissions:
+  contents: write
+concurrency:
+  group: public-hydrography-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.22.3'
+      - run: npm ci --ignore-scripts
+      - name: Prepare isolated geospatial environment
+        run: |
+          python3 -m venv work/hydro-env
+          work/hydro-env/bin/python -m pip install --disable-pip-version-check -r scripts/exposure-requirements.txt
+          work/hydro-env/bin/python -m unittest discover -s tests -p 'test_hydrography_refresh.py'
+          work/hydro-env/bin/python -m unittest discover -s tests -p 'test_waterway_export.py'
+      - name: Acquire, validate, build and apply public reference
+        id: refresh
+        run: work/hydro-env/bin/python scripts/refresh-hydrography.py --apply
+      - name: Regression checks
+        id: checks
+        run: |
+          npm test
+          npm run check
+      - name: Commit validated public outputs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/basemaps/frog-waterways-dark site/data/search/v0.31.0 site/data/search/waterbodies-v0.34.0
+          git diff --cached --quiet || git commit -m 'Refresh validated public USGS hydrography'
+          git push origin HEAD:main
+      - name: Record failed refresh without publishing partial data
+        if: failure() && (steps.refresh.outcome == 'failure' || steps.checks.outcome == 'failure')
+        run: |
+          # Reset staging only: never include partially applied reference outputs.
+          git reset
+          git restore --source=HEAD -- site/basemaps/frog-waterways-dark/refresh-status.json
+          python3 scripts/refresh-hydrography.py --record-failure
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site/basemaps/frog-waterways-dark/refresh-status.json
+          git diff --cached --quiet || git commit -m 'Report hydrography refresh failure; retain reference'
+          git push origin HEAD:main
+      # GITHUB_TOKEN pushes do not trigger another workflow. The existing Pages
+      # schedule (every 15 minutes) validates and publishes the committed reference.

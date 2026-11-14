@@ -47,7 +47,7 @@ test('every public search geometry is accounted for, bounded and in the declared
   assert.equal(keys.size,index.entries.length);
   for(const counts of Object.values(manifest.accounting))assert.equal(counts.input,counts.accepted+counts.unnamed+counts.rejected);
   assert.equal(manifest.accounting.street.rejected,0);assert.equal(manifest.accounting.waterway.rejected,0);
-  assert.equal(index.entries.filter(r=>r.kind==='waterway').length,496);
+  assert(index.entries.some(r=>r.kind==='waterway'));assert.equal(index.entries.length,manifest.namedGroups);
   assert.equal((await readdir(base)).filter(f=>/^[a-f0-9]{2}\.json$/.test(f)).length,256);
 });
 

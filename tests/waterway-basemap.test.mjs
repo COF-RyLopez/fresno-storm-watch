@@ -12,7 +12,7 @@ const tilejson=JSON.parse(await readFile(new URL('tilejson.json',base),'utf8'));
 
 test('county style resolves its own TileJSON for localhost and project Pages, retaining official Esri background',()=>{
   for(const url of ['http://127.0.0.1:8778/basemaps/frog-waterways-dark/','https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/']){
-    const result=waterwayStyle(style,url);assert.equal(result.sources.frog.url,url+'tilejson.json?v=0.29.0');
+    const result=waterwayStyle(style,url);assert.equal(result.sources.frog.url,url+'tilejson.json?v='+encodeURIComponent(style.metadata.frog.retrievedAt));
     assert.equal(result.sources.esri.url,'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer');
     assert.equal(result.glyphs,style.glyphs);assert.equal(result.sprite,style.sprite);
   }
@@ -36,7 +36,7 @@ test('snapshot explicitly accounts for outside-only and rejected geometry withou
   assert.match(manifest.limitations,/not a complete verified irrigation-district ditch inventory/);
   assert.match(WATERWAY_BASEMAP.note,/Fresno County.*unnamed canals.*unverified/);
   assert.equal(tilejson.tileSize,512);assert.equal(tilejson.scheme,'xyz');
-  assert.equal(tilejson.tiles[0],'https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/tiles-v0.29.0/{z}/{x}/{y}.pbf');
+  assert.equal(tilejson.tiles[0],'https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/tiles-v0.29.0/{z}/{x}/{y}.pbf?v='+encodeURIComponent(manifest.retrievedAt));
   assert.deepEqual(tilejson.vector_layers.map(l=>l.geometry_type),['line','point']);
 });
 
@@ -44,7 +44,7 @@ test('gallery entry is constructed with a valid style immediately; unavailable s
   let created=0;
   class Layer{constructor(props){created++;assert.equal(props.style.version,8);this.props=props;}load(){return Promise.resolve(this);}}
   class Basemap{constructor(props){Object.assign(this,props);}}
-  const fetchImpl=async(url,options)=>{assert.match(url.href,/root.json\?v=0.33.0$/);assert.equal(options.credentials,'omit');return {ok:true,json:async()=>style};};
+  const fetchImpl=async(url,options)=>{assert.match(url.href,/root.json\?v=0.33.0$/);assert.equal(options.credentials,'omit');assert.equal(options.cache,'no-store');return {ok:true,json:async()=>style};};
   const result=await createWaterwayBasemap({Basemap,VectorTileLayer:Layer,fetchImpl});
   assert.equal(result.basemap.baseLayers[0],result.layer);assert.equal(await result.load(),result.layer);
   await assert.rejects(createWaterwayBasemap({Basemap,VectorTileLayer:Layer,fetchImpl:async()=>({ok:false,status:503})}),/HTTP 503/);

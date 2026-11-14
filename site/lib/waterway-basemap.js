@@ -9,15 +9,15 @@ export const WATERWAY_BASEMAP = Object.freeze({
 /** Resolve own tile source for both localhost and project-scoped Pages URLs. */
 export function waterwayStyle(style,baseUrl){
   const result=structuredClone(style);
-  result.sources.frog={type:'vector',url:new URL('tilejson.json?v='+WATERWAY_BASEMAP.flowlineVersion,baseUrl).href,minzoom:0,maxzoom:14,bounds:WATERWAY_BASEMAP.bounds};
-  if(result.sources.frogWaterbodies)result.sources.frogWaterbodies={type:'vector',url:new URL('waterbodies-tilejson.json?v='+WATERWAY_BASEMAP.version,baseUrl).href,minzoom:0,maxzoom:12,bounds:WATERWAY_BASEMAP.bounds};
+  result.sources.frog={type:'vector',url:new URL('tilejson.json?v='+encodeURIComponent(style.metadata?.frog?.revision??style.metadata?.frog?.retrievedAt??WATERWAY_BASEMAP.flowlineVersion),baseUrl).href,minzoom:0,maxzoom:14,bounds:WATERWAY_BASEMAP.bounds};
+  if(result.sources.frogWaterbodies)result.sources.frogWaterbodies={type:'vector',url:new URL('waterbodies-tilejson.json?v='+encodeURIComponent(style.metadata?.frog?.waterbodies?.revision??style.metadata?.frog?.waterbodies?.retrievedAt??WATERWAY_BASEMAP.version),baseUrl).href,minzoom:0,maxzoom:12,bounds:WATERWAY_BASEMAP.bounds};
   return result;
 }
 
 /** Load on selection, preserving the existing map if the new style fails. */
 export async function createWaterwayBasemap({Basemap,VectorTileLayer,fetchImpl=fetch}){
   const baseUrl=new URL('../basemaps/frog-waterways-dark/',import.meta.url);
-  const response=await fetchImpl(new URL('root.json?v='+WATERWAY_BASEMAP.version,baseUrl),{credentials:'omit',signal:AbortSignal.timeout(12_000)});
+  const response=await fetchImpl(new URL('root.json?v='+WATERWAY_BASEMAP.version,baseUrl),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(12_000)});
   if(!response.ok)throw new Error(`Waterways style HTTP ${response.status}`);
   const style=waterwayStyle(await response.json(),baseUrl);
   const layer=new VectorTileLayer({id:'frog-waterways-vector',title:WATERWAY_BASEMAP.title,

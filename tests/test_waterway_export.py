@@ -11,6 +11,14 @@ module = SimpleNamespace(**runpy.run_path(str(Path(__file__).resolve().parents[1
 
 
 class ExportTests(unittest.TestCase):
+    def test_id_inventory_rejects_truncation_and_duplicate_ids(self):
+        self.assertEqual(module.inventory_ids({'objectIds':[3,1]}),[1,3])
+        for response in [{'objectIds':[1],'exceededTransferLimit':True},{'objectIds':[1,1]}, {}, {'objectIds':['1']}]:
+            with self.subTest(response=response), self.assertRaises(RuntimeError):
+                module.inventory_ids(response)
+        with self.assertRaises(RuntimeError):
+            module.read_inventory([1],lambda batch:batch,lambda:{'objectIds':[1],'exceededTransferLimit':True},'changed')
+
     def setUp(self):
         self.county = Polygon([(-120,36),(-119,36),(-119,37),(-120,37)])
         self.feature = {'attributes': {'OBJECTID':7,'id3dhp':'stable-7','gnisidlabel':'Test river','gnisid':'123','featuretype':1,'featuretypelabel':'River','featuredate':1234,'lengthkm':2.3}, 'geometry': {'paths': [[[-120.1,36.5],[-119.5,36.5]]]}}
