@@ -1,8 +1,8 @@
 {
   "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
   "publisher": "USGS 3D Hydrography Program",
-  "retrievalStartedAt": "2026-11-14T23:36:27.724994+00:00",
-  "retrievedAt": "2026-11-14T23:38:38.149300+00:00",
+  "retrievalStartedAt": "2026-11-14T23:46:41.086721+00:00",
+  "retrievedAt": "2026-11-14T23:47:38.689765+00:00",
   "crs": "OGC:CRS84",
   "bounds": [
     -120.91873100010041,
