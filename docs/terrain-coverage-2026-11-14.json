@@ -1,0 +1,144 @@
+{
+  "checked": "2026-11-14T19:25:59.997Z",
+  "service": "https://gis.water.ca.gov/arcgisimg/rest/services/elevation/SanJoaquinValley_Zone4_2021_LIDAR/ImageServer",
+  "pixelSize": [
+    1,
+    1
+  ],
+  "spatialReference": {
+    "wkt2": "COMPOUNDCRS[\"\",PROJCRS[\"NAD_1983_2011_StatePlane_California_IV_FIPS_0404_Ft_US\",BASEGEOGCRS[\"GCS_NAD_1983_2011\",DYNAMIC[FRAMEEPOCH[2010.0],MODEL[\"HTDP\"]],DATUM[\"D_NAD_1983_2011\",ELLIPSOID[\"GRS_1980\",6378137.0,298.257222101,LENGTHUNIT[\"Meter\",1.0]]],PRIMEM[\"Greenwich\",0.0,ANGLEUNIT[\"Degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"Latitude (lat)\",north,ORDER[1]],AXIS[\"Longitude (lon)\",east,ORDER[2]],ANGLEUNIT[\"Degree\",0.0174532925199433]],CONVERSION[\"Lambert_Conformal_Conic\",METHOD[\"Lambert_Conformal_Conic\"],PARAMETER[\"False_Easting\",6561666.666666666,LENGTHUNIT[\"Foot_US\",0.3048006096012192]],PARAMETER[\"False_Northing\",1640416.666666667,LENGTHUNIT[\"Foot_US\",0.3048006096012192]],PARAMETER[\"Central_Meridian\",-119.0,ANGLEUNIT[\"Degree\",0.0174532925199433]],PARAMETER[\"Standard_Parallel_1\",36.0,ANGLEUNIT[\"Degree\",0.0174532925199433]],PARAMETER[\"Standard_Parallel_2\",37.25,ANGLEUNIT[\"Degree\",0.0174532925199433]],PARAMETER[\"Latitude_Of_Origin\",35.33333333333334,ANGLEUNIT[\"Degree\",0.0174532925199433]]],CS[Cartesian,2],AXIS[\"Easting (X)\",east,ORDER[1]],AXIS[\"Northing (Y)\",north,ORDER[2]],LENGTHUNIT[\"Foot_US\",0.3048006096012192]],VERTCRS[\"NAVD88 height (ftUS) - Geoid18 (ftUS)\",VDATUM[\"North American Vertical Datum 1988\"],CS[vertical,1],AXIS[\"Gravity-related height (H)\",up,LENGTHUNIT[\"US survey foot\",0.3048006096012192]]]]",
+    "wkt": "PROJCS[\"NAD_1983_2011_StatePlane_California_IV_FIPS_0404_Ft_US\",GEOGCS[\"GCS_NAD_1983_2011\",DATUM[\"D_NAD_1983_2011\",SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"False_Easting\",6561666.666666666],PARAMETER[\"False_Northing\",1640416.666666667],PARAMETER[\"Central_Meridian\",-119.0],PARAMETER[\"Standard_Parallel_1\",36.0],PARAMETER[\"Standard_Parallel_2\",37.25],PARAMETER[\"Latitude_Of_Origin\",35.33333333333334],UNIT[\"Foot_US\",0.3048006096012192]],VERTCS[\"NAVD88 height (ftUS) - Geoid18 (ftUS)\",VDATUM[\"North American Vertical Datum 1988\"],PARAMETER[\"Vertical_Shift\",0.0],PARAMETER[\"Direction\",1.0],UNIT[\"US survey foot\",0.3048006096012192]]"
+  },
+  "extent": {
+    "xmin": 6002499.999774143,
+    "ymin": 1804999.9995974004,
+    "xmax": 6587499.999774143,
+    "ymax": 2267499.9995974004,
+    "spatialReference": {
+      "wkt2": "COMPOUNDCRS[\"\",PROJCRS[\"NAD_1983_2011_StatePlane_California_IV_FIPS_0404_Ft_US\",BASEGEOGCRS[\"GCS_NAD_1983_2011\",DYNAMIC[FRAMEEPOCH[2010.0],MODEL[\"HTDP\"]],DATUM[\"D_NAD_1983_2011\",ELLIPSOID[\"GRS_1980\",6378137.0,298.257222101,LENGTHUNIT[\"Meter\",1.0]]],PRIMEM[\"Greenwich\",0.0,ANGLEUNIT[\"Degree\",0.0174532925199433]],CS[ellipsoidal,2],AXIS[\"Latitude (lat)\",north,ORDER[1]],AXIS[\"Longitude (lon)\",east,ORDER[2]],ANGLEUNIT[\"Degree\",0.0174532925199433]],CONVERSION[\"Lambert_Conformal_Conic\",METHOD[\"Lambert_Conformal_Conic\"],PARAMETER[\"False_Easting\",6561666.666666666,LENGTHUNIT[\"Foot_US\",0.3048006096012192]],PARAMETER[\"False_Northing\",1640416.666666667,LENGTHUNIT[\"Foot_US\",0.3048006096012192]],PARAMETER[\"Central_Meridian\",-119.0,ANGLEUNIT[\"Degree\",0.0174532925199433]],PARAMETER[\"Standard_Parallel_1\",36.0,ANGLEUNIT[\"Degree\",0.0174532925199433]],PARAMETER[\"Standard_Parallel_2\",37.25,ANGLEUNIT[\"Degree\",0.0174532925199433]],PARAMETER[\"Latitude_Of_Origin\",35.33333333333334,ANGLEUNIT[\"Degree\",0.0174532925199433]]],CS[Cartesian,2],AXIS[\"Easting (X)\",east,ORDER[1]],AXIS[\"Northing (Y)\",north,ORDER[2]],LENGTHUNIT[\"Foot_US\",0.3048006096012192]],VERTCRS[\"NAVD88 height (ftUS) - Geoid18 (ftUS)\",VDATUM[\"North American Vertical Datum 1988\"],CS[vertical,1],AXIS[\"Gravity-related height (H)\",up,LENGTHUNIT[\"US survey foot\",0.3048006096012192]]]]",
+      "wkt": "PROJCS[\"NAD_1983_2011_StatePlane_California_IV_FIPS_0404_Ft_US\",GEOGCS[\"GCS_NAD_1983_2011\",DATUM[\"D_NAD_1983_2011\",SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Lambert_Conformal_Conic\"],PARAMETER[\"False_Easting\",6561666.666666666],PARAMETER[\"False_Northing\",1640416.666666667],PARAMETER[\"Central_Meridian\",-119.0],PARAMETER[\"Standard_Parallel_1\",36.0],PARAMETER[\"Standard_Parallel_2\",37.25],PARAMETER[\"Latitude_Of_Origin\",35.33333333333334],UNIT[\"Foot_US\",0.3048006096012192]],VERTCS[\"NAVD88 height (ftUS) - Geoid18 (ftUS)\",VDATUM[\"North American Vertical Datum 1988\"],PARAMETER[\"Vertical_Shift\",0.0],PARAMETER[\"Direction\",1.0],UNIT[\"US survey foot\",0.3048006096012192]]"
+    }
+  },
+  "results": [
+    {
+      "name": "Millerton/Friant",
+      "x": -119.705,
+      "y": 37.001,
+      "value": "487.92",
+      "catalog": [
+        {
+          "Name": "Ov_i02_L02_R0000080D_C00000A69.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L03_R000002AF_C00000378.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L04_R000000E5_C00000128.tif",
+          "Category": 2
+        },
+        {
+          "Name": "s63550w22475",
+          "Category": 1
+        },
+        {
+          "Name": "Ov_i02_L01_R00001827_C00001F3C.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L05_R0000004C_C00000062.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L06_R00000019_C00000020.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L07_R00000008_C0000000A.tif",
+          "Category": 2
+        }
+      ],
+      "pixel": {
+        "Values": [
+          "487.92",
+          "487.92",
+          "487.92",
+          "487.92",
+          "487.92",
+          "491.877",
+          "476.305",
+          "360.016"
+        ]
+      }
+    },
+    {
+      "name": "Pine Flat Dam",
+      "x": -119.325,
+      "y": 36.833,
+      "value": "NoData",
+      "catalog": [],
+      "pixel": {}
+    },
+    {
+      "name": "Kings near Piedra",
+      "x": -119.418,
+      "y": 36.808,
+      "value": "NoData",
+      "catalog": [],
+      "pixel": {}
+    },
+    {
+      "name": "San Joaquin near Highway 41",
+      "x": -119.791,
+      "y": 36.863,
+      "value": "345.8",
+      "catalog": [
+        {
+          "Name": "Ov_i02_L02_R0000080C_C00000A68.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L01_R00001824_C00001F3A.tif",
+          "Category": 2
+        },
+        {
+          "Name": "s63300w21975",
+          "Category": 1
+        },
+        {
+          "Name": "Ov_i02_L03_R000002AE_C00000378.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L05_R0000004C_C00000062.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L06_R00000019_C00000020.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L07_R00000008_C0000000A.tif",
+          "Category": 2
+        },
+        {
+          "Name": "Ov_i02_L04_R000000E4_C00000128.tif",
+          "Category": 2
+        }
+      ],
+      "pixel": {
+        "Values": [
+          "345.507",
+          "345.725",
+          "345.8",
+          "345.7",
+          "352.747",
+          "355.385",
+          "360.505",
+          "345.91"
+        ]
+      }
+    }
+  ]
+}
