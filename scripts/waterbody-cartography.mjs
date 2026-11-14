@@ -59,6 +59,6 @@ export function addWaterbodyStyle(input,manifest,baseUrl){
     paint:{'text-color':'#c2e1ed','text-halo-color':'#17252e','text-halo-width':1.5}};
   style.layers.push({...structuredClone(labels),id:'frog-waterbody-major-names',minzoom:7,filter:['>=','area_sqkm',1],layout:{...labels.layout,'text-size':15}},
     {...structuredClone(labels),id:'frog-waterbody-local-names',minzoom:11,filter:['<','area_sqkm',1]});
-  style.metadata={...(style.metadata??{}),frog:{...(style.metadata?.frog??{}),waterbodies:{version,source:manifest.source,retrievedAt:manifest.retrievedAt,accepted:manifest.accepted}}};
+  style.metadata={...(style.metadata??{}),frog:{...(style.metadata?.frog??{}),waterbodies:{version,revision:manifest.retrievedAt,source:manifest.source,retrievedAt:manifest.retrievedAt,accepted:manifest.accepted}}};
   return style;
 }

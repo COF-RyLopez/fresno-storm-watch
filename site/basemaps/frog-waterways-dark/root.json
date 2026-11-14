@@ -29146,7 +29146,8 @@
   "metadata": {
     "frog": {
       "version": "0.29.0",
-      "retrievedAt": "2026-10-20T05:48:34.131743+00:00",
+      "revision": "2026-11-14T23:38:38.149300+00:00",
+      "retrievedAt": "2026-11-14T23:38:38.149300+00:00",
       "bounds": [
         -120.91873100010041,
         35.906914000095696,
@@ -29156,8 +29157,9 @@
       "countyGeoid": "06019",
       "waterbodies": {
         "version": "0.33.0",
+        "revision": "2026-11-14T23:38:48.714565+00:00",
         "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/60",
-        "retrievedAt": "2026-10-20T23:11:07.747813+00:00",
+        "retrievedAt": "2026-11-14T23:38:48.714565+00:00",
         "accepted": 7118
       }
     }

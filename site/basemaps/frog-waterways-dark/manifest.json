@@ -1,8 +1,8 @@
 {
   "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
   "publisher": "USGS 3D Hydrography Program",
-  "retrievalStartedAt": "2026-10-20T05:47:53.309371+00:00",
-  "retrievedAt": "2026-10-20T05:48:34.131743+00:00",
+  "retrievalStartedAt": "2026-11-14T23:36:27.724994+00:00",
+  "retrievedAt": "2026-11-14T23:38:38.149300+00:00",
   "crs": "OGC:CRS84",
   "bounds": [
     -120.91873100010041,
@@ -29,6 +29,7 @@
   "namedSegments": 16184,
   "unnamedSegments": 126411,
   "scope": "Every USGS flowline intersecting the app Fresno County polygon, including named and unnamed canals, ditches, streams and network connectors. Full intersecting segments retained within the county envelope; border-crossing parts can lie outside the county.",
+  "dimensionPolicy": "Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.",
   "limitations": "Countywide USGS reference coverage, not a complete verified irrigation-district ditch inventory. Not live flow, gate state, hydraulic routing or predicted inundation.",
   "networkAudit": {
     "fields": {
@@ -131,7 +132,6 @@
     "idPolicy": "id3dhp identifies features in this snapshot; USGS does not guarantee persistence across releases. Preserve retrieval version and GNIS/mainstem identifiers where supplied."
   },
   "license": "USGS public-domain federal reference data; Esri background attribution retained separately.",
-  "dimensionPolicy": "Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.",
   "basemapVersion": "0.29.0",
   "tileDirectory": "tiles-v0.29.0",
   "backgroundStyle": {

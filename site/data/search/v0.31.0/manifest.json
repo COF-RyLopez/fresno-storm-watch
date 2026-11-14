@@ -287,7 +287,7 @@
     "waterway": {
       "url": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
       "publisher": "USGS 3D Hydrography Program",
-      "retrievedAt": "2026-10-20T05:48:34.131743+00:00"
+      "retrievedAt": "2026-11-14T23:38:38.149300+00:00"
     }
   },
   "geometryNote": "Public reference snapshot, clipped to Fresno; 5 m display simplification in EPSG:26944, returned as EPSG:4326. Grouped names do not establish connection, travel direction, road access, current conditions or routing."

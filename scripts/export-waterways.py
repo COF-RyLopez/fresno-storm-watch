@@ -84,6 +84,14 @@ def cached_json(path: Path, fetch: Callable[[], dict[str, Any]], check: Callable
     return result
 
 
+def inventory_ids(response: dict[str, Any]) -> list[int]:
+    """Require an explicitly complete ID response, including the final inventory check."""
+    ids = response.get('objectIds')
+    if response.get('exceededTransferLimit') or not isinstance(ids, list) or not ids or any(type(i) is not int for i in ids) or len(set(ids)) != len(ids):
+        raise RuntimeError('Incomplete, malformed or duplicated source ID inventory')
+    return sorted(ids)
+
+
 def read_inventory(ids: list[int], fetch: Callable[[list[int]], list[Any]], inventory: Callable[[], dict[str, Any]],
                    changed: str, size: int = 500, workers: int = 3) -> list[Any]:
     """fetch() sorted returnIdsOnly `ids` in exact `size` batches, then require inventory() to return the same IDs."""
@@ -93,7 +101,7 @@ def read_inventory(ids: list[int], fetch: Callable[[list[int]], list[Any]], inve
             records.extend(batch)
             if index % 10 == 0:
                 LOG.info('Read %s of %s records', len(records), len(ids))
-    if sorted(inventory().get('objectIds') or []) != ids:
+    if inventory_ids(inventory()) != ids:
         raise RuntimeError(changed)
     return records
 

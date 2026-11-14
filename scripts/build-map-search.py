@@ -12,6 +12,7 @@ import hashlib
 import json
 import logging
 import runpy
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -39,35 +40,41 @@ def main() -> None:
         """Query public streets with verified TLS and a bounded request timeout."""
         return helper['request_json'](STREETS + '/query', params, error='County street query failed', headers={'Accept-Encoding': 'gzip'})
 
+    waterways_only = '--waterways-only' in sys.argv
+    old_output = ROOT / 'site/data/search' / VERSION
+    old_index = json.loads((old_output / 'index.json').read_text(encoding='utf-8')) if waterways_only else None
+    old_manifest = json.loads((old_output / 'manifest.json').read_text(encoding='utf-8')) if waterways_only else None
     boundary = ROOT / 'site/data/counties.geojson'
     county, spatial = helper['county_filter'](boundary)
     started = datetime.now(timezone.utc)
     parameters = {'where': '1=1', 'geometry': json.dumps(spatial), 'geometryType': 'esriGeometryPolygon',
                   'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
-    inventory = request(parameters)
-    if inventory.get('exceededTransferLimit') or 'objectIds' not in inventory:
-        raise RuntimeError('Incomplete county street ID inventory')
-    ids = sorted(inventory['objectIds'])
-    identity = hashlib.sha256(json.dumps(ids).encode()).hexdigest()
-    # Version the cache contract as well as IDs; changed fields/CRS must not reuse old batches.
-    contract = hashlib.sha256(json.dumps({'ids': ids, 'fields': FIELDS, 'outSR': 4326}).encode()).hexdigest()
-    cache = ROOT / 'work' / 'search-build' / started.strftime('%Y-%m-%d') / contract[:16]
-    cache.mkdir(parents=True, exist_ok=True)
+    streets = []
+    if not waterways_only:
+        inventory = request(parameters)
+        if inventory.get('exceededTransferLimit') or 'objectIds' not in inventory:
+            raise RuntimeError('Incomplete county street ID inventory')
+        ids = sorted(inventory['objectIds'])
+        identity = hashlib.sha256(json.dumps(ids).encode()).hexdigest()
+        # Version the cache contract as well as IDs; changed fields/CRS must not reuse old batches.
+        contract = hashlib.sha256(json.dumps({'ids': ids, 'fields': FIELDS, 'outSR': 4326}).encode()).hexdigest()
+        cache = ROOT / 'work' / 'search-build' / started.strftime('%Y-%m-%d') / contract[:16]
+        cache.mkdir(parents=True, exist_ok=True)
 
-    def batch(chunk: list[int]) -> list[dict[str, Any]]:
-        """Resume exact ID batches and reject truncated, mismatched or wrong-CRS responses."""
-        def check(data: dict[str, Any]) -> list[dict[str, Any]]:
-            features = data.get('features', [])
-            if data.get('exceededTransferLimit') or len(features) != len(chunk) or {f['attributes']['OBJECTID'] for f in features} != set(chunk):
-                raise RuntimeError('Street batch object-ID accounting mismatch')
-            if data.get('spatialReference', {}).get('wkid') != 4326:
-                raise RuntimeError('Street query returned an unexpected CRS')
-            return features
-        return helper['cached_json'](cache / (str(chunk[0]) + '.json'), lambda: request({
-            'objectIds': ','.join(map(str, chunk)), 'outFields': ','.join(FIELDS),
-            'returnGeometry': 'true', 'outSR': 4326, 'returnZ': 'false', 'returnM': 'false'}), check)
+        def batch(chunk: list[int]) -> list[dict[str, Any]]:
+            """Resume exact ID batches and reject truncated, mismatched or wrong-CRS responses."""
+            def check(data: dict[str, Any]) -> list[dict[str, Any]]:
+                features = data.get('features', [])
+                if data.get('exceededTransferLimit') or len(features) != len(chunk) or {f['attributes']['OBJECTID'] for f in features} != set(chunk):
+                    raise RuntimeError('Street batch object-ID accounting mismatch')
+                if data.get('spatialReference', {}).get('wkid') != 4326:
+                    raise RuntimeError('Street query returned an unexpected CRS')
+                return features
+            return helper['cached_json'](cache / (str(chunk[0]) + '.json'), lambda: request({
+                'objectIds': ','.join(map(str, chunk)), 'outFields': ','.join(FIELDS),
+                'returnGeometry': 'true', 'outSR': 4326, 'returnZ': 'false', 'returnM': 'false'}), check)
 
-    streets = helper['read_inventory'](ids, batch, lambda: request(parameters), 'County street inventory changed during acquisition', workers=4)
+        streets = helper['read_inventory'](ids, batch, lambda: request(parameters), 'County street inventory changed during acquisition', workers=4)
     to_local = Transformer.from_crs(4326, 26944, always_xy=True).transform
     to_geo = Transformer.from_crs(26944, 4326, always_xy=True).transform
     groups: dict[tuple[str, str], dict[str, Any]] = {}
@@ -108,6 +115,20 @@ def main() -> None:
         paths = (row.get('geometry') or {}).get('paths', [])
         geometry = MultiLineString(paths) if paths else LineString()
         add('street', name, aliases, geometry, str(attrs['OBJECTID']))
+    if waterways_only:
+        # Preserve county streets verbatim and retain their original source dates.
+        accounting['street'] = old_manifest['accounting']['street']
+        old_shards = {}
+        for row in old_index['entries']:
+            if row['kind'] == 'waterway':
+                continue
+            if row['kind'] != 'street':
+                raise RuntimeError('Unexpected non-public reference type')
+            if row['shard'] not in old_shards:
+                old_shards[row['shard']] = json.loads((old_output / row['shard']).read_text(encoding='utf-8'))
+            shard = old_shards[row['shard']]
+            groups[('street', name_key(row['name']))] = {'name': row['name'], 'aliases': set(row['aliases']),
+                'paths': shard[row['key']]['paths'], 'segments': row['segments']}
     waterways_path = ROOT / 'work/waterways-county/county.geojson'
     waterways = json.loads(waterways_path.read_text(encoding='utf-8'))
     for row in waterways['features']:
@@ -135,11 +156,17 @@ def main() -> None:
         (output / (shard + '.json')).write_bytes(raw)
         shard_hashes[shard + '.json'] = hashlib.sha256(raw).hexdigest()
     water_manifest = json.loads((ROOT / 'work/waterways-county/manifest.json').read_text(encoding='utf-8'))
-    retrieval_times = [path.stat().st_mtime for path in cache.glob('*.json')]
-    first_retrieved = datetime.fromtimestamp(min(retrieval_times), timezone.utc).isoformat()
-    last_retrieved = datetime.fromtimestamp(max(retrieval_times), timezone.utc).isoformat()
+    if waterways_only:
+        street_source = old_index['sources']['street']
+        identity = old_manifest['streetInventorySha256']
+    else:
+        retrieval_times = [path.stat().st_mtime for path in cache.glob('*.json')]
+        first_retrieved = datetime.fromtimestamp(min(retrieval_times), timezone.utc).isoformat()
+        last_retrieved = datetime.fromtimestamp(max(retrieval_times), timezone.utc).isoformat()
+        street_source = {'url': STREETS, 'publisher': 'Fresno County Public Works and Planning', 'retrievedAt': first_retrieved,
+                         'retrievalCompletedAt': last_retrieved, 'inventoryCheckedAt': started.isoformat()}
     result = {'version': VERSION, 'countyGeoid': '06019', 'generatedAt': datetime.now(timezone.utc).isoformat(),
-              'sources': {'street': {'url': STREETS, 'publisher': 'Fresno County Public Works and Planning', 'retrievedAt': first_retrieved, 'retrievalCompletedAt': last_retrieved, 'inventoryCheckedAt': started.isoformat()},
+              'sources': {'street': street_source,
                           'waterway': {'url': helper['SOURCE'], 'publisher': 'USGS 3D Hydrography Program', 'retrievedAt': water_manifest['retrievedAt']}},
               'geometryNote': 'Public reference snapshot, clipped to Fresno; 5 m display simplification in EPSG:26944, returned as EPSG:4326. Grouped names do not establish connection, travel direction, road access, current conditions or routing.',
               'entries': entries}

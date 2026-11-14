@@ -84,7 +84,7 @@ def acquire() -> None:
         raise RuntimeError('Publisher schema changed; inspect before acquiring.')
     params = {'where': '1=1', 'geometry': json.dumps(geometry), 'geometryType': 'esriGeometryPolygon',
               'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
-    ids = sorted(request(source['SOURCE'] + '/query', params).get('objectIds') or [])
+    ids = source['inventory_ids'](request(source['SOURCE'] + '/query', params))
     if not ids or len(ids) != len(set(ids)) or len(ids) > 500_000:
         raise RuntimeError('Unexpected or duplicated county inventory; do not publish.')
     inventory_hash = hashlib.sha256(json.dumps(ids).encode()).hexdigest()

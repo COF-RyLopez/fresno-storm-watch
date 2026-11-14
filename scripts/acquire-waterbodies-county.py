@@ -91,7 +91,7 @@ def acquire() -> None:
         raise RuntimeError('Publisher waterbody schema changed')
     params = {'where': '1=1', 'geometry': json.dumps(filter_geometry), 'geometryType': 'esriGeometryPolygon',
               'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
-    ids = sorted(request(params).get('objectIds') or [])
+    ids = source['inventory_ids'](request(params))
     if not ids or len(ids) > 100_000 or len(ids) != len(set(ids)):
         raise RuntimeError('Unexpected waterbody inventory')
     inventory_hash = hashlib.sha256(json.dumps(ids).encode()).hexdigest()

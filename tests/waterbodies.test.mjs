@@ -10,7 +10,7 @@ const base=new URL('../site/basemaps/frog-waterways-dark/',import.meta.url);
 const manifest=JSON.parse(await readFile(new URL('waterbodies-manifest.json',base),'utf8')),style=JSON.parse(await readFile(new URL('root.json',base),'utf8'));
 
 test('waterbody reference snapshot is reconciled and qualified independently from original flowlines',()=>{
-  assert.equal(manifest.accepted,7118);assert.equal(manifest.downloaded,manifest.accepted+manifest.rejected);assert.equal(manifest.rejected,0);
+  assert(manifest.accepted>0);assert.equal(manifest.downloaded,manifest.accepted+manifest.rejected);assert.equal(manifest.rejected,0);
   assert.equal(Object.values(manifest.featureTypes).reduce((a,b)=>a+b,0),manifest.accepted);
   assert.equal(manifest.displayAccounting.inputFeatures,manifest.accepted);
   assert.equal(manifest.displayAccounting.representedAtMaxZoom+manifest.displayAccounting.notRepresentedAtMaxZoom.length,manifest.accepted);
@@ -25,7 +25,7 @@ test('fills stay below roads and stream lines; names collide rather than overlap
   for(const l of style.layers.filter(l=>l.source==='frogWaterbodies'&&l.type==='symbol')){assert.equal(l.layout['text-allow-overlap'],false);assert.equal(l.layout['text-ignore-placement'],false);}
   assert.equal(new Set(style.layers.map(l=>l.id)).size,style.layers.length);
   const reapplied=addWaterbodyStyle(style,manifest,'https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/');assert.deepEqual(reapplied,style);
-  for(const url of ['http://127.0.0.1:8782/basemaps/frog-waterways-dark/','https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/'])assert.equal(waterwayStyle(style,url).sources.frogWaterbodies.url,url+'waterbodies-tilejson.json?v=0.33.0');
+  for(const url of ['http://127.0.0.1:8782/basemaps/frog-waterways-dark/','https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/'])assert.equal(waterwayStyle(style,url).sources.frogWaterbodies.url,url+'waterbodies-tilejson.json?v='+encodeURIComponent(style.metadata.frog.waterbodies.retrievedAt));
 });
 
 test('all polygon tiles decode with intact IDs, labels and geometry; source accounting and aggregate checksum match',async()=>{

@@ -13,6 +13,7 @@ import {createPlanningQuestions} from './lib/planning-questions-ui.js';
 import {createForecastReview} from './lib/forecast-review-ui.js';
 import {createForecastComparison} from './lib/forecast-comparison-ui.js';
 import {createMapSearch} from './lib/map-search-ui.js';
+import {installHydrographyStatus} from './lib/hydrography-status.js';
 import {createIrrigationReference} from './lib/irrigation-ui.js';
 import {createEvidencePane} from './lib/evidence-ui.js';
 import {createStormNow} from './lib/storm-ui.js';
@@ -92,6 +93,7 @@ const context=createBriefingContextView({timeZone:CONFIG.timeZone,exercise,onBri
 const briefings=createHanfordBriefing({timeZone:CONFIG.timeZone,exercise,onUpdate:strip.briefing,onImpacts:context.setBriefings,onMapTour:id=>briefingLayers?.open(id)});
 const drainageNearby=createDrainageNearby({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap});
 for(const id of ['drainage-evidence','drainage-review-evidence'])$(id).addEventListener('stormEvidenceClose',()=>drainageNearby.clearIfWithin($(id)));
+installHydrographyStatus();
 mapSearch=createMapSearch({showMap:workspace.showMap,onInspect:row=>{if(row.kind==='gauge')rivers?.select(row.key.slice(6));else if(row.kind==='road-record')roads?.select(row.key);else if(row.kind==='asset')facilities.select(row.key);else if(row.kind==='sandbag')void countySandbags.select(row.key);}});
 const countySandbags=createCountySandbags({exercise,timeZone:CONFIG.timeZone,onMap:workspace.showMap,onArea:id=>{openPlanning();planning?.selectArea(id);},onRoad:key=>roads?.select(key,{keepWorkspace:true}),onData:data=>mapSearch.setSandbags(data)});
 if(new URLSearchParams(location.search).get('sandbags')==='1'&&workspace.section==='watch'&&workspace.mission==='watch')workspace.showPanel('watch',{history:false});
