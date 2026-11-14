@@ -67,7 +67,7 @@ let pumpReadiness;
 let power;
 let networkFacilities=null,networkReadiness=null;
 let planningExerciseEntries=null;
-const evidence=createEvidencePane({timeZone:CONFIG.timeZone,onChange:open=>{if(open)workspace.showMap();else workspace.refreshLayout();cameras?.setSuspended(open);}});
+const evidence=createEvidencePane({timeZone:CONFIG.timeZone,onChange:open=>{workspace.evidenceChanged(open);cameras?.setSuspended(open);}});
 const workspace=createWorkspace({evidence,onActivate:id=>{mapSearch?.clear();if(id==='drainage')environment?.selectRainfall();},onCameraChange:open=>cameras?.setOpen(open)});
 const storm=createStormNow({exercise,timeZone:CONFIG.timeZone,onCameras:open=>cameras?.setOpen(open),
   onRain:kind=>kind==='qpf'?environment?.selectRainfall(9,{selectValidTime:true}):environment?.selectOverlay(kind),
