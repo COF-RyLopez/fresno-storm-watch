@@ -164,8 +164,8 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
     if(!selection||!layers)return;
     layers.reservoirs.removeAll();
     void layers.reservoirLabels.set([...(selection.upstream?.stations||[]),...selection.stations].map(s=>({longitude:s.longitude,latitude:s.latitude,label:s.name})));
-    for(const s of selection.upstream?.stations||[])layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:17,height:17},attributes:{name:s.name,river:'San Joaquin (upstream)'}}));
-    for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
+    for(const s of selection.upstream?.stations||[])layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:17,height:17},attributes:{reservoirId:s.id,name:s.name,river:'San Joaquin (upstream)'}}));
+    for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{reservoirId:s.id,name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
   function selectOverlay(kind,notify=true){if(!['off','radar','qpf','satellite'].includes(kind))return;if(kind!=='qpf')rainfallTimeRequest=null;map?.clearEnvironmentPopup();overlay=kind;if(notify)onOverlayChange(kind);renderWeather();}
@@ -176,6 +176,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
     const requested=QPF_PERIODS.find(p=>String(p.id)===e.target.value);if(!requested||requested.id===period.id)return;
     rainfallTimeRequest=null;map?.clearEnvironmentPopup();setPeriod(requested);renderWeather();void refreshWeather();
   });
+  window.addEventListener('frogReservoirSelect',event=>{if(selection?.stations.some(s=>s.id===event.detail?.id))onTrends(event.detail.id);});
   $('environment-refresh').addEventListener('click',()=>void refreshWeather());
   $('reservoir-refresh').addEventListener('click',()=>void refreshReservoirs());
   $('environment-extent').addEventListener('click',()=>{onMap();map?.fitEnvironment();});
