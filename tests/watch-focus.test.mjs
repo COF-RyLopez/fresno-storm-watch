@@ -9,3 +9,7 @@ test('watch focus uses valid source locations, keeps reservoir and gauge distinc
 test('watch camera motion is bounded and respects reduced motion',()=>{
  assert.equal(watchFocusMotion(true).animate,false);assert.equal(watchFocusMotion(false).animate,true);assert(watchFocusMotion(false).duration<=1000);
 });
+test('co-located wind samples do not replace the reservoir source label',()=>{
+ const points=watchFocusPoints([{id:'PNF',longitude:-119.325,latitude:36.833},{id:'PINEFLAT',longitude:-119.325,latitude:36.833}]);
+ assert.equal(points.length,1);assert.equal(points[0].id,'PNF');
+});
