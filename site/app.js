@@ -68,7 +68,7 @@ let power;
 let networkFacilities=null,networkReadiness=null;
 let planningExerciseEntries=null;
 const evidence=createEvidencePane({timeZone:CONFIG.timeZone,onChange:open=>{workspace.evidenceChanged(open);cameras?.setSuspended(open);}});
-const workspace=createWorkspace({evidence,onActivate:id=>{mapSearch?.clear();if(id==='drainage')environment?.selectRainfall();},onCameraChange:open=>cameras?.setOpen(open)});
+const workspace=createWorkspace({evidence,exercise,onActivate:id=>{mapSearch?.clear();if(id==='drainage')environment?.selectRainfall();},onCameraChange:open=>cameras?.setOpen(open)});
 const storm=createStormNow({exercise,timeZone:CONFIG.timeZone,onCameras:open=>cameras?.setOpen(open),
   onRain:kind=>kind==='qpf'?environment?.selectRainfall(9,{selectValidTime:true}):environment?.selectOverlay(kind),
   onOpen:({kind,id})=>{if(kind==='alert')selectAlert(id);else if(kind==='area')mission.inspectArea(id);else if(kind==='drainage')drainageReviews.inspect(id);else if(kind==='signin')$('sign-in').click();else if(kind==='drainage-load')workspace.showPanel('drainage');else if(kind==='roads')openRoads();}});
@@ -119,7 +119,7 @@ void createCameraWatch({config:CONFIG.cameras,timeZone:CONFIG.timeZone,exercise,
 /** @returns {void} Render health separately from hazard counts. */
 function renderBanner() {
   const banner = bannerState(state, Date.now(), CONFIG.staleMs);
-  strip.alerts(state.lastSuccess===null?null:state.alerts.length);storm.set({alerts:state.alerts,alertCheck:{checked:state.lastSuccess,error:state.error}});mission.setAlerts(state.alerts,{checked:state.lastSuccess,error:state.error});
+  strip.alerts(state.lastSuccess===null?null:state.alerts.length,{warnings:state.alerts.filter(a=>a.category==='Warning').length,error:state.error,stale:state.lastSuccess!==null&&Date.now()-state.lastSuccess>CONFIG.staleMs});storm.set({alerts:state.alerts,alertCheck:{checked:state.lastSuccess,error:state.error}});mission.setAlerts(state.alerts,{checked:state.lastSuccess,error:state.error});
   if(!exercise)reportHealth('nws-region','NWS regional alerts',{checked:state.lastSuccess,error:state.error,maxAgeMs:CONFIG.staleMs});
   $('banner').dataset.tone = banner.tone;
   $('banner').setAttribute('kind', ['failure', 'warning'].includes(banner.tone) ? 'danger' : banner.tone === 'watch' ? 'warning' : 'info');
