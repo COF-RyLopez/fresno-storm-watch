@@ -51,7 +51,8 @@ export function releaseEvidence(input,association,now){
   const generated=Date.parse(input.snapshot?.generatedAt),lastSuccess=Date.parse(row?.lastSuccess),checked=input.checked;
   const collectionCurrent=!input.error&&!row?.error&&Number.isFinite(generated)&&Number.isFinite(lastSuccess)&&Number.isFinite(checked)&&generated<=now+120_000&&lastSuccess<=now+120_000&&checked<=now+120_000&&now-generated<=input.config.collectorMaxAgeMs&&now-lastSuccess<=input.config.collectorMaxAgeMs&&now-checked<=input.config.weatherCheckMaxAgeMs;
   const contract=metric&&series?.sensor===metric.sensor&&series?.duration===metric.duration&&series?.units===metric.units;
-  const current=!!collectionCurrent&&!!contract&&assessed.tone==='normal';
+  const completed=metric?.duration!=='D'||assessed.sample?.time+24*HOUR<=now;
+  const current=!!collectionCurrent&&!!contract&&assessed.tone==='normal'&&completed;
   const sample=assessed.sample;
   const ordered=(series?.samples||[]).filter(p=>Number.isFinite(p.time)&&p.time<=now).sort((a,b)=>a.time-b.time);
   const index=sample?ordered.findIndex(p=>p.time===sample.time):-1,prior=index>0?ordered[index-1]:null;
@@ -59,7 +60,8 @@ export function releaseEvidence(input,association,now){
   const maxHours=metric?.duration==='D'?25:1.5,minHours=metric?.duration==='D'?23:0.5;
   const comparable=current&&prior&&Number.isFinite(prior.value)&&!prior.flag&&prior.units===metric.units&&hours>=minHours&&hours<=maxHours;
   const delta=comparable?sample.value-prior.value:null;
-  return {station:station?.id||association.station,name:station?.name||association.station,operator:station?.operator||null,label:metric?.label||association.metric,metric:association.metric,source:station?.source,duration:metric?.duration,sample,prior:comparable?prior:null,hours:comparable?hours:null,delta,current,increasing:delta!==null&&Math.round(delta)>0,reason:!collectionCurrent?'Collection failed, missing or overdue':!contract?'Metric identity/units changed':assessed.tone!=='normal'?assessed.label:!comparable?'No consecutive valid comparison':'Comparable source reports'};
+  const precision=association.metric==='elevation'?100:1;
+  return {station:station?.id||association.station,name:station?.name||association.station,operator:station?.operator||null,label:metric?.label||association.metric,metric:association.metric,source:station?.source,duration:metric?.duration,units:metric?.displayUnits,checked,generated,lastSuccess,sample,prior:comparable?prior:null,hours:comparable?hours:null,delta,current,increasing:delta!==null&&Math.round(delta*precision)>0,reason:!collectionCurrent?'Collection failed, missing or overdue':!contract?'Metric identity/units changed':!completed?'Daily report is not complete':assessed.tone!=='normal'?assessed.label:!comparable?'No consecutive valid comparison':assessed.label+' · comparable source reports'};
 }
 
 /** @param {number|null} value @param {string} units @returns {boolean} Report differences at display precision; this is not an action threshold. */
@@ -80,6 +82,8 @@ export function evaluateAreas(input,now=Date.now()){
     });
     const rainfall=rainfallEvidence(rain,area,points,environmentConfig,now);
     const releases=area.releases.map(a=>releaseEvidence({...reservoirs,config:environmentConfig},a,now));
+    const pools=[...new Set(area.releases.map(a=>a.station))].map(station=>releaseEvidence({...reservoirs,config:environmentConfig},{station,metric:'elevation'},now));
+    const poolRising=pools.filter(p=>p.increasing),poolRain=!!(poolRising.length&&rainfall.positive);
     const schedules=[...new Set(area.releases.map(a=>a.station))].map(id=>scheduleEvidence({...reservoirs,config:environmentConfig},id,now));
     const scheduled=schedules.flatMap(s=>s.cues);
     const threshold=gauges.some(g=>g.assessment.tone==='threshold');
@@ -91,10 +95,12 @@ export function evaluateAreas(input,now=Date.now()){
     if(!gauges.length)gaps.push('No downstream gauge connected');
     for(const g of gauges)if(!g.assessment.current||!g.assessment.forecastUsable)gaps.push(`${g.id}: ${!g.assessment.current?'observation unavailable/old':'forecast unavailable/old'}`);
     if(rainfall.gaps)gaps.push(`${rainfall.gaps}/${rainfall.samples.length} rainfall sample amounts unknown`);
-    for(const r of releases)if(!r.current||r.delta===null)gaps.push(`${r.station} ${r.label}: ${r.reason}`);
+    for(const r of [...releases,...pools])if(!r.current||r.delta===null)gaps.push(`${r.station} ${r.label}: ${r.reason}`);
     for(const s of schedules){if(!s.current)gaps.push(`${s.station} release notices: ${s.reason}`);else if(s.pending.length)gaps.push(`${s.station}: ${s.pending.length} release notice(s) need verification`);}
-    const rank=threshold?4:change?3:rainfall.positive?2:gaps.length?1:0;
-    const status=threshold?'Published NWS threshold cue':scheduled.length?'Scheduled release — review':change?(rainfall.positive?'Rain + river change — review':'River change — review'):rainfall.positive?'Rain forecast — monitor':gaps.length?'Incomplete evidence':'No current change cue';
-    return {area,gauges,rainfall,releases,schedules,scheduled,rising,higher,increased,gaps,rank,status,review:rank>=3,threshold,unknownThresholds:gauges.filter(g=>!g.assessment.thresholdKnown).length};
+    // Pool rise with forecast rain invites operator review; alone it remains monitoring context.
+    // No release, capacity, runoff, downstream stage or travel time is inferred from pool elevation.
+    const rank=threshold?4:change||poolRain?3:rainfall.positive||poolRising.length?2:gaps.length?1:0;
+    const status=threshold?'Published NWS threshold cue':scheduled.length?'Scheduled release — review':change?(rainfall.positive?'Rain + river change — review':'River change — review'):poolRain?'Rain + rising pool — review':poolRising.length?'Pool rising — monitor':rainfall.positive?'Rain forecast — monitor':gaps.length?'Incomplete evidence':'No current change cue';
+    return {area,gauges,rainfall,releases,pools,poolRising,poolRain,schedules,scheduled,rising,higher,increased,gaps,rank,status,review:rank>=3,threshold,unknownThresholds:gauges.filter(g=>!g.assessment.thresholdKnown).length};
   }).sort((a,b)=>b.rank-a.rank||a.area.name.localeCompare(b.area.name));
 }

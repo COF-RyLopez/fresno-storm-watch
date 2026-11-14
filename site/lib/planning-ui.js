@@ -1,3 +1,5 @@
+import {reservoirWatchSummary} from './reservoir-watch-summary.js';
+import {appendReservoirWatch} from './reservoir-watch-ui.js';
 import {mergeForecastReviews} from './forecast-review-model.js';
 import {differenceText} from './forecast-review-ui.js';
 import {reportHealth} from './source-health.js';
@@ -24,7 +26,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
   const time=t=>Number.isFinite(t)?formatTime(t,timeZone):'Unknown';
   const button=(text,fn)=>{const b=el('calcite-button',text);b.setAttribute('scale','s');b.setAttribute('appearance','outline');b.addEventListener('click',fn);return b;};
   const reportTime=(sample,duration)=>duration==='D'?`Report date ${sample?.reportDate||'unknown'} · PST`:time(sample?.time);
-  function cueSummary(r){return [r.threshold?'NWS threshold met/forecast':null,...r.scheduled.map(n=>noticeSummary(n,time)),...r.rising.map(g=>`${g.id} observed +${riverValue(g.assessment.trend.delta,g.gauge.observed.units)} / ${g.assessment.trend.hours.toFixed(1)} h`),...r.higher.map(g=>`${g.id} forecast +${riverValue(g.assessment.delta,g.gauge.forecast.units)} above observation`),...r.increased.map(s=>`${s.station} ${s.label} +${riverValue(s.delta,'cfs')} / ${s.hours.toFixed(1)} h`),r.rainfall.maximum!==null?`Rain sample max ${r.rainfall.maximum.toFixed(2)} in`:'Rain amount unknown'].filter(Boolean).join(' · ');}
+  function cueSummary(r){return [r.threshold?'NWS threshold met/forecast':null,...r.scheduled.map(n=>noticeSummary(n,time)),...r.rising.map(g=>`${g.id} observed +${riverValue(g.assessment.trend.delta,g.gauge.observed.units)} / ${g.assessment.trend.hours.toFixed(1)} h`),...r.higher.map(g=>`${g.id} forecast +${riverValue(g.assessment.delta,g.gauge.forecast.units)} above observation`),reservoirWatchSummary(r),r.rainfall.maximum!==null?`Rain sample max ${r.rainfall.maximum.toFixed(2)} in`:'Rain amount unknown'].filter(Boolean).join(' · ');}
   const windSummary=r=>r.wind.gust?`72h gust sample max ${Math.round(r.wind.gust.value)} mph · ${r.wind.gust.id} · ${time(r.wind.gust.start)}`:'72h gust forecast unknown';
   function renderConcerns(r,host){
     host.append(el('h4','Wind & gust context · fixed next 72 hours'),el('p',r.association.note),el('p',`${time(r.wind.start)} → ${time(r.wind.end)} · app checked ${time(r.wind.checked)}`));
@@ -72,14 +74,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
       if(!a.thresholdKnown)section.append(el('p','NWS thresholds unknown.','watch-gap'));
       section.append(button('Gauge evidence',()=>onGauge(id)));host.append(section);
     }
-    host.append(el('h4','Reservoir releases'));
-    if(!r.releases.length)host.append(el('p','No release association configured for this area.'));
-    for(const release of r.releases){
-      host.append(el('strong',`${release.name} · ${release.label}`));
-      host.append(el('p',release.sample?`${riverValue(release.sample.value,'cfs')} · ${reportTime(release.sample,release.duration)}${release.current?'':' · excluded from change cues'}`:'Reported release unknown'));
-      host.append(el('p',release.delta===null?release.reason:`Change ${release.delta>=0?'+':''}${riverValue(release.delta,'cfs')} over ${release.hours.toFixed(1)} h; previous ${riverValue(release.prior.value,'cfs')} · ${reportTime(release.prior,release.duration)}`));
-      if(release.source)host.append(link('CDEC source',release.source));
-    }
+    appendReservoirWatch(host,r,time);
     for(const schedule of r.schedules)appendScheduledReleases(host,schedule,time);
     if(r.gaps.length){host.append(el('h4','Coverage gaps'));for(const gap of r.gaps)host.append(el('p',gap,'watch-gap'));}
     host.append(el('p','County action thresholds are not configured. Small positive changes are review cues, not rapid-rise or flood-severity categories. Forecasts and observations may be related; they are not independent votes.','watch-context'));
@@ -92,18 +87,18 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     const rows=exercise?combined:mergeForecastReviews(combined,forecastDifferences);previousRows=rows;
     onSummary(rows.filter(r=>r.review).length);map?.setPlanningData(rows,filterMode);
     onData({rows,points});
-    const reviews=rows.filter(r=>r.review),gaps=rows.filter(r=>r.gaps.length),rainOnly=rows.filter(r=>r.rank===2);
+    const reviews=rows.filter(r=>r.review),gaps=rows.filter(r=>r.gaps.length),rainOnly=rows.filter(r=>r.rank===2&&r.rainfall.positive);
     const overlaps=rows.filter(r=>r.pspsRiver),verification=rows.filter(r=>r.power.verification.length);
     const threshold=reviews.some(r=>r.threshold);
     const scheduleCues=[...new Map(rows.flatMap(r=>r.scheduled).map(n=>[n.key,n])).values()].sort((a,b)=>Number(b.phase==='upcoming')-Number(a.phase==='upcoming')||a.time-b.time);
     const title=overlaps.length?`${overlaps.length} river area${overlaps.length===1?' has':'s have'} PSPS + river cues to review`:reviews.length?`${reviews.length} river area${reviews.length===1?'':'s'} to review for possible prepositioning`:rainOnly.length?`${rainOnly.length} river area${rainOnly.length===1?' has':'s have'} forecast precipitation`:!rain?'Checking river-area evidence':gaps.length?'River-area review · evidence incomplete':'River-area review · no current change cue';
-    const key=JSON.stringify([filterMode,title,busy,forecastDifferences.map(a=>[a.id,a.review,a.complete,a.checked,a.rain?.rainSpread,a.wind?.windTiming.hours,a.rainTiming?.rainTiming.hours]),rain,reservoirs.snapshot?.generatedAt,reservoirs.error,rows.map(r=>[r.area.id,r.status,cueSummary(r),r.gaps,r.wind,r.paired,r.power.matches.map(m=>[m.row.key,m.row.revision,m.problem,m.eligible]),r.power.followups.map(m=>m.row.key),r.power.checked,r.gauges.map(g=>[g.assessment.current,g.assessment.forecastUsable,g.assessment.observed,g.assessment.peak]),r.releases.map(s=>[s.sample,s.delta,s.current])])]);
-    $('watch-check-time').textContent=`${exercise?'Fictional exercise · ':''}Evaluated ${time(Date.now())} · fixed six-area scope`;
+    const key=JSON.stringify([filterMode,title,busy,forecastDifferences.map(a=>[a.id,a.review,a.complete,a.checked,a.rain?.rainSpread,a.wind?.windTiming.hours,a.rainTiming?.rainTiming.hours]),rain,reservoirs.snapshot?.generatedAt,reservoirs.error,rows.map(r=>[r.area.id,r.status,cueSummary(r),r.gaps,r.wind,r.paired,r.power.matches.map(m=>[m.row.key,m.row.revision,m.problem,m.eligible]),r.power.followups.map(m=>m.row.key),r.power.checked,r.gauges.map(g=>[g.assessment.current,g.assessment.forecastUsable,g.assessment.observed,g.assessment.peak]),[...r.releases,...r.pools].map(s=>[s.sample,s.delta,s.current])])]);
+    $('watch-check-time').textContent=`${exercise?'Fictional exercise · ':''}Evaluated ${time(Date.now())} · fixed seven-area scope`;
     $('watch-refresh').toggleAttribute('loading',busy);$('watch-refresh').toggleAttribute('disabled',busy||exercise);
     if(key===signature)return;signature=key;
     $('river-title').textContent=(exercise?'EXERCISE · ':'')+title;
     const focus=(overlaps.length?overlaps:reviews).slice(0,2),windPeak=rows.filter(r=>r.wind.gust).sort((a,b)=>b.wind.gust.value-a.wind.gust.value)[0];
-    $('river-summary').textContent=`${focus.length?focus.map(r=>`${r.area.name}: ${windSummary(r)}`).join(' · '):windPeak?windSummary(windPeak):'Wind context unknown'}. ${scheduleCues.length?`${scheduleCues.length} scheduled release notice(s) to review. `:''}Known PSPS + river matches at watchpoints: ${overlaps.length}${rows.some(r=>r.power.gaps.length)?' (utility coverage incomplete)':''} · ${verification.length} ${verification.length===1?'area needs':'areas need'} power verification · ${gaps.length}/6 with evidence gaps. Review cues are not deployment instructions.`;
+    $('river-summary').textContent=`${focus.length?focus.map(r=>`${r.area.name}: ${cueSummary(r)}`).join(' · '):windPeak?windSummary(windPeak):'Wind context unknown'}. ${scheduleCues.length?`${scheduleCues.length} scheduled release notice(s) to review. `:''}Known PSPS + river matches at watchpoints: ${overlaps.length}${rows.some(r=>r.power.gaps.length)?' (utility coverage incomplete)':''} · ${verification.length} ${verification.length===1?'area needs':'areas need'} power verification · ${gaps.length}/${rows.length} with evidence gaps. Review cues are not deployment instructions.`;
     $('river-banner').setAttribute('kind',threshold?'danger':reviews.length||gaps.length?'warning':'info');
     $('review-areas').setAttribute('text',`Review areas${reviews.length?' ('+reviews.length+')':''}`);
     $('watch-rule-summary').textContent=`${reviews.length} review · ${overlaps.length} PSPS + river · ${verification.length} power verification · ${gaps.length} with gaps`;
