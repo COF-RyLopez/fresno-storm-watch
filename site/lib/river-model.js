@@ -69,7 +69,7 @@ function thresholdsFor(gauge, name, units) {
 /** @param {object|null} gauge @param {object} config @param {number} hours @param {number} now @param {string|null} error @returns {object} */
 export function assessGauge(gauge, config, hours = 72, now = Date.now(), error = null) {
   if (!gauge) return { tone:'gap', rank:0, label:'Data unavailable', gaps:['No successful station query'], observed:null, peak:null, thresholds:[], crossings:[], error, current:false, forecastUsable:false, thresholdKnown:false };
-  const observed = gauge.observed.points.filter(p=>p.time<=now).at(-1) ?? null;
+  const observed = gauge.observed.points.filter(p=>p.time<=now&&Number.isFinite(p.value)).at(-1) ?? null;
   const obsAge = observed ? now-observed.time : Infinity;
   const queryOld = now-gauge.fetched > config.staleMs;
   const current = !!observed && obsAge <= config.observationMaxAgeMs && !error && !queryOld && gauge.inService && gauge.observedStatus !== 'obs_not_current';
@@ -92,7 +92,7 @@ export function assessGauge(gauge, config, hours = 72, now = Date.now(), error =
     const comparable = convertRiverUnits(observed.value,gauge.observed.units,gauge.forecast.units);
     if (comparable !== null) delta = peak.value-comparable;
   }
-  const prior = observed ? gauge.observed.points.filter(p=>p.time<=observed.time-2.5*HOUR && p.time>=observed.time-4*HOUR).at(-1) : null;
+  const prior = observed ? gauge.observed.points.filter(p=>Number.isFinite(p.value)&&p.time<=observed.time-2.5*HOUR && p.time>=observed.time-4*HOUR).at(-1) : null;
   const trend = current && prior ? { delta:observed.value-prior.value, hours:(observed.time-prior.time)/HOUR, start:prior.time } : null;
   const gaps=[];
   if (error) gaps.push('Station query failed; last result may be outdated');

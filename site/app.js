@@ -37,6 +37,7 @@ import {createHanfordBriefing} from './lib/briefing-ui.js';
 import {createBriefingLayers} from './lib/briefing-layer-ui.js';
 import {createBriefingContextView} from './lib/briefing-context-ui.js';
 import { createReleaseTrends } from './lib/release-trend-ui.js';
+import {HADS_SITES} from './lib/pine-flat-telemetry.js';
 import {elAttrs as component,el,elClass} from './lib/dom.js';
 
 const $ = id => document.getElementById(id);
@@ -104,7 +105,7 @@ roads=createRoadWatch({exercise,timeZone:CONFIG.timeZone,onOpen:openRoads,onMap:
 createIrrigationReference({onLocate:id=>{workspace.showMap();if(!map)return false;if(id==='SJMC1')map.focusGauge(id);else environment?.focusReservoir(id);return true;}});
 const forecastReview=createForecastReview({timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onData:data=>{latestForecastReviews=data;planning?.setForecastDifferences(data);},onCompare:(id,point)=>forecastComparison.open(id,point),onArea:id=>{openPlanning();planning?.selectArea(id);}});
 const forecastComparison=createForecastComparison({getSnapshot:forecastReview.getPoint,onPointUpdate:forecastReview.updatePoint,timeZone:CONFIG.timeZone,exercise,onMap:workspace.showMap,onLocate:p=>map?.focusWind(p.longitude,p.latitude)});
-const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onLocate:(id,gauge)=>{workspace.showMap();if(gauge)map?.focusGauge(gauge);else environment?.focusReservoir(id);}});
+const releaseTrends=createReleaseTrends({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onLocate:(id,gauge)=>{workspace.showMap();if(gauge==='PFQC1')void map?.inspectPlanningPoints([HADS_SITES.PFQC1]);else if(gauge)map?.focusGauge(gauge);else environment?.focusReservoir(id);}});
 planning=createPlanningWatch({config:CONFIG,timeZone:CONFIG.timeZone,exercise,onOpen:openPlanning,onMap:workspace.showMap,onData:data=>{storm.set({areas:data.rows});context.setPlanning(data);mission.setPlanning(data);planQuestions.setAreas(data.rows);dwrSupplyPlanning.setPlanning(data);countySandbags.setPlanning(data);},onAreaSelected:id=>{dwrSupplyPlanning.selectArea(id);countySandbags.selectArea(id);},onGauge:id=>rivers?.select(id),onConditions:openEnvironment,onPower:openPower,onSummary:n=>strip.areas(n),onCompare:id=>forecastComparison.open(id),onTrends:id=>{openReservoirs();releaseTrends.open(id);},onExercise:(entries,reservoirs)=>{planningExerciseEntries=entries;rivers?.setExerciseEntries(entries);releaseTrends.setRiverData({entries});releaseTrends.setReservoirData(reservoirs);}});
 if(latestPlanningPower)planning.setPowerData(latestPlanningPower);
 if(latestForecastReviews)planning.setForecastDifferences(latestForecastReviews);

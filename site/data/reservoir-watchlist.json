@@ -1,5 +1,6 @@
 {
   "checked": "2026-10-18",
+  "pineFlatTelemetry": true,
   "scope": "Two primary reservoir controls for Fresno County river planning. This is not a complete upstream reservoir inventory.",
   "crs": "EPSG:4326; CDEC station metadata coordinates, no geometry repair or derived catchment",
   "sourceTimeZone": "CDEC web service documents Pacific Standard Time year-round (UTC-08:00). Daily report dates remain dates; hourly times display in America/Los_Angeles.",

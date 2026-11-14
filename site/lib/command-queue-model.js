@@ -11,7 +11,7 @@ const base=(type,id,name,change,extra={})=>({key:`${type}:${id}`,type,id,name,ch
 /** Read-only adapters: reuse domain review decisions, never infer hazard clearance or a risk score. */
 export function commandQueue({rivers=[],care=[],drainage=[],drainageReady=false,power=null,roads=null,assets=null}={}){
  const items=[];
- for(const row of rivers){const s=concernSummary(row);if(!s.review)continue;items.push(base('river',s.id,s.name,s.change,{time:s.forecast,timeLabel:'Forecast high',quality:s.quality}));}
+ for(const row of rivers){const s=concernSummary(row);if(!s.review)continue;items.push(base('river',s.id,s.name,row.status,{time:s.forecast||row.rainfall?.cycle?.start||s.observed,timeLabel:s.forecast?'Forecast high':row.rainfall?.cycle?.start?'Rain window starts':'Observed',quality:s.quality}));}
  for(const r of care)if(r.review)items.push(base('care',r.key,r.name,r.reasons.join(' · '),{time:finite(r.zonesChecked),timeLabel:'County source checked',quality:r.gaps.length?'Incomplete evidence':'Spatial association · site conditions unconfirmed'}));
  if(drainageReady){
   for(const p of pumpReadinessSummary(drainage).rows){if(!p.attention)continue;const active=p.tasks.filter(t=>t.active||t.changed||t.conflict),owners=[...new Set(active.map(t=>t.owner).filter(Boolean))],due=active.map(t=>t.due).filter(Number.isFinite);items.push(base('pump',p.key,p.name,p.labels.join(' · '),{private:true,groupId:p.groupId,time:finite(p.rain.cycle?.start),timeLabel:'Rainfall window starts',owner:owners.join(', ')||null,due:due.length?Math.min(...due):null,status:active.some(t=>t.overdue)?'Overdue follow-up':active.length?'Assigned follow-up':'Readiness review',quality:p.current?'Owner report · verify event needs':'Readiness unconfirmed'}));}
