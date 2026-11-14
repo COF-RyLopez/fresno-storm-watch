@@ -4,7 +4,7 @@ import {WORKSPACES,workspaceRoute} from './workspace-model.js';
 export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
   let section=workspaceRoute(location.href),mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch',panelOpen=section==='watch'||!compact.matches,camerasOpen=false,map=null;
-  let explore=watchExploreRoute(location.href),selectedConcern=null;
+  let explore=watchExploreRoute(location.href),selectedConcern=null,phonePane='map';
   const cameraStates=new Map(),cameraPanel=$('camera-panel');
   function mapLabels(){
     const narrow=compact.matches||$('map-panel').getBoundingClientRect().width<520;
@@ -29,6 +29,15 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     for(const tab of document.querySelectorAll('#workspace-tabs > calcite-tab'))tab.selected=tab.getAttribute('tab')===section;
     $('storm-shell').dataset.workspace=section;$('storm-shell').dataset.destination=mission;
     // Topic tabs and specialist controls appear only during deliberate map exploration.
+    const phoneWatch=compact.matches&&mission==='watch'&&section==='watch';
+    const pane=panelOpen?'attention':phonePane==='evidence'&&evidence?.isOpen?'evidence':'map';
+    $('storm-shell').dataset.watchPane=phoneWatch?pane:'desktop';
+    $('watch-phone-nav').hidden=!phoneWatch;
+    for(const id of ['attention','map','evidence'])$('watch-phone-'+id).setAttribute('aria-pressed',String(pane===id));
+    $('watch-phone-evidence').disabled=!evidence?.isOpen;
+    $('watch-phone-evidence').title=evidence?.isOpen?'Return to the selected evidence':'Select a concern to open its evidence';
+    $('map-panel').inert=phoneWatch&&pane!=='map';
+    $('evidence-mobile-host').inert=phoneWatch&&pane!=='evidence';
     const focused=mission==='watch'&&section==='watch'&&!explore;
     $('storm-shell').dataset.watchFocus=String(focused);
     $('workspace-tabs').hidden=mission!=='watch'||section==='storm'||focused;
@@ -52,20 +61,24 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     if(push){const u=new URL(location.href);u.searchParams.set('view',section);u.searchParams.delete('mission');u.searchParams.delete('trends');if(u.href!==location.href)window.history.pushState({},'',u);}
     window.dispatchEvent(new Event('stormWorkspaceChange'));
   }
-  function showMap(){panelOpen=!compact.matches;render();}
+  function showMap(){panelOpen=!compact.matches;phonePane=evidence?.isOpen?'evidence':'map';render();}
+  function showFocusedMap(){panelOpen=!compact.matches;phonePane='map';render();}
+  function showWatchPane(pane){if(pane==='evidence'&&!evidence?.isOpen)return;panelOpen=pane==='attention';phonePane=pane;render();}
+  function evidenceChanged(open){if(open){panelOpen=!compact.matches;phonePane='evidence';}else if(phonePane==='evidence'){phonePane='map';}render();}
   // County Watch topic tabs navigate on user clicks / Enter / Space only: Calcite's own activation events can
   // arrive late after a programmatic selection or a browser history change and must not re-navigate.
   for(const t of document.querySelectorAll('#workspace-tabs calcite-tab-title')){const go=()=>{if(t.dataset.workspace!==section)showPanel(t.dataset.workspace);};t.addEventListener('click',go);t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go();});}
   window.addEventListener('popstate',()=>{cameraStates.set(section,camerasOpen);selectedConcern=null;explore=watchExploreRoute(location.href);section=workspaceRoute(location.href);camerasOpen=cameraStates.get(section)||false;mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';evidence?.close({restoreFocus:false});render();if(map)void map.setWorkspace(section);onCameraChange(camerasOpen);onActivate(section);});
+  for(const pane of ['attention','map','evidence'])$('watch-phone-'+pane).addEventListener('click',()=>showWatchPane(pane));
   $('watch-reference').open=watchExploreRoute(location.href);
   $('watch-map-explore').addEventListener('click',()=>setExplore(!explore));
   $('watch-attention-list').addEventListener('click',()=>{panelOpen=true;render();});
   $('watch-reference').addEventListener('click',e=>{if(e.target.closest?.('calcite-button,calcite-link,a'))setExplore(true);});
   $('workspace-list').addEventListener('click',()=>{panelOpen=true;render();});
-  document.querySelectorAll('[data-show-map]').forEach(b=>b.addEventListener('click',showMap));
+  document.querySelectorAll('[data-show-map]').forEach(b=>b.addEventListener('click',showFocusedMap));
   $('camera-sheet').addEventListener('calciteSheetClose',()=>{if(!dock.matches&&!evidence?.isOpen&&camerasOpen){setCameras(false);onCameraChange(false);}});
   compact.addEventListener('change',()=>{if(evidence?.isOpen)panelOpen=!compact.matches;render();});dock.addEventListener('change',render);
   new ResizeObserver(mapLabels).observe($('map-panel'));
   render();
-  return {setExplore,selectConcern,clearConcern(){selectedConcern=null;render();},get explore(){return explore;},setMission(id,{history:push=true}={}){if(!['watch','scenarios','briefing'].includes(id))return;mission=id;panelOpen=true;evidence?.close({restoreFocus:false});render();if(push){const u=new URL(location.href);if(id==='watch')u.searchParams.delete('mission');else u.searchParams.set('mission',id);if(u.href!==location.href)window.history.pushState({},'',u);}window.dispatchEvent(new Event('stormWorkspaceChange'));},get mission(){return mission;},showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;map.setWatchContext?.({explore,selected:selectedConcern});void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
+  return {showFocusedMap,evidenceChanged,setExplore,selectConcern,clearConcern(){selectedConcern=null;render();},get explore(){return explore;},setMission(id,{history:push=true}={}){if(!['watch','scenarios','briefing'].includes(id))return;mission=id;panelOpen=true;evidence?.close({restoreFocus:false});render();if(push){const u=new URL(location.href);if(id==='watch')u.searchParams.delete('mission');else u.searchParams.set('mission',id);if(u.href!==location.href)window.history.pushState({},'',u);}window.dispatchEvent(new Event('stormWorkspaceChange'));},get mission(){return mission;},showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;map.setWatchContext?.({explore,selected:selectedConcern});void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
 }

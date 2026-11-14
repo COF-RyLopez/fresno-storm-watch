@@ -103,3 +103,46 @@
 #watch-attention-list{display:none}
 @media(min-width:901px) and (max-width:1199px){#storm-shell[data-watch-focus=true]:has(#evidence-shell:not([hidden])) #tools-shell{display:flex;--calcite-shell-panel-width:290px}#storm-shell[data-watch-focus=true] #evidence-shell{--calcite-shell-panel-width:320px}}
 @media(max-width:900px){#storm-shell[data-watch-focus=true] #tools-shell{--calcite-shell-panel-width:100vw}#watch-attention-list{display:block}.watch-map-heading{flex-wrap:wrap}.watch-map-heading>div{flex-basis:100%}.watch-map-heading strong{font-size:14px}}
+
+/* Phone review is one view at a time; the bottom switch never scrolls away. */
+#watch-phone-nav{display:flex;gap:4px;padding:4px 8px calc(4px + env(safe-area-inset-bottom));background:var(--calcite-color-surface-1);border-top:1px solid var(--calcite-color-border-2)}
+#watch-phone-nav[hidden]{display:none}
+#watch-phone-nav button{flex:1;min-height:44px;border:1px solid transparent;border-radius:3px;background:transparent;color:var(--calcite-color-text-1);font:inherit;font-size:14px;cursor:pointer}
+#watch-phone-nav button[aria-pressed=true]{background:var(--calcite-color-foreground-2);border-color:var(--calcite-color-brand);font-weight:650}
+#watch-phone-nav button:focus-visible{outline:2px solid var(--calcite-color-focus);outline-offset:-3px}
+#watch-phone-nav button:disabled{color:var(--calcite-color-text-3);cursor:default}
+@media(max-width:900px){
+ #storm-shell[data-workspace=watch][data-destination=watch] #planning-workspace:not(.map-covered){display:grid;position:relative;grid-template-rows:minmax(0,1fr)}
+ #storm-shell[data-workspace=watch][data-destination=watch] #planning-workspace>#map-panel{grid-area:1/1;height:100%;min-height:0}
+ #storm-shell[data-watch-pane=evidence] #map-panel{position:absolute;inset:0;opacity:0;pointer-events:none}
+ #storm-shell[data-watch-pane=map] #evidence-mobile-host{display:none}
+ #storm-shell[data-watch-pane=evidence] #evidence-mobile-host{grid-area:1/1;border:0;height:100%;min-height:0}
+ #storm-shell[data-workspace=watch][data-destination=watch] #planning-workspace .map-toolbar-stack{max-height:none;overflow:visible}
+ #storm-shell[data-workspace=watch][data-destination=watch] #watch-attention-list{display:none}
+ #storm-shell[data-workspace=watch][data-destination=watch] .watch-map-kicker{display:none}
+ #storm-shell[data-workspace=watch][data-destination=watch] #watch-map-explore{min-height:44px}
+ #storm-shell[data-workspace=watch][data-destination=watch] #mission-evidence-content .mission-actions calcite-button{min-height:44px}
+}
+
+.account-narrow{display:none}
+@media(max-width:900px){
+ .account-wide{display:none}.account-narrow{display:inline}
+ #storm-shell[data-workspace=watch][data-destination=watch] .watch-map-heading{flex-wrap:nowrap;padding:0;gap:8px}
+ #storm-shell[data-workspace=watch][data-destination=watch] .watch-map-heading>div{flex-basis:auto}
+}
+@media(max-width:900px) and (max-height:500px){
+ #storm-shell[data-workspace=watch][data-destination=watch] .shell-header{max-height:none}
+ #storm-shell[data-workspace=watch][data-destination=watch] .app-logo-image{width:30px;height:30px}
+ #storm-shell[data-workspace=watch][data-destination=watch] #app-logo{--calcite-navigation-logo-heading-font-size:16px;--calcite-navigation-logo-description-font-size:10px}
+ #storm-shell[data-workspace=watch][data-destination=watch] .scope-bar>div:first-child,
+ #storm-shell[data-workspace=watch][data-destination=watch] .mission-clock{display:none}
+ #storm-shell[data-workspace=watch][data-destination=watch] .legend-stack{gap:0;max-height:20cqh}
+ #storm-shell[data-workspace=watch][data-destination=watch] .scene-note{display:none}
+}
+
+@media(max-width:900px) and (max-height:500px){
+ #storm-shell[data-workspace=watch][data-destination=watch] .shell-header{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center}
+ #storm-shell[data-workspace=watch][data-destination=watch] .scope-bar{grid-column:1/-1}
+ #storm-shell[data-workspace=watch][data-destination=watch] #app-logo{display:none}
+ #storm-shell[data-workspace=watch][data-destination=watch] #map-panel{--calcite-panel-content-top-space:4px 8px;--calcite-panel-content-bottom-space:0 8px}
+}

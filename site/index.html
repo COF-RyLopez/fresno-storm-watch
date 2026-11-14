@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-eCty9FazxSchqafxXOzRh2caNJMId1NUUbT7cz3ZVLM='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-QuDfm07Dy4Mxre1Fx+ZjL9pUVk32yWBuhLdr2F5LdkY='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
-<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=705da4256b"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=ed0e9e80e2"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=705da4256b"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=59a7e5f635"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
 {"imports":{
-"./app.js":"./app.js?v=cb07388c95",
+"./app.js":"./app.js?v=4465bcde87",
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=722d46192c",
@@ -71,7 +71,7 @@
 "./lib/eoc-forms.js":"./lib/eoc-forms.js?v=39ada755f2",
 "./lib/eoc-model.js":"./lib/eoc-model.js?v=97ebee8586",
 "./lib/eoc-store.js":"./lib/eoc-store.js?v=f222ebd168",
-"./lib/evidence-ui.js":"./lib/evidence-ui.js?v=bb702a5687",
+"./lib/evidence-ui.js":"./lib/evidence-ui.js?v=55b543b183",
 "./lib/exercise.js":"./lib/exercise.js?v=260c2b702c",
 "./lib/facility-data.js":"./lib/facility-data.js?v=266716ec5b",
 "./lib/facility-model.js":"./lib/facility-model.js?v=558e4542ad",
@@ -100,7 +100,7 @@
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=4d8e320998",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
 "./lib/mission-model.js":"./lib/mission-model.js?v=e03ed8dcaf",
-"./lib/mission-ui.js":"./lib/mission-ui.js?v=61d151373f",
+"./lib/mission-ui.js":"./lib/mission-ui.js?v=b37a0bd172",
 "./lib/model.js":"./lib/model.js?v=e44a6607f5",
 "./lib/mrms-model.js":"./lib/mrms-model.js?v=46987c2625",
 "./lib/mrms-ui.js":"./lib/mrms-ui.js?v=01ffb4f983",
@@ -196,7 +196,7 @@
 "./lib/weather-ui.js":"./lib/weather-ui.js?v=6f935ae75b",
 "./lib/with-timeout.js":"./lib/with-timeout.js?v=1ddcc38435",
 "./lib/workspace-model.js":"./lib/workspace-model.js?v=f0fb9c7ea0",
-"./lib/workspace-ui.js":"./lib/workspace-ui.js?v=7ea74f531b",
+"./lib/workspace-ui.js":"./lib/workspace-ui.js?v=b21c2d1850",
 "./lib/zone-acs-data.js":"./lib/zone-acs-data.js?v=ac066b36b5",
 "./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
 "./lib/zone-population-product.js":"./lib/zone-population-product.js?v=47199f3b6f",
@@ -204,7 +204,7 @@
 "./scenario-config.js":"./scenario-config.js?v=3da6a248c8"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=cb07388c95"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=4465bcde87"></script>
 </head><body>
 <a class="skip-link" href="#planning-workspace">Skip to mission map</a>
 <calcite-shell id="storm-shell">
@@ -217,7 +217,7 @@
         <calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action>
         <calcite-action id="about" text="Sources &amp; notes" icon="information" text-enabled></calcite-action>
         <calcite-action id="sign-in" text="ArcGIS sign-in setup" icon="user" text-enabled></calcite-action>
-      </div></div><calcite-button id="header-tools-open" slot="content-end" appearance="transparent" kind="neutral" scale="s" icon-start="hamburger">Account &amp; help</calcite-button>
+      </div></div><calcite-button id="header-tools-open" slot="content-end" appearance="transparent" kind="neutral" scale="s" icon-start="hamburger" aria-label="Account and help"><span class="account-wide">Account &amp; help</span><span class="account-narrow">Account</span></calcite-button>
     </calcite-navigation><div id="mobile-mission-nav"></div>
     <div class="scope-bar"><div><span id="eyebrow" title="A planning aid, not an alert service. Use official NWS warnings and county alerts for public safety decisions.">GIS PROTOTYPE · PLANNING AID</span><span id="scope-label" class="scope-label">Fresno County · boundary river reaches</span></div><div class="county-strip" aria-label="Countywide monitoring"><calcite-button id="notify-areas" appearance="transparent" kind="neutral" scale="s" icon-start="exclamation-mark-triangle">Area reviews · checking</calcite-button><calcite-button id="notify-alerts" appearance="transparent" kind="neutral" scale="s" icon-start="bell">Weather alerts · checking</calcite-button><calcite-button id="notify-health" appearance="transparent" kind="neutral" scale="s" icon-start="information">Source issues · checking</calcite-button><calcite-button id="notify-power" appearance="transparent" kind="neutral" scale="s" icon-start="flash">Power / PSPS · checking</calcite-button><calcite-button id="notify-pio" hidden appearance="transparent" kind="neutral" scale="s" icon-start="speech-bubble">PIO source reviews</calcite-button><calcite-button id="notify-forecast" appearance="transparent" scale="s" icon-start="compare">Forecast differences · checking</calcite-button></div><span class="mission-clock" id="mission-time-kind" role="status">Live conditions + published forecasts</span></div>
     <section id="exercise-controls" class="exercise-controls" aria-label="Fictional exercise controls" hidden>
@@ -227,6 +227,7 @@
 
 <calcite-tabs hidden id="workspace-tabs" class="workspace-tabs" scale="m"><calcite-tab-nav slot="title-group" aria-label="Storm workspaces"><calcite-tab-title id="tab-watch" data-workspace="watch" tab="watch" selected>County Watch</calcite-tab-title><calcite-tab-title id="tab-rivers" data-workspace="rivers" tab="rivers">Rivers</calcite-tab-title><calcite-tab-title id="tab-weather" data-workspace="weather" tab="weather">Weather</calcite-tab-title><calcite-tab-title id="tab-reservoirs" data-workspace="reservoirs" tab="reservoirs">Reservoirs</calcite-tab-title><calcite-tab-title id="tab-alerts" data-workspace="alerts" tab="alerts">Weather Alerts</calcite-tab-title><calcite-tab-title id="tab-power" data-workspace="power" tab="power">Power / PSPS</calcite-tab-title><calcite-tab-title id="tab-roads" data-workspace="roads" tab="roads">Roads</calcite-tab-title><calcite-tab-title id="tab-drainage" data-workspace="drainage" tab="drainage">Drainage · private</calcite-tab-title></calcite-tab-nav><calcite-tab tab="drainage"><span class="sr-only">Private FMFCD drainage workspace is below.</span></calcite-tab><calcite-tab tab="watch" selected><span class="sr-only">County Watch workspace is below.</span></calcite-tab><calcite-tab tab="rivers"><span class="sr-only">Rivers workspace is below.</span></calcite-tab><calcite-tab tab="weather"><span class="sr-only">Weather workspace is below.</span></calcite-tab><calcite-tab tab="reservoirs"><span class="sr-only">Reservoirs workspace is below.</span></calcite-tab><calcite-tab tab="alerts"><span class="sr-only">Weather Alerts workspace is below.</span></calcite-tab><calcite-tab tab="power"><span class="sr-only">Power / PSPS workspace is below.</span></calcite-tab><calcite-tab tab="roads"><span class="sr-only">Roads workspace is below.</span></calcite-tab></calcite-tabs>
   </div>
+  <nav slot="footer" id="watch-phone-nav" aria-label="County Watch views" hidden><button id="watch-phone-attention" type="button" aria-controls="watch-panel" aria-pressed="true">Attention</button><button id="watch-phone-map" type="button" aria-controls="map-panel" aria-pressed="false">Map</button><button id="watch-phone-evidence" type="button" aria-controls="evidence-host" aria-pressed="false" disabled>Evidence</button></nav>
   <calcite-shell-panel id="tools-shell" slot="panel-start" display-mode="dock">
 
 

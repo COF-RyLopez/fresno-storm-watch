@@ -35,11 +35,24 @@ test('phone County Watch opens the attention list and offers a way back after in
  const compact=new EventTarget();compact.matches=true;const dock=new EventTarget();dock.matches=false;
  const location={href:'https://storm.invalid/?view=watch'},win=new EventTarget();win.history={pushState(_a,_b,u){location.href=String(u);}};
  return withGlobals({document:{getElementById:get,querySelector:()=>nav,querySelectorAll:()=>[]},window:win,location,matchMedia:q=>q.includes('max-width')?compact:dock,ResizeObserver:class{observe(){}}},()=>{
-  const workspace=createWorkspace();assert.equal(get('tools-shell').hasAttribute('collapsed'),false);assert.equal(get('planning-workspace').inert,true);
+  const evidence={isOpen:false,layout(){}};const workspace=createWorkspace({evidence});assert.equal(get('watch-phone-evidence').disabled,true);assert.equal(get('tools-shell').hasAttribute('collapsed'),false);assert.equal(get('planning-workspace').inert,true);
   workspace.selectConcern({type:'river',id:'kings-lower',name:'Kings'});workspace.showMap();
   assert.equal(get('tools-shell').hasAttribute('collapsed'),true);assert.equal(get('planning-workspace').inert,false);
   get('watch-attention-list').dispatchEvent(new Event('click'));
   assert.equal(get('tools-shell').hasAttribute('collapsed'),false);assert.equal(get('planning-workspace').inert,true);
+  evidence.isOpen=true;workspace.evidenceChanged(true);
+  assert.equal(get('storm-shell').dataset.watchPane,'evidence');
+  get('watch-phone-map').dispatchEvent(new Event('click'));
+  assert.equal(get('storm-shell').dataset.watchPane,'map');assert.equal(evidence.isOpen,true,'map switch must preserve captured evidence');
+  get('watch-phone-attention').dispatchEvent(new Event('click'));
+  assert.equal(get('storm-shell').dataset.watchPane,'attention');
+  get('watch-phone-evidence').dispatchEvent(new Event('click'));
+  assert.equal(get('storm-shell').dataset.watchPane,'evidence');
+  assert.equal(get('map-panel').inert,true,'hidden map must not receive keyboard focus');
+  workspace.showFocusedMap();assert.equal(get('storm-shell').dataset.watchPane,'map','explicit Focus area action opens the map even with evidence retained');assert.equal(evidence.isOpen,true);
+  evidence.isOpen=false;workspace.evidenceChanged(false);
+  assert.equal(get('storm-shell').dataset.watchPane,'map');assert.equal(get('watch-phone-evidence').disabled,true);
+  assert.equal(get('map-panel').inert,false);
   workspace.setExplore(true);assert.equal(get('workspace-tabs').hidden,false);
  });
 });
