@@ -30,6 +30,7 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
  const client=createScenarioClient(SCENARIO_CONFIG),time=v=>Number.isFinite(v)?formatTime(v,'America/Los_Angeles'):'Not supplied';
  let draftRevision=0,draftSavedRevision=0,inspectionRevision=0;
  const followups=createMissionFollowups();
+ $('mission-evidence').addEventListener('stormEvidenceClose',()=>{inspectionRevision++;map?.clearWatchFocus?.();});
  const parameters=new Map();
  function capture(item){const captured=session?{...item,incidentFollowups:followups.snapshot(item)}:item;const added=captureBriefingEvidence(draft,captured);if(added)draftRevision++;renderBriefing();return added;}
  protectBriefingDraft(window,()=>briefingNeedsSave(draft.length,draftRevision,draftSavedRevision));
@@ -67,13 +68,17 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
  }
  function inspect(id,{focus=true}={}){
   inspectionRevision++;selected=id;const row=rows.find(r=>r.area.id===id);if(!row)return;const s=concernSummary(row),g=contextFor(id),host=$('mission-evidence-content');host.replaceChildren();$('mission-evidence').heading=s.name;$('mission-evidence').description='';
-  const headline=el('p',row.status);headline.className='watch-condition-title';host.append(headline,el('p',s.nextReview));
-  const captureNote=disclosure('Evidence capture & timing');captureNote.append(el('p',`Captured ${time(Date.now())}. Reopen this area to refresh; live monitoring continues.`),el('p',`Latest gauge observation: ${time(s.observed)} · first sampled forecast high: ${time(s.forecast)}`));host.append(captureNote);
+  const inspection=inspectionRevision,stillSelected=()=>inspection===inspectionRevision&&$('mission-evidence').hasAttribute('open');
+  const headline=el('p',row.status);headline.className='watch-condition-title';host.append(headline,el('p',id==='kings-lower'?'Confirm release timing with USACE and verify downstream access, field conditions and site power.':s.nextReview));
+  const captureNote=disclosure('Evidence capture & timing');captureNote.append(el('p',`Captured ${time(Date.now())}. Reopen this area to refresh; live monitoring continues.`),el('p',`Latest gauge observation: ${time(s.observed)} · first sampled forecast high: ${time(s.forecast)}`));
+  const mapActions=el('div');mapActions.className='watch-map-actions';
+  mapActions.append(button('Focus area',()=>map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected})),button('View in 3D',async()=>{await map?.setViewMode('3d');if(stillSelected())await map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}));
+  host.append(mapActions);
   appendReservoirWatch(host,row,time);
-  for(const id of [...new Set((row.releases||[]).map(r=>r.station))])host.append(button('Release & downstream gauge trends · '+id,()=>onTrends(id)));
+  for(const id of [...new Set((row.releases||[]).map(r=>r.station))])host.append(button('Compare release & gauge trends · '+id,()=>onTrends(id)));
   const gaps=disclosure(`Source gaps · ${s.gaps.length}`);for(const gap of s.gaps)gaps.append(el('p',gap));if(s.gaps.length)host.append(gaps);
   const briefContext=disclosure('Hanford briefing context');for(const b of (g?.impacts||[]).slice(0,3)){briefContext.append(el('p',b.impact),el('p',`Timing: ${b.timing}`),el('p',`Confidence: ${b.confidence}`),button(`Read source page ${b.page}`,()=>onBriefing(b.document.kind,b.page,b.document.sha256)));}if(g?.impacts?.length)host.append(briefContext);const actions=el('div');actions.className='mission-actions';const assign=button('Assign follow-up',()=>void assignment(row));assign.appearance='solid';assign.disabled=!session;assign.title=session?'Save an incident-linked private exercise follow-up':'County sign-in is required for a private follow-up';actions.append(assign,button('Add to briefing',()=>{const added=capture(freezeConcern(row,g));message('mission-feedback',added?'Evidence captured in the tab’s briefing draft.':'This evidence version is already in the briefing draft.');}));
-  const more=disclosure('Planning & technical tools');more.append(button('Explore flood scenarios',()=>{areaId=id;$('mission-evidence').removeAttribute('open');mission('scenarios');}),button('View in 3D',()=>void map?.setViewMode('3d')),button('River evidence',()=>onSelectArea(id)),button('Weather evidence',()=>onTopic('weather')),button('Population & evacuation zones',onPopulation));const savedFollowups=followups.snapshot(freezeConcern(row,g));host.append(el('h3','Saved incident follow-ups'));if(!savedFollowups.assessed)host.append(el('p','Incident follow-ups unassessed. Choose an incident in County Watch to load them.'));else if(!savedFollowups.rows.length)host.append(el('p','No exactly linked follow-up returned for the selected incident.'));for(const task of savedFollowups.rows)host.append(el('p',`${task.status}${task.overdue?' · OVERDUE':''} · ${task.owner} · due ${time(task.due)}`));host.append(actions);if(!session)host.append(el('p','County sign-in is required to assign a private follow-up.'),button('County sign-in',()=>$('sign-in').click()));host.append(more);const gaugeDetails=disclosure('Gauge forecasts & source details');host.append(gaugeDetails);
+  const more=disclosure('Planning & technical tools');more.append(button('Explore flood scenarios',()=>{areaId=id;$('mission-evidence').removeAttribute('open');mission('scenarios');}),button('River evidence',()=>onSelectArea(id)),button('Weather evidence',()=>onTopic('weather')),button('Population & evacuation zones',onPopulation));const savedFollowups=followups.snapshot(freezeConcern(row,g));const followupDetails=disclosure('Follow-ups & responsible team');if(!savedFollowups.assessed)followupDetails.append(el('p','Incident follow-ups unassessed. Choose an incident in County Watch to load them.'));else if(!savedFollowups.rows.length)followupDetails.append(el('p','No exactly linked follow-up returned for the selected incident.'));for(const task of savedFollowups.rows)followupDetails.append(el('p',`${task.status}${task.overdue?' · OVERDUE':''} · ${task.owner} · due ${time(task.due)}`));host.append(actions);if(!session)followupDetails.append(el('p','County sign-in is required to assign a private follow-up.'),button('County sign-in',()=>$('sign-in').click()));host.append(followupDetails);const gaugeDetails=disclosure('Gauge forecasts & source details');host.append(gaugeDetails);
   for(const q of row.gauges||[]){
    const a=q.assessment,section=el('section');section.className='watch-evidence-source';
    section.append(el('strong',q.gauge?.name||q.id),el('p',a?.observed?`${riverValue(a.observed.value,q.gauge.observed.units)} · ${time(a.observed.time)}${a.current?'':' · old / unverified'}`:'Observation unavailable'));
@@ -81,14 +86,15 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
    if(a?.forecastUsable)section.append(el('p',`NWS forecast high ${riverValue(a.peak.value,q.gauge.forecast.units)} · first sampled ${time(a.peak.time)} · issued ${time(q.gauge.forecast.issued)}`));
    if(q.id==='PFQC1'){section.append(el('small','Provisional near-dam stage · no forecast or verified travel time'),link('NWS gauge source',q.gauge?.sourceUrl||'https://hads.ncep.noaa.gov/'));}else section.append(button('Gauge evidence',()=>onGauge(q.id)));gaugeDetails.append(section);
   }
-  host.append(el('h3','Nearby road records'));
-  if(!g?.roads?.length)host.append(el('p','No nearby road records available from the current lookup. Coverage and current access require verification.'));
-  for(const i of (g?.roads||[]).slice(0,8))host.append(el('p',`${i.row.name} · ${i.row.status}`),button('Review road record',()=>onRoad(i.row.key)));
-  host.append(el('h3','Authorized county facilities'));
-  if(!g?.facilities?.length)host.append(el('p','No connected facilities returned for this lookup. Sign in and load the appropriate county inventory from Power / PSPS.'));
-  for(const i of (g?.facilities||[]).slice(0,8))host.append(el('p',i.row.site.name),button('Review facility',()=>onFacility(i.row.site.key)));
-  host.append(el('p','Nearby records are context around configured watchpoints. They are not predicted flood exposure or confirmed travel routes.'),el('p','Owner: unassigned until a follow-up record is saved.'));
-  $('mission-evidence').setAttribute('open','');if(focus){workspace.showMap();void map?.inspectPlanningPoints(s.points);}
+  const nearby=disclosure('Nearby roads & facilities');nearby.append(el('h3','Nearby road records'));
+  if(!g?.roads?.length)nearby.append(el('p','No nearby road records available from the current lookup. Coverage and current access require verification.'));
+  for(const i of (g?.roads||[]).slice(0,8))nearby.append(el('p',`${i.row.name} · ${i.row.status}`),button('Review road record',()=>onRoad(i.row.key)));
+  nearby.append(el('h3','Authorized county facilities'));
+  if(!g?.facilities?.length)nearby.append(el('p','No connected facilities returned for this lookup. Sign in and load the appropriate county inventory from Power / PSPS.'));
+  for(const i of (g?.facilities||[]).slice(0,8))nearby.append(el('p',i.row.site.name),button('Review facility',()=>onFacility(i.row.site.key)));
+  nearby.append(el('p','Nearby records are context around configured watchpoints. They are not predicted flood exposure or confirmed travel routes.'),el('p','Owner: unassigned until a follow-up record is saved.'));
+  host.append(nearby,captureNote,more);
+  $('mission-evidence').setAttribute('open','');if(focus){workspace.showMap();void map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}
   // The Calcite panel owns its scroll container; replacing children does not reset it.
   const revision=inspectionRevision;void customElements.whenDefined('calcite-panel').then(()=>{
    const pane=$('mission-evidence');if(revision===inspectionRevision&&pane.hasAttribute('open'))void pane.scrollContentTo({top:0,left:0,behavior:'auto'});

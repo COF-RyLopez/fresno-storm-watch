@@ -288,7 +288,7 @@ try {
   void refresh();
   const fresno=counties.find(f=>f.properties.GEOID==='06019');
   for(const c of[power,facilities,care,population])c.setCounty(fresno);
-  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{openPlanning();planning.selectArea(id);},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key),key=>void countySandbags.select(key)).then(controller => {
+  createMap(counties, key=>{planningView(false);selectAlert(key);}, id=>rivers?.select(id),id=>cameras?.select(id),key=>roads.select(key),key=>power.select(key),key=>facilities.select(key),id=>{if(workspace.section==='watch')mission.inspectArea(id);else{openPlanning();planning.selectArea(id);}},evidence.openFeatures,key=>drainage.select(key),key=>power.selectNetwork(key),key=>care.select(key),key=>void countySandbags.select(key)).then(controller => {
     map = controller;
     for(const c of[workspace,mission,storm,planQuestions])c.setMap(map);
     dwrFloodFight.setMap(map,fresno);
