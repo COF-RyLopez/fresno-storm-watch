@@ -66,7 +66,7 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
   if(restore){const replacement=[...host.querySelectorAll('[data-concern]')].find(n=>n.dataset.concern===restore);replacement?.focus({preventScroll:true});}
  }
  function inspect(id,{focus=true}={}){
-  inspectionRevision++;selected=id;const row=rows.find(r=>r.area.id===id);if(!row)return;const s=concernSummary(row),g=contextFor(id),host=$('mission-evidence-content');host.replaceChildren();$('mission-evidence').heading=s.name;
+  inspectionRevision++;selected=id;const row=rows.find(r=>r.area.id===id);if(!row)return;const s=concernSummary(row),g=contextFor(id),host=$('mission-evidence-content');host.replaceChildren();$('mission-evidence').heading=s.name;$('mission-evidence').description='';
   host.append(el('p',`Evidence view captured ${time(Date.now())}. Reopen Inspect to refresh; live monitoring continues.`),el('p',s.change),el('h3','Timing and evidence'),el('p',`Latest connected gauge observation: ${time(s.observed)}`),el('p',`First sampled forecast high: ${time(s.forecast)}. Sources may cover different windows.`),el('p',s.quality));
   appendReservoirWatch(host,row,time);
   for(const id of [...new Set((row.releases||[]).map(r=>r.station))])host.append(button('Release & downstream gauge trends · '+id,()=>onTrends(id)));
@@ -74,11 +74,11 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
   const briefContext=disclosure('Hanford briefing context');for(const b of (g?.impacts||[]).slice(0,3)){briefContext.append(el('p',b.impact),el('p',`Timing: ${b.timing}`),el('p',`Confidence: ${b.confidence}`),button(`Read source page ${b.page}`,()=>onBriefing(b.document.kind,b.page,b.document.sha256)));}if(g?.impacts?.length)host.append(briefContext);host.append(el('h3','Next review'),el('p',s.nextReview));const actions=el('div');actions.className='mission-actions';const assign=button('Assign follow-up',()=>void assignment(row));assign.appearance='solid';assign.disabled=!session;assign.title=session?'Save an incident-linked private exercise follow-up':'County sign-in is required for a private follow-up';actions.append(assign,button('Add to briefing',()=>{const added=capture(freezeConcern(row,g));message('mission-feedback',added?'Evidence captured in the tab’s briefing draft.':'This evidence version is already in the briefing draft.');}));
   const more=disclosure('Planning & technical tools');more.append(button('Explore flood scenarios',()=>{areaId=id;$('mission-evidence').removeAttribute('open');mission('scenarios');}),button('View in 3D',()=>void map?.setViewMode('3d')),button('River evidence',()=>onSelectArea(id)),button('Weather evidence',()=>onTopic('weather')),button('Population & evacuation zones',onPopulation));const savedFollowups=followups.snapshot(freezeConcern(row,g));host.append(el('h3','Saved incident follow-ups'));if(!savedFollowups.assessed)host.append(el('p','Incident follow-ups unassessed. Choose an incident in County Watch to load them.'));else if(!savedFollowups.rows.length)host.append(el('p','No exactly linked follow-up returned for the selected incident.'));for(const task of savedFollowups.rows)host.append(el('p',`${task.status}${task.overdue?' · OVERDUE':''} · ${task.owner} · due ${time(task.due)}`));host.append(actions);if(!session)host.append(el('p','County sign-in is required to assign a private follow-up.'),button('County sign-in',()=>$('sign-in').click()));host.append(more,el('h3','Connected gauges'));
   for(const q of row.gauges||[]){
-   const a=q.assessment;
-   host.append(el('strong',q.gauge?.name||q.id),el('p',a?.observed?`${riverValue(a.observed.value,q.gauge.observed.units)} · ${time(a.observed.time)}${a.current?'':' · old / unverified'}`:'Observation unavailable'));
-   if(a?.current&&a.trend)host.append(el('p',`Observed change ${a.trend.delta>0?'+':''}${riverValue(a.trend.delta,q.gauge.observed.units)} / ${a.trend.hours.toFixed(1)} h`));
-   if(a?.forecastUsable)host.append(el('p',`NWS forecast high ${riverValue(a.peak.value,q.gauge.forecast.units)} · first sampled ${time(a.peak.time)} · issued ${time(q.gauge.forecast.issued)}`));
-   host.append(button('Gauge evidence',()=>onGauge(q.id)));
+   const a=q.assessment,section=el('section');section.className='watch-evidence-source';
+   section.append(el('strong',q.gauge?.name||q.id),el('p',a?.observed?`${riverValue(a.observed.value,q.gauge.observed.units)} · ${time(a.observed.time)}${a.current?'':' · old / unverified'}`:'Observation unavailable'));
+   if(a?.current&&a.trend)section.append(el('p',`Observed change ${a.trend.delta>0?'+':''}${riverValue(a.trend.delta,q.gauge.observed.units)} / ${a.trend.hours.toFixed(1)} h`));
+   if(a?.forecastUsable)section.append(el('p',`NWS forecast high ${riverValue(a.peak.value,q.gauge.forecast.units)} · first sampled ${time(a.peak.time)} · issued ${time(q.gauge.forecast.issued)}`));
+   section.append(button('Gauge evidence',()=>onGauge(q.id)));host.append(section);
   }
   host.append(el('h3','Nearby road records'));
   if(!g?.roads?.length)host.append(el('p','No nearby road records available from the current lookup. Coverage and current access require verification.'));
@@ -88,6 +88,10 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
   for(const i of (g?.facilities||[]).slice(0,8))host.append(el('p',i.row.site.name),button('Review facility',()=>onFacility(i.row.site.key)));
   host.append(el('p','Nearby records are context around configured watchpoints. They are not predicted flood exposure or confirmed travel routes.'),el('p','Owner: unassigned until a follow-up record is saved.'));
   $('mission-evidence').setAttribute('open','');if(focus){workspace.showMap();void map?.inspectPlanningPoints(s.points);}
+  // The Calcite panel owns its scroll container; replacing children does not reset it.
+  const revision=inspectionRevision;void customElements.whenDefined('calcite-panel').then(()=>{
+   const pane=$('mission-evidence');if(revision===inspectionRevision&&pane.hasAttribute('open'))void pane.scrollContentTo({top:0,left:0,behavior:'auto'});
+  });
  }
  async function loadPrivate(){
   if(privateLoad)return privateLoad;const version=epoch;
