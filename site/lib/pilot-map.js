@@ -3,14 +3,19 @@ import {PILOT_BOUNDS,collection} from './pilot-model.js';
 import {waterwayStyle} from './waterway-basemap.js';
 import {withTimeout} from './with-timeout.js';
 
+let archiveProtocol;
 const BASE='https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_';
 export const styleId=view=>view==='rivers'?'frog-waterways-0.33.0':'esri-dark-gray';
 /** Both engines reference the same publisher tiles and existing cached county tiles. */
-export async function pilotStyle(view){
+export async function pilotStyle(view,delivery='tiles'){
  if(view==='watch')return {version:8,sources:{base:{type:'raster',tiles:[BASE+'Base/MapServer/tile/{z}/{y}/{x}'],tileSize:256,attribution:'Esri, HERE, Garmin, USGS, EPA, NPS'},reference:{type:'raster',tiles:[BASE+'Reference/MapServer/tile/{z}/{y}/{x}'],tileSize:256}},layers:[{id:'base',type:'raster',source:'base'},{id:'reference',type:'raster',source:'reference'}]};
  const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetch(new URL('root.json?v=0.33.0',base),{credentials:'omit',signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw Error('Waterways basemap unavailable');
- return waterwayStyle(await r.json(),base);
+ const style=waterwayStyle(await r.json(),base);
+ if(delivery==='pmtiles'){
+  for(const [id,file]of [['frog','waterways'],['frogWaterbodies','waterbodies']])style.sources[id]={...style.sources[id],url:'pmtiles://'+new URL('archives/'+file+'.pmtiles',base).href};
+ }
+ return style;
 }
 /** ArcGIS service metadata is not standard TileJSON; use its documented tile template. */
 export function libreStyle(style){const s=structuredClone(style);if(s.sources.esri)s.sources.esri={type:'vector',tiles:['https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf'],minzoom:0,maxzoom:16,attribution:'Esri, HERE, Garmin, FAO, NOAA, USGS, OpenStreetMap contributors'};return s;}
@@ -18,14 +23,23 @@ const timeout=(promise,ms)=>withTimeout(promise,ms,'Map did not settle within '+
 const rendered=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
 /** Lazy renderer: MapLibre mode never imports the ArcGIS map engine. */
-export async function createPilotMap({engine,container,view,features,county,onSelect,onError}){
- const style=await pilotStyle(view);
+export async function createPilotMap({engine,container,view,features,county,onSelect,onError,delivery='tiles',mode='2d'}){
+ const style=await pilotStyle(view,delivery);
  if(engine==='maplibre'){
   const ml=await import('../vendor/maplibre-6.15.0/maplibre-gl.mjs');
-  const map=new ml.Map({container,style:libreStyle(style),bounds:[[PILOT_BOUNDS[0],PILOT_BOUNDS[1]],[PILOT_BOUNDS[2],PILOT_BOUNDS[3]]],fitBoundsOptions:{padding:20},attributionControl:{compact:true},renderWorldCopies:false,fadeDuration:0});
+  if(delivery==='pmtiles'&&!archiveProtocol){const {Protocol}=await import('../vendor/pmtiles-4.5.0/pmtiles.js');archiveProtocol=new Protocol();ml.addProtocol('pmtiles',archiveProtocol.tile);}
+  const displayStyle=libreStyle(style);
+  if(mode==='3d'){
+   displayStyle.sources.terrain={type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,maxzoom:14,attribution:'Terrain Tiles · Mapzen / Tilezen · reference elevation'};
+   displayStyle.terrain={source:'terrain',exaggeration:1};
+   const shading={id:'terrain-shading',type:'hillshade',source:'terrain',paint:{'hillshade-exaggeration':.35,'hillshade-shadow-color':'#07131e','hillshade-highlight-color':'#a0b4b4','hillshade-accent-color':'#243340'}};
+   const firstLine=displayStyle.layers.findIndex(layer=>layer.type==='line'||layer.type==='symbol');
+   displayStyle.layers.splice(firstLine<0?displayStyle.layers.length:firstLine,0,shading);
+  }
+  const map=new ml.Map({container,style:displayStyle,maxPitch:60,pitch:mode==='3d'?50:0,bounds:[[PILOT_BOUNDS[0],PILOT_BOUNDS[1]],[PILOT_BOUNDS[2],PILOT_BOUNDS[3]]],fitBoundsOptions:{padding:20,pitch:mode==='3d'?50:0},attributionControl:{compact:true},renderWorldCopies:false,fadeDuration:0});
   map.on('error',e=>onError(e.error?.message||'Tile or map error'));
   try{await timeout(new Promise(resolve=>map.once('load',resolve)),20000);}catch(error){map.remove();throw error;}
-  map.addControl(new ml.NavigationControl({showCompass:false}),'top-left');map.addControl(new ml.ScaleControl({unit:'imperial'}),'bottom-left');
+  map.addControl(new ml.NavigationControl({showCompass:mode==='3d',visualizePitch:true}),'top-left');map.addControl(new ml.ScaleControl({unit:'imperial'}),'bottom-left');
   map.addSource('county',{type:'geojson',data:collection([county])});map.addLayer({id:'county-outline',type:'line',source:'county',paint:{'line-color':'#7cabb4','line-width':1.2}});
   map.addSource('records',{type:'geojson',data:features});
   map.addLayer({id:'power-fill',type:'fill',source:'records',filter:['==',['geometry-type'],'Polygon'],paint:{'fill-color':['get','color'],'fill-opacity':.16}});
@@ -36,7 +50,7 @@ export async function createPilotMap({engine,container,view,features,county,onSe
   map.on('click',e=>{const f=map.queryRenderedFeatures(e.point,{layers:['area-points','gauge-points','reservoir-points','power-fill']})[0];if(f)onSelect(f.properties);});
   const idle=async()=>{await rendered();return timeout(new Promise(resolve=>{if(!map.isMoving()&&map.loaded())resolve();else map.once('idle',resolve);}),15000);};
   let settledError=null;await idle().catch(error=>{settledError=error.message;onError(settledError);});
-  return {settledError,setFeatures(data){map.getSource('records').setData(data);},highlight(data){map.getSource('selection').setData(data);},async fit(bounds,duration=0){map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:25,maxZoom:14,duration});await idle();},resize:()=>map.resize(),destroy:()=>map.remove()};
+  return {settledError,setFeatures(data){map.getSource('records').setData(data);},highlight(data){map.getSource('selection').setData(data);},async fit(bounds,duration=0){map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:25,maxZoom:14,duration,pitch:mode==='3d'?50:0});await idle();},resize:()=>map.resize(),destroy:()=>map.remove()};
  }
  // The comparison mode uses the main app's pinned unified SDK loader.
  const {loadSdk}=await import('./map.js');const sdk=await loadSdk();

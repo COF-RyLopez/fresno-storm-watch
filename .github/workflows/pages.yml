@@ -25,6 +25,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run check
+      - name: Pack and verify public waterway archives
+        run: npm run build:waterway-archives
       - name: Check private publisher contract without connecting to ArcGIS
         run: python3 -m unittest discover -s tests -p 'test_eoc_publisher.py'
       - name: Check private pump refresh and inactive Notebook without connecting to ArcGIS

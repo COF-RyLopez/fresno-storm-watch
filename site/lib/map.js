@@ -1,3 +1,4 @@
+import {lazyDisplay} from './lazy-display.js';
 import {focusedLayerVisible,focusGraphicAllowed} from './county-watch-focus.js';
 import {watchFocusPoints,watchFocusMotion} from './watch-focus.js';
 import {createNetworkMap} from './power-network-map.js';
@@ -97,6 +98,7 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities, areaLayer] });
   const searchContext=new GraphicsLayer({title:'Nearby search references — proximity only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
   map.add(searchContext);map.add(searchSelection);
+  const presentationListeners=new Set();
   const memory=workspaceMemory(),registry=new globalThis.Map();let activeProfile='watch',planningRows=[],planningFilter='review',powerRows=[],riverBasin='All';
   let drainagePowerKeys=new Set(),drainagePowerPumps=new Set(),drainagePowerSignature='';
   let workspaceSwitching=false,workspaceVersion=0,transition=Promise.resolve();
@@ -450,7 +452,7 @@ elevationInfo:{mode:'on-the-ground'},
     document.querySelector('#waterway-basemap-context-note').hidden=basemapKey!=='waterways';
     for(const [id,key]of [['power-map-toggle','power'],['facility-map-toggle','facilities'],['wind-map-toggle','wind'],['drainage-existing','drainage'],['drainage-proposed','drainageProposed'],['drainage-other','drainageOther'],['drainage-catchments','drainageCatchments']])document.querySelector('#'+id).checked=!!currentState().layers[key];
     for(const [kind,key]of Object.entries({circuit:'powerCircuits',line:'powerLines',substation:'powerSubstations'}))document.querySelector('#network-'+kind).checked=!!currentState().layers[key];
-    mapContext.setVisibility(currentState().layers.waterways,currentState().layers.buildings);femaStatus();syncVisibility();
+    mapContext.setVisibility(currentState().layers.waterways,currentState().layers.buildings);femaStatus();syncVisibility();for(const listener of presentationListeners)listener();
   }
   function setLayerPreference(key,wanted){if(!(key in LAYER_LABELS))return;currentState().layers[key]=!!wanted;document.dispatchEvent(new CustomEvent('frogLayerPreference',{detail:{key,wanted:!!wanted}}));drawGauges();drawPower();syncControls();}
   const options=document.querySelector('#context-options');for(const [key,label]of Object.entries(LAYER_LABELS)){if(key==='cameras')continue;const host=document.createElement('calcite-label');host.layout='inline';const box=document.createElement('calcite-checkbox');box.dataset.contextLayer=key;box.addEventListener('calciteCheckboxChange',()=>setLayerPreference(key,box.checked));host.append(box,document.createTextNode(label));options.append(host);}
@@ -558,7 +560,9 @@ elevationInfo:{mode:'on-the-ground'},
     }).catch(error=>{workspaceSwitching=false;document.querySelector('#map-status').hidden=false;document.querySelector('#map-status').textContent='Workspace map could not restore. Use Fit workspace or the evidence list.';console.warn('Workspace restore:',error.message);});return transition;
   }
   syncControls();
-  void installBasemapGallery({sdk,map,reactiveUtils,basemaps:galleryBasemaps,getView:()=>view,onSelect:key=>{if(workspaceSwitching||modeBusy)return;currentState().basemap=key;currentState().imagery=key==='imagery';setBasemap(key);}}).then(controller=>{gallery=controller;gallery.setView();});
+  const loadGallery=lazyDisplay(()=>installBasemapGallery({sdk,map,reactiveUtils,basemaps:galleryBasemaps,getView:()=>view,onSelect:key=>{if(workspaceSwitching||modeBusy)return;currentState().basemap=key;currentState().imagery=key==='imagery';setBasemap(key);}}).then(controller=>{gallery=controller;gallery.setView();}));
+  document.querySelector('#map-tools-open').addEventListener('click',()=>void loadGallery());
+    if(document.querySelector('#map-tools-menu').open)void loadGallery();
   // Flood scenario overlay: every model frame, cross-faded by setTime(hour); drawn under the operational graphics.
   let inundation=null,inundationVersion=0;
   async function showInundation(base,scenario){
@@ -583,7 +587,8 @@ elevationInfo:{mode:'on-the-ground'},
   const scenarioDomain=new GraphicsLayer({title:'Reviewed model domain',listMode:'hide',elevationInfo:{mode:'on-the-ground'}});map.add(scenarioDomain);viewListeners.add(drawStructures);
   return {
     setScenarioDomain(geometry){scenarioDomain.removeAll();if(!geometry)return;const polygon=new Polygon(countyGeometry(geometry));scenarioDomain.add(new Graphic({geometry:polygon,symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#f6c85f',width:2,style:'dash'}}}));void focusNavigate(polygon.extent.clone().expand(1.1));},setScenarioBuildings(features){structureFeatures=features;structureFrame=0;drawStructures();},setScenarioBuildingFrame(index){if(index!==structureFrame){structureFrame=index;drawStructures();}},
-    setWatchContext({explore=false,selected=null}){const signature=JSON.stringify([explore,selected]);if(signature===watchContextSignature)return;watchContextSignature=signature;watchExplore=explore;watchConcern=selected;if(quietWatch()){clearSearchSelection();searchContext.removeAll();view.closePopup();}drawAreas();drawPower();syncVisibility();},
+    setWatchContext({explore=false,selected=null}){const signature=JSON.stringify([explore,selected]);if(signature===watchContextSignature)return;watchContextSignature=signature;watchExplore=explore;watchConcern=selected;if(quietWatch()){clearSearchSelection();searchContext.removeAll();view.closePopup();}drawAreas();drawPower();syncVisibility();for(const listener of presentationListeners)listener();},
+    getWorkspace:()=>activeProfile,isLayerWanted:key=>visibleLayer(key,true),onPresentationChanged:listener=>{presentationListeners.add(listener);return ()=>presentationListeners.delete(listener);},
     getViewMode:()=>view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints,clearWatchFocus,focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();

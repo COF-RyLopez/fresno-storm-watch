@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>F.R.O.G. · Map comparison pilot</title>
-<link rel="icon" href="./assets/frog-logo.png"><link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="stylesheet" href="./map-pilot.css?v=07dac1fd64">
+<link rel="icon" href="./assets/frog-logo.png"><link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="stylesheet" href="./map-pilot.css?v=34264c376c">
 <script type="importmap">
 {"imports":{
 "./config.js":"./config.js?v=d82b554e1d",
@@ -34,17 +34,19 @@
 "./lib/frame-window.js":"./lib/frame-window.js?v=2db08f9200",
 "./lib/google-tiles.js":"./lib/google-tiles.js?v=7b7b30bf91",
 "./lib/hrrr-model.js":"./lib/hrrr-model.js?v=287b38e666",
+"./lib/lazy-display.js":"./lib/lazy-display.js?v=2a0fa8ca9c",
 "./lib/map-context.js":"./lib/map-context.js?v=5307914c1e",
 "./lib/map-events.js":"./lib/map-events.js?v=47c9f9b76f",
 "./lib/map-labels.js":"./lib/map-labels.js?v=fba4179d48",
-"./lib/map.js":"./lib/map.js?v=4e16aed7ad",
+"./lib/map.js":"./lib/map.js?v=a211c97adc",
 "./lib/model.js":"./lib/model.js?v=e44a6607f5",
 "./lib/nearby-search.js":"./lib/nearby-search.js?v=dde765ae58",
 "./lib/nwps.js":"./lib/nwps.js?v=ded9874d2f",
 "./lib/nws.js":"./lib/nws.js?v=3813d5f1c3",
 "./lib/pilot-data.js":"./lib/pilot-data.js?v=074e208e1a",
-"./lib/pilot-map.js":"./lib/pilot-map.js?v=0016f60853",
-"./lib/pilot-model.js":"./lib/pilot-model.js?v=8a46905462",
+"./lib/pilot-map.js":"./lib/pilot-map.js?v=5018c28f26",
+"./lib/pilot-model.js":"./lib/pilot-model.js?v=57e5975823",
+"./lib/pilot-performance.js":"./lib/pilot-performance.js?v=87a42d8f0d",
 "./lib/pine-flat-telemetry.js":"./lib/pine-flat-telemetry.js?v=6f5cfbd44e",
 "./lib/pio-model.js":"./lib/pio-model.js?v=904686f830",
 "./lib/pio-zone-context.js":"./lib/pio-zone-context.js?v=a1277ae572",
@@ -80,13 +82,13 @@
 "./lib/workspace-model.js":"./lib/workspace-model.js?v=f0fb9c7ea0",
 "./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
 "./lib/zone-population-product.js":"./lib/zone-population-product.js?v=47199f3b6f",
-"./map-pilot.js":"./map-pilot.js?v=2ee19895fd"
+"./map-pilot.js":"./map-pilot.js?v=08dedee1a0"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/calcite-components/5.2.0/index.js"></script><script type="module" src="./map-pilot.js?v=2ee19895fd"></script></head>
+<script type="module" src="https://js.arcgis.com/calcite-components/5.2.0/index.js"></script><script type="module" src="./map-pilot.js?v=08dedee1a0"></script></head>
 <body><a class="skip" href="#topic">Skip to watch list</a><calcite-shell>
-<div slot="header"><calcite-navigation><a slot="logo" class="brand" href="./"><img src="./assets/frog-logo.png" alt="F.R.O.G."><span>Fresno Storm Watch<small>Map comparison pilot · 0.38.0</small></span></a><calcite-button slot="content-end" href="./?view=watch" appearance="transparent" icon-start="launch">Full app</calcite-button></calcite-navigation>
-<div class="toolbar"><calcite-segmented-control id="view" aria-label="Pilot workspace"><calcite-segmented-control-item id="watch-tab" value="Area Watch" checked>Area Watch</calcite-segmented-control-item><calcite-segmented-control-item id="rivers-tab" value="Rivers">Rivers</calcite-segmented-control-item></calcite-segmented-control><calcite-label layout="inline">Map engine<calcite-select id="engine" label="Map engine" scale="s"><calcite-option value="maplibre" selected>MapLibre pilot</calcite-option><calcite-option value="arcgis">ArcGIS comparison</calcite-option></calcite-select></calcite-label><calcite-button id="mobile-toggle" appearance="outline" scale="s">Show map</calcite-button><calcite-button id="metrics-toggle" appearance="transparent" icon-start="dashboard" scale="s">Compare speed</calcite-button></div>
+<div slot="header"><calcite-navigation><a slot="logo" class="brand" href="./"><img src="./assets/frog-logo.png" alt="F.R.O.G."><span>Fresno Storm Watch<small>Map comparison pilot · 0.80.0</small></span></a><calcite-button slot="content-end" href="./?view=watch" appearance="transparent" icon-start="launch">Full app</calcite-button></calcite-navigation>
+<div class="toolbar"><calcite-segmented-control id="view" aria-label="Pilot workspace"><calcite-segmented-control-item id="watch-tab" value="Area Watch" checked>Area Watch</calcite-segmented-control-item><calcite-segmented-control-item id="rivers-tab" value="Rivers">Rivers</calcite-segmented-control-item></calcite-segmented-control><calcite-label layout="inline">Map engine<calcite-select id="engine" label="Map engine" scale="s"><calcite-option value="maplibre" selected>MapLibre · tiles</calcite-option><calcite-option value="maplibre-pmtiles">MapLibre · PMTiles</calcite-option><calcite-option value="arcgis">ArcGIS comparison</calcite-option></calcite-select></calcite-label><calcite-button id="mobile-toggle" appearance="outline" scale="s">Show map</calcite-button><calcite-label layout="inline">View<calcite-select id="dimension" label="Comparison dimension" scale="s"><calcite-option value="2d" selected>Overhead</calcite-option><calcite-option value="3d">3D terrain · MapLibre</calcite-option></calcite-select></calcite-label><calcite-button id="metrics-toggle" appearance="transparent" icon-start="dashboard" scale="s">Compare speed</calcite-button></div>
 <div class="summary" aria-live="polite" id="summary">Loading public monitoring snapshot…</div></div>
 <calcite-shell-panel slot="panel-start" id="left-panel" width="m"><calcite-panel heading="Area Watch" id="topic"><div class="panel-body"><p class="eyebrow">PUBLIC SOURCE PILOT</p><p id="scope">Seven Fresno County river review groups. Select a card to locate its watchpoints and open evidence.</p><calcite-label id="review-label">Show<calcite-select id="review-filter" label="Area review filter" scale="s"><calcite-option value="review" selected>Needs review</calcite-option><calcite-option value="all">All areas</calcite-option></calcite-select></calcite-label><calcite-label id="basin-label" hidden>Basin<calcite-select id="basin" label="River basin" scale="s"><calcite-option value="All" selected>All basins</calcite-option></calcite-select></calcite-label><calcite-label>Find an area or watchpoint<calcite-input id="search" type="search" placeholder="Name, gauge ID or river" autocomplete="off" clearable scale="s"></calcite-input></calcite-label><calcite-list id="records" label="Monitoring locations"></calcite-list><calcite-notice open icon="information" kind="info"><div slot="message">Review cues identify information to check. They do not activate the EOC, predict inundation or select safe staging sites. Unknown conditions remain unknown.</div></calcite-notice><p><a href="./?view=watch">Open full operational context</a> · <a href="./eoc.html">Private EOC workspace</a></p></div></calcite-panel></calcite-shell-panel>
 <main id="main"><div class="map-tools"><calcite-button id="fit" icon-start="extent" appearance="outline" scale="s">Fit workspace</calcite-button><calcite-button id="refresh" icon-start="refresh" appearance="outline" scale="s">Check live feeds</calcite-button><span id="map-status" role="status">Map waiting for data</span></div><div id="map" tabindex="0" aria-label="Fresno County monitoring map"></div><div class="legend" aria-label="Map legend"><span>▲ Area watchpoint</span><span>● Gauge</span><span>◆ Reservoir</span><span><i style="background:#ef8d87"></i> Published threshold cue</span><span><i style="background:#e0b663"></i> Change / review</span><span><i style="background:#75bddd"></i> Monitor</span><span><i style="background:#a5afb8"></i> Unknown / incomplete</span><span>Outline: Fresno County</span></div><div class="source-line" id="data-time"></div></main>

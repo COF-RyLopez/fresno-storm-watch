@@ -47,3 +47,5 @@ Next delivery trial: reuse the existing Millerton/Pine Flat hydrography PMTiles 
 Use extruded building footprints with documented heights for simple 3D context; use 3D Tiles/I3S only for complex meshes that justify the delivery and memory cost. Terrain and numeric depth remain distinct, with matching datums and explicit NoData. Weather time slices retain observed/forecast/model labels. Gauges are observations, not a measured floodplain velocity field.
 
 Official documentation checked 2026-11-14: PMTiles retrieves relevant tiles using HTTP ranges and is read-only (https://docs.protomaps.com/pmtiles/). deck.gl Tile3DLayer supports 3D Tiles and I3S (https://deck.gl/docs/api-reference/geo-layers/tile-3d-layer). Use these for reference delivery while live utility/closure/gauge status remains separately timestamped and joined by stable identifiers. Private county data keeps the same access controls.
+
+0.80.0 checkpoint: existing county tiles now have a verified PMTiles build and MapLibre terrain trial. See performance-080.md for matched results, startup changes, limitations and remaining migration gates. Main operational renderer remains unchanged.

@@ -1,3 +1,4 @@
+import {lazyDisplay} from './lazy-display.js';
 import {loadSdk} from './map.js';
 import {reportHealth} from './source-health.js';
 import {validateHrrrManifest,validateHrrrFrame,hrrrAt,hrrrPoint,hrrrPixels,GUST_STOPS,RAIN_STOPS} from './hrrr-model.js';
@@ -39,6 +40,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
   async function json(url){const r=await fetch(url,{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error(`HRRR HTTP ${r.status}`);const text=await r.text();if(text.length>900000)throw Error('HRRR file exceeds regional size limit');return JSON.parse(text);}
   async function draw(){
     const state=hrrrAt(manifest,target());
+    if(map&&!map.isLayerWanted('hrrr')){generation++;loading=null;clear();if(hours)stopHours();showStatus();return;}
     if(group)map.setLayerEligibility(group,!exercise&&enabled&&!error&&!mapError&&!!state.frame);
     if(exercise||!enabled||error||state.reason){generation++;loading=null;clear();showStatus();return;}
     const selected=state.frame,wanted=`${manifest.run}:${selected.file}:${shading}`;
@@ -98,5 +100,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
   window.addEventListener('offline',()=>{error='Browser offline · HRRR field hidden';void draw();});window.addEventListener('online',()=>{next=0;tick();});
   if(exercise)for(const id of ['hrrr-toggle','hrrr-shading','hrrr-play','hrrr-next','hrrr-hours','hrrr-refresh'])$(id).setAttribute('disabled','');
   queueMicrotask(()=>{showStatus();void refresh();});
-  return {update(site){point=site;void draw();},refresh,async setMap(controller){map=controller;try{const loader=await loadSdk();const classes=await loader.import(['@arcgis/core/layers/ImageryTileLayer.js','@arcgis/core/layers/support/PixelBlock.js','@arcgis/core/geometry/Extent.js','@arcgis/core/layers/GroupLayer.js']);sdk=classes.slice(0,3);group=new classes[3]({title:'HRRR forecast winds / gusts',visible:false});map.registerLayer('hrrr',group,false);map.onViewChanged(()=>{showStatus();});void draw();}catch(e){mapError=`HRRR map unavailable · ${e.message}`;showStatus();}}};
+  const prepare=lazyDisplay(async()=>{try{const loader=await loadSdk();const classes=await loader.import(['@arcgis/core/layers/ImageryTileLayer.js','@arcgis/core/layers/support/PixelBlock.js','@arcgis/core/geometry/Extent.js','@arcgis/core/layers/GroupLayer.js']);sdk=classes.slice(0,3);group=new classes[3]({title:'HRRR forecast winds / gusts',visible:false});map.registerLayer('hrrr',group,false);map.onViewChanged(()=>{showStatus();});}catch(e){mapError=`HRRR map unavailable · ${e.message}`;showStatus();throw e;}});
+  const syncDisplay=()=>{if(!exercise&&map?.isLayerWanted('hrrr'))void prepare().then(()=>draw()).catch(()=>{});else void draw();};
+  return {update(site){point=site;void draw();},refresh,setMap(controller){map=controller;map.onPresentationChanged(syncDisplay);syncDisplay();}};
 }
