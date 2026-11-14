@@ -151,3 +151,10 @@ test('public source adapters reject HTTP/service errors and never send credentia
   await fetchQpfCycle(QPF_PERIODS[1],async(url,options)=>{query=url;assert.equal(options.credentials,'omit');return {ok:true,json:async()=>({features:[feature(cycle())]})};},now);
   assert.equal(query.searchParams.get('returnGeometry'),'false');assert.equal(query.searchParams.get('resultRecordCount'),'2000');
 });
+
+test('exercise disables current weather controls without aborting alert startup',async()=>{
+ const ui=await readFile(new URL('../site/lib/environment-ui.js',import.meta.url),'utf8');
+ const html=await readFile(new URL('../site/index.html',import.meta.url),'utf8');
+ const list=ui.match(/if\(exercise\)\{for\(const id of \[(.*?)\]/)[1];
+ for(const match of list.matchAll(/'([^']+)'/g))assert(html.includes('id="'+match[1]+'"'),match[1]+' must exist before exercise initialization');
+});

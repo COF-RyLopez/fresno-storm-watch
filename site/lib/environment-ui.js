@@ -180,7 +180,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
   $('reservoir-refresh').addEventListener('click',()=>void refreshReservoirs());
   $('environment-extent').addEventListener('click',()=>{onMap();map?.fitEnvironment();});
   $('qpf-band-list').replaceChildren(...QPF_BANDS.map(b=>{const n=el('span',`${b.label} in`);const swatch=el('i');swatch.style.background=b.color;n.prepend(swatch);return n;}));
-  if(exercise){for(const id of ['env-radar','env-qpf','env-satellite','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
+  if(exercise){for(const id of ['env-overlay','radar-frame','qpf-period','reservoir-refresh'])$(id).setAttribute('disabled','');}
   void environmentalJson(new URL('../data/reservoir-watchlist.json',import.meta.url)).then(s=>{selection=s;renderReservoirs();}).catch(error=>{snapshotError=error.message;renderReservoirs();});
   void refreshWeather();void refreshReservoirs();renderWeather();renderReservoirs();
   const tick=()=>{if(document.hidden)return;renderWeather();renderReservoirs();if(!exercise&&Date.now()>=nextWeather)void refreshWeather();if(!exercise&&Date.now()>=nextReservoir)void refreshReservoirs();};

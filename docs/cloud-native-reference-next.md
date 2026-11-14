@@ -36,3 +36,14 @@ DuckDB-Wasm helps bounded analytical queries; it does not make every map layer
 draw faster. Check range requests, CORS, cache headers, data licenses and private
 access before choosing delivery. No new data migration or renderer-default change
 is included in 0.76.0; this file records the next measured migration scope.
+
+
+## Mission UX gate after 0.79.0
+
+The phone header and selected-area map callout now establish the shared interaction contract for either renderer: choose concern, see its actual source locations, inspect evidence and next review. Keep that contract when moving reference geometry to the cloud-native pilot. Do not add renderer switches to the operational workflow.
+
+Next delivery trial: reuse the existing Millerton/Pine Flat hydrography PMTiles plus its full-detail GeoParquet counterpart, then compare the same selected reach against the current vector-tile basemap. This release does not change renderer defaults or promise an unmeasured speedup. Source freshness and feature-transfer speed are different problems.
+
+Use extruded building footprints with documented heights for simple 3D context; use 3D Tiles/I3S only for complex meshes that justify the delivery and memory cost. Terrain and numeric depth remain distinct, with matching datums and explicit NoData. Weather time slices retain observed/forecast/model labels. Gauges are observations, not a measured floodplain velocity field.
+
+Official documentation checked 2026-11-14: PMTiles retrieves relevant tiles using HTTP ranges and is read-only (https://docs.protomaps.com/pmtiles/). deck.gl Tile3DLayer supports 3D Tiles and I3S (https://deck.gl/docs/api-reference/geo-layers/tile-3d-layer). Use these for reference delivery while live utility/closure/gauge status remains separately timestamped and joined by stable identifiers. Private county data keeps the same access controls.

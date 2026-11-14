@@ -146,3 +146,53 @@
  #storm-shell[data-workspace=watch][data-destination=watch] #app-logo{display:none}
  #storm-shell[data-workspace=watch][data-destination=watch] #map-panel{--calcite-panel-content-top-space:4px 8px;--calcite-panel-content-bottom-space:0 8px}
 }
+
+/* Phone: one compact identity row, two persistent safety/status controls. */
+#phone-workspace-title,#phone-status-row,#watch-map-reason,#watch-map-evidence{display:none}
+@media(max-width:900px){
+ .shell-header{max-height:none;display:block!important}
+ #app-logo,.shell-header>.scope-bar,#mobile-mission-nav{display:none!important}
+ #phone-workspace-title{display:block;font-size:16px;font-weight:600;line-height:1.3;max-width:54vw;overflow-wrap:anywhere}
+ .app-logo-image{width:30px!important;height:30px!important}
+ .app-brand{gap:8px;padding-inline-start:8px}
+ #header-tools-open{min-height:44px;margin-inline:4px}
+ #phone-status-row{display:flex;align-items:center;border-top:1px solid var(--calcite-color-border-3);background:var(--calcite-color-surface-2);padding:0 4px;gap:4px}
+ #phone-status-row calcite-button{flex:1;min-width:0;min-height:44px;--calcite-button-text-color:var(--calcite-color-text-1)}
+ #phone-status-row [data-phone-tone=warning]{--calcite-button-text-color:var(--calcite-color-status-danger);font-weight:650}
+ #phone-status-row [data-phone-tone=gap]{--calcite-button-text-color:var(--calcite-color-status-warning)}
+ #header-tools-host{width:min(330px,calc(100vw - 28px));max-height:70dvh;overflow:auto}
+ #header-mission-host .mission-nav{flex-direction:column;align-items:stretch;padding:8px;gap:4px}
+ #header-monitor-host .county-strip{display:flex;flex-direction:column;align-items:stretch;padding:8px;border-block:1px solid var(--calcite-color-border-3)}
+ #header-tools-host calcite-button,#header-tools-host calcite-action{min-height:44px}
+ #storm-shell[data-watch-focus=true] #map-panel{--calcite-panel-content-top-space:0;--calcite-panel-footer-space:4px 8px}
+ #storm-shell[data-watch-focus=true] #map-toolbar-stack{display:none}
+ #map-wrap>.watch-map-heading{position:absolute;z-index:2;inset:8px 8px auto 56px;width:auto;display:flex;flex-wrap:wrap!important;align-items:center;gap:4px 8px!important;padding:10px!important;background:var(--calcite-color-surface-1);border:1px solid var(--calcite-color-border-2);border-radius:4px;box-shadow:0 3px 10px #0003}
+ #map-wrap>.watch-map-heading>div{flex:1 1 100%!important;min-width:0}
+ #map-wrap #watch-map-reason{display:block;font-size:12px;line-height:1.4;color:var(--calcite-color-text-2);margin-top:4px}
+ #map-wrap #watch-map-evidence{display:block;background:transparent;border:1px solid var(--calcite-color-border-2);color:var(--calcite-color-text-1);font:inherit;font-size:12px;padding:8px;min-height:44px;cursor:pointer}
+ #map-wrap #watch-map-evidence[hidden]{display:none}
+ #map-wrap #watch-map-evidence:focus-visible{outline:2px solid var(--calcite-color-focus)}
+ #map-wrap #watch-map-explore{margin-inline-start:auto;min-height:44px}
+ #storm-shell[data-watch-focus=true] .scene-note{display:none}
+ #storm-shell[data-watch-focus=true] .legend-stack{gap:0}
+ #storm-shell[data-watch-focus=true] .watch-queue-help{display:none}
+}
+
+@media(max-width:900px){
+ #storm-shell[data-watch-focus=true] .watch-queue-title,
+ #storm-shell[data-watch-focus=true] #watch-panel [data-show-map]{display:none}
+ #map-wrap>.watch-map-heading{max-width:360px}
+}
+
+@media(max-width:900px){
+ #map-wrap>.watch-map-heading{flex-wrap:nowrap!important}
+ #map-wrap>.watch-map-heading>div{flex:1!important}
+ #map-wrap #watch-map-explore{display:none}
+ #phone-explore-menu{margin:4px 8px}
+}
+
+@media(max-width:900px){
+ .phone-status-label{display:block;white-space:pre-line;line-height:1.25;text-align:center}
+ #phone-status-row [data-phone-tone=warning]{--calcite-button-text-color:var(--calcite-color-text-1);--calcite-button-icon-color:var(--calcite-color-status-danger)}
+ #phone-status-row [data-phone-tone=gap]{--calcite-button-text-color:var(--calcite-color-text-1);--calcite-button-icon-color:var(--calcite-color-status-warning)}
+}

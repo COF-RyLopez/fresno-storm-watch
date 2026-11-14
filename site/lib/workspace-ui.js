@@ -1,7 +1,7 @@
 import {watchExploreRoute} from './county-watch-focus.js';
 import {WORKSPACES,workspaceRoute} from './workspace-model.js';
 /** One active topic, independent map state, and no persisted operational data. */
-export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null}={}){
+export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidence=null,exercise=false}={}){
   const $=id=>document.getElementById(id),compact=matchMedia('(max-width:900px)'),dock=matchMedia('(min-width:1280px)');
   let section=workspaceRoute(location.href),mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch',panelOpen=section==='watch'||!compact.matches,camerasOpen=false,map=null;
   let explore=watchExploreRoute(location.href),selectedConcern=null,phonePane='map';
@@ -12,7 +12,15 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     for(const a of document.querySelectorAll('.map-action-bar calcite-action'))a.textEnabled=!narrow;
   }
   function render(){
-    const nav=document.querySelector('.mission-nav'),navHost=compact.matches?$('mobile-mission-nav'):$('command-navigation');if(nav.parentElement!==navHost)navHost.append(nav);
+    $('command-navigation').setAttribute('scale',compact.matches?'s':'m');
+    $('watch-panel').heading=compact.matches?'Needs attention':'County Watch';
+    $('watch-panel').description=compact.matches?'':'Select a concern to inspect evidence';
+    const nav=document.querySelector('.mission-nav'),navHost=compact.matches?$('header-mission-host'):$('command-navigation');if(nav.parentElement!==navHost)navHost.append(nav);
+    const monitor=$('county-monitor'),monitorHost=compact.matches?$('header-monitor-host'):document.querySelector('.scope-bar');
+    if(monitor.parentElement!==monitorHost)monitorHost.append(monitor);
+    const statusHost=compact.matches?$('phone-status-row'):monitor;
+    for(const id of ['notify-alerts','notify-health'])if($(id).parentElement!==statusHost)statusHost.append($(id));
+    $('phone-workspace-title').textContent=(exercise?'Exercise · ':'')+(mission==='watch'?WORKSPACES[section].title:mission==='scenarios'?'Planning · hypothetical':'Briefing');
     const actionHost=$('header-tools-host');if($('header-actions').parentElement!==actionHost)actionHost.append($('header-actions'));
     for(const [id,p] of Object.entries(WORKSPACES))$(p.panel).hidden=mission!=='watch'||id!==section;
     $('scenarios-panel').hidden=mission!=='scenarios';$('mission-briefing-panel').hidden=mission!=='briefing';
@@ -42,7 +50,12 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     $('storm-shell').dataset.watchFocus=String(focused);
     $('workspace-tabs').hidden=mission!=='watch'||section==='storm'||focused;
     $('watch-map-heading').hidden=mission!=='watch'||section!=='watch';
+    $('phone-explore-menu').hidden=!phoneWatch;
     $('watch-map-title').textContent=selectedConcern?.name||'Choose a concern to focus the map';
+    $('watch-map-reason').textContent=selectedConcern?.change||'';
+    $('watch-map-evidence').hidden=!evidence?.isOpen;
+    const heading=$('watch-map-heading'),headingHost=phoneWatch&&focused?$('map-wrap'):$('map-toolbar-stack');
+    if(heading.parentElement!==headingHost)headingHost.append(heading);
     $('watch-map-explore').textContent=explore?'Return to focused view':'Explore map';
     $('watch-map-explore').setAttribute('aria-expanded',String(explore));
     $('watch-map-explore').setAttribute('aria-controls','workspace-tabs map-toolbar-controls');
@@ -54,6 +67,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   function selectConcern(item){selectedConcern=item;explore=false;for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');render();}
   function setCameras(open){if(open)evidence?.close({restoreFocus:false});camerasOpen=!!open;cameraStates.set(section,camerasOpen);map?.setLayerPreference('cameras',camerasOpen);render();}
   function showPanel(name,{history:push=true}={}){
+    $('header-tools-menu').removeAttribute('open');
     name=name==='environment'?'weather':name;if(!WORKSPACES[name])return;
     const changed=name!==section||mission!=='watch';mission='watch';cameraStates.set(section,camerasOpen);section=name;panelOpen=true;if(name==='watch'&&push)explore=false;
     if(changed){selectedConcern=null;explore=false;evidence?.close({restoreFocus:false});for(const id of ['map-search-evidence','river-dialog','power-dialog','facility-dialog','drainage-evidence','road-dialog','release-trend-dialog','alert-evidence','usgs-evidence','waze-evidence'])$(id)?.removeAttribute('open');for(const id of ['context-menu','map-tools-menu'])$(id).removeAttribute('open');camerasOpen=cameraStates.get(section)||false;}
@@ -64,11 +78,14 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   function showMap(){panelOpen=!compact.matches;phonePane=evidence?.isOpen?'evidence':'map';render();}
   function showFocusedMap(){panelOpen=!compact.matches;phonePane='map';render();}
   function showWatchPane(pane){if(pane==='evidence'&&!evidence?.isOpen)return;panelOpen=pane==='attention';phonePane=pane;render();}
-  function evidenceChanged(open){if(open){panelOpen=!compact.matches;phonePane='evidence';}else if(phonePane==='evidence'){phonePane='map';}render();}
+  function evidenceChanged(open){if(open){$('header-tools-menu').removeAttribute('open');panelOpen=!compact.matches;phonePane='evidence';}else if(phonePane==='evidence'){phonePane='map';}render();}
   // County Watch topic tabs navigate on user clicks / Enter / Space only: Calcite's own activation events can
   // arrive late after a programmatic selection or a browser history change and must not re-navigate.
   for(const t of document.querySelectorAll('#workspace-tabs calcite-tab-title')){const go=()=>{if(t.dataset.workspace!==section)showPanel(t.dataset.workspace);};t.addEventListener('click',go);t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go();});}
   window.addEventListener('popstate',()=>{cameraStates.set(section,camerasOpen);selectedConcern=null;explore=watchExploreRoute(location.href);section=workspaceRoute(location.href);camerasOpen=cameraStates.get(section)||false;mission=['scenarios','briefing'].includes(new URL(location.href).searchParams.get('mission'))?new URL(location.href).searchParams.get('mission'):'watch';evidence?.close({restoreFocus:false});render();if(map)void map.setWorkspace(section);onCameraChange(camerasOpen);onActivate(section);});
+  $('phone-explore-menu').addEventListener('click',()=>{setExplore(true);showFocusedMap();});
+  $('watch-map-evidence').addEventListener('click',()=>showWatchPane('evidence'));
+  $('header-tools-host').addEventListener('click',e=>{if(e.target.closest?.('calcite-button,calcite-action,calcite-link,a'))$('header-tools-menu').removeAttribute('open');});
   for(const pane of ['attention','map','evidence'])$('watch-phone-'+pane).addEventListener('click',()=>showWatchPane(pane));
   $('watch-reference').open=watchExploreRoute(location.href);
   $('watch-map-explore').addEventListener('click',()=>setExplore(!explore));

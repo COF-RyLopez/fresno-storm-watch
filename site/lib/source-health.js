@@ -1,10 +1,11 @@
+import {phoneAlertSummary} from './phone-alert-summary.js';
 import {sourceHealthSummary} from './source-health-model.js';
 import {disclosure} from './dom.js';
 /** Source status events carry public diagnostics, never feature payloads or credentials. */
 export function reportHealth(key,label,{checked=null,error=null,maxAgeMs=420000,detail='',state=null}={}){window.dispatchEvent(new CustomEvent('storm-source-health',{detail:{key,label,checked,error,maxAgeMs,detail,state}}));}
 /** Countywide counts remain independent of workspace presentation. */
 export function createCountyStrip({onOpen,exercise=false,timeZone}){
-  const $=id=>document.getElementById(id),checks=new Map();let careCount=null,areaCount=null,drainageCount=null,pumpPowerCount=null,readinessCount=null,taskCounts=null,powerCount=null,alertCount=null,dialogSignature=null,briefingUpdated=false,incidentFollowups=null;
+  const $=id=>document.getElementById(id),checks=new Map(),compact=matchMedia('(max-width:900px)');let alertDetail={};let careCount=null,areaCount=null,drainageCount=null,pumpPowerCount=null,readinessCount=null,taskCounts=null,powerCount=null,alertCount=null,dialogSignature=null,briefingUpdated=false,incidentFollowups=null;
   const time=t=>Number.isFinite(t)?new Intl.DateTimeFormat('en-US',{timeZone,dateStyle:'short',timeStyle:'long'}).format(t):'No successful check';
   function render(){const health=sourceHealthSummary(checks),issues=health.review;
     $('notify-areas').textContent=`Area reviews · ${areaCount??'checking'}${drainageCount===null?'':` river + ${drainageCount} drainage${pumpPowerCount?` · ${pumpPowerCount} pump power`:""}${readinessCount?` · ${readinessCount} pump readiness`:""}${taskCounts?` · ${taskCounts.active} assigned / ${taskCounts.overdue} overdue${taskCounts.unmatched?' · '+taskCounts.unmatched+' task rematches':''}${taskCounts.review>taskCounts.overdue?' · '+taskCounts.review+' task reviews':''}`:''}`}`;$('notify-alerts').textContent=`Weather alerts · ${alertCount??'checking'}${briefingUpdated?' · briefing updated':''}`;$('notify-power').textContent=`Power / PSPS · ${powerCount??'checking'}`;$('notify-health').textContent=exercise?'Source health · exercise':`Source health · ${checks.size?issues+' review':'checking'}`;
@@ -16,6 +17,7 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
     $('notify-alerts').title=`Weather alerts · ${alertCount??'checking'} across five counties${briefingUpdated?' · Hanford briefing updated':''}`;$('notify-alerts').setAttribute('aria-label',$('notify-alerts').title);$('notify-alerts').textContent=`NWS · ${alertCount??'checking'}${briefingUpdated?' · new briefing':''}`;
     $('notify-health').setAttribute('icon-start',issues?'exclamation-mark-triangle':'information');
     $('notify-health').setAttribute('aria-label',exercise?'Source health · exercise':health.groups.filter(g=>g.rows.length).map(g=>`${g.label}: ${g.rows.length}`).join(' · ')||'Source checks starting');
+    if(compact.matches){const alert=phoneAlertSummary(alertCount,alertDetail);const label=document.createElement('span');label.className='phone-status-label';label.textContent=alert.text.replace(' regional','\nregional');$('notify-alerts').replaceChildren(label);$('notify-alerts').dataset.phoneTone=alert.tone;$('notify-alerts').setAttribute('aria-label',alert.text+' · '+$('notify-alerts').title);$('notify-health').textContent=exercise?'Sources · exercise':checks.size?'Sources · '+issues+' review':'Sources · checking';}
     if(!$('source-health-dialog').hasAttribute('open'))return;const signature=JSON.stringify([exercise,health]);if(signature===dialogSignature)return;dialogSignature=signature;
     const host=$('source-health-list'),opened=new Map([...host.querySelectorAll('[data-health]')].map(n=>[n.dataset.health,n.hasAttribute('expanded')])),focused=document.activeElement?.closest?.('[data-health]')?.dataset.health;host.replaceChildren();
     if(exercise){const p=document.createElement('p');p.textContent='Live source checks are disabled in the fictional exercise.';host.append(p);return;}
@@ -27,6 +29,7 @@ export function createCountyStrip({onOpen,exercise=false,timeZone}){
   for(const [id,topic]of [['notify-areas','watch'],['notify-alerts','alerts'],['notify-power','power']])$(id).onclick=()=>{onOpen(topic);if(id==='notify-areas'&&incidentFollowups?.overdue){document.getElementById('mission-followups').setAttribute('expanded','');}};
   $('notify-health').onclick=()=>{$('source-health-dialog').setAttribute('open','');render();};
   $('notify-pio').onclick=()=>{onOpen('watch');const section=$('mission-followups');section.setAttribute('expanded','');$('mission-pio-reviews').scrollIntoView({block:'nearest'});};
+  compact.addEventListener('change',render);
   setInterval(()=>{if(!document.hidden)render();},30000);render();
-  return {care:n=>{careCount=n;render();},drainage:(n,pumps=null,readiness=null,tasks=null)=>{drainageCount=n;pumpPowerCount=n===null?null:pumps;readinessCount=n===null?null:readiness;taskCounts=n===null?null:tasks;render();},briefing:n=>{briefingUpdated=!!n;render();},areas:n=>{areaCount=n;render();},alerts:n=>{alertCount=n;render();},power:n=>{powerCount=n;render();}};
+  return {care:n=>{careCount=n;render();},drainage:(n,pumps=null,readiness=null,tasks=null)=>{drainageCount=n;pumpPowerCount=n===null?null:pumps;readinessCount=n===null?null:readiness;taskCounts=n===null?null:tasks;render();},briefing:n=>{briefingUpdated=!!n;render();},areas:n=>{areaCount=n;render();},alerts:(n,detail={})=>{alertCount=n;alertDetail=detail;render();},power:n=>{powerCount=n;render();}};
 }

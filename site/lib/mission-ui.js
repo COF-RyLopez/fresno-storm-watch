@@ -71,7 +71,7 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
  }
  function inspect(id,{focus=true}={}){
   inspectionRevision++;selected=id;const row=rows.find(r=>r.area.id===id);if(!row)return;const s=concernSummary(row),g=contextFor(id),host=$('mission-evidence-content');host.replaceChildren();$('mission-evidence').heading=s.name;$('mission-evidence').description='';
-  selectedConcern='river:'+id;workspace.selectConcern?.({type:'river',id,name:s.name,related:{power:[...(row.power?.matches||[]),...(row.power?.followups||[])].map(m=>m.row.key),roads:(g?.roads||[]).map(m=>m.row.key),facilities:(g?.facilities||[]).map(m=>m.row.site.key)}});renderConcerns(true);
+  selectedConcern='river:'+id;workspace.selectConcern?.({type:'river',id,name:s.name,change:row.status,related:{power:[...(row.power?.matches||[]),...(row.power?.followups||[])].map(m=>m.row.key),roads:(g?.roads||[]).map(m=>m.row.key),facilities:(g?.facilities||[]).map(m=>m.row.site.key)}});renderConcerns(true);
   const inspection=inspectionRevision,stillSelected=()=>inspection===inspectionRevision&&$('mission-evidence').hasAttribute('open');
   const headline=el('p',row.status);headline.className='watch-condition-title';host.append(headline,el('p',id==='kings-lower'?'Confirm release timing with USACE and verify downstream access, field conditions and site power.':s.nextReview));
   const captureNote=disclosure('Evidence capture & timing');captureNote.append(el('p',`Captured ${time(Date.now())}. Reopen this area to refresh; live monitoring continues.`),el('p',`Latest gauge observation: ${time(s.observed)} · first sampled forecast high: ${time(s.forecast)}`));
