@@ -2,6 +2,7 @@
 import { assessGauge, HOUR } from './river-model.js';
 import { qpfCycle, realNumber, reservoirMetricState } from './environment-model.js';
 import {scheduleEvidence} from './release-model.js';
+import {poolBackup,telemetryGauge} from './pine-flat-telemetry.js';
 
 /** @param {object} areaConfig @param {object[]} gauges @param {object[]} reservoirs @returns {object[]} Validate associations before any source queries. */
 export function planningPoints(areaConfig,gauges,reservoirs){
@@ -44,7 +45,7 @@ function rainfallEvidence(state,area,points,config,now){
 }
 
 /** @param {object} input @param {object} association @param {number} now @returns {object} Only consecutive valid, current CDEC observations can produce an increase cue. */
-export function releaseEvidence(input,association,now){
+export function releaseEvidence(input,association,now,allowBackup=true){
   const station=input.selection?.stations.find(s=>s.id===association.station),metric=station?.metrics.find(m=>m.key===association.metric);
   const row=input.snapshot?.stations.find(s=>s.id===association.station),series=row?.metrics?.[association.metric];
   const assessed=metric?reservoirMetricState(series,metric,now):{sample:null,tone:'gap',label:'Metric unavailable'};
@@ -53,6 +54,14 @@ export function releaseEvidence(input,association,now){
   const contract=metric&&series?.sensor===metric.sensor&&series?.duration===metric.duration&&series?.units===metric.units;
   const completed=metric?.duration!=='D'||assessed.sample?.time+24*HOUR<=now;
   const current=!!collectionCurrent&&!!contract&&assessed.tone==='normal'&&completed;
+  if(!current&&allowBackup&&contract&&association.station==='PNF'&&association.metric==='elevation'&&!input.error){
+    const backup=poolBackup(input.snapshot?.telemetry?.PFTC1,series,now,input.config.collectorMaxAgeMs);
+    if(backup){
+      const replacement={...row,error:null,lastSuccess:backup.lastSuccess,metrics:{...row.metrics,elevation:backup}};
+      const result=releaseEvidence({...input,snapshot:{...input.snapshot,stations:input.snapshot.stations.map(s=>s.id==='PNF'?replacement:s)}},association,now,false);
+      if(result.current)return {...result,source:backup.source,publisher:backup.publisher,backup:true,primaryReason:assessed.label,reason:result.reason+' · provisional NWS backup; CDEC primary unavailable/old'};
+    }
+  }
   const sample=assessed.sample;
   const ordered=(series?.samples||[]).filter(p=>Number.isFinite(p.time)&&p.time<=now).sort((a,b)=>a.time-b.time);
   const index=sample?ordered.findIndex(p=>p.time===sample.time):-1,prior=index>0?ordered[index-1]:null;
@@ -80,6 +89,12 @@ export function evaluateAreas(input,now=Date.now()){
       const entry=gaugeEntries.get(id),gauge=entry?.gauge??null;
       return {id,gauge,assessment:assessGauge(gauge,riverConfig,72,now,entry?.error??null)};
     });
+    if(area.id==='kings-lower'&&reservoirs?.selection?.pineFlatTelemetry){
+      const block=reservoirs.snapshot?.telemetry?.PFQC1,gauge=telemetryGauge(block),generated=Date.parse(reservoirs.snapshot?.generatedAt);
+      const fresh=[generated,reservoirs.checked,Date.parse(block?.lastSuccess)].every(t=>Number.isFinite(t)&&t<=now+120000&&now-t<=environmentConfig.collectorMaxAgeMs);
+      const error=reservoirs.error||block?.error||(!fresh?'Telemetry collection overdue':null);
+      gauges.push({id:'PFQC1',gauge,assessment:assessGauge(gauge,{...riverConfig,staleMs:environmentConfig.collectorMaxAgeMs},72,now,error)});
+    }
     const rainfall=rainfallEvidence(rain,area,points,environmentConfig,now);
     const releases=area.releases.map(a=>releaseEvidence({...reservoirs,config:environmentConfig},a,now));
     const pools=[...new Set(area.releases.map(a=>a.station))].map(station=>releaseEvidence({...reservoirs,config:environmentConfig},{station,metric:'elevation'},now));
@@ -93,6 +108,7 @@ export function evaluateAreas(input,now=Date.now()){
     const change=!!(rising.length||higher.length||increased.length||scheduled.length);
     const gaps=[];
     if(!gauges.length)gaps.push('No downstream gauge connected');
+    if(area.id==='kings-lower'&&gauges.some(g=>g.id==='PFQC1'))gaps.push('Near-dam stage only; farther-downstream coverage and travel times unverified');
     for(const g of gauges)if(!g.assessment.current||!g.assessment.forecastUsable)gaps.push(`${g.id}: ${!g.assessment.current?'observation unavailable/old':'forecast unavailable/old'}`);
     if(rainfall.gaps)gaps.push(`${rainfall.gaps}/${rainfall.samples.length} rainfall sample amounts unknown`);
     for(const r of [...releases,...pools])if(!r.current||r.delta===null)gaps.push(`${r.station} ${r.label}: ${r.reason}`);

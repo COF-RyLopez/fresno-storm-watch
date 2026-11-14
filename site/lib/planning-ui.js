@@ -72,7 +72,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
       const published=[...(a.exceeded||[]).map(t=>`Observed ${t.level} ≥ ${riverValue(t.value,t.units)}`),...a.crossings.map(t=>`Forecast ${t.level} ≥ ${riverValue(t.value,t.units)} at sample ${time(t.time)}`)];
       if(published.length)section.append(el('p',published.join(' · '),'watch-threshold'));
       if(!a.thresholdKnown)section.append(el('p','NWS thresholds unknown.','watch-gap'));
-      section.append(button('Gauge evidence',()=>onGauge(id)));host.append(section);
+      if(id==='PFQC1')section.append(el('p','Provisional near-dam stage; routing and travel time unverified.'),link('NWS gauge source',g?.sourceUrl||'https://hads.ncep.noaa.gov/'));else section.append(button('Gauge evidence',()=>onGauge(id)));host.append(section);
     }
     appendReservoirWatch(host,r,time);
     for(const schedule of r.schedules)appendScheduledReleases(host,schedule,time);
@@ -83,6 +83,7 @@ export function createPlanningWatch({config,timeZone,exercise,onOpen,onMap=()=>{
     if(!areaConfig)return;
     if(!exercise)for(const p of points)reportHealth('wpc-point:'+p.id,'WPC rainfall sample · '+p.name,{checked:rain?.checked,error:rain?.error||rain?.points?.[p.id]?.error,state:!rain?'checking':rain.cycle?.end<=Date.now()||Date.now()-rain.cycle?.issue>config.environment.qpfMaxAgeMs?'stale':!Number.isFinite(rain.points?.[p.id]?.value)?'coverage':null,detail:!Number.isFinite(rain?.points?.[p.id]?.value)?'Forecast amount unknown; inspect the published product.':rain?.cycle?.end<=Date.now()?'Forecast window ended.':'Published point lookup; not basin-average rainfall.',maxAgeMs:config.environment.weatherCheckMaxAgeMs});
     const riverRows=evaluateAreas({areas:areaConfig.areas,points,gaugeEntries:entries,riverConfig:config.rivers,reservoirs,rain,environmentConfig:config.environment});
+    if(!exercise&&reservoirs.selection?.pineFlatTelemetry){const g=riverRows.find(r=>r.area.id==='kings-lower')?.gauges.find(g=>g.id==='PFQC1');reportHealth('hads:PFQC1','NWS HADS · Kings below Pine Flat',{checked:g?.gauge?.fetched,error:g?.assessment.error,state:g?.assessment.current?null:'stale',detail:'Provisional near-dam stage; no forecast, flood thresholds or verified downstream travel time.',maxAgeMs:config.environment.collectorMaxAgeMs});}
     const combined=combineAreaConcerns({rows:riverRows,associations,windSites,points,wind,power,previous:previousRows});
     const rows=exercise?combined:mergeForecastReviews(combined,forecastDifferences);previousRows=rows;
     onSummary(rows.filter(r=>r.review).length);map?.setPlanningData(rows,filterMode);

@@ -78,7 +78,7 @@ export function createReleaseTrends({config,timeZone,exercise,onLocate=()=>{}}){
     left.append(el('p',`Last reservoir collection: ${time(model.release.collected)}. Collection time is not observation time.`,'trend-source'));
     if(model.release.source)left.append(link('Official CDEC observations',model.release.source));
     const right=el('section');right.append(el('h4',`${model.gauge.id?model.gauge.id+' · ':''}${model.gauge.title}`),el('p',model.gauge.health,'trend-health'));
-    if(model.gauge.id){right.append(releaseTrendChart(model.gauge,model,model.gaugeDomain,false,timeZone,selections[1],expanded[1]),el('p',`NWS forecast issued: ${time(model.gauge.issued)} · forecast ends: ${time(model.gauge.forecastEnd)} · station checked: ${time(model.gauge.checked)}.`,'trend-source'));if(model.gauge.source)right.append(link('Official NWS gauge',model.gauge.source));}
+    if(model.gauge.id){right.append(releaseTrendChart(model.gauge,model,model.gaugeDomain,false,timeZone,selections[1],expanded[1]),el('p',model.gauge.id==='PFQC1'?`Provisional NWS HADS stage · no forecast. Station checked ${time(model.gauge.checked)}.`:`NWS forecast issued: ${time(model.gauge.issued)} · forecast ends: ${time(model.gauge.forecastEnd)} · station checked: ${time(model.gauge.checked)}.`,'trend-source'));if(model.gauge.source)right.append(link('Official NWS gauge',model.gauge.source));}
     else{right.append(el('p','Downstream comparison unavailable. Pine Flat outflow remains visible on the release chart; it is not a separate downstream measurement.','trend-empty'),link('USACE Kings basin hourly report','https://www.spk-wc.usace.army.mil/fcgi-bin/hourly.py?report=pnf'),el('p','Downstream travel time, diversions and distributary operations require operator confirmation.'),link('USGS 11221500 record availability','https://waterdata.usgs.gov/monitoring-location/USGS-11221500/'));}
     columns.append(left,right);host.append(columns);
     host.append(el('p',model.reach.note,'trend-context'));
@@ -95,14 +95,16 @@ export function createReleaseTrends({config,timeZone,exercise,onLocate=()=>{}}){
   }
   function selectStation(id){
     stationId=TREND_REACHES[id]?id:'MIL';const options=TREND_REACHES[stationId].gauges;
+    if(stationId==='PNF')measure='stage';
+    for(const o of $('trend-measure').children){o.toggleAttribute('selected',o.getAttribute('value')===measure);o.toggleAttribute('disabled',stationId==='PNF'&&o.getAttribute('value')==='flow');}
     if(!options.includes(gaugeId))gaugeId=options[0]||'';
     const picker=$('trend-gauge');picker.replaceChildren();
-    for(const id of options){const o=el('calcite-option',`${id} · ${stations.find(s=>s.id===id)?.name||id}`);o.setAttribute('value',id);o.toggleAttribute('selected',id===gaugeId);picker.append(o);}
+    for(const id of options){const o=el('calcite-option',`${id} · ${id==='PFQC1'?'Kings below Pine Flat':stations.find(s=>s.id===id)?.name||id}`);o.setAttribute('value',id);o.toggleAttribute('selected',id===gaugeId);picker.append(o);}
     if(!options.length){const o=el('calcite-option','No connected downstream gauge');o.setAttribute('value','');o.setAttribute('selected','');picker.append(o);}
     picker.toggleAttribute('disabled',!options.length);$('trend-measure').toggleAttribute('disabled',!options.length);
     for(const o of $('trend-reservoir').children)o.toggleAttribute('selected',o.getAttribute('value')===stationId);
   }
-  function open(id='MIL',preferredGauge=null){if(preferredGauge)gaugeId=preferredGauge;selectStation(id);$('river-dialog').removeAttribute('open');dialog.setAttribute('open','');render(true);onLocate(stationId);}
+  function open(id='MIL',preferredGauge=null){if(id==='PNF'){measure='stage';for(const o of $('trend-measure').children)o.toggleAttribute('selected',o.getAttribute('value')==='stage');}if(preferredGauge)gaugeId=preferredGauge;selectStation(id);$('river-dialog').removeAttribute('open');dialog.setAttribute('open','');render(true);onLocate(stationId);}
   $('trend-reservoir').addEventListener('calciteSelectChange',e=>{selectStation(e.target.value);render(true);onLocate(stationId);});
   $('trend-gauge').addEventListener('calciteSelectChange',e=>{gaugeId=e.target.value;render(true);onLocate(stationId,gaugeId);});
   $('trend-measure').addEventListener('calciteSelectChange',e=>{measure=e.target.value;render(true);});

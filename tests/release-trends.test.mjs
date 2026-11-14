@@ -22,7 +22,7 @@ test('daily CDEC reports remain report dates and use the PST day midpoint, not a
   const m=model();for(const p of m.release.observed){assert.equal(p.time-p.sourceTime,12*HOUR);assert.equal(new Date(p.time-8*HOUR).toISOString().slice(0,10),p.reportDate);assert(p.time<=now);}
 });
 test('Pine Flat uses hourly outflow and does not substitute an upstream Kings gauge',()=>{
-  const m=model({stationId:'PNF',gaugeId:'KREC1'});assert.equal(m.release.metric.sensor,23);assert.equal(m.release.daily,false);assert.equal(m.gauge.id,null);assert.equal(m.gauge.observed.length,0);assert.deepEqual(TREND_REACHES.PNF.gauges,[]);
+  const m=model({stationId:'PNF',gaugeId:'KREC1'});assert.equal(m.release.metric.sensor,23);assert.equal(m.release.daily,false);assert.equal(m.gauge.id,'PFQC1');assert.equal(m.gauge.current,false);assert.equal(m.gauge.observed.length,0);assert.deepEqual(TREND_REACHES.PNF.gauges,['PFQC1']);
 });
 test('gauge flow is explicitly converted from kcfs; missing secondary points break paths',()=>{
   const g={name:'Stage',units:'ft',secondaryName:'Flow',secondaryUnits:'kcfs',points:[{time:1,value:10,secondary:.2},{time:2,value:11,secondary:null},{time:3,value:12,secondary:0}]};

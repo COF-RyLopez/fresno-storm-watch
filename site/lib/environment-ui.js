@@ -1,3 +1,4 @@
+import {poolBackup} from './pine-flat-telemetry.js';
 import {reportHealth} from './source-health.js';
 import {createLabelLayer} from './map-labels.js';
 import { loadSdk } from './map.js';
@@ -118,11 +119,12 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
       if(row?.error||snapshotError||overdue){const warning=el('p',row?.error?`Source check failed: ${row.error}. Previous values retained.`:'Collection unavailable or overdue · verify the publisher.','environment-health');warning.dataset.tone='gap';card.append(warning);}
       const grid=el('dl','','reservoir-grid');
       for(const metric of station.metrics){
-        const assessment=reservoirMetricState(row?.metrics?.[metric.key],metric,now),sample=assessment.sample;
+        const primary=row?.metrics?.[metric.key],backup=station.id==='PNF'&&metric.key==='elevation'&&reservoirMetricState(primary,metric,now).tone!=='normal'?poolBackup(snapshot?.telemetry?.PFTC1,primary,now,config.collectorMaxAgeMs):null;
+        const assessment=reservoirMetricState(backup||primary,metric,now),sample=assessment.sample;
         const cell=el('div','','reservoir-metric');cell.dataset.tone=assessment.tone;
         cell.append(el('dt',metric.label));const dd=el('dd',sample?`${new Intl.NumberFormat('en-US',{maximumFractionDigits:metric.decimals,minimumFractionDigits:metric.decimals}).format(sample.value)} ${metric.displayUnits}`:'Unknown');cell.append(dd);
         cell.append(el('small',sample?(metric.duration==='D'?`Report date ${sample.reportDate} · PST`:time(sample.time)):'No valid source reading'));
-        cell.append(el('small',assessment.label,'metric-state'));
+        cell.append(el('small',assessment.label+(backup?' · provisional NWS backup':''),'metric-state'));if(backup)cell.append(link('NWS pool source',backup.source));
         // CDEC sensor 200 is storage minus the top-of-conservation (flood-control) limit: negative means room left.
         if(metric.key==='floodSpace'&&sample){const fmt=new Intl.NumberFormat('en-US').format(Math.abs(sample.value));dd.textContent=sample.value<0?`${fmt} acre-ft left`:`${fmt} acre-ft into flood space`;
           cell.append(el('small',sample.value<0?'Room below the flood-control limit (top of conservation).':'Above the flood-control limit: the operator is expected to release. Confirm with the operator.','metric-state'));if(sample.value>=0)cell.dataset.tone='gap';}

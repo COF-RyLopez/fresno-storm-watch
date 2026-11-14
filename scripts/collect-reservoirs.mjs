@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { CDEC_URL, cdecSeries, validateReservoirSnapshot } from '../site/lib/environment-model.js';
 import {scheduledRecords,RELEASE_LOOKBACK_DAYS,RELEASE_HORIZON_DAYS} from '../site/lib/release-model.js';
 import {loadPrevious,writeAtomic} from './lib/snapshot-io.mjs';
+import {collectPineFlatTelemetry} from './lib/pine-flat-collector.mjs';
 
 const selectionUrl=new URL('../site/data/reservoir-watchlist.json',import.meta.url);
 const outputUrl=new URL('../site/data/reservoir-latest.json',import.meta.url);
@@ -66,7 +67,8 @@ export async function collectReservoirs({fetchImpl=fetch,now=Date.now(),previous
     stations.push(result);
   }
   const upstream=selection.upstream?await collectUpstream({upstream:selection.upstream,old:previous?.upstream,now,start:pstDate(now-10*DAY),fetchImpl}):undefined;
-  return {schemaVersion:1,generatedAt:new Date(now).toISOString(),collector:'CDEC public JSON · 15-minute target, not guaranteed',sourceTimeZone:'PST (UTC-08:00) year-round',stations,...(upstream?{upstream}:{})};
+  const telemetry=selection.pineFlatTelemetry?await collectPineFlatTelemetry({old:previous?.telemetry,now,fetchImpl}):undefined;
+  return {schemaVersion:1,generatedAt:new Date(now).toISOString(),collector:'CDEC + NWS HADS · 15-minute target, not guaranteed',sourceTimeZone:'CDEC PST (UTC-08:00) year-round; HADS UTC',stations,...(upstream?{upstream}:{}),...(telemetry?{telemetry}:{})};
 }
 
 /** @returns {Promise<void>} Atomic same-directory write; never claim a failed source check succeeded. */

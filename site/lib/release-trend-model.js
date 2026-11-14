@@ -1,11 +1,12 @@
 /** Comparable time windows, not a routed reservoir-to-gauge forecast. */
 import {HOUR,assessGauge,convertRiverUnits} from './river-model.js';
 import {reservoirMetricState} from './environment-model.js';
+import {telemetryGauge} from './pine-flat-telemetry.js';
 import {scheduleEvidence} from './release-model.js';
 
 export const TREND_REACHES=Object.freeze({
   MIL:{name:'Millerton / Friant → San Joaquin',metric:'release',gauges:['SJXC1','RSBC1','GVAC1','SJMC1'],note:'River outlet release only. Spill is shown separately in reservoir conditions; total reservoir outflow includes other outlets and is excluded. Diversions and intervening controls are not modeled.'},
-  PNF:{name:'Pine Flat → Kings River',metric:'outflow',gauges:[],note:'No current downstream Kings gauge is connected. Trimmer and North Fork gauges are upstream and are not substituted. The former USGS 11221500 site has no current continuous record.'}
+  PNF:{name:'Pine Flat → Kings River',metric:'outflow',gauges:['PFQC1'],note:'PFQC1 is provisional near-dam stage from NWS HADS, not an independent discharge or forecast. Farther downstream coverage, diversions and travel times are unverified. Stage and release use separate units.'}
 });
 
 /** @param {object[]} points @param {number} maxGapMs @returns {object[][]} Missing/flagged samples explicitly break a line; zero remains valid. */
@@ -46,8 +47,9 @@ export function buildReleaseTrend({stationId='MIL',gaugeId='SJXC1',measure='flow
   const markers=notices.filter(n=>n.valid).map(n=>({...n,kind:'scheduled',current:schedule.current}));
   const releaseFresh=[Date.parse(row?.lastSuccess),Date.parse(reservoirs.snapshot?.generatedAt)].every(t=>Number.isFinite(t)&&t<=now+120000&&now-t<=config.environment.collectorMaxAgeMs)&&Number.isFinite(reservoirs.checked)&&reservoirs.checked<=now+120000&&now-reservoirs.checked<=config.environment.weatherCheckMaxAgeMs&&!row?.error&&!reservoirs.error;
   const release={title:daily?'River outlet release · daily reports':'Reported outflow / release · hourly',units:'cfs',observed,forecast:[],daily,current:!!releaseFresh&&state.tone!=='gap',health:[state.label,!releaseFresh?'Collection failed or overdue · retained history':null].filter(Boolean).join(' · '),source:station?.source||null,collected:Date.parse(row?.lastSuccess),metric};
-  const selected=reach.gauges.includes(gaugeId)?gaugeId:reach.gauges[0]||null,entry=selected?entries.get(selected):null,g=entry?.gauge;
-  const assessment=assessGauge(g,config.rivers,futureHours,now,entry?.error||null);
+  const selected=reach.gauges.includes(gaugeId)?gaugeId:reach.gauges[0]||null,entry=selected?entries.get(selected):null,g=selected==='PFQC1'?telemetryGauge(reservoirs.snapshot?.telemetry?.PFQC1):entry?.gauge;
+  const telemetryFresh=[g?.fetched,Date.parse(reservoirs.snapshot?.generatedAt),reservoirs.checked].every(t=>Number.isFinite(t)&&t<=now+120000&&now-t<=config.environment.collectorMaxAgeMs);
+  const assessment=assessGauge(g,selected==='PFQC1'?{...config.rivers,staleMs:config.environment.collectorMaxAgeMs}:config.rivers,futureHours,now,entry?.error||(selected==='PFQC1'?(reservoirs.error||reservoirs.snapshot?.telemetry?.PFQC1?.error||(!telemetryFresh?'Telemetry check overdue':null)):null));
   const obs=gaugeTrendSeries(g?.observed,measure,start,now),fc=gaugeTrendSeries(g?.forecast,measure,now,end);
   const observationCurrent=assessment.current&&Number.isFinite(obs.points.at(-1)?.value)&&now-obs.points.at(-1).time<=config.rivers.observationMaxAgeMs;
   const hasForecast=fc.points.some(p=>Number.isFinite(p.value)),forecastCurrent=assessment.forecastUsable&&hasForecast;
