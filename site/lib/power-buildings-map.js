@@ -16,7 +16,7 @@ export function createPowerBuildingsMap({FeatureLayer,Graphic,Extent,registerLay
     for(const known of [true,false]){
       const subset=rows.filter(r=>(r.height!==null)===known);if(!subset.length)continue;
       const layer=new FeatureLayer({id:known?'power-overlap-buildings-height':'power-overlap-buildings-flat',title:known?'Overture footprints overlapping selected power area · approximate height':'Overture overlap footprints · height unknown (flat)',copyright:'© OpenStreetMap contributors, Overture Maps Foundation; Microsoft, Esri. Addresses: County of Fresno via OpenAddresses / Overture.',source:subset.map((r,i)=>new Graphic({geometry:{...r.geometry,type:'polygon'},attributes:{ObjectID:i+1,building_id:r.id,height_m:r.height,address_label:r.addresses.length===1?r.addresses[0]:r.addresses.length>1?`${r.addresses.length} addresses · inspect list`:''}})),objectIdField:'ObjectID',fields,geometryType:'polygon',spatialReference:{wkid:4326},elevationInfo:{mode:'on-the-ground'},outFields:['*'],popupEnabled:false,minScale:BUILDING_LIMITS.drawScale});
-      registerLayer('power',layer,true);layers.push(layer);
+      registerLayer('power',layer,true,undefined,{focusTypes:['power']});layers.push(layer);
     }
     sync();
     await Promise.all(layers.map(l=>l.load()));
