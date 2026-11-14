@@ -59,7 +59,7 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
     $('watch-map-explore').textContent=explore?'Return to focused view':'Explore map';
     $('watch-map-explore').setAttribute('aria-expanded',String(explore));
     $('watch-map-explore').setAttribute('aria-controls','workspace-tabs map-toolbar-controls');
-    map?.setWatchContext?.({explore,selected:selectedConcern});
+    map?.setWatchContext?.({explore,selected:selectedConcern,active:focused});
     $('scope-label').textContent=mission!=='watch'?'Fresno County · '+(mission==='scenarios'?'Planning':'Briefing'):section==='alerts'?'Fresno · Madera · Merced · Kings · Tulare':'Fresno County · '+WORKSPACES[section].title;
     mapLabels();
   }
@@ -97,5 +97,5 @@ export function createWorkspace({onCameraChange=()=>{},onActivate=()=>{},evidenc
   compact.addEventListener('change',()=>{if(evidence?.isOpen)panelOpen=!compact.matches;render();});dock.addEventListener('change',render);
   new ResizeObserver(mapLabels).observe($('map-panel'));
   render();
-  return {showFocusedMap,evidenceChanged,setExplore,selectConcern,clearConcern(){selectedConcern=null;render();},get explore(){return explore;},setMission(id,{history:push=true}={}){if(!['watch','scenarios','briefing'].includes(id))return;mission=id;panelOpen=true;evidence?.close({restoreFocus:false});render();if(push){const u=new URL(location.href);if(id==='watch')u.searchParams.delete('mission');else u.searchParams.set('mission',id);if(u.href!==location.href)window.history.pushState({},'',u);}window.dispatchEvent(new Event('stormWorkspaceChange'));},get mission(){return mission;},showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;map.setWatchContext?.({explore,selected:selectedConcern});void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
+  return {showFocusedMap,evidenceChanged,setExplore,selectConcern,clearConcern(){selectedConcern=null;render();},get explore(){return explore;},setMission(id,{history:push=true}={}){if(!['watch','scenarios','briefing'].includes(id))return;mission=id;panelOpen=true;evidence?.close({restoreFocus:false});render();if(push){const u=new URL(location.href);if(id==='watch')u.searchParams.delete('mission');else u.searchParams.set('mission',id);if(u.href!==location.href)window.history.pushState({},'',u);}window.dispatchEvent(new Event('stormWorkspaceChange'));},get mission(){return mission;},showPanel,showMap,setCameras,refreshLayout:render,setMap(controller){map=controller;map.setWatchContext?.({explore,selected:selectedConcern,active:mission==='watch'&&section==='watch'&&!explore});void map.setWorkspace(section);},get camerasOpen(){return camerasOpen;},get section(){return section;}};
 }
