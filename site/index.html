@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-TKKnaqds4siwko7Q37nY9BQBCmLFgBfCkLA88KgoCyc='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-E1j4oZ1xRD4lHd5ZeqWwTK7btjz2GxAueS4vqq0MhrQ='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
-<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=705da4256b"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=d0294738ec"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=705da4256b"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=83bf2073be"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
 {"imports":{
-"./app.js":"./app.js?v=fe09b628db",
+"./app.js":"./app.js?v=5067f85b7a",
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=722d46192c",
@@ -95,11 +95,11 @@
 "./lib/map-labels.js":"./lib/map-labels.js?v=fba4179d48",
 "./lib/map-search-model.js":"./lib/map-search-model.js?v=15c71c913e",
 "./lib/map-search-ui.js":"./lib/map-search-ui.js?v=c738addf94",
-"./lib/map.js":"./lib/map.js?v=59721ef2c3",
+"./lib/map.js":"./lib/map.js?v=c22370a7e0",
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=4d8e320998",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
 "./lib/mission-model.js":"./lib/mission-model.js?v=e03ed8dcaf",
-"./lib/mission-ui.js":"./lib/mission-ui.js?v=8c5a805de7",
+"./lib/mission-ui.js":"./lib/mission-ui.js?v=4369200aea",
 "./lib/model.js":"./lib/model.js?v=e44a6607f5",
 "./lib/mrms-model.js":"./lib/mrms-model.js?v=46987c2625",
 "./lib/mrms-ui.js":"./lib/mrms-ui.js?v=01ffb4f983",
@@ -174,7 +174,7 @@
 "./lib/scenario-client.js":"./lib/scenario-client.js?v=9acb2d5054",
 "./lib/scenario-contract.js":"./lib/scenario-contract.js?v=3537363f86",
 "./lib/scene-companion.js":"./lib/scene-companion.js?v=b9d56c0620",
-"./lib/selection-focus.js":"./lib/selection-focus.js?v=c1c3a8d19c",
+"./lib/selection-focus.js":"./lib/selection-focus.js?v=80f865c0f2",
 "./lib/snow-fleet-model.js":"./lib/snow-fleet-model.js?v=17699eac3f",
 "./lib/snow-fleet-ui.js":"./lib/snow-fleet-ui.js?v=a298ce9d2b",
 "./lib/snow-model.js":"./lib/snow-model.js?v=3a46a02fc3",
@@ -184,6 +184,7 @@
 "./lib/storm-focus-model.js":"./lib/storm-focus-model.js?v=d14252dfbc",
 "./lib/storm-ui.js":"./lib/storm-ui.js?v=1d13bb69e9",
 "./lib/usgs-gauges.js":"./lib/usgs-gauges.js?v=ee6db16686",
+"./lib/watch-focus.js":"./lib/watch-focus.js?v=7c7e697094",
 "./lib/watch-proximity.js":"./lib/watch-proximity.js?v=9c81ff8698",
 "./lib/water-operators.js":"./lib/water-operators.js?v=66cda7290e",
 "./lib/waterway-basemap.js":"./lib/waterway-basemap.js?v=c81195703c",
@@ -202,7 +203,7 @@
 "./scenario-config.js":"./scenario-config.js?v=3da6a248c8"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=fe09b628db"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=5067f85b7a"></script>
 </head><body>
 <a class="skip-link" href="#planning-workspace">Skip to mission map</a>
 <calcite-shell id="storm-shell">

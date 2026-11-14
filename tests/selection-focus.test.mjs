@@ -22,6 +22,12 @@ test('selection builds its destination in the active 3D view and saves after nav
   const {focus,events}=harness();await focus.focus(type=>({location:'Friant',type}));
   assert.deepEqual(events,[['stop'],['mode','3d'],['navigate',{location:'Friant',type:'3d'}],['save']]);
 });
+test('watch navigation options reach the view without changing ordinary selection defaults',async()=>{
+ const options=[];const h=harness({navigate:async(target,value)=>options.push(value)});
+ await h.focus.focus(()=>({location:'Pine Flat'}),{navigationOptions:{animate:true,duration:900}});
+ await h.focus.focus(()=>({location:'road'}));
+ assert.deepEqual(options,[{animate:true,duration:900},undefined]);
+});
 test('latest selection wins when 3D initialization is deferred',async()=>{
   const mode=deferred(),h=harness({setMode:()=>mode.promise});
   const first=h.focus.focus(()=>({location:'Millerton'}));await Promise.resolve();

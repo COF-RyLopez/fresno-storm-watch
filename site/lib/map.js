@@ -1,3 +1,4 @@
+import {watchFocusPoints,watchFocusMotion} from './watch-focus.js';
 import {createNetworkMap} from './power-network-map.js';
 import {createRiverNetworkMap} from './river-network-map.js';
 import {createPowerBuildingsMap} from './power-buildings-map.js';
@@ -52,6 +53,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   const selectedLayer = new GraphicsLayer({ title: 'Selected alert' });
   const labels = new GraphicsLayer({ title: 'County labels', elevationInfo:{mode:'relative-to-ground'} });
   const gauges = new GraphicsLayer({ title: 'NWS river watchpoints', elevationInfo:{mode:'relative-to-ground'} });
+  let watchSelection=null;
+  const watchHighlight=new GraphicsLayer({title:'Selected watchpoints · source locations, not flood extent',listMode:'hide',elevationInfo:{mode:'relative-to-ground'},popupEnabled:false});
   const areaLayer=new GraphicsLayer({title:'Area review watchpoints — not flood extents',elevationInfo:{mode:'relative-to-ground'}});
   const cameras = new GraphicsLayer({ title: 'Caltrans river-area highway cameras', elevationInfo:{mode:'relative-to-ground'} });
   const power = new GraphicsLayer({title:'Utility PSPS / outage records — approximate',elevationInfo:{mode:'on-the-ground'}});
@@ -152,6 +155,8 @@ elevationInfo:{mode:'on-the-ground'},
   // Name labels: NWS and USGS gauges share one label layer so their names deconflict against each other.
   const gaugeLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River gauge names'}),areaLabels=createLabelLayer({FeatureLayer,Graphic},{title:'River watch area names'});
   registerLayer('gauges',gaugeLabels.layer);registerLayer('areas',areaLabels.layer);
+  const watchLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Selected watchpoint names',minScale:400000});
+  registerLayer('areas',watchHighlight);registerLayer('areas',watchLabels.layer);
   const roadLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Road closure names',minScale:DENSE_LABEL_MIN_SCALE}),cameraLabels=createLabelLayer({FeatureLayer,Graphic},{title:'Camera names',minScale:DENSE_LABEL_MIN_SCALE,below:true});
   registerLayer('roads',roadLabels.layer);registerLayer('cameras',cameraLabels.layer);
   document.querySelector('#map-name-labels')?.addEventListener('calciteSwitchChange',e=>setMapLabels(e.target.checked));
@@ -295,7 +300,7 @@ elevationInfo:{mode:'on-the-ground'},
   };
   window.addEventListener('storm-theme-change', applyMapTheme);
   applyMapTheme();
-  const navigate = target => {mapPick++;waterwayPickStatus('');return view.goTo(target, { animate: false }).catch(error => {
+  const navigate = (target,options={animate:false}) => {mapPick++;waterwayPickStatus('');return view.goTo(target, options).catch(error => {
     if (error.name !== 'AbortError') { const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map navigation failed. Select records in the list for details.'; }
   });};
   // Calcite can resize the panel after MapView becomes ready. Keep the initial
@@ -433,7 +438,7 @@ elevationInfo:{mode:'on-the-ground'},
     for(const r of drainageRows){drainageLayers[drainageGroup(r)].add(new Graphic({geometry:{...r.geometry,type:r.geometry.rings?'polygon':'point'},attributes:{drainageKey:r.key},symbol:fmfcdInventorySymbol(r,{dark:basemapKey!=='light'})}));}
     drawDrainagePower();for(const layer of Object.values(drainageLayers))setLayerEligibility(layer,layer.graphics.length>0);
   }
-  function drawAreas(){areaLayer.removeAll();const seen=new Set(),labels=[];for(const row of planningRows.filter(r=>planningFilter==='all'||r.review)){const p0=row.samplePoints[0];if(p0)labels.push({longitude:p0.longitude,latitude:p0.latitude,label:row.area.name});}void areaLabels.set(labels);for(const row of planningRows.filter(r=>planningFilter==='all'||r.review))for(const p of row.samplePoints){const key=`${p.longitude}:${p.latitude}`;if(seen.has(key))continue;seen.add(key);areaLayer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},attributes:{areaId:row.area.id},symbol:{type:'simple-marker',style:row.review?'triangle':row.gaps.length?'diamond':'circle',size:12,color:color(row.review?'--gauge-change':row.gaps.length?'--gauge-gap':'--gauge-monitor'),outline:{color:'#202427',width:1.5}}}));}}
+  function drawAreas(){areaLayer.removeAll();const seen=new Set(),labels=[];for(const row of planningRows.filter(r=>planningFilter==='all'||r.review)){const p0=row.samplePoints[0];if(p0&&!watchSelection)labels.push({longitude:p0.longitude,latitude:p0.latitude,label:row.area.name});}void areaLabels.set(labels);for(const row of planningRows.filter(r=>planningFilter==='all'||r.review))for(const p of row.samplePoints){const key=`${p.longitude}:${p.latitude}`;if(seen.has(key))continue;seen.add(key);areaLayer.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},attributes:{areaId:row.area.id},symbol:{type:'simple-marker',style:row.review?'triangle':row.gaps.length?'diamond':'circle',size:12,color:color(row.review?'--gauge-change':row.gaps.length?'--gauge-gap':'--gauge-monitor'),outline:{color:'#202427',width:1.5}}}));}for(const graphic of areaLayer.graphics){if(watchSelection){const symbol=graphic.symbol.clone();symbol.color.a=graphic.attributes.areaId===watchSelection.id?1:.25;symbol.outline.color.a=graphic.attributes.areaId===watchSelection.id?1:.25;graphic.symbol=symbol;}}}
   function syncControls(){
     for(const c of document.querySelectorAll('[data-context-layer]')){const builtIn=c.dataset.contextLayer==='waterways'&&basemapKey==='waterways';c.checked=builtIn||!!currentState().layers[c.dataset.contextLayer];c.disabled=builtIn;c.closest('calcite-label').hidden=c.dataset.contextLayer==='upstream'&&activeProfile!=='reservoirs';}
     document.querySelector('#waterway-basemap-context-note').hidden=basemapKey!=='waterways';
@@ -446,7 +451,8 @@ elevationInfo:{mode:'on-the-ground'},
   const focusNavigate=target=>{selectionFocus.cancel();const version=workspaceVersion;return transition.then(()=>{if(version===workspaceVersion){followRegion=false;return navigate(target);}});};
   const focusMessage=text=>{const host=document.querySelector('#map-status');host.hidden=false;host.textContent=text;};
   const selectionFocus=createSelectionFocus({workspace:()=>workspaceVersion,ready:()=>transition,setMode,view:()=>view,preferredMode:()=>view.type,
-    navigate:target=>{followRegion=false;const status=document.querySelector('#map-status');if(/^(No usable source location|The selected location)/.test(status.textContent))status.hidden=true;return navigate(target);},save:capture,
+    settled:()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),
+    navigate:(target,options)=>{followRegion=false;const status=document.querySelector('#map-status');if(/^(No usable source location|The selected location)/.test(status.textContent))status.hidden=true;return navigate(target,options);},save:capture,
     missing:()=>focusMessage('No usable source location for this selection. Evidence remains available; map position unchanged.'),
     failed:()=>focusMessage('The selected location could not be shown. Evidence remains available; use Fit workspace to recover.')});
   const focusLocation=(longitude,latitude,scale=35000,layer=null)=>selectionFocus.focus(type=>{
@@ -518,11 +524,24 @@ elevationInfo:{mode:'on-the-ground'},
   }
   function focusSearchContext(key){const graphic=searchContext.graphics.find(g=>g.attributes.key===key);return graphic?searchFocus.focus(mode=>({target:graphic.geometry,...(graphic.geometry.type==='point'?{scale:12000}:{}),...(mode==='3d'?{tilt:45,heading:0}:{})})):Promise.resolve(false);}
   const focusPoints=(points,padding=.04)=>{const valid=points.filter(validLocation);return focusGeometry(valid.length?pointsExtent(valid,padding):null);};
+  function clearWatchFocus(){watchSelection=null;watchHighlight.removeAll();void watchLabels.set([]);drawAreas();}
+  function inspectPlanningPoints(points,{areaId=null,canNavigate=()=>true}={}){
+    if(!canNavigate())return Promise.resolve(false);
+    const valid=watchFocusPoints(points);if(!valid.length)return Promise.resolve(false);
+    clearWatchFocus();setLayerPreference('areas',true);
+    if(areaId){
+      watchSelection={id:areaId};
+      for(const p of valid)watchHighlight.add(new Graphic({geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#e5f6ff',width:2}}}));
+      void watchLabels.set(valid);drawAreas();
+    }
+    const extent=pointsExtent(valid,.012);
+    return selectionFocus.focus(type=>type==='3d'?{target:extent,tilt:35,heading:0}:extent,{canNavigate,navigationOptions:watchFocusMotion(matchMedia('(prefers-reduced-motion:reduce)').matches)});
+  }
   function capture(){const state=currentState();state.viewpoint=view.viewpoint?.clone();state.mode=view.type;state.imagery=imagery;state.basemap=basemapKey;}
   function setWorkspace(id){
     if(!WORKSPACES[id])return Promise.resolve();if(id===activeProfile&&memory.active===id)return transition;
     if(memory.active&&!workspaceSwitching&&!modeBusy)capture();
-    selectionFocus.cancel();clearSearchSelection();utilityNetwork.clearMatch();waterwayPickStatus('');activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
+    selectionFocus.cancel();clearWatchFocus();clearSearchSelection();utilityNetwork.clearMatch();waterwayPickStatus('');activeProfile=id;memory.activate(id);const version=++workspaceVersion;workspaceSwitching=true;view.closePopup();onFeatureSelect(null);
     mapScope=WORKSPACES[id].scope;for(const l of [boundaryLayer,labels])l.graphics.forEach(g=>g.visible=mapScope==='regional'||g.attributes.countyId==='06019');
     drawGauges();drawPower();drawAreas();syncControls();
     transition=transition.catch(()=>{}).then(async()=>{
@@ -558,7 +577,7 @@ elevationInfo:{mode:'on-the-ground'},
   const scenarioDomain=new GraphicsLayer({title:'Reviewed model domain',listMode:'hide',elevationInfo:{mode:'on-the-ground'}});map.add(scenarioDomain);viewListeners.add(drawStructures);
   return {
     setScenarioDomain(geometry){scenarioDomain.removeAll();if(!geometry)return;const polygon=new Polygon(countyGeometry(geometry));scenarioDomain.add(new Graphic({geometry:polygon,symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#f6c85f',width:2,style:'dash'}}}));void focusNavigate(polygon.extent.clone().expand(1.1));},setScenarioBuildings(features){structureFeatures=features;structureFrame=0;drawStructures();},setScenarioBuildingFrame(index){if(index!==structureFrame){structureFrame=index;drawStructures();}},
-    getViewMode:()=>view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints:points=>{setLayerPreference('areas',true);const valid=points.filter(validLocation);if(!valid.length)return Promise.resolve(false);const extent=pointsExtent(valid,.025);return focusNavigate(view.type==='3d'?{target:extent,tilt:45}:extent);},focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
+    getViewMode:()=>view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setViewMode:mode=>['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints,clearWatchFocus,focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));
@@ -609,7 +628,7 @@ elevationInfo:{mode:'on-the-ground'},
     updateGauges:(rows,basin='All')=>{gaugeRows=rows;riverBasin=basin;drawGauges();},
     selectGauge: id=>{selectedGauge=id;drawGauges();},
     focusGauge: id=>{const row=gaugeRows.find(r=>r.station.id===id);if(row){const g=validLocation(row.gauge)?row.gauge:row.station;return focusLocation(g.longitude,g.latitude,35000,'gauges');}},
-    fit: () => { followRegion = false; return focusNavigate(fitTarget()); },
+    fit: () => { clearWatchFocus();followRegion = false; return focusNavigate(fitTarget()); },
     update: alerts => {
       alertLayer.removeAll();
       selectedLayer.removeAll();
