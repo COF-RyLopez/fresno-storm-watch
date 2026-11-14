@@ -53,4 +53,4 @@ export function featureBounds(features){
  return points.reduce((b,p)=>[Math.min(b[0],p[0]),Math.min(b[1],p[1]),Math.max(b[2],p[0]),Math.max(b[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
 }
 /** Comparison eligibility is explicit; never average unlike data, modes or views. */
-export function comparableRuns(a,b){return !!a&&!!b&&a.engine!==b.engine&&a.complete===true&&b.complete===true&&!a.errors?.length&&!b.errors?.length&&a.dataId===b.dataId&&a.view===b.view&&a.filter===b.filter&&a.basin===b.basin&&a.featureSignature===b.featureSignature&&a.width===b.width&&a.height===b.height&&a.pixelRatio===b.pixelRatio&&a.symbolVersion===b.symbolVersion&&a.styleId===b.styleId;}
+export function comparableRuns(a,b){return !!a&&!!b&&(a.engine!==b.engine||(a.delivery||'tiles')!==(b.delivery||'tiles'))&&(a.mode||'2d')===(b.mode||'2d')&&a.complete===true&&b.complete===true&&!a.errors?.length&&!b.errors?.length&&a.dataId===b.dataId&&a.view===b.view&&a.filter===b.filter&&a.basin===b.basin&&a.featureSignature===b.featureSignature&&a.width===b.width&&a.height===b.height&&a.pixelRatio===b.pixelRatio&&a.symbolVersion===b.symbolVersion&&a.styleId===b.styleId;}

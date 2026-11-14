@@ -62,6 +62,11 @@ test('extent calculation includes all polygon parts and does not manufacture emp
  assert.equal(featureBounds([]),null);assert.deepEqual(featureBounds([{geometry:{type:'MultiPolygon',coordinates:[[[[-120,36],[-119,36],[-120,36]]],[[[-118.5,37],[-118,37.5],[-118.5,37]]]]}}]),[-120,36,-118,37.5]);
 });
 const run={engine:'maplibre',complete:true,errors:[],dataId:'x',view:'rivers',filter:'all',basin:'All',featureSignature:'same',width:960,height:540,pixelRatio:1,symbolVersion:'pilot-1',styleId:'frog'};
+test('same renderer can compare archive versus tile delivery, but never 3D versus 2D',()=>{
+ assert(comparableRuns({...run,delivery:'tiles',mode:'2d'},{...run,delivery:'pmtiles',mode:'2d'}));
+ assert(!comparableRuns({...run,mode:'3d'},{...run,engine:'arcgis',mode:'2d'}));
+ assert(!comparableRuns({...run,delivery:'tiles',mode:'2d'},{...run,delivery:'pmtiles',mode:'3d'}));
+});
 test('only error-free completed runs from different engines with identical contexts are comparable',()=>{
  const other={...run,engine:'arcgis'};assert(comparableRuns(run,other));assert(!comparableRuns(run,run));
  for(const [field,value] of Object.entries({complete:false,errors:['Tile failed'],dataId:'new',view:'watch',filter:'review',basin:'Kings',featureSignature:'changed',width:600,height:300,pixelRatio:2,symbolVersion:'new',styleId:'other'}))assert(!comparableRuns(run,{...other,[field]:value}),field);

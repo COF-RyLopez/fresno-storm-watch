@@ -17,3 +17,5 @@ site/data/map-pilot-latest.json
 site/data/waze-latest.json
 site/data/google-tiles.json
 ux/
+
+site/basemaps/frog-waterways-dark/archives/

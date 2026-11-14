@@ -18,6 +18,20 @@
     {
       "file": "site/vendor/maplibre-6.15.0/maplibre-gl.css",
       "sha256": "a90798a1953017790e590f7e1bd35ff103a8a4263972cb47290b78adf86f8c20"
+    },
+    {
+      "file": "site/vendor/pmtiles-4.5.0/pmtiles.js",
+      "sha256": "0d357165e6ffbba6805de5a8536d5ef7cb362636d9e766e2bc76aeeef610726d"
+    },
+    {
+      "file": "site/vendor/pmtiles-4.5.0/fflate.js",
+      "sha256": "b7ca4450b19559a1d50eb381adcee94b82449674be4cd17789d9beba7e6122a1"
     }
-  ]
+  ],
+  "archiveReader": {
+    "package": "pmtiles",
+    "version": "4.5.0",
+    "dependency": "fflate@0.8.3",
+    "note": "Bare fflate import rewritten to colocated browser module; licenses included."
+  }
 }

@@ -1,3 +1,4 @@
+import {lazyDisplay} from './lazy-display.js';
 import {loadSdk} from './map.js';
 import {reportHealth} from './source-health.js';
 import {labelPolygons,createLabelLayer} from './map-labels.js';
@@ -127,7 +128,7 @@ export function createSnowLevel({time,exercise,target}){
   $('snow-refresh').addEventListener('click',()=>void refresh());
   setInterval(()=>{if(!document.hidden)void refresh();},30*60000);
   queueMicrotask(()=>{render();void refresh();});
-  return {update:render,async setMap(map){controller=map;try{
+  const prepare=lazyDisplay(async()=>{const map=controller;try{
     const sdk=await loadSdk();const [ImageryLayer,FeatureLayer,GraphicsLayer,G]=await sdk.import(['@arcgis/core/layers/ImageryLayer.js','@arcgis/core/layers/FeatureLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js']);Graphic=G;
     // rasterFunction None: raw metres. The service's default display function is a hillshade (0-255), which never reaches a snow level.
     terrain=new ImageryLayer({url:ELEVATION_URL,title:'Terrain above NWS snow level · USGS 3DEP',format:'lerc',rasterFunction:{functionName:'None'},pixelFilter,opacity:.45,popupEnabled:false,legendEnabled:false});
@@ -145,5 +146,7 @@ export function createSnowLevel({time,exercise,target}){
       const opts=[...new Set(names.features.map(f=>f.attributes.name).filter(Boolean))].sort().map(n=>{const o=document.createElement('calcite-option');o.value=n;o.textContent=n.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase());return o;});
       $('snow-profile-road').append(...opts);$('snow-profile-road').disabled=exercise;}
     catch(e){$('snow-profile-status').textContent=`Road list unavailable · ${e.message}`;}
-  }catch(e){errors.set(point,`Snow map unavailable · ${e.message}`);render();}}};
+  }catch(e){errors.set(point,`Snow map unavailable · ${e.message}`);render();throw e;}});
+  const syncDisplay=()=>{if(!exercise&&controller&&(controller.getWorkspace()==='weather'||controller.isLayerWanted('snowLevel')||controller.isLayerWanted('snowRoutes')))void prepare().catch(()=>{});};
+  return {update:render,setMap(map){controller=map;map.onPresentationChanged(syncDisplay);syncDisplay();}};
 }
