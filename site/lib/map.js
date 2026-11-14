@@ -215,7 +215,8 @@ elevationInfo:{mode:'on-the-ground'},
     void syncGoogle3d();
     window.dispatchEvent(new CustomEvent('storm-basemap-change',{detail:{key:basemapKey}}));
     const reference=basemapKey===WATERWAY_BASEMAP.key,note=document.querySelector('#waterway-basemap-note'),missing=key===WATERWAY_BASEMAP.key&&!waterwayBasemap;
-    note.hidden=!reference&&!missing;note.textContent=reference?waterwayBasemap.note:missing?`County waterways style unavailable — ${waterwayStyleError}. Dark gray context restored.`:'';
+    note.hidden=!reference;note.textContent=reference?waterwayBasemap.note:'';
+    const failure=document.querySelector('#waterway-basemap-error');failure.hidden=!missing;failure.textContent=missing?`County waterways style unavailable — ${waterwayStyleError}. Dark gray context restored.`:'';
     document.querySelector('#waterbody-legend').hidden=!reference;
     mapContext.setBasemapReference(reference);
     if(reference)void waterwayBasemap.load().catch(failWaterwayBasemap);
@@ -227,7 +228,7 @@ elevationInfo:{mode:'on-the-ground'},
   function failWaterwayBasemap(error){
     if(isMapLoadCancellation(error)||basemapKey!==WATERWAY_BASEMAP.key)return;
     currentState().basemap='dark';setBasemap('dark');
-    const note=document.querySelector('#waterway-basemap-note');note.hidden=false;
+    const note=document.querySelector('#waterway-basemap-error');note.hidden=false;
     note.textContent=`County waterways unavailable — ${error?.message||'tile source failed'}. Dark gray context restored.`;
   }
   let region, fresnoGeometry;

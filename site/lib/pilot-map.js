@@ -4,12 +4,10 @@ import {waterwayStyle} from './waterway-basemap.js';
 import {withTimeout} from './with-timeout.js';
 
 let archiveProtocol;
-const BASE='https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_';
-export const styleId=view=>view==='rivers'?'frog-waterways-0.33.0':'esri-dark-gray';
+export const styleId=()=> 'frog-waterways-0.33.0';
 /** Both engines reference the same publisher tiles and existing cached county tiles. */
-export async function pilotStyle(view,delivery='tiles'){
- if(view==='watch')return {version:8,sources:{base:{type:'raster',tiles:[BASE+'Base/MapServer/tile/{z}/{y}/{x}'],tileSize:256,attribution:'Esri, HERE, Garmin, USGS, EPA, NPS'},reference:{type:'raster',tiles:[BASE+'Reference/MapServer/tile/{z}/{y}/{x}'],tileSize:256}},layers:[{id:'base',type:'raster',source:'base'},{id:'reference',type:'raster',source:'reference'}]};
- const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetch(new URL('root.json?v=0.33.0',base),{credentials:'omit',signal:AbortSignal.timeout(15000)});
+export async function pilotStyle(view,delivery='tiles',fetchImpl=fetch){
+ const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetchImpl(new URL('root.json?v=0.33.0',base),{credentials:'omit',signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw Error('Waterways basemap unavailable');
  const style=waterwayStyle(await r.json(),base);
  if(delivery==='pmtiles'){
@@ -54,9 +52,9 @@ export async function createPilotMap({engine,container,view,features,county,onSe
  }
  // The comparison mode uses the main app's pinned unified SDK loader.
  const {loadSdk}=await import('./map.js');const sdk=await loadSdk();
- const [Map,MapView,Basemap,TileLayer,VectorTileLayer,GraphicsLayer,Graphic,Extent,reactive]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/MapView.js','@arcgis/core/Basemap.js','@arcgis/core/layers/TileLayer.js','@arcgis/core/layers/VectorTileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/geometry/Extent.js','@arcgis/core/core/reactiveUtils.js']);
+ const [Map,MapView,Basemap,VectorTileLayer,GraphicsLayer,Graphic,Extent,reactive]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/MapView.js','@arcgis/core/Basemap.js','@arcgis/core/layers/VectorTileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/geometry/Extent.js','@arcgis/core/core/reactiveUtils.js']);
  const css=document.createElement('link');css.rel='stylesheet';css.href='https://js.arcgis.com/5.1/esri/themes/dark/main.css';document.head.append(css);
- const basemap=view==='rivers'?new Basemap({baseLayers:[new VectorTileLayer({style})]}):new Basemap({baseLayers:[new TileLayer({url:BASE+'Base/MapServer'})],referenceLayers:[new TileLayer({url:BASE+'Reference/MapServer'})]});
+ const basemap=new Basemap({baseLayers:[new VectorTileLayer({style})]});
  const records=new GraphicsLayer({title:'Identical pilot records'}),outline=new GraphicsLayer({title:'County reference'}),selection=new GraphicsLayer({title:'Selection'});
  const map=new Map({basemap,layers:[outline,records,selection]});const extent=b=>new Extent({xmin:b[0],ymin:b[1],xmax:b[2],ymax:b[3],spatialReference:{wkid:4326}});
  const display=new MapView({map,container,extent:extent(PILOT_BOUNDS),popupEnabled:false,attributionVisible:true,ui:{components:['zoom']}});

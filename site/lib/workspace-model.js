@@ -16,7 +16,7 @@ export function workspaceRoute(input){const u=new URL(input,'https://storm.inval
   // Area Watch is the operational front door; explicit topic and scenario links remain valid.
   return 'watch';}
 /** @param {string} id @returns {object} Independent, memory-only defaults. */
-export function workspaceDefaults(id){return {mode:id==='power'?'3d':'2d',basemap:['rivers','reservoirs'].includes(id)?'waterways':'dark',imagery:false,cameras:false,viewpoint:null,layers:Object.fromEntries(Object.keys(LAYER_LABELS).map(k=>[k,WORKSPACES[id].layers.includes(k)]))};}
+export function workspaceDefaults(id){return {mode:id==='power'?'3d':'2d',basemap:'waterways',imagery:false,cameras:false,viewpoint:null,layers:Object.fromEntries(Object.keys(LAYER_LABELS).map(k=>[k,WORKSPACES[id].layers.includes(k)]))};}
 /** @param {object} state @param {string} key @param {boolean} eligible @returns {boolean} A refresh cannot enable a layer excluded by this workspace. */
 export const layerVisible=(state,key,eligible=true)=>!!state.layers[key]&&!!eligible;
 /** @returns {object} Independent mutable presentation state, held only in this page. */

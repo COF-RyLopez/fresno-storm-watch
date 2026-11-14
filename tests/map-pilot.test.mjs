@@ -71,10 +71,22 @@ test('only error-free completed runs from different engines with identical conte
  const other={...run,engine:'arcgis'};assert(comparableRuns(run,other));assert(!comparableRuns(run,run));
  for(const [field,value] of Object.entries({complete:false,errors:['Tile failed'],dataId:'new',view:'watch',filter:'review',basin:'Kings',featureSignature:'changed',width:600,height:300,pixelRatio:2,symbolVersion:'new',styleId:'other'}))assert(!comparableRuns(run,{...other,[field]:value}),field);
 });
-test('watch maps use same publisher raster tile families; native ArcGIS metadata gets adapted for MapLibre',async()=>{
- const style=await pilotStyle('watch');assert.equal(style.sources.base.tileSize,256);assert.match(style.sources.base.tiles[0],/World_Dark_Gray_Base\/MapServer\/tile/);
+test('native ArcGIS metadata gets adapted for the shared MapLibre reference',async()=>{
  const source={version:8,sources:{esri:{type:'vector',url:'native-metadata'},frog:{type:'vector',url:'existing-county-tilejson'}},layers:[]};const adapted=libreStyle(source);assert.match(adapted.sources.esri.tiles[0],/tile\/\{z\}\/\{y\}\/\{x\}.pbf/);assert.deepEqual(adapted.sources.frog,source.sources.frog);assert.equal(source.sources.esri.url,'native-metadata');
 });
 test('pilot route is isolated, uses one pinned Calcite runtime and has no browser persistence',async()=>{
  const html=await readFile(new URL('../site/map-pilot.html',import.meta.url),'utf8'),script=await readFile(new URL('../site/map-pilot.js',import.meta.url),'utf8');assert(html.includes('calcite-components/5.2.0/index.js'));assert(!html.includes('src="https://js.arcgis.com/5.1/"'));assert(!/localStorage|sessionStorage|indexedDB|document.cookie/.test(script));assert(!/innerHTML\s*=/.test(script));assert(!script.includes('getToken'));assert(html.includes('Full app'));
+});
+
+test('both workspaces retain identical references under tiled and archive delivery',async()=>{
+ const source=JSON.parse(await readFile(new URL('../site/basemaps/frog-waterways-dark/root.json',import.meta.url),'utf8'));
+ const fetchImpl=async()=>({ok:true,json:async()=>structuredClone(source)});
+ for(const delivery of ['tiles','pmtiles']){
+  const watch=await pilotStyle('watch',delivery,fetchImpl),rivers=await pilotStyle('rivers',delivery,fetchImpl);
+  assert.deepEqual(watch,rivers);
+  assert.equal(watch.sources.frog.url.startsWith('pmtiles://'),delivery==='pmtiles');
+  assert.equal(watch.sources.frogWaterbodies.url.startsWith('pmtiles://'),delivery==='pmtiles');
+  assert.deepEqual(watch.layers,source.layers);
+ }
+ await assert.rejects(pilotStyle('watch','tiles',async()=>({ok:false})),/unavailable/);
 });
