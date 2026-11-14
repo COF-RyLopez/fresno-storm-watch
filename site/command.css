@@ -80,3 +80,26 @@
 #mission-evidence-content>details summary{cursor:pointer;padding:8px 0}
 .watch-condition-grid + .watch-context{font-size:12px;line-height:1.4}
 @media(max-width:420px){.watch-condition-cell dd{font-size:19px}}
+
+/* County Watch: attention first; exploration remains a deliberate, reversible mode. */
+.watch-map-heading{display:flex;align-items:center;gap:10px;width:100%;padding:6px 0}
+.watch-map-heading>div{flex:1;min-width:0}
+.watch-map-heading strong{display:block;font-size:16px;line-height:1.35}
+.watch-map-kicker{display:block;font-size:11px;color:var(--calcite-color-text-2);margin-bottom:3px}
+.watch-reference{margin:18px 14px 8px;border-top:1px solid var(--calcite-color-border-3);padding-top:10px}
+.watch-reference>summary{cursor:pointer;font-size:14px;padding:10px 0;font-weight:600}
+.concern-next{color:var(--calcite-color-text-1);font-weight:600;font-size:12px;margin-top:3px}
+#storm-shell[data-watch-focus=true] .map-search-launch,
+#storm-shell[data-watch-focus=true] .map-action-row,
+#storm-shell[data-watch-focus=true] #context-open,
+#storm-shell[data-watch-focus=true] #map-tools-open,
+#storm-shell[data-watch-focus=true] #scene-controls{display:none!important}
+#storm-shell[data-watch-focus=true] .map-toolbar-stack{gap:0}
+#storm-shell[data-watch-focus=true] #tools-shell{--calcite-shell-panel-width:340px}
+#storm-shell[data-watch-focus=true] #evidence-shell{--calcite-shell-panel-width:360px;--calcite-shell-panel-max-width:40vw}
+#storm-shell[data-watch-focus=true] #mission-concerns .command-row{gap:4px;padding:12px 14px}
+#storm-shell[data-watch-focus=true] #mission-concerns .command-row>span:first-child{font-size:10px;letter-spacing:.035em;color:var(--calcite-color-text-2)}
+#storm-shell[data-watch-focus=true] #mission-concerns .command-row>small:last-child{font-size:11px}
+#watch-attention-list{display:none}
+@media(min-width:901px) and (max-width:1199px){#storm-shell[data-watch-focus=true]:has(#evidence-shell:not([hidden])) #tools-shell{display:flex;--calcite-shell-panel-width:290px}#storm-shell[data-watch-focus=true] #evidence-shell{--calcite-shell-panel-width:320px}}
+@media(max-width:900px){#storm-shell[data-watch-focus=true] #tools-shell{--calcite-shell-panel-width:100vw}#watch-attention-list{display:block}.watch-map-heading{flex-wrap:wrap}.watch-map-heading>div{flex-basis:100%}.watch-map-heading strong{font-size:14px}}

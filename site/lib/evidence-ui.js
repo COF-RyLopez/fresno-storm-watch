@@ -16,7 +16,7 @@ export function createEvidencePane({onChange=()=>{},timeZone='America/Los_Angele
   function close({restoreFocus=true}={}){
     if(!active)return;const previous=active,returnTo=opener;active=null;opener=null;focusGeneration++;
     previous.removeAttribute('open');previous.hidden=true;notifyClosed(previous);layout();onChange(false);
-    if(restoreFocus){const target=returnTo?.isConnected&&returnTo.getClientRects().length?returnTo:$('context-open');if(target.setFocus)void target.setFocus();else target.focus({preventScroll:true});}
+    if(restoreFocus){const target=returnTo?.isConnected&&returnTo.getClientRects().length?returnTo:($('storm-shell')?.dataset.watchFocus==='true'?$('watch-map-explore'):$('context-open'));if(target.setFocus)void target.setFocus();else target.focus({preventScroll:true});}
   }
   function show(pane){
     if(active===pane){layout();return;}
