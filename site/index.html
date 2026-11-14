@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-CLdGCxgZcjD9xli65krkEyBdtsvlh/MFk841O9bgmIA='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-1BmNDzANphLFVRkA9k0BaF4k+kvslTZ9n2GoRSwZ5aY='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
 <link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=705da4256b"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=0d350bda6f"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
 {"imports":{
-"./app.js":"./app.js?v=934df1b880",
+"./app.js":"./app.js?v=515f97e282",
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=722d46192c",
@@ -98,8 +98,8 @@
 "./lib/map.js":"./lib/map.js?v=59721ef2c3",
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=4d8e320998",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
-"./lib/mission-model.js":"./lib/mission-model.js?v=0cddfa629b",
-"./lib/mission-ui.js":"./lib/mission-ui.js?v=df7c27ff7c",
+"./lib/mission-model.js":"./lib/mission-model.js?v=389f45f05c",
+"./lib/mission-ui.js":"./lib/mission-ui.js?v=52286e2054",
 "./lib/model.js":"./lib/model.js?v=e44a6607f5",
 "./lib/mrms-model.js":"./lib/mrms-model.js?v=46987c2625",
 "./lib/mrms-ui.js":"./lib/mrms-ui.js?v=01ffb4f983",
@@ -112,10 +112,10 @@
 "./lib/pio-zone-context.js":"./lib/pio-zone-context.js?v=a1277ae572",
 "./lib/planning-data.js":"./lib/planning-data.js?v=9c0a419583",
 "./lib/planning-exercise.js":"./lib/planning-exercise.js?v=4824137732",
-"./lib/planning-model.js":"./lib/planning-model.js?v=f8f5b32ca0",
+"./lib/planning-model.js":"./lib/planning-model.js?v=f1b470a3c2",
 "./lib/planning-questions-model.js":"./lib/planning-questions-model.js?v=efc151ad44",
 "./lib/planning-questions-ui.js":"./lib/planning-questions-ui.js?v=a05a8e4743",
-"./lib/planning-ui.js":"./lib/planning-ui.js?v=e948fc68d8",
+"./lib/planning-ui.js":"./lib/planning-ui.js?v=f6d311e326",
 "./lib/pool.js":"./lib/pool.js?v=20e07862c1",
 "./lib/population-data.js":"./lib/population-data.js?v=f39e853fd6",
 "./lib/population-guide.js":"./lib/population-guide.js?v=39a783c58d",
@@ -159,6 +159,8 @@
 "./lib/release-trend-model.js":"./lib/release-trend-model.js?v=a7bc004f6f",
 "./lib/release-trend-ui.js":"./lib/release-trend-ui.js?v=8caed91387",
 "./lib/release-ui.js":"./lib/release-ui.js?v=409c6f34dd",
+"./lib/reservoir-watch-summary.js":"./lib/reservoir-watch-summary.js?v=6279e850f2",
+"./lib/reservoir-watch-ui.js":"./lib/reservoir-watch-ui.js?v=70a24e2f19",
 "./lib/river-chart.js":"./lib/river-chart.js?v=84bae751aa",
 "./lib/river-exercise.js":"./lib/river-exercise.js?v=336a25d5ab",
 "./lib/river-model.js":"./lib/river-model.js?v=f4cfa150af",
@@ -190,7 +192,7 @@
 "./lib/weather-model.js":"./lib/weather-model.js?v=1bd1a127dc",
 "./lib/weather-ui.js":"./lib/weather-ui.js?v=6f935ae75b",
 "./lib/with-timeout.js":"./lib/with-timeout.js?v=1ddcc38435",
-"./lib/workspace-model.js":"./lib/workspace-model.js?v=bd93dee3c1",
+"./lib/workspace-model.js":"./lib/workspace-model.js?v=f0fb9c7ea0",
 "./lib/workspace-ui.js":"./lib/workspace-ui.js?v=dbe0dbdb47",
 "./lib/zone-acs-data.js":"./lib/zone-acs-data.js?v=ac066b36b5",
 "./lib/zone-acs-model.js":"./lib/zone-acs-model.js?v=eeac25f9fe",
@@ -199,14 +201,14 @@
 "./scenario-config.js":"./scenario-config.js?v=3da6a248c8"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=934df1b880"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=515f97e282"></script>
 </head><body>
 <a class="skip-link" href="#planning-workspace">Skip to mission map</a>
 <calcite-shell id="storm-shell">
   <div slot="header" class="shell-header">
     <calcite-navigation id="command-navigation" label="Storm Watch navigation">
       <div slot="logo" class="app-brand"><img class="app-logo-image" src="./assets/frog-logo.png" width="64" height="64" alt="F.R.O.G. — Flood Response Operations Group"><calcite-navigation-logo id="app-logo" heading="Storm Watch" heading-level="1" description="Fresno County · 2026–27"></calcite-navigation-logo></div>
-      <nav slot="content-start" class="mission-nav" aria-label="Primary mission"><calcite-button data-mission="storm" icon-start="clock">Storm now</calcite-button><calcite-button data-mission="watch" icon-start="map">County Watch</calcite-button><calcite-button data-mission="scenarios" icon-start="analysis">Planning</calcite-button><calcite-button data-mission="briefing" icon-start="file-text">Briefing</calcite-button></nav>
+      <nav slot="content-start" class="mission-nav" aria-label="Primary mission"><calcite-button data-mission="watch" icon-start="map">County Watch</calcite-button><calcite-button data-mission="storm" icon-start="clock">Storm now</calcite-button><calcite-button data-mission="scenarios" icon-start="analysis">Planning</calcite-button><calcite-button data-mission="briefing" icon-start="file-text">Briefing</calcite-button></nav>
       <div slot="content-end" id="header-actions-host"><div class="navigation-actions" id="header-actions"><calcite-button href="./reported-locations.html" appearance="transparent" scale="s" icon-start="map-pin">Reported locations</calcite-button><calcite-button href="./eoc.html" appearance="transparent" scale="s" icon-start="organization">EOC workspace</calcite-button>
         <calcite-button class="official-link" appearance="transparent" kind="neutral" scale="s" href="https://www.weather.gov/hnx/" target="_blank" rel="noopener noreferrer" icon-end="launch">NWS Hanford</calcite-button>
         <calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action>

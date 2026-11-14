@@ -13,9 +13,8 @@ export const WORKSPACES=Object.freeze({
 });
 /** @param {string|URL} input @returns {string} Preserve legacy weather, release-chart and County Watch links. */
 export function workspaceRoute(input){const u=new URL(input,'https://storm.invalid/');if(['MIL','PNF'].includes(u.searchParams.get('trends')))return 'reservoirs';const id=u.searchParams.get('view');if(id==='conditions'||id==='environment')return 'weather';if(WORKSPACES[id])return id;
-  // Storm now is the first view. Sandbag / DWR supply / resident-care links (app.js relies on it) and
-  // Planning / Briefing mission links keep County Watch underneath, as before.
-  return ['sandbags','dwrSupplies','care'].some(k=>u.searchParams.get(k)==='1')||['scenarios','briefing'].includes(u.searchParams.get('mission'))?'watch':'storm';}
+  // Area Watch is the operational front door; explicit topic and scenario links remain valid.
+  return 'watch';}
 /** @param {string} id @returns {object} Independent, memory-only defaults. */
 export function workspaceDefaults(id){return {mode:id==='power'?'3d':'2d',basemap:['rivers','reservoirs'].includes(id)?'waterways':'dark',imagery:false,cameras:false,viewpoint:null,layers:Object.fromEntries(Object.keys(LAYER_LABELS).map(k=>[k,WORKSPACES[id].layers.includes(k)]))};}
 /** @param {object} state @param {string} key @param {boolean} eligible @returns {boolean} A refresh cannot enable a layer excluded by this workspace. */
