@@ -41,7 +41,7 @@ export function installWatchClouds(session){
   if(!lifecycle||!enabled)return;
   const signal=lifecycle.signal,run=++generation,observation=target;
   const current=()=>!signal.aborted&&generation===run;
-  if(rendered&&(rendered.stamp>observation||observation-rendered>(rendered.kind==='surface'?CLOUD_TOP_MAX_GAP:CLOUD_PAIR_GAP)))clearImage();
+  if(rendered&&(rendered.stamp>observation||observation-rendered.stamp>(rendered.kind==='surface'?CLOUD_TOP_MAX_GAP:CLOUD_PAIR_GAP)))clearImage();
   if(!rendered)status.textContent='Checking GOES clouds…';
   try{
    const catalogFrames=await catalog('surface',loadCloudTopCatalog,signal);

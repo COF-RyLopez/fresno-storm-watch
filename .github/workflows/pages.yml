@@ -125,6 +125,11 @@ jobs:
         timeout-minutes: 3
         continue-on-error: true
         run: work/goes-env/bin/python scripts/collect-goes-cloud-tops.py --reuse-url https://cof-rylopez.github.io/fresno-storm-watch/data/goes-cloud-tops/
+      - name: Prepare experimental regional Hanford Zarr volumes
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        timeout-minutes: 3
+        continue-on-error: true
+        run: node --use-system-ca scripts/collect-radar-volume.mjs
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
