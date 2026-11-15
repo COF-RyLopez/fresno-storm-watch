@@ -2,7 +2,7 @@
 export const WATERWAY_BASEMAP = Object.freeze({
   key:'waterways',title:'F.R.O.G. Waterways — Dark',
   bounds:[-120.91873100010041,35.906914000095696,-118.36058599987905,37.58583700006363],
-  version:'0.33.0',flowlineVersion:'0.29.0',
+  version:'0.33.0',styleRevision:'0.87.0',flowlineVersion:'0.29.0',
   note:'Fresno County and Millerton / Pine Flat upstream watersheds · USGS mapped water bodies, named / unnamed canals and ditches; local inventory completeness unverified.'
 });
 
@@ -18,7 +18,7 @@ export function waterwayStyle(style,baseUrl){
 /** Load on selection, preserving the existing map if the new style fails. */
 export async function createWaterwayBasemap({Basemap,VectorTileLayer,fetchImpl=fetch}){
   const baseUrl=new URL('../basemaps/frog-waterways-dark/',import.meta.url);
-  const response=await fetchImpl(new URL('root.json?v='+WATERWAY_BASEMAP.version,baseUrl),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(12_000)});
+  const response=await fetchImpl(new URL('root.json?v='+WATERWAY_BASEMAP.styleRevision,baseUrl),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(12_000)});
   if(!response.ok)throw new Error(`Waterways style HTTP ${response.status}`);
   const style=waterwayStyle(await response.json(),baseUrl);
   const layer=new VectorTileLayer({id:'frog-waterways-vector',title:WATERWAY_BASEMAP.title,

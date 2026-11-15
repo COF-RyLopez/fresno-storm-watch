@@ -3,7 +3,7 @@ export const LAYER_LABELS=Object.freeze({populationDensity:'Living Atlas ACS tra
 export const WORKSPACES=Object.freeze({
   storm:{title:'Storm now',panel:'storm-panel',scope:'fresno',layers:['alerts','areas','gauges','roads','weather','riverNetwork','waze']},
   watch:{title:'County Watch',panel:'watch-panel',scope:'fresno',layers:['areas','power','care','countySandbags']},
-  rivers:{title:'Rivers',panel:'river-panel',scope:'fresno',layers:['gauges','reservoirs','waterways','riverNetwork']},
+  rivers:{title:'Rivers',panel:'river-panel',scope:'fresno',layers:['gauges','reservoirs','waterways']},
   weather:{title:'Weather',panel:'environment-panel',scope:'weather',layers:['weather','wind','hrrr']},
   reservoirs:{title:'Reservoirs',panel:'reservoir-panel',scope:'fresno',layers:['reservoirs','gauges','waterways']},
   alerts:{title:'Weather Alerts',panel:'weather-panel',scope:'regional',layers:['alerts']},

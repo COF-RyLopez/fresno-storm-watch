@@ -3,7 +3,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import geojsonvt from 'geojson-vt';
 import {addWaterbodyStyle,suppressNames,writeTiles,thumbnailPoint,PUBLIC_URL as publicUrl} from './waterbody-cartography.mjs';
-import {waterwayRole,overviewRank} from './waterway-cartography.mjs';
+import {waterwayRole,overviewRank,applyWaterwayOverviewStyle} from './waterway-cartography.mjs';
 
 const root=new URL('../',import.meta.url),input=new URL('work/waterways-county/',root);
 const output=new URL('site/basemaps/frog-waterways-dark/',root);
@@ -84,6 +84,7 @@ style.layers.push({...structuredClone(nameStyle),id:'frog-overview-names',minzoo
 style.metadata={...(style.metadata??{}),frog:{version,revision:manifest.retrievedAt,retrievedAt:manifest.retrievedAt,bounds,countyGeoid:manifest.countyGeoid}};
 const waterbodies=JSON.parse(await readFile(new URL('waterbodies-manifest.json',output),'utf8'));
 style=addWaterbodyStyle(style,waterbodies,publicUrl);
+applyWaterwayOverviewStyle(style);
 await writeFile(new URL('root.json',output),JSON.stringify(style,null,2)+'\n');
 const preview=data.features.filter(f=>f.properties.rank===0).flatMap(f=>(f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates).flatMap(path=>{
   const projected=path.map(thumbnailPoint(bounds));

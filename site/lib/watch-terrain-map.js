@@ -10,11 +10,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
  style.sources.terrain={...dem,attribution:'Terrain Tiles · Mapzen / Tilezen · reference elevation'};
  style.sources.relief=dem;
  style.terrain={source:'terrain',exaggeration:1};
- // Use the storm demo's slate ground and hillshade treatment in the focused view.
- for(const layer of style.layers){
-  if(layer.type==='background')layer.paint['background-color']='#263339';
-  if(layer.id==='Land')layer.paint['fill-color']='#263339';
- }
+ // Add the storm demo's hillshade over the shared slate basemap.
  const index=style.layers.findIndex(l=>l.type==='line'||l.type==='symbol');
  style.layers.splice(index<0?style.layers.length:index,0,{id:'terrain-shading',type:'hillshade',source:'relief',paint:{'hillshade-exaggeration':.52,'hillshade-shadow-color':'#101b20','hillshade-highlight-color':'#a8b0a1'}});
  const map=new ml.Map({container,style,center:[-119.6,36.8],zoom:8,pitch:50,maxPitch:60,attributionControl:{compact:true},renderWorldCopies:false,fadeDuration:0});

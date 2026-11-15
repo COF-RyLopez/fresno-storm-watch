@@ -164,7 +164,7 @@ export function createEnvironmentWatch({config,timeZone,exercise,onMap=()=>{},on
     if(!selection||!layers)return;
     layers.reservoirs.removeAll();
     void layers.reservoirLabels.set([...(selection.upstream?.stations||[]),...selection.stations].map(s=>({longitude:s.longitude,latitude:s.latitude,label:s.name})));
-    for(const s of selection.upstream?.stations||[])layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:17,height:17},attributes:{reservoirId:s.id,name:s.name,river:'San Joaquin (upstream)'}}));
+    for(const s of selection.upstream?.stations||[])layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:13,height:13},attributes:{reservoirId:s.id,name:s.name,river:'San Joaquin (upstream)'}}));
     for(const s of selection.stations)layers.reservoirs.add(new layers.Graphic({geometry:{type:'point',longitude:s.longitude,latitude:s.latitude,spatialReference:{wkid:4326}},symbol:{type:'picture-marker',url:new URL('../assets/reservoir-pin.svg',import.meta.url).href,width:25,height:25},attributes:{reservoirId:s.id,name:s.name,river:s.river},popupTemplate:{title:'{name}',content:'{river}. Select Reservoirs for dated pool, storage, inflow and release readings. This point is the CDEC reporting location, not a water-surface elevation.'}}));
   }
 
