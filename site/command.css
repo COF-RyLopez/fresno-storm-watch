@@ -202,10 +202,10 @@
 #watch-terrain.ready{opacity:1;pointer-events:auto}
 #watch-terrain[hidden]{display:none}
 .watch-terrain-stage{position:absolute;inset:0}
-#watch-terrain-overhead{font:inherit;font-size:12px;min-height:36px;padding:6px 10px;color:var(--calcite-color-text-1);background:var(--calcite-color-surface-1);border:1px solid var(--calcite-color-border-2);border-radius:3px;cursor:pointer}
-#watch-terrain-overhead:focus-visible{outline:2px solid var(--calcite-color-focus)}
-#watch-terrain-overhead[hidden],#watch-terrain-note[hidden]{display:none}
+:is(#watch-terrain-overhead,#watch-terrain-upstream){font:inherit;font-size:12px;min-height:36px;padding:6px 10px;color:var(--calcite-color-text-1);background:var(--calcite-color-surface-1);border:1px solid var(--calcite-color-border-2);border-radius:3px;cursor:pointer}
+:is(#watch-terrain-overhead,#watch-terrain-upstream):focus-visible{outline:2px solid var(--calcite-color-focus)}
+:is(#watch-terrain-overhead,#watch-terrain-upstream)[hidden],#watch-terrain-note[hidden]{display:none}
 #watch-terrain-note{margin:3px 8px;font-size:11px;line-height:1.35}
 #watch-terrain .maplibregl-ctrl-attrib{font-size:10px;color:#e0e5e9;background:#20282ee8;max-width:calc(100% - 12px)}
 #watch-terrain .maplibregl-ctrl-attrib a{color:#e0e5e9}
-@media(max-width:600px){#watch-terrain-overhead{min-height:44px;padding:4px 8px}#map-wrap>.watch-map-heading{flex-wrap:wrap!important}#map-wrap>.watch-map-heading>div{flex-basis:100%!important}#watch-terrain-note{font-size:10px}}
+@media(max-width:600px){:is(#watch-terrain-overhead,#watch-terrain-upstream){min-height:44px;padding:4px 8px}#map-wrap>.watch-map-heading{flex-wrap:wrap!important}#map-wrap>.watch-map-heading>div{flex-basis:100%!important}#watch-terrain-note{font-size:10px}}

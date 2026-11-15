@@ -70,6 +70,8 @@ def convert(features: list[dict[str, Any]], county: Any, oid: str) -> tuple[list
 
 def acquire() -> None:
     """Download an enumerated, resumable inventory; replace output only after validation."""
+    from hydrography_scope import SCOPE, basin_manifest, reference_scope
+
     source = runpy.run_path(str(ROOT / 'scripts' / 'export-waterways.py'))
 
     def request(params: dict[str, Any], url: str = SOURCE + '/query') -> dict[str, Any]:
@@ -77,7 +79,7 @@ def acquire() -> None:
         return source['request_json'](url, params, retries=3, error='USGS waterbody service error')
 
     boundary = ROOT / 'site' / 'data' / 'counties.geojson'
-    county, filter_geometry = source['county_filter'](boundary)
+    county, coverage, filter_geometry, watershed_hash = reference_scope(boundary, source)
     output = ROOT / 'work' / 'waterbodies-county'
     cache = output / 'batches'
     cache.mkdir(parents=True, exist_ok=True)
@@ -92,6 +94,10 @@ def acquire() -> None:
     params = {'where': '1=1', 'geometry': json.dumps(filter_geometry), 'geometryType': 'esriGeometryPolygon',
               'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
     ids = source['inventory_ids'](request(params))
+    _, county_geometry = source['county_filter'](boundary)
+    county_ids = source['inventory_ids'](request({**params, 'geometry': json.dumps(county_geometry)}))
+    if not set(county_ids).issubset(ids):
+        raise RuntimeError('Expanded acquisition omitted county water bodies')
     if not ids or len(ids) > 100_000 or len(ids) != len(set(ids)):
         raise RuntimeError('Unexpected waterbody inventory')
     inventory_hash = hashlib.sha256(json.dumps(ids).encode()).hexdigest()
@@ -110,7 +116,7 @@ def acquire() -> None:
             'outSR': 4326, 'returnGeometry': 'true', 'returnZ': 'false', 'returnM': 'false'}), check)
 
     features = source['read_inventory'](ids, batch, lambda: request(params), 'Waterbody inventory changed during acquisition', workers=2)
-    rows, rejected = convert(features, county, oid)
+    rows, rejected = convert(features, coverage, oid)
     (output / 'rejected.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
     if rejected or len(rows) != len(ids):
         raise RuntimeError('Waterbody validation failed; inspect rejected.json. Prior public output retained.')
@@ -119,11 +125,12 @@ def acquire() -> None:
         'retrievalStartedAt': min(started, datetime.fromtimestamp(min(p.stat().st_mtime for p in cache.glob(key + '-*.json')), timezone.utc).isoformat()),
         'retrievedAt': datetime.now(timezone.utc).isoformat(),
         'retrievalPolicy': 'Validated resumable batches for the same ID inventory, fields and county filter; not an atomic editing-service snapshot. Cached batch modification times retained as the beginning of the retrieval window.',
-        'crs': 'OGC:CRS84', 'bounds': list(county.bounds), 'downloaded': len(ids), 'accepted': len(rows), 'rejected': 0,
+        'crs': 'OGC:CRS84', 'bounds': list(coverage.bounds), 'watershedsSha256': watershed_hash, 'watersheds': basin_manifest(ROOT),
+        'countyInventoryCount': len(county_ids), 'addedUpstreamCount': len(ids) - len(county_ids), 'downloaded': len(ids), 'accepted': len(rows), 'rejected': 0,
         'named': sum(bool(r['properties']['name']) for r in rows), 'featureTypes': kinds,
         'boundarySha256': hashlib.sha256(boundary.read_bytes()).hexdigest(), 'inventorySha256': inventory_hash,
         'sourceSha256': hashlib.sha256(json.dumps(features, sort_keys=True).encode()).hexdigest(),
-        'scope': 'All publisher waterbody polygons intersecting Fresno County, including unnamed features. Geometry clipped to the county envelope; boundary-crossing lake/reservoir parts may lie outside the county.',
+        'scope': SCOPE + ' Intersecting polygons retained within the combined map envelope.',
         'limitations': 'Published reference footprints, not current shorelines, observed water levels, flood extents, predicted inundation or a complete local pond/basin inventory. Feature types remain publisher classifications.',
         'dimensionPolicy': 'Requested RFC7946 WGS84 XY with outSR=4326, returnZ=false and returnM=false; no vertical datum or elevation use.',
         'license': 'USGS open, non-proprietary federal reference data; acknowledgment retained.'}

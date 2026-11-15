@@ -13,6 +13,9 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const map=new ml.Map({container,style,center:[-119.6,36.8],zoom:8,pitch:50,maxPitch:60,attributionControl:{compact:true},renderWorldCopies:false,fadeDuration:0});
  try{await waitForTerrain(map,onError);}catch(e){map.remove();throw e;}
  map.addControl(new ml.NavigationControl({visualizePitch:true}),'bottom-left');
+ const empty={type:'FeatureCollection',features:[]};
+ map.addSource('watch-basin',{type:'geojson',data:empty});
+ map.addLayer({id:'watch-basin-outline',type:'line',source:'watch-basin',paint:{'line-color':'#e4d8aa','line-width':2,'line-dasharray':[3,2]}});
  map.addSource('watch-records',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
  map.addLayer({id:'watch-lines',type:'line',source:'watch-records',filter:['==',['geometry-type'],'LineString'],paint:{'line-color':['get','color'],'line-width':3}});
  map.addLayer({id:'watch-points',type:'circle',source:'watch-records',filter:['==',['geometry-type'],'Point'],paint:{'circle-color':['get','color'],'circle-radius':['case',['==',['get','kind'],'facility'],5,7],'circle-stroke-color':'#e8f6fb','circle-stroke-width':1.5}});
@@ -23,8 +26,20 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
  map.on('click',e=>{const f=map.queryRenderedFeatures(e.point,{layers:['watch-points','watch-facilities','watch-lines']})[0];if(f)onSelect(f.properties);});
- let destroyed=false,overhead=false,pendingBounds=null;
+ let destroyed=false,overhead=false,pendingBounds=null,rainUrl=null;
+ function rain(image){
+  if(map.getLayer('watch-basin-rain'))map.removeLayer('watch-basin-rain');
+  if(map.getSource('watch-basin-rain'))map.removeSource('watch-basin-rain');
+  if(rainUrl)URL.revokeObjectURL(rainUrl);
+  rainUrl=null;
+  if(!image?.blob)return;
+  rainUrl=URL.createObjectURL(image.blob);
+  map.addSource('watch-basin-rain',{type:'image',url:rainUrl,coordinates:image.coordinates});
+  map.addLayer({id:'watch-basin-rain',type:'raster',source:'watch-basin-rain',paint:{'raster-opacity':0.34,'raster-fade-duration':0}},'frog-overview-rivers');
+ }
  const fit=(bounds,animate)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds=bounds;return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds,false);});observer.observe(container);
- return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true){if(destroyed)return;map.resize();fit(bounds,animate);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},destroy(){if(destroyed)return;destroyed=true;observer.disconnect();map.remove();}};
+ return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true){if(destroyed)return;map.resize();fit(bounds,animate);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
+  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},rain,
+  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();map.remove();if(rainUrl)URL.revokeObjectURL(rainUrl);}};
 }

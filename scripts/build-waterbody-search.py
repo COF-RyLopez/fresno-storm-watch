@@ -73,11 +73,13 @@ def build_groups(features: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], 
 
 def main() -> None:
     """Check exact raw-source hash and identity inventory before generating public shards."""
+    from hydrography_scope import reference_scope
+
     helper = runpy.run_path(str(ROOT / 'scripts/export-waterways.py'))
     boundary = ROOT / 'site/data/counties.geojson'
-    _, spatial = helper['county_filter'](boundary)
+    _, _, spatial, watershed_hash = reference_scope(boundary, helper)
     manifest = json.loads((ROOT / 'work/waterbodies-county/manifest.json').read_text(encoding='utf-8'))
-    if hashlib.sha256(boundary.read_bytes()).hexdigest() != manifest['boundarySha256']:
+    if hashlib.sha256(boundary.read_bytes()).hexdigest() != manifest['boundarySha256'] or watershed_hash != manifest['watershedsSha256']:
         raise RuntimeError('County boundary changed; reacquire waterbodies first')
     fields = ['OBJECTID', 'id3dhp', 'gnisid', 'gnisidlabel', 'featuretype', 'featuretypelabel', 'featuredate', 'areasqkm']
     cache_key = hashlib.sha256((manifest['inventorySha256'] + ','.join(fields) + json.dumps(spatial)).encode()).hexdigest()[:16]
@@ -114,7 +116,7 @@ def main() -> None:
     (output / 'index.json').write_text(json.dumps(index, separators=(',', ':')) + '\n', encoding='utf-8')
     result = {'version': VERSION, 'countyGeoid': '06019', 'source': source, 'sourceSha256': manifest['sourceSha256'],
               'accounting': counts, 'namedGroups': len(entries), 'geometryShardsSha256': hashes,
-              'scope': 'Named publisher Lake-class features intersecting Fresno County; complete source outlines retained, including boundary-crossing portions. Not clipped or simplified. Unnamed bodies are not indexed.',
+              'scope': 'Named publisher Lake-class features intersecting Fresno County or either reservoir watershed; complete source outlines retained, including boundary-crossing portions. Not clipped or simplified. Unnamed bodies are not indexed.',
               'identityPolicy': 'Group only matching nonzero GNIS IDs; without GNIS, retain a separate source-feature identity. Equal names alone never merge different GNIS identities.',
               'geometryPolicy': 'WGS84 XY polygons with clockwise exteriors and counterclockwise holes for ArcGIS. No 3D, current shoreline, inundation, connectivity or safe-access inference.',
               'stationAssociations': associations}

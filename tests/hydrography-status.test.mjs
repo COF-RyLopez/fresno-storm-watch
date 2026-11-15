@@ -6,6 +6,6 @@ test('reference status distinguishes recent retrieval, failure, overdue and unkn
  assert.match(hydrographyStatus(d,now),/^Weekly reference refresh/);
  assert.match(hydrographyStatus({...d,state:'failed'},now),/^Refresh failed; previous reference retained/);
  for(const lastSuccessAt of [null,'invalid','2026-10-14','2027-01-01'])assert.match(hydrographyStatus({...d,lastSuccessAt},now),/^Reference refresh overdue or unconfirmed/);
- assert.match(hydrographyStatus(d,now),/not a new survey date/);
- assert.match(hydrographyStatus(d,now),/not the full upstream watersheds/);
+ assert.match(hydrographyStatus(d,now),/date describes retrieval/);
+ assert.match(hydrographyStatus({...d,coverage:'Fresno and both upstream watersheds'},now),/Fresno and both upstream watersheds/);
 });

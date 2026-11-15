@@ -3,15 +3,15 @@
   "name": "Fresno waterbody reference footprints",
   "scheme": "xyz",
   "tiles": [
-    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/waterbodies-v0.33.0/{z}/{x}/{y}.pbf?v=2026-11-14T23%3A47%3A45.459006%2B00%3A00"
+    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/waterbodies-v0.33.0/{z}/{x}/{y}.pbf?v=2026-11-15T00%3A44%3A40.028214%2B00%3A00"
   ],
   "minzoom": 0,
   "maxzoom": 12,
   "bounds": [
     -120.91873100010041,
     35.906914000095696,
-    -118.36058599987905,
-    37.58583700006363
+    -118.334284974,
+    37.739163907
   ],
   "tileSize": 512,
   "attribution": "USGS 3DHP; reference outlines, not current water levels",

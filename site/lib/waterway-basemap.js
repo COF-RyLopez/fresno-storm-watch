@@ -3,14 +3,15 @@ export const WATERWAY_BASEMAP = Object.freeze({
   key:'waterways',title:'F.R.O.G. Waterways — Dark',
   bounds:[-120.91873100010041,35.906914000095696,-118.36058599987905,37.58583700006363],
   version:'0.33.0',flowlineVersion:'0.29.0',
-  note:'Fresno County USGS reference · mapped water bodies, named / unnamed canals and ditches; local inventory completeness unverified. Water-body outlines are not current shorelines or flood extents.'
+  note:'Fresno County and Millerton / Pine Flat upstream watersheds · USGS mapped water bodies, named / unnamed canals and ditches; local inventory completeness unverified.'
 });
 
 /** Resolve own tile source for both localhost and project-scoped Pages URLs. */
 export function waterwayStyle(style,baseUrl){
   const result=structuredClone(style);
-  result.sources.frog={type:'vector',url:new URL('tilejson.json?v='+encodeURIComponent(style.metadata?.frog?.revision??style.metadata?.frog?.retrievedAt??WATERWAY_BASEMAP.flowlineVersion),baseUrl).href,minzoom:0,maxzoom:14,bounds:WATERWAY_BASEMAP.bounds};
-  if(result.sources.frogWaterbodies)result.sources.frogWaterbodies={type:'vector',url:new URL('waterbodies-tilejson.json?v='+encodeURIComponent(style.metadata?.frog?.waterbodies?.revision??style.metadata?.frog?.waterbodies?.retrievedAt??WATERWAY_BASEMAP.version),baseUrl).href,minzoom:0,maxzoom:12,bounds:WATERWAY_BASEMAP.bounds};
+  const bounds=style.metadata?.frog?.bounds??WATERWAY_BASEMAP.bounds;
+  result.sources.frog={type:'vector',url:new URL('tilejson.json?v='+encodeURIComponent(style.metadata?.frog?.revision??style.metadata?.frog?.retrievedAt??WATERWAY_BASEMAP.flowlineVersion),baseUrl).href,minzoom:0,maxzoom:14,bounds};
+  if(result.sources.frogWaterbodies)result.sources.frogWaterbodies={type:'vector',url:new URL('waterbodies-tilejson.json?v='+encodeURIComponent(style.metadata?.frog?.waterbodies?.revision??style.metadata?.frog?.waterbodies?.retrievedAt??WATERWAY_BASEMAP.version),baseUrl).href,minzoom:0,maxzoom:12,bounds};
   return result;
 }
 
