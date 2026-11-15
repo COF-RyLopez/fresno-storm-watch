@@ -2,6 +2,7 @@ import {countyGeometry} from './model.js';
 import {terrainBounds} from './watch-terrain-model.js';
 import {fetchQpfCycle} from './environment-data.js';
 import {QPF_URL,qpfPlanningTime,realNumber} from './environment-model.js';
+import {WPC_INTERVALS} from './watershed-timeline-model.js';
 
 const areaReservoirs=new Map([
  ['san-joaquin-lower','MIL'],['san-joaquin-upper','MIL'],
@@ -23,9 +24,13 @@ export async function loadWatershed(reservoir,{signal,fetchImpl=fetch}={}){
 const mercator=(lon,lat)=>[lon*Math.PI/180*6378137,Math.asinh(Math.tan(lat*Math.PI/180))*6378137];
 
 /** Fetch a compact map image tied to one verified WPC forecast cycle. */
-export async function loadWatershedRain(bounds,{signal,fetchImpl=fetch,clock=Date.now}={}){
+export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,clock=Date.now}={}){
+ if(window&&!WPC_INTERVALS.includes(window.layer))throw Error('Unsupported six-hour forecast layer');
+ const period=window?{id:window.layer,hours:6}:{id:9,hours:72};
  const request=(url,options={})=>fetchImpl(url,{...options,signal:signal&&options.signal?AbortSignal.any([signal,options.signal]):signal??options.signal});
- const cycle=await fetchQpfCycle({id:9,hours:72},request,clock());
+ const cycle=await fetchQpfCycle(period,request,clock());
+ const sameRevision=(a,b)=>['issue','start','end'].every(field=>a[field]===b[field]);
+ if(window&&(cycle.product!=='6-hour QPF'||!sameRevision(cycle,window)))throw Error('WPC has revised the selected window');
  const now=clock();
  if(qpfPlanningTime(cycle,now,now,24*3_600_000)===null)throw Error('Published forecast is stale or expired');
  const [west,south,east,north]=bounds;
@@ -33,13 +38,13 @@ export async function loadWatershedRain(bounds,{signal,fetchImpl=fetch,clock=Dat
  // Match the image aspect ratio to the Web Mercator extent to avoid edge shifts.
  const size=[800,Math.round(800*(ymax-ymin)/(xmax-xmin))];
  const definitionExpression=`issue_time = '${cycle.issueText}' AND start_time = '${cycle.startText}' AND end_time = '${cycle.endText}' AND units = 'Inches' AND qpf >= 0.01`;
- const query=new URL(`${QPF_URL}/9/query`);
+ const query=new URL(`${QPF_URL}/${period.id}/query`);
  query.search=new URLSearchParams({f:'json',where:definitionExpression,geometry:bounds.join(','),geometryType:'esriGeometryEnvelope',inSR:'4326',outFields:'qpf',returnGeometry:'false'});
  const url=new URL(`${QPF_URL}/export`);
- url.search=new URLSearchParams({f:'image',format:'png32',transparent:'true',bbox:[xmin,ymin,xmax,ymax].join(','),bboxSR:'3857',imageSR:'3857',size:size.join(','),layers:'show:9',layerDefs:JSON.stringify({9:definitionExpression})});
+ url.search=new URLSearchParams({f:'image',format:'png32',transparent:'true',bbox:[xmin,ymin,xmax,ymax].join(','),bboxSR:'3857',imageSR:'3857',size:size.join(','),layers:`show:${period.id}`,layerDefs:JSON.stringify({[period.id]:definitionExpression})});
  const options=()=>({credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(25_000)});
  const [response,local,metadata]=await Promise.all([
-  request(url,options()),request(query,options()).then(r=>r.json()),request(`${QPF_URL}/9?f=json`,options()).then(r=>r.json())
+  request(url,options()),request(query,options()).then(r=>r.json()),request(`${QPF_URL}/${period.id}?f=json`,options()).then(r=>r.json())
  ]);
  if(!response.ok||!response.headers.get('content-type')?.startsWith('image/png'))throw Error('WPC forecast map unavailable');
  if(local.error||local.exceededTransferLimit||!Array.isArray(local.features))throw Error('WPC forecast coverage unavailable');
@@ -51,8 +56,9 @@ export async function loadWatershedRain(bounds,{signal,fetchImpl=fetch,clock=Dat
   return {value,color:`rgb(${color.slice(0,3).join(',')})`};
  });
  // Confirm the source did not roll over while the image was requested.
- const confirmed=await fetchQpfCycle({id:9,hours:72},request,clock());
- if(['issue','start','end'].some(field=>cycle[field]!==confirmed[field]))throw Error('WPC forecast is updating');
+ const confirmed=await fetchQpfCycle(period,request,clock());
+ if(!sameRevision(cycle,confirmed)||cycle.product!==confirmed.product)throw Error('WPC forecast is updating');
+ if(cycle.end<=clock())throw Error('Forecast window ended while loading');
  // Export expands one axis to match the integer output pixel ratio.
  const ratio=size[0]/size[1],dx=Math.max((xmax-xmin),(ymax-ymin)*ratio)/2,dy=dx/ratio;
  const cx=(xmin+xmax)/2,cy=(ymin+ymax)/2;

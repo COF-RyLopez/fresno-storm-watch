@@ -1,6 +1,7 @@
 import {installWatchTerrain} from './watch-terrain-ui.js';
-import {terrainSnapshot,terrainBounds,terrainAnchors} from './watch-terrain-model.js';
-import {pointInRings} from './power-geometry.js';
+import {terrainSnapshot,terrainBounds,terrainAnchors,basinRoadEligible} from './watch-terrain-model.js';
+import {pointInRings,powerScope} from './power-geometry.js';
+import {roadInCurrentView} from './roads.js';
 import {lazyDisplay} from './lazy-display.js';
 import {focusedLayerVisible,focusGraphicAllowed} from './county-watch-focus.js';
 import {watchFocusPoints,watchFocusMotion} from './watch-focus.js';
@@ -96,7 +97,8 @@ export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCa
   const drainageGroup=r=>r.category==='existing'?'drainage':r.category==='proposed'?'drainageProposed':r.category==='catchment'?'drainageCatchments':'drainageOther';
   const drainagePoints=rows=>rows.flatMap(r=>r.geometry.rings?r.geometry.rings.flat().map(([longitude,latitude])=>({longitude,latitude})):[{longitude:r.geometry.x,latitude:r.geometry.y}]);
   const pointsExtent=(points,padX,padY=padX)=>{const xs=points.map(p=>p.longitude),ys=points.map(p=>p.latitude);return new Extent({xmin:Math.min(...xs)-padX,ymin:Math.min(...ys)-padY,xmax:Math.max(...xs)+padX,ymax:Math.max(...ys)+padY,spatialReference:{wkid:4326}});};
-  const roadGraphic=r=>{const inactive=r.active==='no',shade=inactive?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';return new Graphic({attributes:{roadKey:r.key},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||inactive?'dash':'solid'}});};
+  let watershedRoadStatus={},lastWatershed=null,watershedScope=null;
+  const roadGraphic=r=>{const inactive=r.active==='no',shade=inactive?'#a5a9ad':r.layer===2?'#65cad1':'#f6a777';return new Graphic({attributes:{roadKey:r.key,terrainName:r.name,roadActive:r.active,roadEnd:r.end,roadDetour:r.layer===2},geometry:{...r.geometry,type:r.layer===0?'point':'polyline',spatialReference:{wkid:4326}},symbol:r.layer===0?{type:'simple-marker',style:'x',size:13,color:shade,outline:{color:shade,width:2}}:{type:'simple-line',color:shade,width:3,style:r.layer===2||inactive?'dash':'solid'}});};
   const facilityGraphic=(r,pointOutline)=>{const polygon=!!r.site.geometry.rings;return new Graphic({attributes:{facilityKey:r.site.key,terrainName:r.site.name},geometry:{...r.site.geometry,type:polygon?'polygon':'point'},symbol:polygon?{type:'simple-fill',style:r.tone==='unmatched'?'none':'diagonal-cross',color:FACILITY_COLORS[r.tone],outline:{color:FACILITY_COLORS[r.tone],width:2}}:{type:'simple-marker',style:'diamond',size:14,color:r.tone==='unmatched'?[0,0,0,0]:FACILITY_COLORS[r.tone],outline:{color:pointOutline,width:2}}});};
   const map = new Map({ basemap: themedBasemap(), layers: [fema, alertLayer, boundaryLayer, power, roads, selectedLayer, labels, gauges, cameras, facilities, areaLayer] });
   const searchContext=new GraphicsLayer({title:'Nearby search references — proximity only',listMode:'hide',elevationInfo:{mode:'on-the-ground'},popupEnabled:false});
@@ -324,27 +326,39 @@ elevationInfo:{mode:'on-the-ground'},
   function terrainRecord(graphic,kind){
     const a=graphic.attributes||{},field=Object.keys(terrainFields).find(k=>a[k]!=null);if(!field&&!a.terrainName)return null;
     const geometry=terrainGeometry(graphic.geometry);if(!geometry)return null;
-    return {key:field?field+':'+a[field]:kind+':'+a.terrainName,kind:kind||terrainFields[field]||'concern',name:a.terrainName||a.name||gaugeRows.find(r=>r.station.id===a.gaugeId)?.station.name||watchConcern?.name||'Reference',geometry,color:a.terrainFocus?'#8bd6e8':graphic.symbol?.color?.toHex?.()||'#8bd6e8',pickField:field,pickId:a[field]};
+    return {key:field?field+':'+a[field]:kind+':'+a.terrainName,kind:kind||terrainFields[field]||'concern',name:a.terrainName||a.name||gaugeRows.find(r=>r.station.id===a.gaugeId)?.station.name||watchConcern?.name||'Reference',geometry,color:a.terrainFocus?'#8bd6e8':graphic.symbol?.color?.toHex?.()||'#8bd6e8',pickField:field,pickId:a[field],active:a.roadActive,end:a.roadEnd,detour:a.roadDetour};
   }
   function terrainData(target,watershed){
     const selected=[],candidates=[];
-    const basin=watershed?countyGeometry(watershed.geometry).rings:null;
+    const basin=watershed?countyGeometry(watershed.geometry):null;
+    if(watershed!==lastWatershed){
+      lastWatershed=watershed;
+      watershedScope=basin?powerScope(basin):null;
+    }
+    const now=Date.now();
+    const checked=watershedRoadStatus.checked;
+    const roadStatus=watershed?{state:!Number.isFinite(checked)?'unavailable':watershedRoadStatus.error||now-checked>420000?'old':'current',checked}:null;
     for(const [layer,r]of registry)for(const g of layer.graphics||[]){
       const record=terrainRecord(g);if(!record)continue;
+      if(watershedScope&&record.kind==='road'){
+        if(basinRoadEligible(record,watershedScope,now))selected.push(record);
+        else if(roadInCurrentView(record,now))candidates.push(record);
+        continue;
+      }
       if(layer.visible&&g.visible!==false&&!(layer===areaLayer&&watchHighlight.graphics.length))selected.push(record);
       if(['facilities','gauges','reservoirs'].includes(r.key)&&r.eligible)candidates.push(record);
       if(basin&&r.eligible&&['gauges','reservoirs'].includes(r.key)&&Number.isFinite(record.geometry.x)&&
-        (record.pickId===watershed.properties.reservoir||pointInRings([record.geometry.x,record.geometry.y],basin)))selected.push(record);
+        (record.pickId===watershed.properties.reservoir||pointInRings([record.geometry.x,record.geometry.y],basin.rings)))selected.push(record);
     }
     const anchors=terrainAnchors(watchConcern,watchSelection,watchHighlight.graphics.toArray().map(g=>({longitude:g.geometry.longitude,latitude:g.geometry.latitude})));
     if(!selected.length&&Number.isFinite(target.x))selected.push({key:'focus',kind:'concern',name:watchConcern?.name||'Selected location',geometry:target,color:'#e5f6ff'});
-    return terrainSnapshot({target,selected,candidates,anchors});
+    return terrainSnapshot({target,selected,candidates,anchors,roadStatus});
   }
   let terrainFallbackBounds=null;
   terrainBridge=installWatchTerrain({wanted:()=>watchTerrainEnabled&&quietWatch()&&!!watchConcern&&basemapKey==='waterways',snapshot:terrainData,exercise,
     detach(target){terrainFallbackBounds=terrainBounds(target);view.container=null;document.querySelector('#map').hidden=true;document.querySelector('#map-status').hidden=true;document.querySelector('#map-scale').hidden=true;document.querySelector('#view-mode-status').hidden=true;},
     restore(){document.querySelector('#map-scale').hidden=false;document.querySelector('#view-mode-status').hidden=false;document.querySelector('#map').hidden=false;if(!view.container){view.container='map';if(terrainFallbackBounds){const [xmin,ymin,xmax,ymax]=terrainFallbackBounds;view.extent=new Extent({xmin:xmin===xmax?xmin-.006:xmin,ymin:ymin===ymax?ymin-.006:ymin,xmax:xmin===xmax?xmax+.006:xmax,ymax:ymin===ymax?ymax+.006:ymax,spatialReference:{wkid:4326}});}}terrainFallbackBounds=null;},
-    onSelect:p=>{const emit=(name,detail)=>window.dispatchEvent(new CustomEvent(name,{detail}));const actions={usgsSite:id=>emit('frogUsgsSelect',{id}),reservoirId:id=>emit('frogReservoirSelect',{id}),gaugeId:onGaugeSelect,facilityKey:onFacilitySelect,roadKey:onRoadSelect,powerKey:onPowerSelect,drainageKey:onDrainageSelect,careKey:onCareSelect,areaId:onAreaSelect};actions[p.pickField]?.(p.pickId);}
+    onSelect:p=>{const emit=(name,detail)=>window.dispatchEvent(new CustomEvent(name,{detail}));const actions={usgsSite:id=>emit('frogUsgsSelect',{id}),reservoirId:id=>emit('frogReservoirSelect',{id}),gaugeId:onGaugeSelect,facilityKey:onFacilitySelect,roadKey:id=>onRoadSelect(id,{keepWorkspace:true}),powerKey:onPowerSelect,drainageKey:onDrainageSelect,careKey:onCareSelect,areaId:onAreaSelect};actions[p.pickField]?.(p.pickId);}
   });
   const navigate = async (target,options={animate:false}) => {const navigation=++mapPick,concern=watchConcern;waterwayPickStatus('');const shape=terrainGeometry(target?.target||target);if(shape&&await terrainBridge?.focus(shape,options))return;if(navigation!==mapPick||concern!==watchConcern)return;return view.goTo(target, options).catch(error => {
     if (error.name !== 'AbortError') { const status=document.querySelector('#map-status');status.hidden=false;status.textContent='Map navigation failed. Select records in the list for details.'; }
@@ -627,7 +641,7 @@ elevationInfo:{mode:'on-the-ground'},
     setScenarioDomain(geometry){scenarioDomain.removeAll();if(!geometry)return;const polygon=new Polygon(countyGeometry(geometry));scenarioDomain.add(new Graphic({geometry:polygon,symbol:{type:'simple-fill',color:[0,0,0,0],outline:{color:'#f6c85f',width:2,style:'dash'}}}));void focusNavigate(polygon.extent.clone().expand(1.1));},setScenarioBuildings(features){structureFeatures=features;structureFrame=0;drawStructures();},setScenarioBuildingFrame(index){if(index!==structureFrame){structureFrame=index;drawStructures();}},
     setWatchContext({explore=false,selected=null,active=true}){const signature=JSON.stringify([explore,selected,active]);if(signature===watchContextSignature)return;watchContextSignature=signature;watchExplore=explore;watchConcern=selected;watchTerrainEnabled=active;terrainBridge?.context(selected?selected.type+':'+selected.id:null);if(quietWatch()){clearSearchSelection();searchContext.removeAll();view.closePopup();}drawAreas();drawPower();syncVisibility();for(const listener of presentationListeners)listener();},
     getWorkspace:()=>activeProfile,isLayerWanted:key=>visibleLayer(key,true),onPresentationChanged:listener=>{presentationListeners.add(listener);return ()=>presentationListeners.delete(listener);},
-    openUpstreamWatershed:()=>terrainBridge.openWatershed(),getViewMode:()=>terrainBridge?.active?'3d':view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setViewMode:mode=>terrainBridge?.active?Promise.resolve(terrainBridge.setMode(mode)):['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints,clearWatchFocus,focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
+    openUpstreamWatershed:()=>terrainBridge.openWatershed(),selectWatershedWindow:(id,window,options)=>terrainBridge.selectWatershedWindow(id,window,options),getViewMode:()=>terrainBridge?.active?'3d':view.type,focusReferenceGeometry:(shape,scale)=>focusGeometry(new Graphic({geometry:{...shape,type:shape.rings?'polygon':'point'}}).geometry,scale),registerLayer,setLayerEligibility,setLayerPreference,setWorkspace,showInundation,setViewMode:mode=>terrainBridge?.active?Promise.resolve(terrainBridge.setMode(mode)):['2d','3d'].includes(mode)?setMode(mode):Promise.resolve(),inspectPlanningPoints,clearWatchFocus,focusSearchSelection,clearSearchSelection,findNearbySearch,setSearchContext,focusSearchContext,
     setBriefingContext:data=>{
       briefingContext.removeAll();
       for(const p of data.points)briefingContext.add(new Graphic({attributes:{areaId:data.id},geometry:{type:'point',longitude:p.longitude,latitude:p.latitude},symbol:{type:'simple-marker',style:'circle',size:20,color:[0,0,0,0],outline:{color:'#65cad1',width:2}}}));
@@ -651,7 +665,7 @@ elevationInfo:{mode:'on-the-ground'},
     setPowerBuildings:rows=>powerBuildings.set(rows),clearPowerBuildings:()=>powerBuildings.clear(),setPowerBuildingLabels:value=>powerBuildings.setLabels(value),focusPowerBuilding:id=>powerBuildings.focus(id),powerBuildingsViewport:()=>{const extent=view.extent;if(!extent)return null;const geo=extent.spatialReference.isGeographic?extent:webMercatorUtils.webMercatorToGeographic(extent);return {rings:[[[geo.xmin,geo.ymin],[geo.xmin,geo.ymax],[geo.xmax,geo.ymax],[geo.xmax,geo.ymin],[geo.xmin,geo.ymin]]],spatialReference:{wkid:4326}};},
     setPower:rows=>{powerRows=rows;drawPower();},
     focusPower:key=>{if(['restored','cancelled'].includes(powerRows.find(r=>r.key===key)?.status))setLayerPreference('powerHistory',true);const g=power.graphics.find(g=>g.attributes.powerKey===key);if(g){followRegion=false;setLayerPreference('power',true);document.querySelector('#power-map-toggle').checked=true;const geometries=power.graphics.toArray().filter(item=>item.attributes.powerKey===key).map(item=>item.geometry);if(geometries.length===1&&g.geometry.type==='point')return focusGeometry(g.geometry,25000);return focusGeometry(new Extent(powerFocusExtent(geometries)));}return focusGeometry(null);},
-    setRoads:rows=>{roads.removeAll();for(const r of rows)if(r.geometry)roads.add(roadGraphic(r));
+    setRoads:(rows,status={})=>{watershedRoadStatus=status;roads.removeAll();for(const r of rows)if(r.geometry)roads.add(roadGraphic(r));
       void roadLabels.set(rows.flatMap(r=>{const p=r.name!=='Unnamed county record'&&labelPoint(r.geometry);return p?[{...p,label:r.name}]:[];}));},
     setRoadsVisible:visible=>setLayerPreference('roads',visible),
     focusRoad:key=>{const g=roads.graphics.find(g=>g.attributes.roadKey===key);if(g){followRegion=false;setLayerPreference('roads',true);return focusGeometry(g.geometry,g.geometry.type==='point'?22000:null);}return focusGeometry(null);},

@@ -1,8 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {terrainBounds,terrainSnapshot,terrainAnchors} from '../site/lib/watch-terrain-model.js';
+import {terrainBounds,terrainSnapshot,terrainAnchors,basinRoadEligible} from '../site/lib/watch-terrain-model.js';
+import {powerScope} from '../site/lib/power-geometry.js';
 const point=(key,x,y,kind='facility')=>({key,kind,name:key,geometry:{x,y,spatialReference:{wkid:4326}},color:'#abcdef',secret:'never copy'});
 const focus={xmin:-119.34,ymin:36.82,xmax:-119.31,ymax:36.85,spatialReference:{wkid:4326}};
+test('current county road segments crossing a basin are visible, while history and off-basin roads are omitted',()=>{
+ const scope=powerScope({rings:[[[-120,36],[-119,36],[-119,37],[-120,37],[-120,36]]]});
+ const closure={...point('closure',0,0,'road'),active:'yes',geometry:{paths:[[[-120.5,36.4],[-118.8,36.6]]],spatialReference:{wkid:4326}}};
+ assert(basinRoadEligible(closure,scope,100));
+ assert(!basinRoadEligible({...closure,active:'no'},scope,100));
+ assert(!basinRoadEligible({...closure,end:99},scope,100));
+ assert(!basinRoadEligible({...closure,geometry:{...closure.geometry,paths:[[[-120.5,37.1],[-118.8,37.2]]]}},scope,100));
+ const detour={...closure,key:'detour',detour:true};
+ const data=terrainSnapshot({target:focus,selected:[closure,detour,detour],roadStatus:{state:'old'}});
+ assert.equal(data.roads,2);assert.equal(data.features[1].properties.detour,true);assert.equal(data.features[0].properties.color,'#a5a9ad');
+});
 test('terrain rejects unknown/projected CRS and malformed coordinates, preserving full bounds',()=>{
  assert.deepEqual(terrainBounds(focus),[-119.34,36.82,-119.31,36.85]);
  assert.equal(terrainBounds({...focus,spatialReference:{wkid:3857}}),null);

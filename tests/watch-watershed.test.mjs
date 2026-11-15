@@ -35,20 +35,20 @@ test('watershed links attach to their own river concerns and use the published f
  }
 });
 
-function forecastFetch({rollover=false,dry=false,brokenImage=false}={}){
+function forecastFetch({rollover=false,dry=false,brokenImage=false,layer=9,cycle=attributes}={}){
  let cycleChecks=0;
  return async(input,options)=>{
   assert.equal(options.credentials,'omit');
   const u=new URL(input);
   if(u.pathname.endsWith('/export')){
-   assert.equal(u.searchParams.get('layers'),'show:9');
-   assert.match(JSON.parse(u.searchParams.get('layerDefs'))[9],/2026-11-14 22:19:52.*Inches.*qpf >= 0.01/);
+   assert.equal(u.searchParams.get('layers'),`show:${layer}`);
+   assert(JSON.parse(u.searchParams.get('layerDefs'))[layer].includes(cycle.issue_time));
    return brokenImage?Response.json({error:{}}):new Response(new Uint8Array([137,80,78,71]),{headers:{'content-type':'image/png'}});
   }
-  if(u.pathname.endsWith('/9'))return Response.json({drawingInfo:{renderer:{uniqueValueInfos:[{value:'0.25',symbol:{color:[8,139,0,255]}}]}}});
+  if(u.pathname.endsWith(`/${layer}`))return Response.json({drawingInfo:{renderer:{uniqueValueInfos:[{value:'0.25',symbol:{color:[8,139,0,255]}}]}}});
   if(u.searchParams.has('geometry'))return Response.json({features:dry?[]:[{attributes:{qpf:0.25}}]});
-  const issue=rollover&&cycleChecks++?'2026-11-14 23:00:00':attributes.issue_time;
-  return Response.json({features:[{attributes:{...attributes,issue_time:issue}}]});
+  const issue=rollover&&cycleChecks++?'2026-11-14 23:00:00':cycle.issue_time;
+  return Response.json({features:[{attributes:{...cycle,issue_time:issue}}]});
  };
 }
 
@@ -62,4 +62,20 @@ test('WPC map uses one forecast cycle and the publisher legend within the reques
  assert.equal((await loadWatershedRain(bounds,{clock:()=>now,fetchImpl:forecastFetch({dry:true})})).blob,null);
  for(const options of [{rollover:true},{brokenImage:true}])await assert.rejects(loadWatershedRain(bounds,{clock:()=>now,fetchImpl:forecastFetch(options)}));
  await assert.rejects(loadWatershedRain(bounds,{clock:()=>now+48*3600_000,fetchImpl:forecastFetch()}),/stale or expired/);
+});
+
+test('six-hour contours render only the layer and revision selected in the timeline',async()=>{
+ const bounds=data.features[0].properties.bounds;
+ const cycle={...attributes,product:'6-hour QPF',end_time:'2026-11-15 06:00:00'};
+ const window={layer:14,issue:Date.parse('2026-11-14T22:19:52Z'),start:Date.parse('2026-11-15T00:00:00Z'),end:Date.parse('2026-11-15T06:00:00Z')};
+ const options={window,clock:()=>now,fetchImpl:forecastFetch({layer:14,cycle})};
+ const rain=await loadWatershedRain(bounds,options);
+ assert.equal(rain.cycle.hours,6);assert.equal(rain.cycle.end,window.end);assert.equal(rain.legend[0].value,.25);
+ const called=[];
+ await assert.rejects(loadWatershedRain(bounds,{...options,window:{...window,issue:now-100},fetchImpl:(url,init)=>{
+  called.push(new URL(url).pathname);return options.fetchImpl(url,init);
+ }}),/revised/);
+ assert(called.every(path=>path.endsWith('/14/query')));
+ await assert.rejects(loadWatershedRain(bounds,{...options,fetchImpl:forecastFetch({layer:14,cycle,rollover:true})}),/forecast is updating/);
+ await assert.rejects(loadWatershedRain(bounds,{...options,clock:()=>window.end}),/stale or expired/);
 });
