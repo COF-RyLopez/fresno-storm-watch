@@ -162,6 +162,9 @@ privateView = privateUI.mountCommandPrivate({
   work: $("work-view"),
   briefing: $("briefing-view"),
   controller: privateController,
+  team: eoc.EOC_CONFIG.teamLabel,
+  onNavigate: (view: string) => navigate(view),
+  onNotices: () => { renderList(); renderCoverage(); },
   onFocus: (id: any) => {
     if (typeof id === "string" && feeds.reference.some((c) => c.id === id))
       select(id);
@@ -211,7 +214,7 @@ privateView = privateUI.mountCommandPrivate({
 function privateTasks(): Concern[] {
   const s = privateController.state;
   if (!s.username || !s.incident || s.loading) return [];
-  return privateModel
+  const tasks = privateModel
     .taskRows(s.records)
     .filter((r: any) => r.group !== "Completed or canceled")
     .map((r: any) => {
@@ -235,6 +238,14 @@ function privateTasks(): Concern[] {
         links: [],
       };
     });
+  const outreach = (privateView?.pioNotices() ?? []).map((n: any) => ({
+    id: "private-pio:" + n.key, kind: "private", private: true,
+    name: n.location, change: n.change, time: n.sourceTime, timeLabel: "Recorded",
+    quality: n.category === "Overdue follow-ups" ? "Overdue" : n.verification,
+    review: true, group: 2, nextAction: `${n.owner || "Unassigned"} · ${n.nextReview}`,
+    features: [], evidence: [], details: ["PIO review cue · approved message unchanged"], links: [],
+  }));
+  return [...tasks, ...outreach];
 }
 const current = (): Concern | undefined =>
   privateSelection ||
@@ -341,7 +352,10 @@ function select(id: string) {
     renderEvidence();
     updateMap();
   }
-  if (matchMedia("(max-width:700px)").matches) pane("details");
+  if (matchMedia("(max-width:700px)").matches) {
+    const clicked = feeds.reference.find((c) => c.id === id) ?? referenceResults.get(id);
+    pane(clicked?.kind === "alert" && clicked?.features.length ? "map" : "details");
+  }
 }
 $("evidence-close").onclick = () => {
   privateSelection = undefined;
@@ -524,7 +538,8 @@ function renderList() {
     ? "Show first five"
     : `Show all ${rows.length} concerns`;
 }
-function nearby(c: Concern) {
+function nearby(c: Concern): Concern[] {
+  if (c.kind === "alert") return model.advisoryContext(c, [...feeds.reference, ...authorizedSites]);
   const b = model.geometryBounds(c.features);
   if (!b) return [];
   const pad = 0.05,
@@ -616,6 +631,7 @@ function renderEvidence() {
     c.change,
     c.quality,
     c.evidence,
+    nearby(c).map((r: Concern) => [r.id, r.change, r.time, r.quality]),
   ]);
   if (lastEvidence === signature) return;
   lastEvidence = signature;
@@ -630,8 +646,9 @@ function renderEvidence() {
   const actions = el("div", undefined, "actions");
   actions.append(
     button(
-      "Assign verification",
+      c.id.startsWith("private-pio:") ? "Review PIO outreach" : "Assign verification",
       () => {
+        if (c.id.startsWith("private-pio:")) { privateView.openPio(); return; }
         navigate("work");
         privateView.focusAssignment?.(c);
         notify(
@@ -662,6 +679,17 @@ function renderEvidence() {
   );
   next.append(actions);
   out.append(next);
+  if (c.kind === "alert") {
+    out.append(el("p", `${c.timeLabel} ${date(c.time)}`));
+    for (const l of c.links) out.append(link(l.label, l.url));
+    if (!c.features.length) out.append(el("p", "NWS supplied no usable map footprint. Local overlap is not assessed; review the official affected locations."));
+    const tools = el("div", undefined, "actions");
+    tools.append(button("Open focused map", () => { pane("map"); pendingFit = true; void ensureMap().then(updateMap); }),
+      button("PIO outreach", () => privateView.openPio()));
+    if (model.advisoryProfile(c.name).type === "water")
+      tools.append(button("Rain forecast", () => { pane("map"); void chooseWeather("rain"); }));
+    out.append(tools);
+  }
   const summaries = [
     c.evidence.find((e) => e.label.toLowerCase().includes("rain")),
     c.evidence.find((e) => /release/i.test(e.label)),
@@ -673,16 +701,24 @@ function renderEvidence() {
     out.append(chart(e));
   const near = el("details", undefined, "nearby");
   near.append(
-    el("summary", "Nearby concerns"),
-    el("p", "Map proximity only. Connections and access are not established."),
+    el("summary", c.kind === "alert" ? model.advisoryProfile(c.name).label : "Nearby concerns"),
+    el("p", c.kind === "alert" ? model.advisoryProfile(c.name).qualification : "Map proximity only. Connections and access are not established."),
   );
-  for (const r of nearby(c))
+  (near as HTMLDetailsElement).open = c.kind === "alert";
+  const related = nearby(c);
+  for (const r of related.slice(0, c.kind === "alert" ? 5 : 8))
     near.append(button(r.name + " · " + r.change, () => select(r.id)));
+  if (c.kind === "alert" && related.length > 5) {
+    const more = el("details"); more.append(el("summary", `More mapped context · ${related.length - 5}`));
+    for (const r of related.slice(5)) more.append(button(r.name + " · " + r.change, () => select(r.id)));
+    near.append(more);
+  }
+  if (c.kind === "alert" && related.length === 24) near.append(el("p", "Showing up to 24 matching records. Inspect a local place for more detail."));
   if (!nearby(c).length)
     near.append(
       el(
         "p",
-        "No nearby road, power or care records returned. County facility and pump coverage requires authorized access.",
+        "No matching context returned from the loaded sources. This is not an all-clear. County facility and pump coverage requires authorized access.",
       ),
     );
   out.append(near);
@@ -715,7 +751,7 @@ function renderCoverage() {
     : "Coverage & sources";
   const warnings = feeds.concerns.filter((c) => c.group === 0),
     due = privateTasks().filter(
-      (c) => c.quality === "Overdue" || c.quality === "Conflicting versions",
+      (c) => c.quality === "Overdue" || c.quality === "Conflicting versions" || c.id.startsWith("private-pio:"),
     );
   const important = $("important");
   important.replaceChildren();
@@ -735,7 +771,10 @@ function renderCoverage() {
         "span",
         `${due.length} follow-up${due.length === 1 ? "" : "s"} need review for the selected incident`,
       ),
-      button("Work", () => navigate("work")),
+      button(due.every((c) => c.id.startsWith("private-pio:")) ? "PIO outreach" : "Work", () => {
+        if (due.every((c) => c.id.startsWith("private-pio:"))) privateView.openPio();
+        else navigate("work");
+      }),
     );
   else if (Object.keys(feeds.errors).length)
     important.append(
@@ -772,8 +811,10 @@ function updateMap() {
     const b = model.geometryBounds(c.features);
     features = [
       ...c.features,
-      ...nearby(c).flatMap((r) => r.features),
+      ...nearby(c).flatMap((r) => r.features).filter(f => c.kind !== "alert" || model.advisoryMatches(c, f)),
       ...feeds.features.filter((f) => {
+        if (c.kind === "alert" && model.advisoryProfile(c.name).type !== "water") return false;
+        if (c.kind === "alert") return model.advisoryMatches(c, f);
         const p = f.geometry.coordinates;
         return (
           b &&
@@ -785,6 +826,7 @@ function updateMap() {
       }),
     ];
   }
+  features = [...new Map(features.map((f) => [JSON.stringify([f.id, f.properties?.id, f.geometry]), f])).values()];
   map.set({ type: "FeatureCollection", features });
   const basin = c?.watershed
     ? feeds.watersheds?.features.find(
@@ -793,7 +835,9 @@ function updateMap() {
     : null;
   map.watershed(basin);
   $("map-place").textContent = c?.name || "Fresno County & upstream watersheds";
-  $("map-scope").textContent = c
+  $("map-scope").textContent = c?.kind === "alert"
+    ? `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
+    : c
     ? "Selected place · nearby context · current observations"
     : "Reference terrain · major waterways";
   if (pendingFit && c) {

@@ -1,7 +1,9 @@
 import { COMMAND_PHASES, taskRows } from "./command-private.js";
 import { FORMS, localDateValue } from "./eoc-forms.js";
-import { approvalFor, heads, reportStatus } from "./eoc-model.js";
-import { isPio } from "./pio-model.js";
+import { approvalFor, heads, reportStatus, reviewState } from "./eoc-model.js";
+import { isPio, pioBriefingLines, pioNotifications } from "./pio-model.js";
+import { createPioWorkspace } from "./pio-ui.js";
+import { pendingPioSourceReviews } from "./pio-source-review.js";
 
 const el = (tag, text, className) => {
   const node = document.createElement(tag);
@@ -87,7 +89,7 @@ function operationalLines(records = {}) {
     references: "External references",
   };
   return Object.entries(labels).flatMap(([collection, title]) => {
-    const rows = heads(records[collection] ?? []);
+    const rows = heads(records[collection] ?? []).filter((r) => !isPio(r.record.payload));
     if (!rows.length) return [];
     return [
       title +
@@ -256,6 +258,9 @@ export function commandBriefingText(briefing, approval) {
     title,
     [date(briefing.created), briefing.author, approvalLine].join(" · "),
     "Version " + briefing.id + " · SHA-256 " + digest,
+    snapshot.scope === "pio"
+      ? "Scope: PIO outreach only · " + (snapshot.pioZoneKey ?? "all outreach zones in this incident") + ". Other incident evidence is excluded."
+      : "Scope: incident operational records and selected evidence",
     incident &&
       [
         incident.name,
@@ -301,6 +306,7 @@ export function commandBriefingText(briefing, approval) {
         ]
       : []),
     ...operationalLines(snapshot.records),
+    ...pioBriefingLines(snapshot.records, heads, date, snapshot.captured),
     ...(snapshot.sourceHealth ?? []).map((source) =>
       [source.name, source.status, date(source.checked)].join(" · "),
     ),
@@ -409,6 +415,9 @@ export function mountCommandPrivate({
   briefing,
   controller,
   onFocus = () => {},
+  onNavigate = () => {},
+  onNotices = () => {},
+  team = "F.R.O.G. EOC exercise team",
 }) {
   let phase = "all",
     title = "",
@@ -418,6 +427,70 @@ export function mountCommandPrivate({
     dead = false,
     printNode = null;
   let lastState, stateMessage, assignment;
+  let workView = "followups", pio, briefingScope = { scope: "all", zoneKey: null };
+  const pioHost = el("section", null, "cmd-pio");
+  pioHost.id = "pio-workspace";
+  const pioMessage = paragraph("");
+  pioMessage.setAttribute("role", "status");
+  const pioReviews = el("section", null, "cmd-pio-reviews");
+  function renderPioReviews() {
+    pioReviews.replaceChildren();
+    const s = controller.state, notices = pio?.sourceNotifications() ?? [];
+    if (!s.incident || !notices.length) return;
+    pioReviews.append(el("h2", "Outreach source reviews"), paragraph("Review acknowledges this source revision for your team. Approved messages and distribution history stay unchanged."));
+    for (const n of notices) {
+      const reviewed = reviewState(n, s.records.reviews, team) === "Acknowledged";
+      const row = el("article", null, "cmd-record");
+      row.append(el("h3", n.location), paragraph(n.change), paragraph(date(n.sourceTime)));
+      if (n.category !== "Data failures" && s.allowed.has("reviews")) {
+        const action = button(reviewed ? "Reopen source review" : "Acknowledge source review", async () => {
+          action.disabled = true;
+          try {
+            await controller.reviewPioSource(n, reviewed ? "Reopened" : "Acknowledged");
+            pioMessage.textContent = "Team source review recorded. Approved message unchanged.";
+            renderPioReviews(); pio.render(); onNotices();
+          } catch (e) { pioMessage.textContent = e.message; }
+          finally { action.disabled = false; }
+        });
+        action.disabled = s.saving || s.loading; row.append(action);
+      }
+      pioReviews.append(row);
+    }
+  }
+  function pioNotices() {
+    const state = controller.state;
+    if (!state.username || !state.incident || state.loading) return [];
+    return [...pioNotifications(state.records, heads, Date.now()),
+      ...pendingPioSourceReviews(pio?.sourceNotifications() ?? [], state.records.reviews, team)];
+  }
+  function ensurePio() {
+    if (pio) return pio;
+    pio = createPioWorkspace({
+      host: pioHost, team,
+      getState: () => {
+        const s = controller.state;
+        return {records: s.records, incident: s.incident, periodReady: !!s.period,
+          can: (key) => !!s.username && !s.loading && !s.saving && s.allowed.has(key)};
+      },
+      commit: controller.commitPio,
+      time: date,
+      message: (text) => { pioMessage.textContent = text; },
+      onSourceChange: () => { pio.render(); renderPioReviews(); onNotices(); },
+      onBriefing: ({zoneKey = null} = {}) => {
+        if (hasDraft(controller.state) && !window.confirm("Replace this unsaved briefing draft with a PIO handoff?")) return;
+        briefingScope = {scope: "pio", zoneKey};
+        const row = controller.state.records.coordination.find((r) => r.payload.pioOutreach?.zone.key === zoneKey);
+        title = zoneKey ? "PIO handoff · " + (row?.payload.location ?? zoneKey) : "PIO handoff";
+        narrative = ""; savedDraft = null;
+        render(true); onNavigate("briefing");
+      },
+    });
+    return pio;
+  }
+  function openPio() {
+    workView = "pio"; render(true); onNavigate("work");
+    focusWhenVisible(work.querySelector('[data-work-view="pio"]'));
+  }
   const taskFilters = { location: "", owner: "", status: "" };
   const expanded = new Set();
   function collapsible(label, count, content) {
@@ -433,6 +506,7 @@ export function mountCommandPrivate({
     return node;
   }
   function focusWhenVisible(node) {
+    if (!node) return;
     requestAnimationFrame(() => {
       if (!node.isConnected) return;
       if (!work.hidden) node.focus();
@@ -460,7 +534,7 @@ export function mountCommandPrivate({
     render(true);
   }
   const digestDraft = (state) =>
-    JSON.stringify([title, narrative, state.captures.map((r) => r.id)]);
+    JSON.stringify([title, narrative, briefingScope, state.captures.map((r) => r.id)]);
   const hasDraft = (state) =>
     Boolean(title || narrative || state.captures.length) &&
     digestDraft(state) !== savedDraft;
@@ -468,9 +542,10 @@ export function mountCommandPrivate({
     title = "";
     narrative = "";
     savedDraft = null;
+    briefingScope = { scope: "all", zoneKey: null };
   }
   function warnBeforeUnload(event) {
-    if (hasDraft(controller.state)) {
+    if (hasDraft(controller.state) || pio?.hasDraft()) {
       event.preventDefault();
       event.returnValue = "";
     }
@@ -644,14 +719,9 @@ export function mountCommandPrivate({
             p.phase || "Unclassified",
           ].join(" · "),
         );
-        if (p.pumpTask || isPio(p))
+        if (p.pumpTask)
           card.append(
-            link(
-              p.pumpTask ? "Open pump task workflow" : "Open PIO outreach",
-              p.pumpTask
-                ? "../eoc-guide.html#pump-followups"
-                : "../eoc.html#outreach",
-            ),
+            link("Open pump task workflow", "../eoc-guide.html#pump-followups"),
           );
         if (typeof p.publicPlaceId === "string")
           card.append(
@@ -786,8 +856,8 @@ export function mountCommandPrivate({
         return;
       }
       if (
-        hasDraft(state) &&
-        !window.confirm("Switch incident and clear this briefing draft?")
+        (hasDraft(state) || pio?.hasDraft()) &&
+        !window.confirm("Switch incident and clear unsaved outreach and briefing drafts?")
       ) {
         picker.input.value = state.incident ?? "";
         return;
@@ -835,6 +905,22 @@ export function mountCommandPrivate({
         () => void controller.selectIncident(state.incident),
       ),
     );
+    const workNav = el("nav", null, "cmd-work-nav");
+    workNav.setAttribute("aria-label", "Work tools");
+    for (const [value, label] of [["followups", "Follow-ups"], ["pio", "PIO outreach"]]) {
+      const control = button(label, () => { workView = value; render(true); });
+      control.dataset.workView = value;
+      control.setAttribute("aria-pressed", String(workView === value));
+      workNav.append(control);
+    }
+    work.append(workNav);
+    if (workView === "pio") {
+      pioHost.hidden = false;
+      work.append(pioMessage, pioReviews, pioHost);
+      ensurePio().render();
+      renderPioReviews();
+      return;
+    }
     for (const row of heads(state.records.incidents)) {
       work.append(
         recordCard(
@@ -887,7 +973,6 @@ export function mountCommandPrivate({
     }
     const workflows = el("div", null, "cmd-specialized-links");
     workflows.append(
-      link("PIO outreach and approval", "../eoc.html#outreach"),
       link("Pump readiness update form", "../pump-readiness.html"),
       link("Open County Watch for pump assignments", "../?view=watch"),
     );
@@ -911,6 +996,12 @@ export function mountCommandPrivate({
       return;
     }
     if (state.allowed.has("briefings")) {
+      briefing.append(paragraph(briefingScope.scope === "pio"
+        ? "PIO handoff · " + (briefingScope.zoneKey ? "selected evacuation zone" : "all outreach in this incident") + ". Saved messages, approvals, receipts and source evidence will be included. Other captured map evidence remains in your general draft."
+        : "Incident handoff · operational records and captured evidence."));
+      if (briefingScope.scope === "pio") briefing.append(button("Use all incident evidence", () => {
+        briefingScope = {scope: "all", zoneKey: null}; render(true);
+      }));
       const form = el("form", null, "cmd-form");
       const t = field(["title", "Briefing title"], title);
       const n = field(
@@ -939,7 +1030,7 @@ export function mountCommandPrivate({
         save.disabled = true;
         const revision = digestDraft(state);
         try {
-          await controller.saveBriefing({ title: title.trim(), narrative });
+          await controller.saveBriefing({ title: title.trim(), narrative, ...briefingScope, sourceNotices: pioNotices() });
           savedDraft = revision;
           render(true);
         } catch (failure) {
@@ -1072,6 +1163,9 @@ export function mountCommandPrivate({
   function render(force = false) {
     if (dead) return;
     const state = controller.state;
+    if (state.incident !== priorScope || lastState?.username !== state.username) {
+      pio?.clear(); pioMessage.textContent = ""; pioReviews.replaceChildren();
+    }
     if (
       (lastState?.username && !state.username) ||
       (priorScope && state.incident !== priorScope)
@@ -1109,11 +1203,16 @@ export function mountCommandPrivate({
     work.replaceChildren();
     briefing.replaceChildren();
     renderWork(state);
+    // The shared editor updates asynchronous evidence panels by DOM ID. Keep its
+    // draft connected, but invisible, while another Work tool or loading is shown.
+    if (!work.contains(pioHost)) { pioHost.hidden = true; work.append(pioHost); }
     renderBriefing(state);
+    if (state.username && state.incident && !state.loading) void ensurePio().checkSources();
   }
 
   render();
   function focusAssignment(concern) {
+    workView = "followups";
     const {
       id,
       name,
@@ -1147,8 +1246,11 @@ export function mountCommandPrivate({
   return {
     render,
     focusAssignment,
+    openPio,
+    pioNotices,
     destroy() {
       dead = true;
+      pio?.destroy();
       window.removeEventListener("beforeunload", warnBeforeUnload);
       discardDraft();
       assignment = null;

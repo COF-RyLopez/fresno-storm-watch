@@ -1,3 +1,5 @@
+import {powerScope} from "./power-geometry.js";
+import {countyGeometry} from "./model.js";
 /** Presentation state is memory-only. Refresh never replaces the selected place or camera. */
 export function createCommandState() {
   let value = {
@@ -172,4 +174,65 @@ export function snapshotConcern(c, now = Date.now()) {
     })),
     association: c.association || "Nearby context; impact not established",
   });
+}
+
+/** Display guidance only: never derives an impact or an official action from proximity. */
+export function advisoryProfile(name = "") {
+  const type = /flood|rain/i.test(name) ? "water"
+    : /wind|red flag|fire/i.test(name) ? "power"
+    : /fog|snow|winter|ice|blizzard|freeze|frost/i.test(name) ? "access"
+    : /heat|cold/i.test(name) ? "care" : "general";
+  return {
+    type,
+    kinds: type === "water" ? ["river", "road", "care"]
+      : ["power", "care"].includes(type) ? ["power", "road", "care"] : ["road", "care"],
+    label: type === "water" ? "River conditions & access"
+      : type === "power" ? "Power & access" : type === "access" ? "Travel & access" : "Local context",
+    nextAction: type === "water" ? "Review rainfall, gauge trends and crossings with the responsible river and road operators"
+      : type === "power" ? "Review utility notices, backup-power readiness and road access with the responsible teams"
+      : type === "access" ? "Confirm travel restrictions and access with Road Maintenance and affected facilities"
+      : "Review official instructions and confirm local needs with the responsible teams",
+    qualification: "Mapped overlap with the advisory; not confirmed impacts. Reported status and timestamps still need review. Overlap does not establish safe access or hydraulic/electrical connections.",
+  };
+}
+
+const advisoryScopes = new WeakMap();
+export function advisoryMatches(alert, feature) {
+  const features = alert.features;
+  if (!Array.isArray(features)) return false;
+  let scopes = advisoryScopes.get(features);
+  if (!scopes) {
+    scopes = features.flatMap(({geometry:g}) => {
+      const polygons = g?.type === "Polygon" ? [g.coordinates] : g?.type === "MultiPolygon" ? g.coordinates : [];
+      return polygons.flatMap((coordinates) => {
+        try {return [powerScope(countyGeometry({type:"Polygon",coordinates}))];} catch {return [];}
+      });
+    });
+    advisoryScopes.set(features, scopes);
+  }
+  const g = feature?.geometry;
+  if (!g) return false;
+  try {
+    if (g.type === "Point") return scopes.some(s=>s.intersects({x:g.coordinates[0],y:g.coordinates[1]}));
+    if (g.type === "LineString" || g.type === "MultiLineString")
+      return scopes.some(s=>s.intersectsLine(g.type === "LineString" ? [g.coordinates] : g.coordinates));
+    if (g.type === "Polygon" || g.type === "MultiPolygon") {
+      const shape=countyGeometry(g); return scopes.some(s=>s.intersects(shape));
+    }
+  } catch {return false;}
+  return false;
+}
+
+export function advisoryContext(alert, records) {
+  const b = geometryBounds(alert.features ?? []);
+  if (!b) return [];
+  const {kinds} = advisoryProfile(alert.name);
+  return [...new Map(records.filter((r) => {
+    if (r.id === alert.id || !(r.private || kinds.includes(r.kind))) return false;
+    if (r.kind !== "river" && !r.review && !r.private) return false;
+    return (r.features ?? []).some(f=>advisoryMatches(alert,f));
+  }).map((r) => [r.id, r])).values()].sort((a,b) => {
+    const rank = (r) => r.private ? kinds.length : kinds.indexOf(r.kind);
+    return rank(a)-rank(b) || Number(/verification|unverified/i.test(a.quality ?? ""))-Number(/verification|unverified/i.test(b.quality ?? "")) || (b.time ?? 0)-(a.time ?? 0) || a.id.localeCompare(b.id);
+  }).slice(0, 24);
 }

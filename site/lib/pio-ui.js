@@ -182,6 +182,7 @@ export function createPioWorkspace({host,getState,commit,message,time,onSourceCh
       const controls=el('div');controls.className='button-row';controls.append(button('Update outreach',()=>begin('plan',r),permitted('coordination')),button('Record approval / withdrawal',()=>begin('approval',r),permitted('approvals')&&!s.conflict&&!closed(p)),button('Record distribution',()=>begin('distribution',r),permitted('coordination')&&s.approved&&!closed(p)),button('Create zone PIO handoff',()=>onBriefing({zoneKey:o.zone.key}),permitted('briefings')&&state.periodReady));article.append(controls);host.append(article);
     }
   }
-  setInterval(()=>{if(!document.hidden&&getState().incident&&!editor)void reviewZones();},300000);
-  return {render,checkSources(){if(!editor)return reviewZones();},sourceNotifications(){return zoneNotices;},clear(){epoch++;entryAbort?.abort();entryPending=null;entry=null;entryError=requestError;entryFocusPending=!!request;monitor.clear();abort?.abort();zones=null;zoneError=null;editor?.populationAbort?.abort();editor?.afnAbort?.abort();zonePending=null;reviewPending=null;reviewSignature=null;reviewChecked=null;zoneNotices=[];editor=null;saveBusy=false;host.replaceChildren();}};
+  const timer=setInterval(()=>{if(!document.hidden&&getState().incident&&!editor)void reviewZones();},300000);
+  function clear(){epoch++;entryAbort?.abort();entryPending=null;entry=null;entryError=requestError;entryFocusPending=!!request;monitor.clear();abort?.abort();zones=null;zoneError=null;editor?.populationAbort?.abort();editor?.afnAbort?.abort();zonePending=null;reviewPending=null;reviewSignature=null;reviewChecked=null;zoneNotices=[];editor=null;saveBusy=false;host.replaceChildren();}
+  return {render,hasDraft:()=>!!editor,checkSources(){if(!editor)return reviewZones();},sourceNotifications(){return zoneNotices;},clear,destroy(){clearInterval(timer);clear();}};
 }

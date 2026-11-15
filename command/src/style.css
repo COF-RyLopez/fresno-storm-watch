@@ -951,3 +951,20 @@ button {
 .cmd-collection summary {
   font-size: 16px;
 }
+/* PIO uses the same private editor and records as EOC, inside Command Work. */
+.cmd-work-nav { display:flex; gap:.5rem; flex-wrap:wrap; margin:1.25rem 0; }
+.cmd-work-nav [aria-pressed="true"] { border-color:var(--calcite-color-brand); background:var(--calcite-color-surface-3); color:var(--calcite-color-text-1); }
+.cmd-pio { max-width:80ch; overflow-wrap:anywhere; }
+.cmd-pio .section-toolbar,.cmd-pio .button-row { display:flex; gap:.75rem; flex-wrap:wrap; margin:1rem 0; }
+.cmd-pio calcite-button { --calcite-button-height:2.75rem; min-height:44px; }
+.cmd-pio .field { margin:1.25rem 0; }
+.cmd-pio label,.cmd-pio .field small { display:block; margin:.5rem 0; }
+.cmd-pio input,.cmd-pio textarea,.cmd-pio select { box-sizing:border-box; width:100%; min-height:44px; padding:.65rem; color:var(--calcite-color-text-1); background:var(--calcite-color-surface-2); border:1px solid var(--calcite-color-border-1); font:inherit; }
+.cmd-pio textarea { min-height:7rem; resize:vertical; }
+.cmd-pio .pio-record { padding:1.25rem 0; border-bottom:1px solid var(--calcite-color-border-2); }
+.cmd-pio p { line-height:1.5; }
+.cmd-pio blockquote,.cmd-pio .pio-message { white-space:pre-wrap; margin:1rem 0; padding:1rem; background:var(--calcite-color-surface-2); }
+.cmd-pio #pio-error { color:var(--calcite-color-status-danger); }
+.cmd-pio details { padding:.75rem 0; }
+.cmd-pio :focus-visible { outline:2px solid var(--calcite-color-brand); outline-offset:3px; }
+@media (max-width:700px) { .cmd-pio .section-toolbar calcite-button,.cmd-pio .button-row calcite-button { flex:1 1 100%; } }

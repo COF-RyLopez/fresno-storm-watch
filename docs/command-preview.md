@@ -9,6 +9,8 @@ This is an additive preview at `/command/`, built from `command/`. The existing 
 3. Choose Assign verification. The place, evidence and next review carry into Work. Choose an existing authorized exercise incident before saving. Tasks filter by phase, owner, place and status. Completed work and supporting collections are expandable. Corrections and conflict resolution retain record history.
 4. Capture evidence into Briefing, select an operational period, edit the narrative and save a version. The version includes selected-incident operational records and bounded figure samples. Approval covers its exact digest. Printed charts are recreated from frozen samples, never current feeds. Legacy briefing formats retain their original EOC review/print route.
 5. On phones, Attention, Map and Details retain the selected place. Weather starts off and playback paused. Navigation pauses rendering; returning preserves a valid selected weather frame. Expired scans are labeled, not silently refreshed into a different time.
+6. Work → PIO outreach reuses the existing private editor: confirmed languages, zone applicability, saved population/AFN evidence, exact-message approvals/withdrawals and manual distribution receipts/corrections. Source revisions can be acknowledged or reopened without changing approved messages. Zone or incident-wide PIO handoffs open the Command briefing composer and retain their declared scope, provenance and uncertainty.
+7. Selecting an NWS advisory fits its published footprint and exposes hazard-appropriate local context: river observations for flooding, power for wind, and access/care for winter or travel concerns. Phone selection opens Map first when a footprint exists. Context uses geometric overlap including polygon holes (up to 24 records; first five expanded); it does not establish impact, connectivity or safe access. Authorized facilities appear only after loading them. Missing geometry is explicitly unassessed.
 
 ## Data and access
 
@@ -34,7 +36,7 @@ For the published preview use `https://cof-rylopez.github.io/fresno-storm-watch/
 | `index.html`: Watch, Rivers, Weather, Reservoirs, Alerts, Power, Roads, Drainage, Population | Combined Watch map, place selection and contextual evidence; current route retained | Finish every specialist evidence/action parity check |
 | `eoc.html`: incidents, periods, reports, verification, coordination, checklists, staging, references | Shared private adapters in Work, with append-only corrections | Distinct-account read/write/denial exercise |
 | `eoc.html`: briefings/approvals/withdrawals | New exact Command snapshot and approval; legacy versions open in EOC | Print review and shift handoff exercise |
-| PIO outreach / AFN source-change review | Existing records remain readable and included in snapshots; explicit specialist link | Migrate specialist edit/review interface into Work |
+| PIO outreach / AFN source-change review | Native Work tool using the shared editor, source checks, team reviews and scoped readable Command handoffs | Distinct PIO/approver account exercise and staff acceptance |
 | Pump readiness and assignments | Private inventory in Watch; records preserved; direct existing form/action links | Migrate all readiness-specific review and task actions into Work |
 | `pump-readiness.html`, `zone-population.html` | Preserved focused external entry points | Shared visual polish; retain direct URLs |
 | `flood-scenario.html`, `flood-scenario-3d.html`, `scenario-guide.html` | Preserved outside primary operator navigation | Contextual comparison when a usable product covers selection |
@@ -45,7 +47,7 @@ For the published preview use `https://cof-rylopez.github.io/fresno-storm-watch/
 
 ## Remaining acceptance gates — not claimed complete
 
-- Unified PIO and pump-specific editing; old links remain intentional until replacements pass.
+- Pump-specific editing; old pump links remain intentional until replacements pass. PIO editing is now available inside Work.
 - Full private drainage/basin topology context and contextual building extrusion in Command; current specialist views retain them.
 - Incident-specific reviewed staging, readiness, people, power and road relationship validation with responsible agencies.
 - Exact graphical map capture in approved briefings. The current snapshot freezes camera/product/window settings and numeric figure data; it does not archive an external basemap or weather volume.
@@ -61,6 +63,8 @@ Browser checks include 1280×720 and 390×844 layouts, selected watershed eviden
 2026-11-15 validation: 967 automated tests passed, along with TypeScript, production build and the existing site checks. Independent review fixes cover private selection/DOM cleanup on incident changes and sign-out, superseded searches, failed rainfall windows, radar expiry recovery and cloud refresh after navigation. The live private check was read-only: existing incidents/reports loaded, an incident switch cleared the prior report, and sign-out cleared the private workspace and search text. No exercise records, group memberships or permissions were changed by this check.
 
 The built shell is approximately 21 KB JavaScript, 13 KB CSS and 26 KB HTML before compression, excluding shared modules, Calcite, MapLibre, reference tiles and weather. These are build sizes, not claims of three-second loading or 30 FPS. A performance run must document hardware/network, cold/warm caches and long-session memory before renderer defaults replace the legacy app.
+
+2026-11-15 PIO increment: 972 tests, TypeScript, Vite build and site checks pass. Fresh review findings were corrected and rechecked. The signed-in browser loaded existing exercise outreach with population/AFN snapshots; an unsaved draft survived Follow-ups/PIO and Watch/Work navigation at phone width; a zone handoff opened Command Briefing. The new adapter's save/approval/receipt/retry and source-review paths were tested with the isolated exercise store, not by modifying AGOL records. At 390px the form had no horizontal overflow. Live advisory selection opened the phone map; follow-up geometry tests verify holes, crossing lines and exclusion outside the alert polygon. Browser dialog automation was unable to dismiss the test-draft discard confirmation, so that confirmation was handed to the user. Actual phone and distinct-account acceptance remain pending.
 
 ## Release and rollback
 
