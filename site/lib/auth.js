@@ -1,4 +1,4 @@
-import { loadSdk } from './map.js';
+import { loadSdk } from './sdk.js';
 /** ArcGIS keeps the token per tab (sessionStorage) unless the person ticks "Keep me signed in", so a second tab (Map and EOC
  * side by side) started signed out. Tokens still stay per tab; only a non-secret flag is shared: a tab that opens while the
  * flag is set signs itself in through the County portal (no password while the portal session lasts), and signing out
@@ -8,7 +8,7 @@ const storage=(area,fn)=>{try{return fn(window[area]);}catch{return null;}};
 /** @returns {boolean} Whether this tab should try the portal on load: flag set and no attempt in the last 2 minutes (a cancel never loops). */
 export function shouldAutoSignIn(flag,tried,now=Date.now()){return flag==='1'&&!(now-Number(tried)<120000);}
 /** Shared PKCE sign-in. Private controllers clear memory before sign-out or expiry. */
-export async function setupAuth(config,exercise,onChange=()=>{}) {
+export async function setupAuth(config,exercise,onChange=()=>{},{loadSdk:openSdk=loadSdk}={}) {
   const button=document.querySelector('#sign-in'),status=document.querySelector('#identity-status');
   const label=text=>button.setAttribute('text',text),help=()=>{const h=document.querySelector('#signin-help');h?.setAttribute(h.localName==='calcite-block'?'expanded':'open','');};
   if(!config.clientId||exercise){label(exercise?'Exercise only':'ArcGIS sign-in setup');button.addEventListener('click',help);onChange(null);return {check:async()=>false,invalidate:()=>onChange(null)};}
@@ -16,7 +16,7 @@ export async function setupAuth(config,exercise,onChange=()=>{}) {
   let portal=null,identity=null,checking=null,generation=0;
   const clear=(message='Signed out · private workspace cleared')=>{generation++;portal=null;onChange(null);label('County ArcGIS sign-in');status.textContent=message;};
   try {
-    const sdk=await loadSdk(),[OAuthInfo,manager,Portal]=await sdk.import(['@arcgis/core/identity/OAuthInfo.js','@arcgis/core/identity/IdentityManager.js','@arcgis/core/portal/Portal.js']);identity=manager;
+    const sdk=await openSdk(),[OAuthInfo,manager,Portal]=await sdk.import(['@arcgis/core/identity/OAuthInfo.js','@arcgis/core/identity/IdentityManager.js','@arcgis/core/portal/Portal.js']);identity=manager;
     identity.registerOAuthInfos([new OAuthInfo({appId:config.clientId,portalUrl:config.portalUrl,flowType:'authorization-code',popup:false,authNamespace:config.authNamespace})]);
     const check=async()=>{
       if(checking)return checking;const epoch=generation;

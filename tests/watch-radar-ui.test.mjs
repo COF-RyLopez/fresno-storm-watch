@@ -34,7 +34,8 @@ async function until(predicate,message){
 // Keep the real controller, playback, timeline validation, checksums and decoding.
 // Only the DOM, clock, scheduled callbacks, HTTP transport and map boundary are doubled.
 function harness(t){
- t.mock.method(Date,'now',()=>NOW);
+ let now=NOW;
+ t.mock.method(Date,'now',()=>now);
  const document=new EventTarget();document.hidden=false;
  document.createElement=tag=>new FakeElement(tag);
  document.createTextNode=text=>({textContent:text});
@@ -79,7 +80,7 @@ function harness(t){
  // Cloud pairing has its own tests; use the actual off control before opening radar.
  click(ui.cloudButton);
  t.after(()=>{ui.close();restore();});
- return {ui,info,state,config,requests,timers,scanLink:links.get('NOAA scan file'),
+ return {ui,info,state,config,requests,timers,advanceClock(ms){now+=ms;},scanLink:links.get('NOAA scan file'),
   async open(){ui.open();await until(()=>state.patches!==null,'initial echo patches');},
   async volume(){click(ui.volumeButton);await until(()=>state.cube!==null,'experimental volume');},
   refresh(){const entry=[...timers].find(([,timer])=>timer.delay===60000);assert.ok(entry,'live refresh is scheduled');timers.delete(entry[0]);entry[1].callback();},
@@ -177,4 +178,20 @@ test('a GPU failure followed by missing patches reports unavailable instead of r
  await until(()=>h.info.textContent==='Hanford radar unavailable','failed GPU fallback status');
  assert.equal(h.state.cube,null);assert.equal(h.state.patches,null);assert.equal(h.scanLink.hidden,true);
  assert.equal(h.ui.controls.children[1].attributes.get('aria-valuetext'),'No scan selected');
+});
+
+test('resuming after the live scan expires enables an explicit Latest retry', async t=>{
+ const h=harness(t);await h.open();
+ const [play,,latest]=h.ui.controls.children;
+ assert.equal(latest.disabled,true);
+ h.ui.suspend();h.advanceClock(121*60_000);h.ui.resume();
+ assert.match(h.info.textContent,/expired/);
+ assert.equal(h.scanLink.hidden,true);
+ assert.equal(latest.disabled,false);
+ assert.equal(play.textContent,'Play');
+ assert.equal(h.state.patches,null);
+ const before=h.requests.length;
+ click(latest);
+ await until(()=>h.requests.length>before,'explicit Latest retry');
+ await until(()=>h.info.textContent==='Hanford radar unavailable','expired source status');
 });

@@ -30,7 +30,9 @@
     "collect:zone-population": "node --use-system-ca scripts/acquire-zone-population.mjs",
     "build:zone-population": "node --use-system-ca scripts/build-zone-population.mjs",
     "build:import-map": "node scripts/import-map.mjs",
-    "build:waterway-archives": "node scripts/pack-waterway-archives.mjs"
+    "build:waterway-archives": "node scripts/pack-waterway-archives.mjs",
+    "build:command": "vite build --config command/vite.config.ts",
+    "check:command": "tsc -p command/tsconfig.json"
   },
   "devDependencies": {
     "@mapbox/vector-tile": "2.0.4",
@@ -41,6 +43,8 @@
     "pbf": "4.0.1",
     "pmtiles": "4.5.0",
     "polygon-clipping": "0.15.7",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
     "vt-pbf": "3.1.3"
   }
 }

@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {authorizeDrainage} from './drainage-model.js';
 import {verifyCopySchema,readPumpCopy} from './pump-copy-model.js';
 import {privateObjectIds} from './eoc-store.js';

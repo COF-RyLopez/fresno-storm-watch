@@ -107,6 +107,10 @@ export function installForecastClouds({session,info,items,source,visible}){
   }
  }
  const firstUpcoming=run=>Math.max(0,run.frames.findIndex(frame=>frame.valid>=Date.now()));
+ function scheduleRefresh(){
+  clearTimeout(refreshTimer);
+  if(active&&!document.hidden&&!gpuFailed)refreshTimer=setTimeout(()=>void refresh(),5*60_000);
+ }
  async function refresh(){
   clearTimeout(refreshTimer);
   if(!active||document.hidden||gpuFailed)return;
@@ -124,7 +128,7 @@ export function installForecastClouds({session,info,items,source,visible}){
     }
    }finally{if(request===current){request=null;sync();}}
   }
-  if(active)refreshTimer=setTimeout(()=>void refresh(),5*60_000);
+  scheduleRefresh();
  }
  function pause(){
   stopRequests();
@@ -152,6 +156,13 @@ export function installForecastClouds({session,info,items,source,visible}){
   else void refresh();
  });
  return {controls,
+  suspend(){active=false;clearTimeout(refreshTimer);stopRequests();session.forecastWind(null);session.forecastClouds(null);},
+  resume(){
+   active=true;controls.hidden=false;
+   if(volume&&catalog?.run+12*HOUR>=Date.now()){session.forecastClouds(volume,renderFailure);drawWind();info.textContent=label(displayed);sync();}
+   else{clearWeather();info.textContent='Selected forecast run expired · waiting for the next update';sync();}
+   scheduleRefresh();
+  },
   open(){
    active=true;gpuFailed=windFailed=false;controls.hidden=false;sync();
    info.textContent='Loading HRRR forecast clouds…';items.replaceChildren();
