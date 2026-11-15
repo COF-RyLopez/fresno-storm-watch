@@ -1,0 +1,4 @@
+# Python 3.11+. Versions exercised against the native NOAA GOES-18 product.
+numpy==2.5.4
+netCDF4==1.7.4
+pyproj==3.8.0

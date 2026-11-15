@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {hanfordRadarTimeline,loadHanfordTimeline,loadHanfordFrame} from '../site/lib/hanford-radar-data.js';
+import {hanfordRadarTimeline,loadHanfordTimeline,loadHanfordFrame,RADAR_EXTENT} from '../site/lib/hanford-radar-data.js';
 import {radarEchoCells} from '../site/lib/hanford-radar-cells.js';
 
 const now=Date.parse('2026-11-15T02:14:00Z');
@@ -55,7 +55,7 @@ test('downloads verified packed altitude and rejects incomplete, altered or out-
  await assert.rejects(loadHanfordFrame(invalid.frame,{...options,fetchImpl:read(invalid.manifest,invalid.body)}),/sample/);
 });
 
-test('radar cells preserve sampled altitude bands, use the strongest return and leave gaps empty',()=>{
+test('radar footprints use the strongest sampled return across altitude and leave gaps empty',()=>{
  const samples=new Float32Array([
   -120.597,36.303,1200,31,
   -120.598,36.302,1700,22,
@@ -64,7 +64,30 @@ test('radar cells preserve sampled altitude bands, use the strongest return and 
   -120.1,36.8,1200,55
  ]);
  const cells=radarEchoCells(samples);
- assert.deepEqual(cells.map(cell=>[cell.bottom,cell.top,cell.dbz]),[[1000,2000,31],[3000,4000,46],[1000,2000,55]]);
- assert.equal(radarEchoCells(samples,10).length,4);
+ assert.deepEqual(cells.map(cell=>[cell.height,cell.dbz]),[[3800,46],[1200,55]]);
+ assert.equal(radarEchoCells(samples,10).length,2,'A weaker return at another altitude does not create an extra footprint.');
  assert(cells.every(cell=>cell.east-cell.west<0.05&&cell.north-cell.south<0.04));
+});
+
+test('equal-strength echoes choose the lower actual sample deterministically, without altitude quantization',()=>{
+ const samples=[[-120.597,36.303,3789,46],[-120.598,36.302,1655,46],[-120.596,36.303,1000,31]];
+ const forward=radarEchoCells(new Float32Array(samples.flat()));
+ const reverse=radarEchoCells(new Float32Array(samples.toReversed().flat()));
+ assert.deepEqual(forward,reverse);assert.equal(forward[0].height,1655);assert.equal(forward[0].dbz,46);
+});
+
+test('weak-return filtering changes only occupied horizontal support and never expands an edge bin',()=>{
+ const [west,south,east,north]=RADAR_EXTENT;
+ const samples=new Float32Array([west,south,1200,19,east,north,2912,35]);
+ const normal=radarEchoCells(samples,20),weak=radarEchoCells(samples,10);
+ assert.equal(normal.length,1);assert.equal(weak.length,2);assert.equal(normal[0].height,2912);
+ for(const cell of weak){assert(cell.west>=west&&cell.east<=east&&cell.south>=south&&cell.north<=north);assert(cell.west<cell.east&&cell.south<cell.north);}
+ assert.deepEqual(radarEchoCells(samples,40),[]);assert.deepEqual(radarEchoCells(new Float32Array()),[]);
+});
+
+test('invalid footprint samples and thresholds cannot create NaN geometry',()=>{
+ for(const sample of [[-119.5,36.6,NaN,25],[-119.5,36.6,-1,25],[-119.5,36.6,12001,25],[-125,36.6,1200,25],[-119.5,36.6,1200,80]])
+  assert.throws(()=>radarEchoCells(new Float32Array(sample)),/sample/);
+ assert.throws(()=>radarEchoCells(new Float32Array([1,2,3])),/sample/);
+ assert.throws(()=>radarEchoCells(new Float32Array(),NaN),/threshold/);
 });

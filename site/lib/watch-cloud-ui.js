@@ -1,4 +1,5 @@
 import {CLOUD_PAIR_GAP,loadCloudTimes,loadCloudImage,matchCloudObservation} from './watch-cloud-data.js';
+import {CLOUD_TOP_MAX_GAP,cloudTopFrameAt,loadCloudTopCatalog,loadCloudTopFrame} from './cloud-top-height-data.js';
 
 const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 
@@ -8,27 +9,31 @@ export function installWatchClouds(session){
  button.scale='s';button.textContent='Clouds';button.hidden=true;
  const status=document.createElement('p');
  status.className='watch-cloud-time';status.hidden=true;
- let enabled=true,lifecycle,target,rendered=null,generation=0,checked=0,times=[],pending;
- const images=new Map();
+ let enabled=true,lifecycle,target,rendered=null,generation=0;
+ const catalogs=new Map(),frames=new Map();
  function sync(){
   button.appearance=enabled?'solid':'outline';button.kind='neutral';
   button.setAttribute('aria-pressed',String(enabled));
   status.hidden=!lifecycle||!enabled;
  }
- function clearImage(){if(rendered!==null)session.cloud(null);rendered=null;}
- function catalog(signal){
-  if(times.length&&Date.now()-checked<5*60_000)return times;
-  if(pending)return pending;
-  const task=loadCloudTimes({signal}).then(result=>{if(!signal.aborted){times=result;checked=Date.now();}return result;})
-   .finally(()=>{if(pending===task)pending=null;});
-  pending=task;
+ function clearImage(){
+  if(rendered?.kind==='surface')session.cloudTops(null);
+  if(rendered?.kind==='infrared')session.cloud(null);
+  rendered=null;
+  status.removeAttribute('title');
+ }
+ function catalog(kind,load,signal){
+  const previous=catalogs.get(kind);
+  if(previous&&Date.now()-previous.checked<5*60_000)return previous.task;
+  const task=load({signal}).catch(error=>{if(catalogs.get(kind)?.task===task)catalogs.delete(kind);throw error;});
+  catalogs.set(kind,{checked:Date.now(),task});
   return task;
  }
- function image(stamp,signal){
-  if(images.has(stamp))return images.get(stamp);
-  const task=loadCloudImage(stamp,{signal}).catch(error=>{if(images.get(stamp)===task)images.delete(stamp);throw error;});
-  images.set(stamp,task);
-  if(images.size>8)images.delete(images.keys().next().value);
+ function frame(key,load){
+  if(frames.has(key))return frames.get(key);
+  const task=load().catch(error=>{if(frames.get(key)===task)frames.delete(key);throw error;});
+  frames.set(key,task);
+  if(frames.size>4)frames.delete(frames.keys().next().value);
   return task;
  }
  async function observe(when){
@@ -36,18 +41,38 @@ export function installWatchClouds(session){
   if(!lifecycle||!enabled)return;
   const signal=lifecycle.signal,run=++generation,observation=target;
   const current=()=>!signal.aborted&&generation===run;
-  if(rendered!==null&&(rendered>observation||observation-rendered>CLOUD_PAIR_GAP))clearImage();
-  if(rendered===null)status.textContent='Checking GOES clouds…';
+  if(rendered&&(rendered.stamp>observation||observation-rendered>(rendered.kind==='surface'?CLOUD_TOP_MAX_GAP:CLOUD_PAIR_GAP)))clearImage();
+  if(!rendered)status.textContent='Checking GOES clouds…';
   try{
-   const frames=await catalog(signal);
+   const catalogFrames=await catalog('surface',loadCloudTopCatalog,signal);
    if(!current())return;
-   const newTime=matchCloudObservation(frames,observation,Date.now());
+   const scene=cloudTopFrameAt(catalogFrames,observation);
+   if(scene?.count){
+    if(rendered?.key===scene.sha256&&rendered.stamp===scene.end)return;
+    const mesh=await frame(scene.sha256,()=>loadCloudTopFrame(scene,{signal}));
+    if(!current())return;
+    if(rendered?.kind==='infrared')clearImage();
+    session.cloudTops(mesh.vertices);
+    rendered={kind:'surface',stamp:scene.end,key:scene.sha256};
+    status.textContent=`3D cloud tops · GOES-18 ${time.format(scene.end)}`;
+    status.title=`Regional cloud-top height estimate ${(mesh.min/1000).toFixed(1)}–${(mesh.max/1000).toFixed(1)} km (geopotential)`;
+    return;
+   }
+  }catch{
+   // Use the independently dated infrared image when the height retrieval is unavailable.
+  }
+  if(!current())return;
+  if(rendered?.kind==='surface')clearImage();
+  try{
+   const times=await catalog('infrared',loadCloudTimes,signal);
+   if(!current())return;
+   const newTime=matchCloudObservation(times,observation,Date.now());
    if(newTime===null){clearImage();status.textContent='No GOES image near this scan';return;}
-   if(newTime===rendered)return;
+   if(rendered?.stamp===newTime)return;
    clearImage();status.textContent='Loading GOES clouds…';
-   const frame=await image(newTime,signal);
+   const image=await frame(`ir:${newTime}`,()=>loadCloudImage(newTime,{signal}));
    if(!current())return;
-   session.cloud(frame);rendered=newTime;status.textContent=`Clouds · GOES IR ${time.format(newTime)}`;
+   session.cloud(image);rendered={kind:'infrared',stamp:newTime};status.textContent=`Clouds (2D IR) · ${time.format(newTime)}`;
   }catch{
    if(current()){clearImage();status.textContent='GOES clouds unavailable';}
   }
@@ -59,6 +84,6 @@ export function installWatchClouds(session){
  });
  return {button,status,observe,
   open(){lifecycle=new AbortController();button.hidden=false;sync();void observe(Date.now());},
-  close(){lifecycle?.abort();lifecycle=null;button.hidden=true;pending=null;images.clear();times=[];checked=0;clearImage();sync();}
+  close(){lifecycle?.abort();lifecycle=null;button.hidden=true;frames.clear();catalogs.clear();clearImage();sync();}
  };
 }
