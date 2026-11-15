@@ -3,6 +3,7 @@ import {waitForTerrain} from './watch-terrain-ready.js';
 import {createHanfordRadarLayer} from './hanford-radar-layer.js';
 import {createHanfordVolumeLayer} from './hanford-volume-layer.js';
 import {createCloudTopLayer} from './cloud-top-layer.js';
+import {installCloudTopInspection} from './cloud-top-inspection.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 export async function createWatchTerrain({container,onSelect,onError}){
@@ -38,25 +39,15 @@ export async function createWatchTerrain({container,onSelect,onError}){
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
  const records=['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours'];
  const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
- const hover=new ml.Popup({className:'watch-feature-hover',closeButton:false,closeOnClick:false,focusAfterOpen:false,offset:12});
- const clearHover=()=>{hover.remove();map.getCanvas().style.cursor='';};
- map.on('mousemove',e=>{
-  if(!matchMedia('(hover: hover)').matches||map.isMoving())return;
-  const record=recordAt(e.point);
-  if(!record?.name){clearHover();return;}
-  map.getCanvas().style.cursor='pointer';
-  hover.setText(record.name).setLngLat(e.lngLat);
-  if(!hover.isOpen())hover.addTo(map);
- });
- map.on('mouseout',clearHover);map.on('movestart',clearHover);
- map.on('click',e=>{clearHover();const record=recordAt(e.point);if(record)onSelect(record);});
  let destroyed=false,overhead=false,pendingBounds=null;
  const imageUrls=new Map();
  let radarLayer;
  let volumeLayer;
  let volumeFailure;
  let cloudTopLayer;
- function radar(samples,minDbz){
+ let cloudMetadata;
+ const inspection=installCloudTopInspection({map,Popup:ml.Popup,recordAt,onSelect,getSurface:()=>cloudTopLayer,getMetadata:()=>cloudMetadata});
+ function radar(samples,minDbz,options){
   if(!samples?.length){
    if(map.getLayer('watch-hanford-radar'))map.removeLayer('watch-hanford-radar');
    radarLayer=null;
@@ -66,9 +57,9 @@ export async function createWatchTerrain({container,onSelect,onError}){
    radarLayer=createHanfordRadarLayer(ml.MercatorCoordinate);
    map.addLayer(radarLayer,'watch-lines');
   }
-  radarLayer.setSamples(samples,minDbz);
+  radarLayer.setSamples(samples,minDbz,options);
  }
- function radarVolume(volume,minDbz,onFailure){
+ function radarVolume(volume,minDbz,onFailure,options){
   const id='watch-hanford-volume';
   if(!volume){if(map.getLayer(id))map.removeLayer(id);volumeLayer=volumeFailure=null;return;}
   if(onFailure)volumeFailure=onFailure;
@@ -88,9 +79,10 @@ export async function createWatchTerrain({container,onSelect,onError}){
    try{map.addLayer(candidate,'watch-lines');volumeLayer=candidate;}
    catch(error){if(map.getLayer(id))map.removeLayer(id);throw error;}
   }
-  volumeLayer.setVolume(volume,minDbz);
+  volumeLayer.setVolume(volume,minDbz,options);
  }
- function cloudTops(vertices){
+ function cloudTops(vertices,options={}){
+  inspection.clear();cloudMetadata=vertices?.length?options:null;
   const id='watch-goes-cloud-tops';
   if(!vertices?.length){
    if(map.getLayer(id))map.removeLayer(id);
@@ -102,7 +94,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
    const before=map.getLayer('watch-hanford-radar')?'watch-hanford-radar':map.getLayer('watch-hanford-volume')?'watch-hanford-volume':'watch-lines';
    map.addLayer(cloudTopLayer,before);
   }
-  cloudTopLayer.setSurface(vertices);
+  return cloudTopLayer.setSurface(vertices,options);
  }
  function setImage(id,image,paint){
   if(map.getLayer(id))map.removeLayer(id);
@@ -120,5 +112,5 @@ export async function createWatchTerrain({container,onSelect,onError}){
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
-  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();clearHover();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
+  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
 }
