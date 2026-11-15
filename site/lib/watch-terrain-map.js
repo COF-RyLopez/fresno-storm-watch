@@ -1,5 +1,6 @@
 import {pilotStyle,libreStyle} from './pilot-map.js';
 import {waitForTerrain} from './watch-terrain-ready.js';
+import {createHanfordRadarLayer} from './hanford-radar-layer.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 export async function createWatchTerrain({container,onSelect,onError}){
@@ -35,6 +36,19 @@ export async function createWatchTerrain({container,onSelect,onError}){
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
  map.on('click',e=>{const f=map.queryRenderedFeatures(e.point,{layers:['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours']})[0];if(f)onSelect(f.properties);});
  let destroyed=false,overhead=false,pendingBounds=null,rainUrl=null;
+ let radarLayer;
+ function radar(samples){
+  if(!samples?.length){
+   if(map.getLayer('watch-hanford-radar'))map.removeLayer('watch-hanford-radar');
+   radarLayer=null;
+   return;
+  }
+  if(!map.getLayer('watch-hanford-radar')){
+   radarLayer=createHanfordRadarLayer(ml.MercatorCoordinate);
+   map.addLayer(radarLayer,'watch-lines');
+  }
+  radarLayer.setSamples(samples);
+ }
  function rain(image){
   if(map.getLayer('watch-basin-rain'))map.removeLayer('watch-basin-rain');
   if(map.getSource('watch-basin-rain'))map.removeSource('watch-basin-rain');
@@ -48,6 +62,6 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const fit=(bounds,animate)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds=bounds;return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds,false);});observer.observe(container);
  return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true){if(destroyed)return;map.resize();fit(bounds,animate);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
-  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},rain,
+  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},rain,radar,
   destroy(){if(destroyed)return;destroyed=true;observer.disconnect();map.remove();if(rainUrl)URL.revokeObjectURL(rainUrl);}};
 }

@@ -227,7 +227,8 @@
 .watershed-timeline-readout a{font-size:12px}
 @media(max-width:600px){.watershed-timeline select{min-height:44px;font-size:16px}}
 .watershed-player{position:absolute;z-index:2;left:50%;bottom:30px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 108px);box-sizing:border-box;padding:8px 10px;border:1px solid var(--calcite-color-border-2);border-radius:6px;background:var(--calcite-color-surface-1);color:var(--calcite-color-text-1);box-shadow:0 4px 18px #0005;font-size:12px}
-.watershed-player-controls,.watershed-player-colors{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
+.watershed-weather-modes,.watershed-player-controls,.watershed-player-colors{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
+.watershed-weather-modes{margin-bottom:6px}
 .watershed-player-controls select{min-width:0;max-width:100%;min-height:32px;background:var(--calcite-color-surface-2);border:1px solid var(--calcite-color-border-2);color:inherit;font:inherit}
 .watershed-player :is(select,a,summary):focus-visible{outline:2px solid var(--calcite-color-focus);outline-offset:2px}
 .watershed-player p{margin:5px 0;line-height:1.35}
@@ -242,6 +243,7 @@
  .watershed-player{left:46px;right:8px;bottom:42px;width:auto;max-width:none;transform:none}
  .watershed-player-controls{gap:4px 8px}
  .watershed-player-controls :is(select,calcite-button){min-height:44px;align-content:center}
+ .watershed-weather-modes calcite-button{min-height:44px;align-content:center}
  .watershed-player-links a,.watershed-player-links summary{display:inline-flex;min-height:30px;align-items:center}
  .watershed-player-controls select{font-size:16px;flex:1 1 145px}
 }
