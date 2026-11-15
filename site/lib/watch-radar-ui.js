@@ -133,9 +133,9 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
    active=true;following=true;failed=false;controls.hidden=false;
    clouds.open();
    info.textContent='Loading Hanford radar…';scanLink.hidden=true;syncControls();colors();
-   items.replaceChildren(document.createTextNode('Shaded cells show sampled radar echoes at estimated heights. GOES infrared shows cloud and surface patterns in grayscale. The satellite image has its own observation time and is projected onto the map without estimated cloud heights.'),
+   items.replaceChildren(document.createTextNode('Reflectivity patches show the strongest sampled Hanford echo in each roughly 4 km bin at its estimated height. GOES-18 retrieves geopotential cloud-top heights. Cloud positions are approximate and can shift horizontally with satellite viewing angle. The map uses a 2D infrared image when matching cloud-top heights are unavailable.'),
     document.createElement('br'),weakLabel,document.createElement('br'),scanLink,document.createTextNode(' '),coverage,document.createTextNode(' '),
-    source('NOAA GOES imagery','https://www.cnrfc.l.noaa.gov/satellite.php'));
+    source('NOAA cloud-top height','https://vlab.noaa.gov/web/towr-s/goes-cloud-top-height'));
    void refresh();
   },
   close(){

@@ -46,6 +46,11 @@ jobs:
           work/exposure-env/bin/python -m unittest discover -s tests -p 'test_waterway_export.py'
           work/exposure-env/bin/python -m pip install --disable-pip-version-check -r scripts/building-requirements.txt
           work/exposure-env/bin/python -m unittest discover -s tests -p 'test_power_buildings.py'
+      - name: Test GOES cloud-top projection and retrieval quality
+        run: |
+          python3 -m venv work/goes-env
+          work/goes-env/bin/python -m pip install --disable-pip-version-check -r scripts/goes-cloud-tops-requirements.txt
+          work/goes-env/bin/python -m unittest discover -s tests -p 'test_goes_cloud_tops.py'
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published
@@ -115,6 +120,11 @@ jobs:
           # Accepted from either a repository variable or a secret; a secret only keeps it out of run logs.
           GOOGLE_MAP_TILES_KEY: ${{ vars.GOOGLE_MAP_TILES_KEY || secrets.GOOGLE_MAP_TILES_KEY }}
         run: node -e "const k=(process.env.GOOGLE_MAP_TILES_KEY||'').trim();if(!k){console.log('No GOOGLE_MAP_TILES_KEY; 3D page uses Esri imagery.');process.exit(0)}if(!/^[A-Za-z0-9_-]{20,100}$/.test(k))throw new Error('GOOGLE_MAP_TILES_KEY is not an API key');require('fs').writeFileSync('site/data/google-tiles.json',JSON.stringify({key:k}));console.log('Google Map Tiles key written.')"
+      - name: Collect recent NOAA GOES-18 cloud-top heights
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        timeout-minutes: 3
+        continue-on-error: true
+        run: work/goes-env/bin/python scripts/collect-goes-cloud-tops.py --reuse-url https://cof-rylopez.github.io/fresno-storm-watch/data/goes-cloud-tops/
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

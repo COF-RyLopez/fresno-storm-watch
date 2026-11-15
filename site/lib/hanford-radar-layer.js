@@ -2,30 +2,34 @@ import {radarSampleColor} from './hanford-radar-data.js';
 import {radarEchoCells} from './hanford-radar-cells.js';
 
 const vertex=`#version 300 es
-layout(location=0) in vec3 minimum;
-layout(location=1) in vec3 maximum;
+layout(location=0) in vec4 bounds;
+layout(location=1) in float altitude;
 layout(location=2) in vec3 reflectivityColor;
 uniform mat4 matrix;
 out vec3 color;
-const vec3 corners[8] = vec3[8](
-  vec3(0,0,0),vec3(1,0,0),vec3(1,1,0),vec3(0,1,0),
-  vec3(0,0,1),vec3(1,0,1),vec3(1,1,1),vec3(0,1,1)
+out vec2 uv;
+const vec2 corners[6] = vec2[6](
+  vec2(0,0),vec2(1,0),vec2(0,1),vec2(0,1),vec2(1,0),vec2(1,1)
 );
-const int faces[36] = int[36](
-  0,2,1,0,3,2, 4,5,6,4,6,7, 0,1,5,0,5,4,
-  1,2,6,1,6,5, 2,3,7,2,7,6, 3,0,4,3,4,7
-);
-const float shade[6] = float[6](0.65,1.0,0.76,0.87,0.76,0.87);
 void main() {
-  gl_Position = matrix * vec4(mix(minimum, maximum, corners[faces[gl_VertexID]]), 1.0);
-  color = shade[gl_VertexID / 6] * reflectivityColor;
+  uv = corners[gl_VertexID];
+  gl_Position = matrix * vec4(mix(bounds.xy, bounds.zw, uv), altitude, 1.0);
+  color = reflectivityColor;
 }`;
 const fragment=`#version 300 es
 precision mediump float;
 in vec3 color;
+in vec2 uv;
 out vec4 pixel;
 void main() {
-  pixel = vec4(color * 0.74, 0.74);
+  // Round and feather inward only: never color outside this occupied horizontal bin.
+  vec2 edge = abs(uv - vec2(0.5)) - vec2(0.38);
+  float distanceToEdge = length(max(edge, vec2(0.0))) + min(max(edge.x, edge.y), 0.0) - 0.12;
+  if (distanceToEdge >= 0.0) discard;
+  float feather = max(fwidth(distanceToEdge) * 1.25, 0.04);
+  float coverage = 1.0 - smoothstep(-feather, 0.0, distanceToEdge);
+  float opacity = mix(0.28, 0.48, smoothstep(0.0, 0.16, -distanceToEdge)) * coverage;
+  pixel = vec4(color * opacity, opacity);
 }`;
 
 function shader(gl,type,code){
@@ -54,7 +58,11 @@ function program(gl){
  finally{if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);}
 }
 
-/** Use MapLibre's existing depth buffer and one instance per occupied echo cell. */
+/**
+ * Soft horizontal reflectivity footprints, not boxes or reconstructed storm volumes.
+ * Each occupied ~4 km bin keeps its strongest return's estimated sample height.
+ * Terrain depth is respected, but radar never writes depth that could hide ground labels.
+ */
 export function createHanfordRadarLayer(MercatorCoordinate){
  let map,compiled,buffer,vao,matrix,vertices=null,count=0,input=null,minimum;
  const mvp=new Float32Array(16);
@@ -73,8 +81,8 @@ export function createHanfordRadarLayer(MercatorCoordinate){
     if(!buffer||!vao)throw Error('Hanford radar buffer unavailable');
     matrix=gl.getUniformLocation(compiled,'matrix');
     gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-    for(let index=0;index<3;index++){
-     gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,3,gl.FLOAT,false,36,index*12);
+    for(const [index,size,offset]of [[0,4,0],[1,1,16],[2,3,20]]){
+     gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,size,gl.FLOAT,false,32,offset);
      gl.vertexAttribDivisor(index,1);
     }
    }catch(error){release(gl);throw error;}
@@ -82,30 +90,34 @@ export function createHanfordRadarLayer(MercatorCoordinate){
   },
   setSamples(samples,minDbz){
    if(input===samples&&minimum===minDbz)return;
-   input=samples;minimum=minDbz;
    const cells=radarEchoCells(samples,minDbz);
-   count=cells.length;vertices=new Float32Array(count*9);
-   cells.forEach(({west,south,east,north,bottom,top,dbz},index)=>{
-    const start=MercatorCoordinate.fromLngLat([west,north],bottom);
-    const end=MercatorCoordinate.fromLngLat([east,south],top);
+   const next=new Float32Array(cells.length*8);
+   cells.forEach(({west,south,east,north,height,dbz},index)=>{
+    const start=MercatorCoordinate.fromLngLat([west,north]);
+    const end=MercatorCoordinate.fromLngLat([east,south]);
+    const level=MercatorCoordinate.fromLngLat([(west+east)/2,(south+north)/2],height);
     const [r,g,b]=radarSampleColor(dbz);
-    vertices.set([start.x,start.y,start.z,end.x,end.y,end.z,r/255,g/255,b/255],index*9);
+    next.set([start.x,start.y,end.x,end.y,level.z,r/255,g/255,b/255],index*8);
    });
-   map.triggerRepaint();
+   input=samples;minimum=minDbz;count=cells.length;vertices=next;
+   map?.triggerRepaint();
   },
   render(gl,{defaultProjectionData}){
    if(!compiled||!count)return;
-   gl.bindVertexArray(vao);
-   if(vertices){
-    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-    gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
-    vertices=null;
-   }
-   gl.useProgram(compiled);
-   mvp.set(defaultProjectionData.mainMatrix);
-   gl.uniformMatrix4fv(matrix,false,mvp);
-   gl.drawArraysInstanced(gl.TRIANGLES,0,36,count);
-   gl.bindVertexArray(null);
+   const depthWrite=gl.getParameter(gl.DEPTH_WRITEMASK),cull=gl.isEnabled(gl.CULL_FACE);
+   try{
+    gl.depthMask(false);gl.disable(gl.CULL_FACE);gl.bindVertexArray(vao);
+    if(vertices){
+     gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+     gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
+     vertices=null;
+    }
+    gl.useProgram(compiled);
+    mvp.set(defaultProjectionData.mainMatrix);
+    gl.uniformMatrix4fv(matrix,false,mvp);
+    // MapLibre supplies premultiplied-alpha blending; the shader keeps the same dBZ colors.
+    gl.drawArraysInstanced(gl.TRIANGLES,0,6,count);
+   }finally{gl.bindVertexArray(null);gl.depthMask(depthWrite);if(cull)gl.enable(gl.CULL_FACE);}
   },
   onRemove(_map,gl){release(gl);count=0;vertices=input=map=null;}
  };

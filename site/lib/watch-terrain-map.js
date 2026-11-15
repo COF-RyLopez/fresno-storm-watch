@@ -1,6 +1,7 @@
 import {pilotStyle,libreStyle} from './pilot-map.js';
 import {waitForTerrain} from './watch-terrain-ready.js';
 import {createHanfordRadarLayer} from './hanford-radar-layer.js';
+import {createCloudTopLayer} from './cloud-top-layer.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 export async function createWatchTerrain({container,onSelect,onError}){
@@ -51,6 +52,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
  let destroyed=false,overhead=false,pendingBounds=null;
  const imageUrls=new Map();
  let radarLayer;
+ let cloudTopLayer;
  function radar(samples,minDbz){
   if(!samples?.length){
    if(map.getLayer('watch-hanford-radar'))map.removeLayer('watch-hanford-radar');
@@ -62,6 +64,20 @@ export async function createWatchTerrain({container,onSelect,onError}){
    map.addLayer(radarLayer,'watch-lines');
   }
   radarLayer.setSamples(samples,minDbz);
+ }
+ function cloudTops(vertices){
+  const id='watch-goes-cloud-tops';
+  if(!vertices?.length){
+   if(map.getLayer(id))map.removeLayer(id);
+   cloudTopLayer=null;
+   return;
+  }
+  if(!map.getLayer(id)){
+   cloudTopLayer=createCloudTopLayer(ml.MercatorCoordinate);
+   const before=map.getLayer('watch-hanford-radar')?'watch-hanford-radar':'watch-lines';
+   map.addLayer(cloudTopLayer,before);
+  }
+  cloudTopLayer.setSurface(vertices);
  }
  function setImage(id,image,paint){
   if(map.getLayer(id))map.removeLayer(id);
@@ -76,7 +92,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
  return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
-  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,
+  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
   destroy(){if(destroyed)return;destroyed=true;observer.disconnect();clearHover();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
