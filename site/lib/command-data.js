@@ -17,6 +17,7 @@ import {
   boundedFigure,
   orderedConcerns,
   geometryBounds,
+  advisoryProfile,
 } from "./command-model.js";
 import { readCareCollection } from "./care-data.js";
 import { CARE_SOURCES, ZONE_STATUS, zonesAt } from "./care-model.js";
@@ -265,11 +266,12 @@ export function alertConcerns(alerts) {
       group: 0,
       review: true,
       time: a.onset || a.issued,
-      timeLabel: "Issued / effective",
+      timeLabel: a.onset ? "Effective" : "Issued",
       quality: a.quality || "Official NWS " + a.category,
-      nextAction: "Review official instructions and affected locations",
+      nextAction: advisoryProfile(a.type).nextAction,
       details: [
         `Issuing office ${a.office}`,
+        "Issued " + (a.issued ? new Date(a.issued).toISOString() : "not supplied"),
         "Expires " +
           (a.expires ? new Date(a.expires).toISOString() : "not supplied"),
       ],
@@ -285,7 +287,7 @@ export function alertConcerns(alerts) {
           kind: "alert",
           color: (CATEGORIES[a.category] || CATEGORIES.Other).color,
         },
-      })),
+      })).filter((f) => f.geometry),
     }));
 }
 

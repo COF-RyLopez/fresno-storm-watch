@@ -1,5 +1,6 @@
 import { createPrivateStore } from "./eoc-store.js";
 import { loadCoreSdk } from "./sdk.js";
+import { isPio } from "./pio-model.js";
 import {
   approvalFor,
   briefingSnapshot,
@@ -20,6 +21,7 @@ const finished = (record) =>
 
 export function taskRows(records, phase = "all", now = Date.now()) {
   return heads(records.coordination ?? records)
+    .filter((row) => !row.heads.some((r) => isPio(r.payload)))
     .filter(
       (row) =>
         phase === "all" ||
@@ -57,6 +59,9 @@ export async function buildCommandBriefing({
   period,
   records,
   now = Date.now(),
+  scope = "all",
+  zoneKey = null,
+  sourceNotices = [],
 }) {
   const evidence = structuredClone(captures);
   const notifications = evidence.map(({ id, evidence: item }) => ({
@@ -84,22 +89,25 @@ export async function buildCommandBriefing({
     .sort((a, b) => b.created - a.created)
     .find(
       (row) =>
-        row.payload.snapshot.scope === "all" &&
+        row.payload.snapshot.scope === scope &&
+        (row.payload.snapshot.pioZoneKey ?? null) === zoneKey &&
         approvalFor(row, scoped.approvals)?.payload.status === "Approved",
     );
   const { snapshot } = await briefingSnapshot({
     records: scoped,
     period,
-    notifications,
+    notifications: [...notifications, ...structuredClone(sourceNotices)],
     sourceHealth: [],
     previous: previous?.payload.snapshot,
     now,
     exercise: true,
+    scope,
+    pioZoneKey: zoneKey,
   });
   Object.assign(snapshot, {
     title,
     narrative,
-    selection: { included: evidence.length, excluded: 0 },
+    selection: { included: snapshot.notifications.length, excluded: 0 },
   });
   const payload = {
     title,
@@ -271,6 +279,7 @@ export function createCommandPrivate({
         entity,
         supersedes = [],
         retryKey,
+        event: suppliedEvent,
       } = await prepare(records);
       ensureCurrent();
       const key = canonical([
@@ -281,6 +290,7 @@ export function createCommandPrivate({
       ]);
       const event =
         pending.get(key) ??
+        suppliedEvent ??
         makeEvent(collection, payload, {
           incident,
           entity: newIncident ? incident : entity,
@@ -289,7 +299,8 @@ export function createCommandPrivate({
       const existing = records[collection].find((r) => r.id === event.id);
       if (
         existing &&
-        (existing.entity !== event.entity ||
+        (existing.entity !== event.entity || existing.incident !== event.incident ||
+          canonical(existing.supersedes) !== canonical(event.supersedes) ||
           canonical(existing.payload) !== canonical(event.payload))
       ) {
         throw Error("The event ID already belongs to a different record.");
@@ -339,13 +350,37 @@ export function createCommandPrivate({
     return write("incidents", () => ({ payload: data }), { newIncident: true });
   }
 
-  function saveBriefing({ title, narrative }) {
+  async function commitPio(candidate) {
+    const event = structuredClone(candidate);
+    if (!((event.collection === "coordination" && isPio(event.payload)) ||
+      (event.collection === "approvals" && event.payload?.kind === "pio-outreach")))
+      throw Error("Use a PIO outreach, approval or distribution record.");
+    if (!state.incident || event.incident !== state.incident)
+      throw Error("Choose the matching incident before saving PIO outreach.");
+    // The existing editor owns the retry ID and exact-version references.
+    return write(event.collection, () => ({ ...event, event, retryKey: event.id }));
+  }
+
+  async function reviewPioSource(notice, action = "Acknowledged") {
+    if (!notice?.key?.startsWith("pio") || notice.category === "Data failures")
+      throw Error("Only an available PIO source revision can be acknowledged.");
+    const incident = state.incident, team = config.teamLabel || "F.R.O.G. EOC exercise team";
+    const entity = await digest([team, notice.key]);
+    if (!incident || state.incident !== incident) throw Error("Private incident changed.");
+    const supersedes = headIds(state.records.reviews, entity);
+    return write("reviews", () => ({entity, supersedes, payload: {
+      sourceKey: notice.key, sourceRevision: notice.revision, team, action,
+    }}));
+  }
+
+  function saveBriefing({ title, narrative, scope = "all", zoneKey = null, sourceNotices = [] }) {
     if (!state.period)
       throw Error(
         "Choose a recorded operational period before saving a briefing.",
       );
     const selected = state.period;
     const captures = [...state.captures];
+    const notices = structuredClone(sourceNotices);
     return write("briefings", async (records) => {
       if (!isCurrentPeriod(records, selected))
         throw Error(
@@ -355,11 +390,14 @@ export function createCommandPrivate({
       const payload = await buildCommandBriefing({
         title,
         narrative,
-        captures,
+        captures: scope === "pio" ? [] : captures,
         period,
         records,
+        scope,
+        zoneKey,
+        sourceNotices: notices,
       });
-      return { payload, retryKey: [title, narrative, captures, selected] };
+      return { payload, retryKey: [title, narrative, captures, selected, scope, zoneKey, notices] };
     });
   }
 
@@ -418,6 +456,8 @@ export function createCommandPrivate({
     selectIncident,
     selectPeriod,
     append,
+    commitPio,
+    reviewPioSource,
     createIncident,
     capture,
     removeCapture,
