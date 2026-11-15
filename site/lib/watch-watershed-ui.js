@@ -1,12 +1,13 @@
-import {loadWatershed,loadWatershedRain,upstreamReservoir} from './watch-watershed-data.js';
+import {loadWatershed,loadWatershedRain,regionalForecastBounds,upstreamReservoir} from './watch-watershed-data.js';
 import {createWatershedPlayback} from './watershed-playback.js';
 import {installWatchRadar} from './watch-radar-ui.js';
 
 const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 const key=window=>window?`${window.layer}:${window.issue}:${window.start}:${window.end}`:'';
+const californiaBounds=[-124.65,32.35,-113.8,42.2];
 
 /** One optional basin view for the selected river concern. Requests end when it closes. */
-export function installWatchWatershed({session,repaint,localBounds,exercise=false}){
+export function installWatchWatershed({session,repaint,localBounds,getOverhead,setOverhead,exercise=false}){
  const button=document.createElement('button');
  button.id='watch-terrain-upstream';button.type='button';button.hidden=true;button.textContent='Upstream watershed';
  button.setAttribute('aria-pressed','false');
@@ -19,6 +20,8 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
  for(const [button,label] of [[forecast,'Forecast'],[radar,'Hanford radar']]){
   button.scale='s';button.textContent=label;modes.append(button);
  }
+ const regional=document.createElement('calcite-button');regional.scale='s';regional.appearance='outline';regional.kind='neutral';
+ regional.hidden=true;modes.append(regional);
  const controls=document.createElement('div');controls.className='watershed-player-controls';
  const play=document.createElement('calcite-button');play.scale='s';play.iconStart='play';play.textContent='Play';play.disabled=true;
  const picker=document.createElement('select');picker.setAttribute('aria-label','Precipitation forecast window');
@@ -30,10 +33,11 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
  legendTitle.textContent='Sources';legend.append(legendTitle,items);legend.hidden=true;
  const links=document.createElement('div');links.className='watershed-player-links';links.append(legend);
  const radarView=installWatchRadar({session,info,items,renderColors,visible:()=>panel.getClientRects().length>0,source});
- panel.append(modes,controls,radarView.controls,info,colors,links);document.querySelector('#map-wrap').append(panel);
+ modes.append(radarView.cloudButton);
+ panel.append(modes,controls,radarView.controls,info,radarView.cloudStatus,colors,links);document.querySelector('#map-wrap').append(panel);
  let reservoir,basin,abort,timer,rainRequest,selectedWindow=null,displayedUntil=0;
  let windows=[],onFrame,autoplay=false,sequence='';
- let mode='forecast';
+ let mode='forecast',regionalView=false,basinOverhead=false;
  const currentWindows=()=>windows.filter(row=>row.end>Date.now());
  const player=createWatershedPlayback({canAdvance:()=>mode==='forecast'&&!!basin&&!document.hidden&&panel.getClientRects().length>0,
   changed(playing){play.iconStart=playing?'pause':'play';play.textContent=playing?'Pause':'Play';},
@@ -67,6 +71,9 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
    button.setAttribute('aria-pressed',String(active));
   }
   controls.hidden=exercise||mode==='radar';
+  regional.hidden=exercise||mode!=='forecast'||!basin;
+  regional.textContent=regionalView?'Watershed':'California';
+  regional.setAttribute('aria-label',regionalView?'Fit selected watershed':'Fit California forecast');
  }
  function setMode(next,load=true){
   if(next===mode||exercise||!basin)return;
@@ -84,6 +91,14 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
  }
  forecast.addEventListener('click',()=>setMode('forecast'));
  radar.addEventListener('click',()=>setMode('radar'));
+ regional.addEventListener('click',()=>{
+  if(!basin||mode!=='forecast')return;
+  if(!regionalView)basinOverhead=getOverhead();
+  regionalView=!regionalView;
+  syncMode();
+  setOverhead(regionalView||basinOverhead);
+  session.focus(regionalView?californiaBounds:basin.bounds,regionalView?{top:136,bottom:225,left:32,right:32}:undefined);
+ });
  syncMode();
 
  function setWindows(next){
@@ -116,8 +131,10 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
  });
 
  function close(returnToConcern=false){
-  abort?.abort();abort=null;cancelForecast();radarView.close();mode='forecast';syncMode();
+  if(returnToConcern&&regionalView)setOverhead(basinOverhead);
+  abort?.abort();abort=null;cancelForecast();radarView.close();mode='forecast';regionalView=false;
   basin=null;if(!returnToConcern){selectedWindow=null;setWindows([]);onFrame=null;}
+  syncMode();
   panel.hidden=true;modes.hidden=true;legend.hidden=true;colors.hidden=true;play.disabled=picker.disabled=true;
   button.textContent='Upstream watershed';button.setAttribute('aria-pressed','false');
   session.watershed(null);
@@ -140,7 +157,7 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
    }
   }
   try{
-   const rain=await loadWatershedRain(basin.bounds,{signal,window});
+   const rain=await loadWatershedRain(regionalForecastBounds,{signal,window});
    if(rain.blob&&!signal.aborted){
     const decoded=await createImageBitmap(rain.blob);
     decoded.close();
@@ -152,7 +169,7 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
    const amount=window?.max?.[reservoir];
    const basinNote=Number.isFinite(amount)?` · Watershed peak ${amount.toFixed(2)} in`:window?' · No watershed contours ≥0.01 in':rain.legend.length?'':' · No contours ≥0.01 in shown';
    info.textContent=`${label} forecast · ${time.formatRange(start,end)}${basinNote}`;
-   const date=document.createElement('p');date.textContent=`WPC issued ${time.format(issue)}. Colors show expected liquid-equivalent accumulation. The dashed line marks the ${name} watershed.`;
+   const date=document.createElement('p');date.textContent=`WPC issued ${time.format(issue)}. Colors show expected liquid-equivalent accumulation across California and nearby areas. The dashed line marks the ${name} watershed.`;
    renderColors('Forecast inches',rain.legend);
    items.replaceChildren(date,source('WPC precipitation forecast','https://www.wpc.ncep.noaa.gov/qpf/about_qpf6body.html'),document.createTextNode(' · '),source('USGS watershed boundary',basin.feature.properties.source));legend.hidden=false;
    sync();
@@ -183,6 +200,7 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
    legend.hidden=!exercise;
    if(!exercise){
     modes.hidden=false;
+    syncMode();
     setWindows(windows);
     picker.value=key(selectedWindow);
     if(autoplay&&currentWindows().length)start();

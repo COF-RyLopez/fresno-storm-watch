@@ -1,11 +1,13 @@
 import {loadHanfordTimeline,loadHanfordFrame,RADAR_BANDS,RADAR_MAX_AGE} from './hanford-radar-data.js';
 import {createWatershedPlayback} from './watershed-playback.js';
+import {installWatchClouds} from './watch-cloud-ui.js';
 
 const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 const sameScan=(left,right)=>left?.file===right?.file&&left?.sha256===right?.sha256;
 
 /** Keep live-follow and replay on the same renderer. Replay holds a bounded, dated scan list. */
 export function installWatchRadar({session,info,items,renderColors,visible,source}){
+ const clouds=installWatchClouds(session);
  const controls=document.createElement('div');controls.className='watershed-player-controls watershed-radar-controls';controls.hidden=true;
  const play=document.createElement('calcite-button'),latest=document.createElement('calcite-button');
  play.scale=latest.scale='s';play.textContent='Play';latest.textContent='Latest';latest.appearance='outline';latest.kind='neutral';
@@ -41,6 +43,7 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
  function report(){
   clearTimeout(expiry);
   syncControls();
+  void clouds.observe(stillRecent(displayed)?displayed.end:Date.now());
   if(!stillRecent(displayed)){
    session.radar(null);scanLink.hidden=true;
    info.textContent=failed?'Hanford radar unavailable':'No recent Hanford scans available';
@@ -125,16 +128,19 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
   else if(following)void refresh();
   else report();
  });
- return {controls,
+ return {controls,cloudButton:clouds.button,cloudStatus:clouds.status,
   open(){
    active=true;following=true;failed=false;controls.hidden=false;
+   clouds.open();
    info.textContent='Loading Hanford radar…';scanLink.hidden=true;syncControls();colors();
-   items.replaceChildren(document.createTextNode('Shaded cells show the strongest sampled echo in each roughly 4 km × 4 km × 1 km cell, at estimated height above mean sea level. Coverage varies. Empty space can include weak returns or unsampled areas.'),
-    document.createElement('br'),weakLabel,document.createElement('br'),scanLink,document.createTextNode(' '),coverage);
+   items.replaceChildren(document.createTextNode('Shaded cells show sampled radar echoes at estimated heights. GOES infrared shows cloud and surface patterns in grayscale. The satellite image has its own observation time and is projected onto the map without estimated cloud heights.'),
+    document.createElement('br'),weakLabel,document.createElement('br'),scanLink,document.createTextNode(' '),coverage,document.createTextNode(' '),
+    source('NOAA GOES imagery','https://www.cnrfc.l.noaa.gov/satellite.php'));
    void refresh();
   },
   close(){
    active=false;controls.hidden=true;playback.pause();clearTimeout(timer);clearTimeout(expiry);abortRequest();cache.clear();
+   clouds.close();
    timeline=displayed=samples=null;session.radar(null);
   }
  };

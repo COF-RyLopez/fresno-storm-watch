@@ -242,6 +242,7 @@
  @keyframes reservoir-evidence-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 }
 .watershed-player p{margin:5px 0;line-height:1.35}
+.watershed-player .watch-cloud-time{color:var(--calcite-color-text-2)}
 .watershed-player-colors .briefing-layer-symbols{max-height:48px;overflow:auto;margin:0}
 .watershed-player-links{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin-top:4px}
 .watershed-player-links details[open]{flex-basis:100%}

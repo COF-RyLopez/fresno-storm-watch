@@ -14,7 +14,7 @@ export function installWatchTerrain({wanted,snapshot,onSelect,detach,restore,exe
   failure:error=>{failed=true;showFailure(error.message);}
  });
  function showFailure(message){note.hidden=false;note.textContent='Terrain unavailable — using the regular map. '+String(message).slice(0,150);}
- const watershed=installWatchWatershed({session,exercise,repaint:()=>api.refresh(),localBounds:()=>data()?.bounds});
+ const watershed=installWatchWatershed({session,exercise,setOverhead,getOverhead:()=>overhead,repaint:()=>api.refresh(),localBounds:()=>data()?.bounds});
  function data(){return target?snapshot(target,watershed.feature):null;}
  function caption(d){
   note.hidden=false;note.textContent=`Reference terrain · ${d.facilities?d.facilities+' nearby facilities':'Facility inventory may be unassessed'}`;
