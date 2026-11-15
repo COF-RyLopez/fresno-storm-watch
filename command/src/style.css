@@ -331,6 +331,16 @@ small {
   color: #d3dfe1;
   line-height: 1.4;
 }
+.utility-update {
+  color: var(--calcite-color-text-1, #effcfc);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.concern .utility-update {
+  margin-top: 6px;
+  font-size: 13px;
+}
 .concern .when {
   font-size: 12px;
   margin-top: 8px;

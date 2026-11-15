@@ -163,6 +163,10 @@ export function riverConcerns(bundle, now = Date.now()) {
     .map((r) => {
       const c = base("power:" + r.key, "power", `${r.utility} · ${r.name}`);
       c.change = POWER_STATES[r.status] || "Status needs verification";
+      c.utilityUpdate = {
+        publisher: r.utility,
+        text: r.details || "No event details supplied by the utility.",
+      };
       c.review = true;
       c.group = 1;
       c.time = r.updated?.time || null;
