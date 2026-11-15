@@ -25,7 +25,7 @@ const button=(label,fn)=>{const b=el('calcite-button',label);b.scale='s';b.appea
 const link=(label,href)=>{const a=el('a',label);try{const u=new URL(href,location.href);if(!['https:','blob:'].includes(u.protocol)&&!href.startsWith('./'))throw Error('Unsupported link');if(u.username||u.password)throw Error('Embedded credentials');a.href=href;if(u.protocol==='https:'||href.startsWith('./')){a.target='_blank';a.rel='noopener noreferrer';}}catch{a.textContent=label+' · link unavailable';}return a;};
 const field=(label,type='text',value='')=>{const l=el('label',label),n=el(type==='textarea'?'textarea':type==='select'?'select':'input');if(n.tagName==='INPUT')n.type=type;n.value=value;n.autocomplete='off';l.append(n);return {label:l,input:n};};
 /** Mission shell state is tab-only; live collectors remain owned by app.js. */
-export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTrends=()=>{},onGauge=()=>{},onRoad=()=>{},onFacility=()=>{},onBriefing=()=>{},onTopic=()=>{},onCare=()=>{},onDrainage=()=>{},onPower=()=>{},onQueueRoad=onRoad,onPopulation=()=>{}}){
+export function createMission({workspace,watershedTimeline,exercise=false,onSelectArea=()=>{},onTrends=()=>{},onGauge=()=>{},onRoad=()=>{},onFacility=()=>{},onBriefing=()=>{},onTopic=()=>{},onCare=()=>{},onDrainage=()=>{},onPower=()=>{},onQueueRoad=onRoad,onPopulation=()=>{}}){
  let concernSignature='',careRows=[],drainageRows=[],drainageReady=false,queuePower=null,queueIndex=0,selectedConcern=null,libraryId='',mappedLibraryId='',libraryLoading=false,libraryProblem=null;let ownOverlay=false,privateFrames=null;let alertHealth={},countyAlerts=[],countyRoads=null,countySites=null;let rows=[],context=null,selected=null,map=null,session=null,epoch=0,catalog=null,publicCatalog=null,library=[],step=0,scenarioTitle=null,modelId='',areaId='',requestId=crypto.randomUUID(),runs=[],draft=[],privateStore=null,incident='',period='',player=null,scenarioEpoch=0,scenarioHour=0,playing=false,last=0,privateLoad=null;
  const queueTime=v=>Number.isFinite(v)?formatDateTime(v):'Not supplied';
  const client=createScenarioClient(SCENARIO_CONFIG),time=v=>Number.isFinite(v)?formatTime(v,'America/Los_Angeles'):'Not supplied';
@@ -94,6 +94,7 @@ export function createMission({workspace,exercise=false,onSelectArea=()=>{},onTr
   const mapActions=el('div');mapActions.className='watch-map-actions';
   mapActions.append(button('Focus area',()=>{workspace.showFocusedMap?.();map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}),button('View in 3D',async()=>{workspace.showFocusedMap?.();await map?.setViewMode('3d');if(stillSelected())await map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}));
   const mapDetails=disclosure('Map, trends & technical tools');mapDetails.append(mapActions);
+  watershedTimeline?.append(host,id,rows,{open:upstream});
   appendReservoirWatch(host,row,time);
   for(const id of [...new Set((row.releases||[]).map(r=>r.station))])mapDetails.append(button('Compare release & gauge trends · '+id,()=>onTrends(id)));
   const gaps=disclosure(`Source gaps · ${s.gaps.length}`);for(const gap of s.gaps)gaps.append(el('p',gap));if(s.gaps.length)host.append(gaps);

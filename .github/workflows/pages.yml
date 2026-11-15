@@ -49,6 +49,9 @@ jobs:
       - name: Collect public CDEC reservoir readings
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:reservoirs -- --published
+      - name: Collect public WPC watershed timing and RISE outlet reports
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: node --use-system-ca scripts/collect-watershed-timeline.mjs
       - name: Collect public county sandbag references
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:sandbags -- --published
