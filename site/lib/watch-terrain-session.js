@@ -4,7 +4,7 @@ export function createTerrainSession({create,activate,deactivate,failure}){
  const dispose=value=>{if(value&&!disposed.has(value)){disposed.add(value);value.destroy();}};
  const clear=()=>{epoch++;dispose(adapter);adapter=null;pending=null;deactivate();};
  return {clear,refresh(data){adapter?.set(data);},overhead(value){adapter?.overhead(value);},
-  focus(bounds,padding){adapter?.focus(bounds,true,padding);},watershed(feature){adapter?.watershed(feature);},rain(image){adapter?.rain(image);},cloud(image){adapter?.cloud(image);},cloudTops(vertices){adapter?.cloudTops(vertices);},radar(samples,minDbz){adapter?.radar(samples,minDbz);},radarVolume(volume,minDbz,onFailure){adapter?.radarVolume(volume,minDbz,onFailure);},get active(){return !!adapter;},async open(data,animate=true){
+  focus(bounds,padding){adapter?.focus(bounds,true,padding);},watershed(feature){adapter?.watershed(feature);},rain(image){adapter?.rain(image);},cloud(image){adapter?.cloud(image);},cloudTops(vertices,options){return adapter?.cloudTops(vertices,options);},radar(samples,minDbz,options){adapter?.radar(samples,minDbz,options);},radarVolume(volume,minDbz,onFailure,options){adapter?.radarVolume(volume,minDbz,onFailure,options);},get active(){return !!adapter;},async open(data,animate=true){
   const request=++epoch;
   try{
    if(!adapter){const loading=pending??=create();const created=await loading;if(request!==epoch){if(pending!==loading&&created!==adapter)dispose(created);return false;}adapter=created;pending=null;}

@@ -243,6 +243,13 @@
 }
 .watershed-player p{margin:5px 0;line-height:1.35}
 .watershed-player .watch-cloud-time{color:var(--calcite-color-text-2)}
+.watch-cloud-key{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin:4px 0;font-size:11px}
+.watch-cloud-key span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.watch-cloud-key .legend-swatch{width:12px;height:10px;flex:none}
+.watch-cloud-readout{white-space:pre-line;font-size:12px;line-height:1.45;max-width:260px}
+.watch-cloud-readout .maplibregl-popup-content{background:var(--calcite-color-surface-1);color:var(--calcite-color-text-1);padding:8px 25px 8px 10px;border:1px solid var(--calcite-color-border-2)}
+.watch-cloud-readout .maplibregl-popup-tip{display:none}
+.watch-cloud-readout .maplibregl-popup-close-button{color:var(--calcite-color-text-1);font-size:18px;min-width:24px;min-height:24px}
 .watershed-player-colors .briefing-layer-symbols{max-height:48px;overflow:auto;margin:0}
 .watershed-player-links{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin-top:4px}
 .watershed-player-links details[open]{flex-basis:100%}

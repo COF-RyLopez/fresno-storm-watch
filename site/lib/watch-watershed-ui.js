@@ -34,7 +34,7 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
  const links=document.createElement('div');links.className='watershed-player-links';links.append(legend);
  const radarView=installWatchRadar({session,info,items,renderColors,visible:()=>panel.getClientRects().length>0,source});
  modes.append(radarView.cloudButton,radarView.volumeButton);
- panel.append(modes,controls,radarView.controls,info,radarView.cloudStatus,colors,links);document.querySelector('#map-wrap').append(panel);
+ panel.append(modes,controls,radarView.controls,info,radarView.cloudStatus,radarView.cloudLegend,colors,links);document.querySelector('#map-wrap').append(panel);
  let reservoir,basin,abort,timer,rainRequest,selectedWindow=null,displayedUntil=0;
  let windows=[],onFrame,autoplay=false,sequence='';
  let mode='forecast',regionalView=false,basinOverhead=false;

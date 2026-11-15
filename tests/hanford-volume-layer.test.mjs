@@ -20,7 +20,7 @@ test('renderer accepts the same finite 10-to-under-80 range as the source loader
 
 // This fake tracks context state, not implementation internals: leaks affect subsequent map layers.
 function context({compile=true,link=true,allocation=true}={}){
- const gl={},calls=[],shaders=[],uniforms=new Map(),state=new Map(),enabled=new Set(),textures=new Map(),samplers=new Map();
+ const gl={},calls=[],shaders=[],uniforms=new Map(),state=new Map(),enabled=new Set(),textures=new Map(),samplers=new Map(),allocated=new Set();let maximumTextures=0;
  const names=['VERTEX_SHADER','FRAGMENT_SHADER','COMPILE_STATUS','LINK_STATUS','CURRENT_PROGRAM','VERTEX_ARRAY_BINDING',
   'ACTIVE_TEXTURE','TEXTURE0','TEXTURE_3D','TEXTURE_BINDING_3D','SAMPLER_BINDING','MAX_3D_TEXTURE_SIZE','TEXTURE_MIN_FILTER',
   'TEXTURE_MAG_FILTER','TEXTURE_WRAP_S','TEXTURE_WRAP_T','TEXTURE_WRAP_R','NEAREST','CLAMP_TO_EDGE','R32F','RED','FLOAT',
@@ -43,7 +43,8 @@ function context({compile=true,link=true,allocation=true}={}){
  gl.createProgram=()=>({new:'program'});gl.attachShader=()=>{};gl.linkProgram=()=>{};gl.getProgramParameter=()=>link;
  gl.getProgramInfoLog=()=> 'test link failure';gl.deleteProgram=()=>calls.push(['deleteProgram']);
  gl.createVertexArray=()=>({new:'vao'});gl.deleteVertexArray=()=>calls.push(['deleteVertexArray']);
- gl.createTexture=()=>allocation?{new:'texture'}:null;gl.deleteTexture=()=>calls.push(['deleteTexture']);
+ gl.createTexture=()=>{if(!allocation)return null;const texture={new:'texture'};allocated.add(texture);maximumTextures=Math.max(maximumTextures,allocated.size);return texture;};
+ gl.deleteTexture=texture=>{allocated.delete(texture);calls.push(['deleteTexture']);};
  gl.getUniformLocation=(_program,name)=>name;gl.bindVertexArray=value=>state.set(gl.VERTEX_ARRAY_BINDING,value);
  gl.useProgram=value=>state.set(gl.CURRENT_PROGRAM,value);gl.activeTexture=value=>state.set(gl.ACTIVE_TEXTURE,value);
  gl.bindTexture=(_target,value)=>textures.set(state.get(gl.ACTIVE_TEXTURE),value);
@@ -57,9 +58,9 @@ function context({compile=true,link=true,allocation=true}={}){
  gl.blendFuncSeparate=(...values)=>['BLEND_SRC_RGB','BLEND_DST_RGB','BLEND_SRC_ALPHA','BLEND_DST_ALPHA'].forEach((name,i)=>state.set(gl[name],values[i]));
  gl.uniformMatrix4fv=(name,_transpose,value)=>uniforms.set(name,Array.from(value));
  for(const method of ['uniform1i','uniform1f','uniform2f','uniform3f','uniform4f'])gl[method]=(name,...value)=>uniforms.set(name,value);
- gl.drawArrays=(...args)=>{assert.equal(state.get(gl.DEPTH_WRITEMASK),false);assert.ok(enabled.has(gl.DEPTH_TEST));assert.ok(enabled.has(gl.BLEND));assert.ok(!enabled.has(gl.CULL_FACE));calls.push(['draw',...args]);};
+ gl.drawArrays=(...args)=>{assert.equal(state.get(gl.DEPTH_WRITEMASK),false);assert.ok(enabled.has(gl.DEPTH_TEST));assert.ok(enabled.has(gl.BLEND));assert.ok(!enabled.has(gl.CULL_FACE));calls.push(['draw',...args]);calls.push(['frame',textures.get(gl.TEXTURE0),uniforms.get('frameOpacity')?.[0]]);};
  const snapshot=()=>({state:new Map(state),enabled:new Set(enabled),textures:new Map(textures),samplers:new Map(samplers)});
- return {gl,calls,shaders,uniforms,snapshot};
+ return {gl,calls,shaders,uniforms,snapshot,allocated,maximumTextures:()=>maximumTextures};
 }
 
 test('projected x/y and metre heights agree with MapLibre across the volume latitude range',()=>{
@@ -173,4 +174,65 @@ test('WebGL error codes propagate and restore state even when the driver does no
  layer.onAdd({triggerRepaint(){}},gl);layer.setVolume(volume);gl.getError=()=>99999;
  assert.throws(()=>layer.render(gl,{defaultProjectionData:{mainMatrix:identity}}),/texture upload failed/);
  assert.deepEqual(snapshot(),before);
+});
+
+test('volume playback blends independent observed textures then releases the previous frame',t=>{
+ let now=100,repaints=0;t.mock.method(performance,'now',()=>now);
+ const {gl,calls,snapshot,allocated,maximumTextures}=context(),before=snapshot(),layer=createHanfordVolumeLayer(coordinates);
+ const first=fixture(),second=fixture();first.values[0]=35;second.values[30]=65;
+ layer.onAdd({triggerRepaint:()=>repaints++},gl);layer.setVolume(first,20);layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ layer.setVolume(second,20,{durationMs:400});layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ assert.deepEqual(calls.filter(row=>row[0]==='upload').map(row=>row[10]),[first.values,second.values]);
+ now=300;calls.length=0;layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ assert.deepEqual(calls.filter(row=>row[0]==='frame').map(row=>row[2]),[0.5,0.5]);
+ assert.equal(calls.filter(row=>row[0]==='upload').length,0);assert.equal(allocated.size,2);assert.equal(maximumTextures(),2);assert.deepEqual(snapshot(),before);
+ now=500;calls.length=0;layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ assert.deepEqual(calls.filter(row=>row[0]==='frame').map(row=>row[2]),[1]);assert.equal(allocated.size,1);
+ const settled=repaints;layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});assert.equal(repaints,settled);
+ layer.onRemove(null,gl);assert.equal(allocated.size,0);
+});
+
+test('interrupted volume transitions stay bounded and immediate updates cancel the fade',t=>{
+ let now=0,repaints=0;t.mock.method(performance,'now',()=>now);
+ const {gl,calls,allocated,maximumTextures}=context(),layer=createHanfordVolumeLayer(coordinates),first=fixture();first.values[0]=35;
+ const render=()=>layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ layer.onAdd({triggerRepaint:()=>repaints++},gl);layer.setVolume(first,20);render();
+ for(let i=0;i<5;i++){now+=50;const next=fixture();next.values[i]=40+i;layer.setVolume(next,20,{durationMs:400});render();}
+ assert.equal(allocated.size,2);assert.equal(maximumTextures(),2);
+ layer.setVolume(first,20,{durationMs:-1});calls.length=0;render();
+ assert.deepEqual(calls.filter(row=>row[0]==='frame').map(row=>row[2]),[1]);assert.equal(allocated.size,1);
+ const next=fixture();next.values[0]=50;layer.setVolume(next,20,{durationMs:400});render();layer.onRemove(null,gl);
+ const stopped=repaints;render();assert.equal(repaints,stopped);assert.equal(allocated.size,0);
+});
+
+test('volume transition upload and draw failures release both textures and stop animation',t=>{
+ t.mock.method(performance,'now',()=>0);
+ for(const method of ['drawArrays','texImage3D']){
+  let repaints=0;const {gl,snapshot,allocated}=context(),before=snapshot(),layer=createHanfordVolumeLayer(coordinates),first=fixture(),second=fixture();
+  first.values[0]=35;second.values[1]=50;layer.onAdd({triggerRepaint:()=>repaints++},gl);layer.setVolume(first,20);
+  layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});layer.setVolume(second,20,{durationMs:400});gl[method]=()=>{throw Error('GPU failed');};
+  assert.throws(()=>layer.render(gl,{defaultProjectionData:{mainMatrix:identity}}),/GPU failed/);assert.deepEqual(snapshot(),before);assert.equal(allocated.size,0);
+  const stopped=repaints;layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});assert.equal(repaints,stopped);
+ }
+});
+
+test('clearing a volume during a fade removes both scans without another animation repaint',t=>{
+ let now=0,repaints=0;t.mock.method(performance,'now',()=>now);
+ const {gl,calls,allocated}=context(),layer=createHanfordVolumeLayer(coordinates),first=fixture(),second=fixture();first.values[0]=35;second.values[1]=50;
+ const render=()=>layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ layer.onAdd({triggerRepaint:()=>repaints++},gl);layer.setVolume(first,20);render();layer.setVolume(second,20,{durationMs:400});render();
+ layer.setVolume(null,20,{durationMs:400});calls.length=0;const stopped=repaints;now=200;render();
+ assert.equal(calls.filter(row=>row[0]==='draw').length,0);assert.equal(repaints,stopped);assert.equal(allocated.size,1);
+ layer.onRemove(null,gl);assert.equal(allocated.size,0);
+});
+
+test('invalid volume replacement preserves an active fade and settling the same frame does not upload again',t=>{
+ let now=0;t.mock.method(performance,'now',()=>now);
+ const {gl,calls,allocated}=context(),layer=createHanfordVolumeLayer(coordinates),first=fixture(),second=fixture();first.values[0]=35;second.values[1]=50;
+ const render=()=>layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ layer.onAdd({triggerRepaint(){}},gl);layer.setVolume(first,20);render();layer.setVolume(second,20,{durationMs:400});render();
+ assert.throws(()=>layer.setVolume({...second,shape:[1,1,1]},20,{durationMs:400}),/volume/);
+ now=200;calls.length=0;render();assert.deepEqual(calls.filter(row=>row[0]==='frame').map(row=>row[2]),[0.5,0.5]);assert.equal(allocated.size,2);
+ layer.setVolume(second,20);calls.length=0;render();
+ assert.deepEqual(calls.filter(row=>row[0]==='frame').map(row=>row[2]),[1]);assert.equal(calls.filter(row=>row[0]==='upload').length,0);assert.equal(allocated.size,1);
 });

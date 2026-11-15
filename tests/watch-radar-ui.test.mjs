@@ -38,7 +38,7 @@ function harness(t){
  const document=new EventTarget();document.hidden=false;
  document.createElement=tag=>new FakeElement(tag);
  document.createTextNode=text=>({textContent:text});
- const state={patches:null,cube:null,volumeWrites:[],failure:null};
+ const state={patches:null,cube:null,volumeWrites:[],failure:null,transitions:[]};
  const config={patches:[first.frame],volumes:[first.record],failedPatches:new Set(),failedVolumes:new Set(),hold:null};
  const requests=[],timers=new Map(),links=new Map();let timerId=0;
  const fetch=async(input,options)=>{
@@ -70,8 +70,8 @@ function harness(t){
   clearTimeout:id=>timers.delete(id)});
  const info=new FakeElement('p');
  const session={
-  radar(values){state.patches=values;},
-  radarVolume(grid,_minimum,onFailure){state.cube=grid;if(grid)state.volumeWrites.push(grid);if(onFailure)state.failure=onFailure;},
+  radar(values,_minimum,options){state.patches=values;if(values)state.transitions.push(options);},
+  radarVolume(grid,_minimum,onFailure,options){state.cube=grid;if(grid){state.volumeWrites.push(grid);state.transitions.push(options);}if(onFailure)state.failure=onFailure;},
   cloud(){},cloudTops(){}
  };
  const ui=installWatchRadar({session,info,items:new FakeElement(),renderColors(){},visible:()=>true,
@@ -101,6 +101,20 @@ test('an empty volume catalog keeps dated echo patches and explains the fallback
   'The empty cube catalog must still read the direct radar timeline.');
 });
 
+test('replay preloads its first scan and fades only forward adjacent observations',async t=>{
+ const h=harness(t);h.config.patches=[first.frame,second.frame];await h.open();
+ await until(()=>h.requests.some(path=>path.endsWith(first.frame.file)),'first replay frame is preloaded');
+ const before=h.requests.filter(path=>path.endsWith(first.frame.file)).length;
+ const [play,scrub]=h.ui.controls.children;
+ scrub.value='0';scrub.dispatchEvent(new Event('change'));
+ await until(()=>h.state.patches?.[3]===35,'backward seek');
+ assert.equal(h.state.transitions.at(-1)?.durationMs,0,'A backward seek must not imply reversed cloud motion.');
+ assert.ok(h.requests.filter(path=>path.endsWith(first.frame.file)).length<=before+1,'A seek may restart lookahead cancelled before checksum decoding finished, but must not duplicate display work.');
+ click(play);await until(()=>h.state.patches?.[3]===45,'forward replay');
+ assert.equal(h.state.transitions.at(-1)?.durationMs,400);
+ assert.match(h.info.textContent,/Transition/,'Both observation times are qualified while images are blended.');
+});
+
 test('failed replacement cube and patches preserve the earlier rendered cube and its date',async t=>{
  const h=harness(t);await h.open();await h.volume();
  const previous=h.state.cube,previousStatus=h.info.textContent,previousTime=h.ui.controls.children[1].attributes.get('aria-valuetext');
@@ -112,6 +126,15 @@ test('failed replacement cube and patches preserve the earlier rendered cube and
  assert.equal(h.scanLink.href,first.frame.source);
  assert.equal(h.ui.controls.children[1].attributes.get('aria-valuetext'),previousTime);
  assert.equal(h.info.textContent,`${previousStatus} · Update unavailable`);
+});
+
+test('reduced motion keeps manual playback without crossfading observations',async t=>{
+ const restore=stubGlobals({matchMedia:()=>({matches:true})});t.after(restore);
+ const h=harness(t);h.config.patches=[first.frame,second.frame];await h.open();
+ const [play,scrub]=h.ui.controls.children;scrub.value='0';scrub.dispatchEvent(new Event('change'));
+ await until(()=>h.state.patches?.[3]===35,'first frame');click(play);
+ await until(()=>h.state.patches?.[3]===45,'next frame');
+ assert.equal(h.state.transitions.at(-1)?.durationMs,0);assert.doesNotMatch(h.info.textContent,/Transition/);
 });
 
 test('switching back to patches invalidates an in-flight cube even if its response arrives late',async t=>{

@@ -25,6 +25,7 @@ uniform vec3 gridSize;
 uniform vec4 heightMapping; // south/R, (north-south)/R, maxHeight*max(sec(latitude)), minHeight
 uniform float heightSpan;
 uniform float minimumDbz;
+uniform float frameOpacity;
 const float MAX_ALPHA=0.55;
 const int MAX_STEPS=160;
 
@@ -109,7 +110,7 @@ void main(){
  if(accumulated.a==0.0)discard;
  // Test the nearest actual echo against terrain; never write radar into the map depth buffer.
  gl_FragDepth=gl_DepthRange.near+firstDepth*gl_DepthRange.diff;
- pixel=accumulated;
+ pixel=accumulated*frameOpacity;
 }`;
 
 /** Validate a bounded [z,y,x] measured field and construct its local Mercator cube. */
@@ -241,59 +242,95 @@ function restoreRender(gl,state){
 /**
  * Experimental Mercator-only measured-echo volume. Input is immutable, x-fastest,
  * y northward and z upward, with -999 unknown. No gap filling or weather inference.
- * A single R32F texture is <=1 MiB; 160 samples/pixel maximum, only on map repaint.
+ * Each R32F texture is <=1 MiB; at most two observed frames during an opacity fade.
+ * Each frame uses <=160 samples/pixel. No scalar interpolation or invented motion.
  * Place before gauges, roads and labels. GPU failures throw for the caller's fallback.
  */
 export function createHanfordVolumeLayer(MercatorCoordinate){
- let map,compiled,vao,texture,uniforms,volume=null,geometry=null,minimum=20,pending=false;
+ let map,context,compiled,vao,uniforms,current={volume:null,geometry:null,minimum:20,texture:null,pending:false},previous=null,transition=null;
+ const dispose=frame=>{if(frame?.texture)context.deleteTexture(frame.texture);if(frame)frame.texture=null;};
  const release=gl=>{
-  if(texture)gl.deleteTexture(texture);if(vao)gl.deleteVertexArray(vao);if(compiled)gl.deleteProgram(compiled);
-  texture=vao=compiled=null;
+  dispose(previous);dispose(current);previous=transition=null;
+  if(vao)gl.deleteVertexArray(vao);if(compiled)gl.deleteProgram(compiled);
+  vao=compiled=null;
  };
  return {
   id:'watch-hanford-volume',type:'custom',renderingMode:'3d',
   onAdd(owner,gl){
    if(typeof gl.texImage3D!=='function'||typeof gl.createVertexArray!=='function')throw Error('Hanford volume requires WebGL2');
+   context=gl;
    try{
-    compiled=program(gl);vao=gl.createVertexArray();texture=gl.createTexture();
-    if(!vao||!texture)throw Error('Hanford volume GPU allocation failed');
-    uniforms=Object.fromEntries(['echoes','localMatrix','inverseMatrix','screenBounds','gridSize','heightMapping','heightSpan','minimumDbz']
+    compiled=program(gl);vao=gl.createVertexArray();current.texture=gl.createTexture();
+    if(!vao||!current.texture)throw Error('Hanford volume GPU allocation failed');
+    uniforms=Object.fromEntries(['echoes','localMatrix','inverseMatrix','screenBounds','gridSize','heightMapping','heightSpan','minimumDbz','frameOpacity']
      .map(name=>[name,gl.getUniformLocation(compiled,name)]));
     if(Object.values(uniforms).some(value=>value===null))throw Error('Hanford volume shader uniforms unavailable');
-    map=owner;pending=!!volume;
+    map=owner;current.pending=!!current.volume;
    }catch(error){release(gl);throw error;}
   },
-  setVolume(next,minDbz=20){
+  setVolume(next,minDbz=20,{durationMs=0}={}){
    if(!Number.isFinite(minDbz)||minDbz<10||minDbz>79.5)throw Error('Invalid Hanford volume threshold');
-   if(next===volume&&minDbz===minimum)return;
-   const changed=next!==volume,nextGeometry=changed&&next?volumeGeometry(next,MercatorCoordinate):geometry;
-   volume=next;geometry=next?nextGeometry:null;minimum=minDbz;pending=pending||(changed&&!!next);
+   const animate=Number.isFinite(durationMs)&&durationMs>0,changed=next!==current.volume;
+   if(!changed&&minDbz===current.minimum){
+    if(previous&&!animate){dispose(previous);previous=transition=null;map?.triggerRepaint();}
+    return;
+   }
+   const geometry=changed&&next?volumeGeometry(next,MercatorCoordinate):current.geometry;
+   dispose(previous);previous=transition=null;
+   if(!changed){current.minimum=minDbz;}
+   else{
+    const frame={volume:next,geometry:next?geometry:null,minimum:minDbz,texture:null,pending:!!next};
+    if(animate&&compiled&&next&&current.volume&&minDbz===current.minimum&&(geometry.maximum>=minDbz||current.geometry.maximum>=minDbz)){
+     previous=current;transition={durationMs,start:null};
+    }else{frame.texture=current.texture;current.texture=null;}
+    current=frame;
+   }
    map?.triggerRepaint();
   },
   render(gl,{defaultProjectionData}){
-   if(!compiled||!volume||geometry.maximum<minimum)return;
-   if(gl.isContextLost())throw Error('Hanford volume WebGL context lost');
-   const {matrix,inverse,screenBounds}=volumeMatrices(defaultProjectionData?.mainMatrix,geometry);
-   if(screenBounds[0]>=screenBounds[2]||screenBounds[1]>=screenBounds[3])return;
-   if(volume.shape.some(size=>size>gl.getParameter(gl.MAX_3D_TEXTURE_SIZE)))throw Error('Hanford volume exceeds GPU texture size');
+   if(!compiled||!current.volume&&!previous?.volume)return;
    const saved=renderState(gl);
    try{
-    gl.bindTexture(gl.TEXTURE_3D,texture);gl.bindSampler(0,null);
-    if(pending){upload(gl,texture,volume);pending=false;}
+    if(gl.isContextLost())throw Error('Hanford volume WebGL context lost');
+    const frames=[];
+    for(const frame of [previous,current])if(frame?.volume&&frame.geometry.maximum>=frame.minimum){
+     const matrices=volumeMatrices(defaultProjectionData?.mainMatrix,frame.geometry),{screenBounds}=matrices;
+     if(screenBounds[0]>=screenBounds[2]||screenBounds[1]>=screenBounds[3])continue;
+     if(frame.volume.shape.some(size=>size>gl.getParameter(gl.MAX_3D_TEXTURE_SIZE)))throw Error('Hanford volume exceeds GPU texture size');
+     if(!frame.texture){frame.texture=gl.createTexture();if(!frame.texture)throw Error('Hanford volume GPU allocation failed');}
+     if(frame.pending){upload(gl,frame.texture,frame.volume);frame.pending=false;}
+     frames.push({frame,...matrices});
+    }
+    let progress=1;
+    if(transition){
+     const now=performance.now();transition.start??=now;
+     progress=Math.max(0,Math.min(1,(now-transition.start)/transition.durationMs));
+     if(progress===1){dispose(previous);previous=transition=null;}
+    }
+    gl.bindSampler(0,null);
     gl.useProgram(compiled);gl.bindVertexArray(vao);
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(false);gl.disable(gl.CULL_FACE);gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
-    gl.uniform1i(uniforms.echoes,0);gl.uniform1f(uniforms.minimumDbz,minimum);
-    gl.uniformMatrix4fv(uniforms.localMatrix,false,matrix);gl.uniformMatrix4fv(uniforms.inverseMatrix,false,inverse);
-    gl.uniform4f(uniforms.screenBounds,...screenBounds);
-    gl.uniform3f(uniforms.gridSize,volume.shape[2],volume.shape[1],volume.shape[0]);
-    gl.uniform4f(uniforms.heightMapping,geometry.southAngle,geometry.angleSpan,geometry.topScaledMeters,volume.heightRange[0]);
-    gl.uniform1f(uniforms.heightSpan,volume.heightRange[1]-volume.heightRange[0]);
-    gl.drawArrays(gl.TRIANGLES,0,6);
-    if(gl.getError()!==gl.NO_ERROR)throw Error('Hanford volume draw failed');
+    gl.uniform1i(uniforms.echoes,0);
+    // Composite the colors of two observed volumes; their unknown masks and dBZ stay separate.
+    for(const {frame,matrix,inverse,screenBounds}of frames){
+     const opacity=frame===current?progress:1-progress;
+     if(opacity<=0)continue;
+     const {volume,geometry,minimum,texture}=frame;
+     gl.bindTexture(gl.TEXTURE_3D,texture);gl.uniform1f(uniforms.frameOpacity,opacity);gl.uniform1f(uniforms.minimumDbz,minimum);
+     gl.uniformMatrix4fv(uniforms.localMatrix,false,matrix);gl.uniformMatrix4fv(uniforms.inverseMatrix,false,inverse);
+     gl.uniform4f(uniforms.screenBounds,...screenBounds);
+     gl.uniform3f(uniforms.gridSize,volume.shape[2],volume.shape[1],volume.shape[0]);
+     gl.uniform4f(uniforms.heightMapping,geometry.southAngle,geometry.angleSpan,geometry.topScaledMeters,volume.heightRange[0]);
+     gl.uniform1f(uniforms.heightSpan,volume.heightRange[1]-volume.heightRange[0]);
+     gl.drawArrays(gl.TRIANGLES,0,6);
+     if(gl.getError()!==gl.NO_ERROR)throw Error('Hanford volume draw failed');
+    }
+   }catch(error){release(gl);throw error;
    }finally{restoreRender(gl,saved);}
+   if(transition)map?.triggerRepaint();
   },
-  onRemove(_owner,gl){release(gl);map=null;volume=geometry=null;pending=false;}
+  onRemove(_owner,gl){release(gl);map=context=null;current={volume:null,geometry:null,minimum:20,texture:null,pending:false};}
  };
 }
