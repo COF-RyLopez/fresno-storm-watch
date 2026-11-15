@@ -1031,6 +1031,7 @@ async function chooseWeather(mode: string) {
         if (!weatherSuspended) map.rain(rain);
         info.textContent = `${currentRainWindow ? "6-hour" : "72-hour"} forecast · ${date(rain.cycle.start)} → ${date(rain.cycle.end)}`;
         colors(rain.legend);
+        $("weather-legend").prepend(el("strong", "Forecast rain · inches "));
         items.replaceChildren(
           el(
             "p",
