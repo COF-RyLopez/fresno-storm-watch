@@ -23,6 +23,8 @@ jobs:
         with:
           node-version: '22.22.3'
       - run: npm ci --ignore-scripts
+      - run: npm run check:command
+      - run: npm run build:command
       - run: npm test
       - run: npm run check
       - name: Pack and verify public waterway archives

@@ -51,7 +51,7 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
   play.disabled=frames().length<2;
   scrub.disabled=frames().length<2;scrub.max=String(Math.max(0,frames().length-1));scrub.value=String(Math.max(0,index()));
   scrub.setAttribute('aria-valuetext',displayed?time.format(displayed.end):'No scan selected');
-  latest.disabled=following&&!failed;
+  latest.disabled=following&&!failed&&!!stillRecent(displayed);
  }
  function colors(){
   renderColors('Radar reflectivity (dBZ)',RADAR_BANDS.filter(band=>band.min>=minimum())
@@ -195,6 +195,12 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
   else report();
  });
  return {controls,volumeButton,cloudButton:clouds.button,cloudStatus:clouds.status,cloudLegend:clouds.legend,
+  suspend(){active=false;clearTimeout(timer);clearTimeout(expiry);cancelPending();playback.pause();clouds.close();session.radar(null);session.radarVolume(null);},
+  resume(){
+   active=true;controls.hidden=false;clouds.open();clearTimeout(timer);
+   if(stillRecent(displayed)){void run(signal=>draw(displayed,signal));if(following)timer=setTimeout(()=>void refresh(),60000);}
+   else{scanLink.hidden=true;info.textContent='Selected radar scan expired · use Latest to check again';syncControls();}
+  },
   open(){
    active=true;following=true;failed=false;controls.hidden=false;volumeButton.hidden=false;
    clouds.open();

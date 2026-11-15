@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en" class="calcite-mode-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval'; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.arcgis.com;"
+    />
+    <title>F.R.O.G. Command · Fresno County</title>
+    <link rel="icon" href="../assets/frog-logo.png" />
+    <link rel="stylesheet" href="../vendor/maplibre-6.15.0/maplibre-gl.css" />
+    <script
+      type="module"
+      src="https://js.arcgis.com/calcite-components/5.1"
+    ></script>
+  </head>
+  <body>
+    <a class="skip" href="#attention">Skip to attention list</a>
+    <header class="command-header">
+      <a class="brand" href="#/watch" aria-label="F.R.O.G. County Watch"
+        ><img src="../assets/frog-logo.png" alt="" /><span
+          >F.R.O.G.<small>Fresno County</small></span
+        ></a
+      >
+      <nav aria-label="Main destinations">
+        <button data-view="watch" aria-current="page">Watch</button
+        ><button data-view="work">Work</button
+        ><button data-view="briefing">Briefing</button>
+      </nav>
+      <span class="exercise-label">Exercise preview</span>
+      <details class="account">
+        <summary>
+          Account <calcite-icon icon="user" scale="s"></calcite-icon>
+        </summary>
+        <div class="account-panel">
+          <strong>County workspace</strong
+          ><calcite-action
+            id="sign-in"
+            text-enabled
+            text="County sign-in"
+            icon="sign-in"
+          ></calcite-action>
+          <p id="identity-status" role="status">
+            Public evidence available. Sign in for private work.
+          </p>
+          <p id="signin-help" hidden>
+            Use your authorized county AGOL account.
+          </p>
+          <a href="../">Current Storm Watch</a
+          ><a href="../eoc-guide.html">Access &amp; help</a>
+        </div>
+      </details>
+    </header>
+    <div class="incident-strip">
+      <span id="incident-context">Exercise · No incident selected</span
+      ><span id="activation-context">Activation unconfirmed</span
+      ><span id="period-context"></span>
+    </div>
+    <div id="important" class="important" role="status" hidden></div>
+    <main id="command-main">
+      <section id="watch-view" class="watch-view" aria-label="County Watch">
+        <aside id="attention" class="attention" tabindex="-1">
+          <div class="panel-heading">
+            <h1>County Watch</h1>
+            <button
+              id="refresh"
+              class="icon-button"
+              aria-label="Refresh public evidence"
+            >
+              <calcite-icon icon="refresh" scale="s"></calcite-icon>
+            </button>
+          </div>
+          <form id="search" role="search">
+            <label for="find-place" class="sr-only"
+              >Find a place or concern</label
+            >
+            <div class="search-field">
+              <calcite-icon icon="search" scale="s"></calcite-icon
+              ><input
+                id="find-place"
+                type="search"
+                placeholder="Find a place or concern"
+                autocomplete="off"
+              />
+            </div>
+          </form>
+          <div class="list-heading">
+            <h2 id="list-title">Needs attention</h2>
+            <label class="sr-only" for="concern-filter">Concern type</label
+            ><select id="concern-filter">
+              <option value="all">All types</option>
+              <option value="river">Rivers</option>
+              <option value="road">Roads</option>
+              <option value="power">Power</option>
+              <option value="zone">Evacuation zones</option>
+              <option value="care">Resident care</option>
+              <option value="private">Private work</option>
+            </select>
+          </div>
+          <div id="attention-list" aria-live="polite">
+            <p class="loading">Checking current evidence…</p>
+          </div>
+          <button id="show-all" class="text-button" hidden>
+            Show all concerns
+          </button>
+          <div class="browse">
+            <h2>Explore a watershed</h2>
+            <button data-place="river:san-joaquin-lower">
+              Millerton <span>San Joaquin River</span></button
+            ><button data-place="river:kings-lower">
+              Pine Flat <span>Kings River</span>
+            </button>
+          </div>
+          <details class="coverage">
+            <summary id="coverage-title">Coverage &amp; sources</summary>
+            <div id="coverage-list"></div>
+            <button id="load-places">
+              Load care facilities &amp; evacuation zones</button
+            ><button id="load-assets">
+              Load authorized facilities &amp; pumps
+            </button>
+            <p id="asset-status">Private inventory not assessed.</p>
+            <a href="../zone-population.html">Population read-only map</a>
+          </details>
+        </aside>
+        <section class="map-panel" aria-label="Operational map">
+          <div id="command-map"></div>
+          <div id="map-failure" hidden role="status"></div>
+          <div class="map-caption">
+            <span id="map-place">Fresno County &amp; upstream watersheds</span
+            ><small id="map-scope">Terrain and reference waterways</small>
+          </div>
+          <div class="map-tools">
+            <button id="map-fit" aria-label="Fit selected place">
+              <calcite-icon
+                icon="zoom-to-object"
+                scale="s"
+              ></calcite-icon></button
+            ><button id="map-overhead" aria-pressed="false">Overhead</button>
+          </div>
+          <div class="weather-dock" id="weather-dock">
+            <div class="weather-mode">
+              <label for="weather">Weather</label
+              ><select id="weather">
+                <option value="off">Off</option>
+                <option value="rain">Rain forecast</option>
+                <option value="radar">Hanford radar</option>
+                <option value="clouds">Forecast clouds</option>
+              </select>
+            </div>
+            <div id="weather-controls"></div>
+            <p id="weather-time" role="status" hidden></p>
+            <div id="weather-legend" hidden></div>
+            <details id="weather-details" hidden>
+              <summary>Source &amp; coverage</summary>
+              <div id="weather-source"></div>
+            </details>
+          </div>
+        </section>
+        <aside
+          id="evidence"
+          class="evidence"
+          aria-label="Selected concern details"
+          hidden
+        >
+          <div class="panel-heading">
+            <h2 id="evidence-name">Selected place</h2>
+            <button
+              id="evidence-close"
+              aria-label="Close details"
+              class="icon-button"
+            >
+              <calcite-icon icon="x" scale="s"></calcite-icon>
+            </button>
+          </div>
+          <div id="evidence-content"></div>
+        </aside>
+      </section>
+      <section id="work-view" class="work-view" hidden aria-label="Work">
+        <h1>Work</h1>
+        <p>Sign in to choose an incident and track follow-ups.</p>
+      </section>
+      <section
+        id="briefing-view"
+        class="briefing-view"
+        hidden
+        aria-label="Briefing"
+      >
+        <h1>Briefing</h1>
+        <p>Sign in to prepare a private exercise handoff.</p>
+      </section>
+    </main>
+    <nav class="mobile-panes" aria-label="Watch panels">
+      <button data-pane="attention" aria-pressed="true">
+        <calcite-icon icon="list" scale="s"></calcite-icon>Attention</button
+      ><button data-pane="map" aria-pressed="false">
+        <calcite-icon icon="map" scale="s"></calcite-icon>Map</button
+      ><button data-pane="details" aria-pressed="false">
+        <calcite-icon icon="information" scale="s"></calcite-icon>Details
+      </button>
+    </nav>
+    <div class="save-message" id="save-message" role="status" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

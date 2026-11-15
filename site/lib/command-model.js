@@ -1,0 +1,175 @@
+/** Presentation state is memory-only. Refresh never replaces the selected place or camera. */
+export function createCommandState() {
+  let value = {
+    view: "watch",
+    selected: null,
+    camera: null,
+    filter: "all",
+    query: "",
+    mobile: "attention",
+    weather: "off",
+    concerns: [],
+  };
+  const listeners = new Set();
+  return {
+    get value() {
+      return value;
+    },
+    patch(next) {
+      value = { ...value, ...next };
+      for (const f of listeners) f(value);
+    },
+    subscribe(f) {
+      listeners.add(f);
+      return () => listeners.delete(f);
+    },
+  };
+}
+export function routeState(hash) {
+  const [path, query = ""] = String(hash).replace(/^#/, "").split("?");
+  const p = new URLSearchParams(query),
+    view = path.replace(/^\//, "");
+  return {
+    view: ["watch", "work", "briefing"].includes(view) ? view : "watch",
+    selected: p.get("place") || null,
+  };
+}
+export function orderedConcerns(rows) {
+  return [...new Map(rows.map((r) => [r.id, r])).values()].sort(
+    (a, b) =>
+      (a.group ?? 3) - (b.group ?? 3) ||
+      (a.group === 1
+        ? (b.time ?? -Infinity) - (a.time ?? -Infinity)
+        : (a.time ?? Infinity) - (b.time ?? Infinity)) ||
+      a.id.localeCompare(b.id),
+  );
+}
+const coordinate = (p) =>
+  Array.isArray(p) &&
+  p.length >= 2 &&
+  Number.isFinite(p[0]) &&
+  Number.isFinite(p[1]) &&
+  Math.abs(p[0]) <= 180 &&
+  Math.abs(p[1]) <= 90;
+/** Service queries already request EPSG:4326. Never guess a projected coordinate's datum. */
+export function arcGeometry(g) {
+  if (!g) return null;
+  if (g.type && g.coordinates) return g;
+  if (Number.isFinite(g.x) && Number.isFinite(g.y) && coordinate([g.x, g.y]))
+    return { type: "Point", coordinates: [g.x, g.y] };
+  if (
+    g.paths?.length &&
+    g.paths.every((r) => r.length >= 2 && r.every(coordinate))
+  )
+    return { type: "MultiLineString", coordinates: g.paths };
+  if (
+    g.rings?.length &&
+    g.rings.every((r) => r.length >= 4 && r.every(coordinate))
+  ) {
+    // Nest rings by containment: separate outer rings are islands, not holes.
+    const inside = ([x, y], ring) => {
+      let result = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i],
+          [xj, yj] = ring[j];
+        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)
+          result = !result;
+      }
+      return result;
+    };
+    const area = (r) =>
+      Math.abs(
+        r.reduce((s, p, i) => {
+          const q = r[(i + 1) % r.length];
+          return s + p[0] * q[1] - q[0] * p[1];
+        }, 0),
+      );
+    const nodes = g.rings
+      .map((r) => ({ ring: r, area: area(r), parent: null, depth: 0 }))
+      .sort((a, b) => b.area - a.area);
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      n.parent =
+        nodes
+          .slice(0, i)
+          .filter((p) => inside(n.ring[0], p.ring))
+          .at(-1) || null;
+      n.depth = n.parent ? n.parent.depth + 1 : 0;
+    }
+    const polygons = nodes
+      .filter((n) => n.depth % 2 === 0)
+      .map((n) => [
+        n.ring,
+        ...nodes
+          .filter((h) => h.parent === n && h.depth % 2 === 1)
+          .map((h) => h.ring),
+      ]);
+    return polygons.length === 1
+      ? { type: "Polygon", coordinates: polygons[0] }
+      : { type: "MultiPolygon", coordinates: polygons };
+  }
+  return null;
+}
+/** Retain extrema within each time bucket and both endpoints for bounded briefing charts. */
+export function boundedFigure(points = [], limit = 96) {
+  const rows = points
+    .filter((p) => Number.isFinite(p.time) && Number.isFinite(p.value))
+    .map((p) => ({ time: p.time, value: p.value }))
+    .sort((a, b) => a.time - b.time);
+  if (rows.length <= limit) return rows;
+  const buckets = Math.max(1, Math.floor((limit - 2) / 2)),
+    width = (rows.length - 2) / buckets,
+    result = [rows[0]];
+  for (let b = 0; b < buckets; b++) {
+    const part = rows.slice(
+      1 + Math.floor(b * width),
+      1 + Math.floor((b + 1) * width),
+    );
+    if (!part.length) continue;
+    const lo = part.reduce((a, p) => (p.value < a.value ? p : a)),
+      hi = part.reduce((a, p) => (p.value > a.value ? p : a));
+    result.push(
+      ...(lo === hi ? [lo] : [lo, hi]).sort((a, b) => a.time - b.time),
+    );
+  }
+  result.push(rows.at(-1));
+  return result;
+}
+export function geometryBounds(features) {
+  const points = [];
+  const walk = (c) => {
+    if (coordinate(c)) points.push(c);
+    else if (Array.isArray(c)) c.forEach(walk);
+  };
+  for (const f of features) walk(f.geometry?.coordinates);
+  if (!points.length) return null;
+  return points.reduce(
+    (b, p) => [
+      Math.min(b[0], p[0]),
+      Math.min(b[1], p[1]),
+      Math.max(b[2], p[0]),
+      Math.max(b[3], p[1]),
+    ],
+    [180, 90, -180, -90],
+  );
+}
+export function snapshotConcern(c, now = Date.now()) {
+  return structuredClone({
+    id: c.id,
+    title: c.name,
+    name: c.name,
+    kind: c.kind,
+    capturedAt: now,
+    change: c.change,
+    quality: c.quality,
+    nextAction: c.nextAction,
+    time: c.time,
+    sourceRevision: c.revision,
+    details: c.details,
+    evidence: (c.evidence || []).map((e) => ({
+      ...e,
+      points: boundedFigure(e.points),
+    })),
+    association: c.association || "Nearby context; impact not established",
+  });
+}

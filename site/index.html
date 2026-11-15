@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-yUiz98hWi4VURc55OL6wdqhgqUEHllKnH0GokxKpoLU='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-CeA8/8wBhGwmwn1NXsaM3l/DDMuByhKfK3jOHKj3t0s='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
 <link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=31d486d23c"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=eba47caf7d"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
@@ -20,7 +20,7 @@
 "./lib/afn-ui.js":"./lib/afn-ui.js?v=670d7e9f90",
 "./lib/area-concern-exercise.js":"./lib/area-concern-exercise.js?v=fb6ceea12c",
 "./lib/area-concern-model.js":"./lib/area-concern-model.js?v=e5c976f8cc",
-"./lib/auth.js":"./lib/auth.js?v=2f0be0de2b",
+"./lib/auth.js":"./lib/auth.js?v=dbea9dc5e5",
 "./lib/badge-symbols.js":"./lib/badge-symbols.js?v=cf1b1261a4",
 "./lib/basemap-gallery-ui.js":"./lib/basemap-gallery-ui.js?v=2d2e451f3b",
 "./lib/briefing-context-model.js":"./lib/briefing-context-model.js?v=6fd632b118",
@@ -74,7 +74,7 @@
 "./lib/environment-ui.js":"./lib/environment-ui.js?v=6a28c9f4f1",
 "./lib/eoc-forms.js":"./lib/eoc-forms.js?v=39ada755f2",
 "./lib/eoc-model.js":"./lib/eoc-model.js?v=97ebee8586",
-"./lib/eoc-store.js":"./lib/eoc-store.js?v=f222ebd168",
+"./lib/eoc-store.js":"./lib/eoc-store.js?v=598d00c725",
 "./lib/evidence-ui.js":"./lib/evidence-ui.js?v=55b543b183",
 "./lib/exercise.js":"./lib/exercise.js?v=260c2b702c",
 "./lib/facility-data.js":"./lib/facility-data.js?v=266716ec5b",
@@ -108,7 +108,7 @@
 "./lib/map-labels.js":"./lib/map-labels.js?v=fba4179d48",
 "./lib/map-search-model.js":"./lib/map-search-model.js?v=15c71c913e",
 "./lib/map-search-ui.js":"./lib/map-search-ui.js?v=79d5ed1f89",
-"./lib/map.js":"./lib/map.js?v=328ef304d8",
+"./lib/map.js":"./lib/map.js?v=7e037f00e8",
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=4d8e320998",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
 "./lib/mission-model.js":"./lib/mission-model.js?v=e03ed8dcaf",
@@ -159,7 +159,7 @@
 "./lib/power-ui.js":"./lib/power-ui.js?v=588558f369",
 "./lib/precip-probability-model.js":"./lib/precip-probability-model.js?v=4887749ec3",
 "./lib/private-frame-player.js":"./lib/private-frame-player.js?v=89f0a220f3",
-"./lib/pump-copy-data.js":"./lib/pump-copy-data.js?v=3b51d2bd43",
+"./lib/pump-copy-data.js":"./lib/pump-copy-data.js?v=f7479f7219",
 "./lib/pump-copy-model.js":"./lib/pump-copy-model.js?v=be5dbef391",
 "./lib/pump-form-model.js":"./lib/pump-form-model.js?v=d9a5ac067a",
 "./lib/pump-readiness-contract.js":"./lib/pump-readiness-contract.js?v=8b27765203",
@@ -191,6 +191,7 @@
 "./lib/scenario-client.js":"./lib/scenario-client.js?v=9acb2d5054",
 "./lib/scenario-contract.js":"./lib/scenario-contract.js?v=3537363f86",
 "./lib/scene-companion.js":"./lib/scene-companion.js?v=b9d56c0620",
+"./lib/sdk.js":"./lib/sdk.js?v=dffeeed4e9",
 "./lib/selection-focus.js":"./lib/selection-focus.js?v=80f865c0f2",
 "./lib/snow-fleet-model.js":"./lib/snow-fleet-model.js?v=17699eac3f",
 "./lib/snow-fleet-ui.js":"./lib/snow-fleet-ui.js?v=a298ce9d2b",
@@ -204,10 +205,10 @@
 "./lib/watch-cloud-data.js":"./lib/watch-cloud-data.js?v=024ef76823",
 "./lib/watch-cloud-ui.js":"./lib/watch-cloud-ui.js?v=3d7dbedee7",
 "./lib/watch-focus.js":"./lib/watch-focus.js?v=7c7e697094",
-"./lib/watch-forecast-cloud-ui.js":"./lib/watch-forecast-cloud-ui.js?v=14dc798863",
+"./lib/watch-forecast-cloud-ui.js":"./lib/watch-forecast-cloud-ui.js?v=cafc2865d0",
 "./lib/watch-proximity.js":"./lib/watch-proximity.js?v=9c81ff8698",
-"./lib/watch-radar-ui.js":"./lib/watch-radar-ui.js?v=6c4209b164",
-"./lib/watch-terrain-map.js":"./lib/watch-terrain-map.js?v=8239579fbc",
+"./lib/watch-radar-ui.js":"./lib/watch-radar-ui.js?v=f1cf66c1f7",
+"./lib/watch-terrain-map.js":"./lib/watch-terrain-map.js?v=c59cd681cc",
 "./lib/watch-terrain-model.js":"./lib/watch-terrain-model.js?v=57b281d505",
 "./lib/watch-terrain-ready.js":"./lib/watch-terrain-ready.js?v=f7102473b2",
 "./lib/watch-terrain-session.js":"./lib/watch-terrain-session.js?v=38ff9cc7c4",

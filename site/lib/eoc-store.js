@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {COLLECTIONS,emptyRecords,validateEvent,validatePayload,canonical} from './eoc-model.js';
 export const GROUP_FOR={incidents:'recorders',periods:'coordinators',reports:'reporters',verifications:'reviewers',coordination:'coordinators',checklists:'coordinators',staging:'reviewers',briefings:'coordinators',approvals:'approvers',references:'coordinators',reviews:'reporters'};
 const idPattern=/^[a-zA-Z0-9_-]{1,80}$/;
@@ -18,12 +18,12 @@ function decode(feature,collection,layer){
   for(const k of ['id','entity','incident'])if(!idPattern.test(record[k]))throw new Error('Private record identifier invalid.');
   validatePayload(collection,record.payload);return record;
 }
-export async function createPrivateStore(config,session){
+export async function createPrivateStore(config,session,{loadSdk:openSdk=loadSdk}={}){
   if(!config.enabled||config.environment!=='exercise')throw new Error('Private exercise storage is not enabled.');
   if(!config.orgId||session.portal.id!==config.orgId)throw new Error('Sign in with an approved county organization account.');
   const groups=await session.portal.user.fetchGroups(),ids=new Set(groups.map(g=>g.id)),owner=config.owner===session.username;
   if(!owner&&!ids.has(config.groups.viewers))throw new Error('The operational viewer group is required.');
-  const [FeatureLayer,request]=await (await loadSdk()).import(['@arcgis/core/layers/FeatureLayer.js','@arcgis/core/request.js']);
+  const [FeatureLayer,request]=await (await openSdk()).import(['@arcgis/core/layers/FeatureLayer.js','@arcgis/core/request.js']);
   const read={},write={},allowed=new Set();let alive=true;
   for(const name of COLLECTIONS){const settings=config.collections[name];if(!settings?.read||!settings?.write)throw new Error(`Storage for ${name} is not configured.`);read[name]=new FeatureLayer({url:safeService(settings.read),outFields:['*']});if(owner||ids.has(config.groups[GROUP_FOR[name]]))allowed.add(name);}
   const ensure=()=>{if(!alive)throw new Error('Session ended; private records were cleared.');};

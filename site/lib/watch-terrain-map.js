@@ -7,7 +7,7 @@ import {installCloudTopInspection} from './cloud-top-inspection.js';
 import {createWatchWindTrails} from './watch-wind-trails.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
-export async function createWatchTerrain({container,onSelect,onError}){
+export async function createWatchTerrain({container,onSelect,onError,onCamera=()=>{}}){
  const ml=await import('../vendor/maplibre-6.15.0/maplibre-gl.mjs');
  if(!protocol){const {Protocol}=await import('../vendor/pmtiles-4.5.0/pmtiles.js');protocol=new Protocol();ml.addProtocol('pmtiles',protocol.tile);}
  const style=libreStyle(await pilotStyle('watch','pmtiles'));
@@ -26,6 +26,8 @@ export async function createWatchTerrain({container,onSelect,onError}){
  map.addSource('watch-basin',{type:'geojson',data:empty});
  map.addLayer({id:'watch-basin-outline',type:'line',source:'watch-basin',paint:{'line-color':'#e4d8aa','line-width':2,'line-dasharray':[3,2]}});
  map.addSource('watch-records',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+ map.addLayer({id:'watch-polygons',type:'fill',source:'watch-records',filter:['==',['geometry-type'],'Polygon'],paint:{'fill-color':['get','color'],'fill-opacity':.13}});
+ map.addLayer({id:'watch-polygon-outlines',type:'line',source:'watch-records',filter:['==',['geometry-type'],'Polygon'],paint:{'line-color':['get','color'],'line-width':2}});
  map.addLayer({id:'watch-lines',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['!=',['get','detour'],true]],paint:{'line-color':['get','color'],'line-width':3}});
  map.addLayer({id:'watch-detours',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['==',['get','detour'],true]],paint:{'line-color':['get','color'],'line-width':2.5,'line-dasharray':[3,2]}});
  map.addLayer({id:'watch-points',type:'circle',source:'watch-records',filter:['==',['geometry-type'],'Point'],paint:{'circle-color':['get','color'],'circle-radius':['case',['==',['get','kind'],'facility'],5,7],'circle-stroke-color':'#e8f6fb','circle-stroke-width':1.5}});
@@ -38,7 +40,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
  map.addLayer({id:'watch-facilities',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'facility']],layout:{'icon-image':'facility','icon-size':.6,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#e8f6fb','icon-halo-width':1}});
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
- const records=['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours'];
+ const records=['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-polygons'];
  const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
  let destroyed=false,overhead=false,pendingBounds=null;
  const imageUrls=new Map();
@@ -127,7 +129,9 @@ export async function createWatchTerrain({container,onSelect,onError}){
  }
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
+ map.on('moveend',()=>onCamera({center:map.getCenter().toArray(),zoom:map.getZoom(),pitch:map.getPitch(),bearing:map.getBearing()}));
  return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
+  restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},

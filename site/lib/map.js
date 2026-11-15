@@ -35,12 +35,8 @@ import {YARDS_URL,FUEL_URL,siteName} from './county-yards-model.js';
 import {badgeSymbol,badgeUrl} from './badge-symbols.js';
 import {glbCopyright,createCredits} from './google-tiles.js';
 
-let sdkPromise;
-/** @returns {Promise<object>} Load the pinned vendor SDK without blocking feed/error text. */
-export function loadSdk() {
-  sdkPromise ??= import('https://js.arcgis.com/5.1/').then(() => globalThis.$arcgis);
-  return sdkPromise;
-}
+import {loadSdk} from './sdk.js';
+export {loadSdk} from './sdk.js';
 
 /** @param {object[]} counties @param {Function} onSelect @returns {Promise<object>} */
 export async function createMap(counties, onSelect, onGaugeSelect = ()=>{}, onCameraSelect = ()=>{}, onRoadSelect=()=>{}, onPowerSelect=()=>{}, onFacilitySelect=()=>{},onAreaSelect=()=>{},onFeatureSelect=()=>{},onDrainageSelect=()=>{},onNetworkSelect=()=>{},onCareSelect=()=>{},onSandbagSelect=()=>{},{exercise=false}={}) {
