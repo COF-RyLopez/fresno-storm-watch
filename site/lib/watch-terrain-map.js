@@ -4,6 +4,7 @@ import {createHanfordRadarLayer} from './hanford-radar-layer.js';
 import {createHanfordVolumeLayer} from './hanford-volume-layer.js';
 import {createCloudTopLayer} from './cloud-top-layer.js';
 import {installCloudTopInspection} from './cloud-top-inspection.js';
+import {createWatchWindTrails} from './watch-wind-trails.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 export async function createWatchTerrain({container,onSelect,onError}){
@@ -44,6 +45,11 @@ export async function createWatchTerrain({container,onSelect,onError}){
  let radarLayer;
  let cloudTopLayer;
  let cloudMetadata;
+ let windTrails;
+ function forecastWind(field,options){
+  if(field&&!windTrails)windTrails=createWatchWindTrails(map);
+  windTrails?.set(field,options);
+ }
  const inspection=installCloudTopInspection({map,Popup:ml.Popup,recordAt,onSelect,getSurface:()=>cloudTopLayer,getMetadata:()=>cloudMetadata});
  function radar(samples,minDbz,options){
   if(!samples?.length){
@@ -122,8 +128,8 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
  return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
-  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,cloudTops,
+  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
-  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
+  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();windTrails?.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
 }

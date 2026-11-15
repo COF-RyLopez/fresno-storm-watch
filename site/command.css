@@ -210,6 +210,8 @@
 #watch-terrain-note{margin:3px 8px;font-size:11px;line-height:1.35}
 #watch-terrain .maplibregl-ctrl-attrib{font-size:10px;color:#e0e5e9;background:#20282ee8;max-width:calc(100% - 12px)}
 #watch-terrain .maplibregl-ctrl-attrib a{color:#e0e5e9}
+.watch-wind-trails{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.watch-wind-trails[hidden]{display:none}
 @media(max-width:600px){:is(#watch-terrain-overhead,#watch-terrain-upstream){min-height:44px;padding:4px 8px}#map-wrap>.watch-map-heading{flex-wrap:wrap!important}#map-wrap>.watch-map-heading>div{flex-basis:100%!important}#watch-terrain-note{font-size:10px}}
 
 .watershed-timeline{margin:12px 0;border:1px solid var(--calcite-color-border-2);border-radius:4px;padding:0 12px 10px;background:var(--calcite-color-surface-1)}

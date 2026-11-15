@@ -45,3 +45,26 @@ test('volume loading checks the exact byte count, hash and inflated shape',async
   await assert.rejects(loadForecastCloudHour(short,short.frames[0],signal),/shape/);
  }finally{restore();}
 });
+
+test('a matched v2 hour decodes signed 10 m wind and preserves old cloud-only frames',async()=>{
+ const joint=new Uint8Array(values.length+shape[1]*shape[2]*4);
+ joint.set(values);
+ const packed=new DataView(joint.buffer,values.length);
+ packed.setInt16(0,-123,true);packed.setInt16(2,450,true);
+ let bytes=gzipSync(joint);
+ const doc=fixture(bytes);
+ doc.version=2;
+ for(const frame of doc.frames)frame.wind=true;
+ const catalog=validateForecastClouds(doc,run);
+ const restore=stubGlobals({fetch:async()=>new Response(bytes)});
+ const signal=new AbortController().signal;
+ try{
+  const result=await loadForecastCloudHour(catalog,catalog.frames[0],signal);
+  assert.equal(result.values[12],72);
+  assert.ok(Math.abs(result.wind.vectors[0]+1.23)<.00001);
+  assert.equal(result.wind.vectors[1],4.5);
+  bytes=gzipSync(values);
+  const legacy=validateForecastClouds(fixture(bytes),run);
+  assert.equal((await loadForecastCloudHour(legacy,legacy.frames[0],signal)).wind,null);
+ }finally{restore();}
+});

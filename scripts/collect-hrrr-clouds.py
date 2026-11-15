@@ -1,4 +1,4 @@
-"""Publish a small regional HRRR cloud volume for each forecast hour (Python 3.12+)."""
+"""Publish regional HRRR forecast cloud volumes and matched 10 m winds (Python 3.12+)."""
 from __future__ import annotations
 
 import argparse
@@ -28,6 +28,10 @@ RADIUS = 6378137
 BOUNDS = (-121.5, 35.5, -117.7, 38.65)
 HOURS = range(1, 13)
 MAX_MESSAGE = 4_000_000
+WIND_LEVEL = "10 m above ground"
+WIND_FIELDS = (("UGRD", WIND_LEVEL), ("VGRD", WIND_LEVEL))
+OUTPUT_VERSION = 2
+MAX_FRAME = 440_000
 LOG = logging.getLogger(__name__)
 
 
@@ -54,10 +58,11 @@ def download(cycle: datetime, hour: int) -> tuple[str, dict]:
         if variable == "CLMR":
             variable = "CLWMR"
         if ((level in LEVEL_NAMES and variable in ("HGT", "CLWMR", "CIMIXR"))
-                or (level == "surface" and variable in ("HGT", "PRES"))):
+                or (level == "surface" and variable in ("HGT", "PRES"))
+                or (variable, level) in WIND_FIELDS):
             ranges[variable, level] = (int(row[1]), int(next_row[1]) - 1)
     expected = {(variable, level) for variable in ("HGT", "CLWMR", "CIMIXR") for level in LEVEL_NAMES}
-    if set(ranges) != expected | {("HGT", "surface"), ("PRES", "surface")}:
+    if not (expected | {("HGT", "surface"), ("PRES", "surface")}).issubset(ranges):
         raise ValueError("HRRR cloud field inventory is incomplete")
     return url, ranges
 
@@ -95,35 +100,91 @@ def density(fields: dict) -> np.ndarray:
     return np.rint(255 * np.clip(np.log1p(cloud * 20_000) / np.log1p(20), 0, 1)).astype("uint8")
 
 
+def grid_relative_wind(data: bytes) -> bool:
+    """Read the vector convention from GRIB2 Lambert grid template 3.30, octet 47."""
+    offset = 16
+    while offset + 5 <= len(data):
+        length = int.from_bytes(data[offset:offset + 4], "big")
+        if length < 5 or offset + length > len(data):
+            break
+        if data[offset + 4] == 3:
+            if length != 81 or data[offset + 12:offset + 14] != b"\x00\x1e":
+                break
+            return bool(data[offset + 46] & 8)
+        offset += length
+    raise ValueError("Unsupported HRRR wind grid")
+
+
+def projected_wind(u: np.ndarray, v: np.ndarray, native_crs: str,
+                   grid: tuple[np.ndarray, np.ndarray], grid_relative: bool) -> bytes:
+    """Rotate model winds into projected east/north displacement per second."""
+    x, y = grid
+    if not np.isfinite(u).all() or not np.isfinite(v).all() or np.max(np.hypot(u, v)) > 120:
+        raise ValueError("Invalid regional HRRR wind")
+    if grid_relative:
+        forward = Transformer.from_crs(3857, native_crs, always_xy=True)
+        inverse = Transformer.from_crs(native_crs, 3857, always_xy=True)
+        nx, ny = forward.transform(x, y)
+        x1, y1 = inverse.transform(nx + 10, ny)
+        x2, y2 = inverse.transform(nx, ny + 10)
+        x0, y0 = inverse.transform(nx, ny)
+        vx = (u * (x1 - x0) + v * (x2 - x0)) / 10
+        vy = (u * (y1 - y0) + v * (y2 - y0)) / 10
+    else:
+        # EPSG:3857 has east/north axes and a latitude-dependent map scale.
+        scale = np.cosh(y / RADIUS)
+        vx, vy = u * scale, v * scale
+    vectors = np.stack((vx, vy), axis=-1)
+    if not np.isfinite(vectors).all() or np.max(np.abs(vectors)) > 200:
+        raise ValueError("Invalid projected HRRR wind")
+    return np.rint(vectors * 100).astype("<i2").tobytes()
+
+
 def collect_frame(cycle: datetime, hour: int,
                   grid: tuple[np.ndarray, np.ndarray], pool: ThreadPoolExecutor) -> dict:
     url, ranges = download(cycle, hour)
     valid = cycle + timedelta(hours=hour)
 
-    def field(key: tuple[str, str]) -> tuple[tuple[str, str], np.ndarray]:
+    def field(key: tuple[str, str]) -> tuple[np.ndarray, str, bool | None]:
         variable, level = key
         data = read(url, MAX_MESSAGE, ranges[key])
         meta = gribberish.parse_grib_message_metadata(data, 0)
-        expected_units = {"HGT": "gpm", "PRES": "pa", "CLWMR": "kgkg-1", "CIMIXR": "kgkg-1"}
+        expected_units = {"HGT": "gpm", "PRES": "pa", "CLWMR": "kgkg-1", "CIMIXR": "kgkg-1",
+                          "UGRD": "ms-1", "VGRD": "ms-1"}
+        level_type = {"surface": "ground or water surface", WIND_LEVEL: "specific height level above ground"}
+        level_value = 10 if level == WIND_LEVEL else LEVEL_NAMES.get(level, 0) * 100
         if (meta.reference_date != cycle or meta.forecast_date != valid
                 or meta.var_abbrev != variable or meta.units != expected_units[variable]
                 or meta.grid_shape != (1059, 1799)
-                or meta.level_value != LEVEL_NAMES.get(level, 0) * 100
-                or meta.level_type != ("ground or water surface" if level == "surface" else "isobaric surface")):
+                or meta.level_value != level_value
+                or meta.level_type != level_type.get(level, "isobaric surface")):
             raise ValueError(f"HRRR field metadata changed for {key}")
         transform = Transformer.from_crs(3857, meta.proj, always_xy=True)
         tx, ty = transform.transform(*grid)
         x, y = meta.xy()
         values = gribberish.parse_grib_array(data, 0).reshape(meta.grid_shape)
-        return key, RegularGridInterpolator((y, x), values)((ty, tx))
+        relative = grid_relative_wind(data) if level == WIND_LEVEL else None
+        return RegularGridInterpolator((y, x), values)((ty, tx)), meta.proj, relative
 
-    cells = density(dict(pool.map(field, ranges)))
-    body = gzip.compress(cells.tobytes(), mtime=0)
+    cloud_keys = [key for key in ranges if key not in WIND_FIELDS]
+    cells = density({key: result[0] for key, result in zip(cloud_keys, pool.map(field, cloud_keys))})
+    wind = b""
+    try:
+        if not all(key in ranges for key in WIND_FIELDS):
+            raise ValueError("10 m wind fields missing from the run")
+        (u, crs, relative), (v, v_crs, v_relative) = pool.map(field, WIND_FIELDS)
+        if crs != v_crs or relative != v_relative:
+            raise ValueError("Wind axes differ between components")
+        wind = projected_wind(u, v, crs, grid, bool(relative))
+    except (OSError, ValueError) as error:
+        LOG.warning("HRRR %s +%dh wind unavailable: %s", cycle, hour, error)
+    body = gzip.compress(cells.tobytes() + wind, mtime=0)
     checksum = sha256(body).hexdigest()
     name = f"{cycle:%Y%m%d%H}-f{hour:02d}-{checksum[:12]}.gz"
     (OUTPUT / name).write_bytes(body)
     LOG.info("HRRR %s +%dh, %s bytes, %s occupied cells", cycle, hour, len(body), np.count_nonzero(cells))
-    return {"file": name, "sha256": checksum, "bytes": len(body), "lead": hour, "valid": valid.isoformat()}
+    return {"file": name, "sha256": checksum, "bytes": len(body), "lead": hour,
+            "valid": valid.isoformat(), "wind": bool(wind)}
 
 
 def save_manifest(manifest: dict) -> None:
@@ -134,7 +195,7 @@ def save_manifest(manifest: dict) -> None:
 
 def reuse_snapshot(url: str, manifest: dict, cycle: datetime, bounds: list[float]) -> None:
     prior_bounds = manifest["bounds3857"]
-    if (manifest["version"] != 1 or manifest["run"] != cycle.isoformat()
+    if (manifest["version"] not in (1, OUTPUT_VERSION) or manifest["run"] != cycle.isoformat()
             or manifest["shape"] != list(SHAPE) or manifest["heightRange"] != [0, HEIGHT]
             or len(prior_bounds) != len(bounds)
             or not all(abs(a - b) < .1 for a, b in zip(prior_bounds, bounds))
@@ -148,7 +209,7 @@ def reuse_snapshot(url: str, manifest: dict, cycle: datetime, bounds: list[float
         if (frame["file"] != name
                 or frame["valid"] != (cycle + timedelta(hours=lead)).isoformat()):
             raise ValueError("Invalid prior forecast record")
-        body = read(url + name, 400_000)
+        body = read(url + name, MAX_FRAME)
         if len(body) != frame["bytes"] or sha256(body).hexdigest() != digest:
             raise ValueError("Prior forecast frame integrity check failed")
         (OUTPUT / name).write_bytes(body)
@@ -170,7 +231,9 @@ def collect(reuse_url: str | None) -> None:
             LOG.info("Prior HRRR cloud snapshot unavailable: %s", error)
     with ThreadPoolExecutor(max_workers=12) as pool:
         for candidate in (cycle, cycle - timedelta(hours=3)):
-            if reuse_url and isinstance(previous, dict) and previous.get("run") == candidate.isoformat():
+            if (reuse_url and isinstance(previous, dict) and previous.get("run") == candidate.isoformat()
+                    and previous.get("version") == OUTPUT_VERSION
+                    and all(frame.get("wind") for frame in previous.get("frames", ()))):
                 try:
                     reuse_snapshot(reuse_url, previous, candidate, bounds)
                     return
@@ -182,8 +245,12 @@ def collect(reuse_url: str | None) -> None:
             except (OSError, ValueError) as error:
                 LOG.info("HRRR run %s unavailable; checking the earlier run: %s", candidate, error)
         else:
+            if (reuse_url and isinstance(previous, dict)
+                    and previous.get("run") in {cycle.isoformat(), (cycle - timedelta(hours=3)).isoformat()}):
+                reuse_snapshot(reuse_url, previous, datetime.fromisoformat(previous["run"]), bounds)
+                return
             raise ValueError("No complete recent HRRR cloud forecast")
-    manifest = {"version": 1, "run": candidate.isoformat(), "shape": SHAPE,
+    manifest = {"version": OUTPUT_VERSION, "run": candidate.isoformat(), "shape": SHAPE,
                 "bounds3857": bounds, "heightRange": [0, HEIGHT], "frames": frames}
     save_manifest(manifest)
 
