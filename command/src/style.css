@@ -845,8 +845,9 @@ summary {
     min-height: 44px;
   }
   .weather-dock {
-    bottom: 35px;
-    width: calc(100% - 20px);
+    left: 58px;
+    transform: none;
+    width: calc(100% - 76px);
     max-width: 360px;
     min-width: 0;
   }
@@ -935,7 +936,7 @@ summary {
   min-height: 44px;
 }
 .weather-dock {
-  bottom: 48px;
+  bottom: 88px;
 }
 .maplibregl-ctrl-attrib-inner {
   max-width: 280px;
