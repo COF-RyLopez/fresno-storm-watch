@@ -13,6 +13,7 @@ __pycache__/
 site/data/precip-probability.json
 site/data/probability-images/
 site/data/hrrr/
+site/data/hrrr-clouds/
 site/data/goes-cloud-tops/
 site/data/radar-volume/
 site/data/map-pilot-latest.json

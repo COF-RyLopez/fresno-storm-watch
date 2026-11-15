@@ -13,12 +13,13 @@ void main(){
 }`;
 const colorFunction=RADAR_BANDS.slice().reverse().map(({min,color})=>
  `if(dbz>=${min.toFixed(1)})return vec3(${color.map(channel=>(channel/255).toFixed(9)).join(',')});`).join('\n');
-const fragment=`#version 300 es
+const fragment=(cloud)=>`#version 300 es
 precision highp float;
 precision highp sampler3D;
 in vec2 screen;
 out vec4 pixel;
 uniform sampler3D echoes;
+${cloud?'uniform sampler3D previousClouds; uniform float cloudBlend;':''}
 uniform mat4 localMatrix;
 uniform mat4 inverseMatrix;
 uniform vec3 gridSize;
@@ -26,8 +27,8 @@ uniform vec4 heightMapping; // south/R, (north-south)/R, maxHeight*max(sec(latit
 uniform float heightSpan;
 uniform float minimumDbz;
 uniform float frameOpacity;
-const float MAX_ALPHA=0.55;
-const int MAX_STEPS=160;
+const float MAX_ALPHA=${cloud?'0.62':'0.55'};
+const int MAX_STEPS=${cloud?'80':'160'};
 
 vec3 echoColor(float dbz){${colorFunction}\nreturn vec3(0.0);}
 
@@ -68,6 +69,12 @@ bool intersectBox(vec3 origin,vec3 direction,inout float entry,inout float exitA
  return exitAt>entry;
 }
 
+${cloud?`float cloudDensity(vec3 uv){
+ float current=texture(echoes,uv).r;
+ if(cloudBlend>=1.0)return current;
+ return mix(texture(previousClouds,uv).r,current,cloudBlend);
+}`:''}
+
 void main(){
  vec4 nearPoint=inverseMatrix*vec4(screen,-1.0,1.0);
  vec4 farPoint=inverseMatrix*vec4(screen,1.0,1.0);
@@ -95,16 +102,22 @@ void main(){
   vec3 uv=vec3(point.xy,(altitude-heightMapping.w)/heightSpan);
   if(any(lessThan(uv,vec3(0.0)))||any(greaterThanEqual(uv,vec3(1.0))))continue;
   ivec3 cell=ivec3(floor(uv*gridSize));
-  float dbz=texelFetch(echoes,cell,0).r;
+  ${cloud?`float density=cloudDensity(uv);
+  if(density<0.015)continue;
+  float shade=cloudDensity(uv+vec3(-0.008,0.012,0.025));
+  vec3 tint=mix(vec3(0.56,0.66,0.78),vec3(0.96,0.98,1.0),1.0-smoothstep(0.0,0.65,shade));
+  float edge=smoothstep(0.0,0.025,min(min(uv.x,1.0-uv.x),min(uv.y,1.0-uv.y)));
+  float opacity=1.0-exp(-0.14*density*edge*voxelStep);`:`float dbz=texelFetch(echoes,cell,0).r;
   if(dbz<minimumDbz)continue; // -999 unknown is transparent, including at the box boundary.
   float opacity=1.0-exp(-0.24*coverageAt(uv,cell)*voxelStep);
+  vec3 tint=echoColor(dbz);`}
   if(opacity<0.0001)continue;
   if(accumulated.a==0.0){
    vec4 clip=localMatrix*vec4(point,1.0);
    firstDepth=clip.z/clip.w*0.5+0.5;
   }
   opacity=min(opacity,(MAX_ALPHA-accumulated.a)/(1.0-accumulated.a));
-  accumulated.rgb+=(1.0-accumulated.a)*opacity*echoColor(dbz);
+  accumulated.rgb+=(1.0-accumulated.a)*opacity*tint;
   accumulated.a+=(1.0-accumulated.a)*opacity;
  }
  if(accumulated.a==0.0)discard;
@@ -114,17 +127,17 @@ void main(){
 }`;
 
 /** Validate a bounded [z,y,x] measured field and construct its local Mercator cube. */
-export function volumeGeometry(volume,MercatorCoordinate){
+export function volumeGeometry(volume,MercatorCoordinate,cloud=false){
  const {values,shape,bounds3857,heightRange}=volume??{};
- if(!(values instanceof Float32Array)||values.byteLength>MAX_BYTES||!Array.isArray(shape)||shape.length!==3||
+ if(!(values instanceof (cloud?Uint8Array:Float32Array))||values.byteLength>MAX_BYTES||!Array.isArray(shape)||shape.length!==3||
   shape.some(size=>!Number.isInteger(size)||size<1||size>256)||shape.reduce((a,b)=>a*b,1)!==values.length||
   !Array.isArray(bounds3857)||bounds3857.length!==4||bounds3857.some(value=>!Number.isFinite(value)||Math.abs(value)>WORLD_METERS/2)||
   bounds3857[0]>=bounds3857[2]||bounds3857[1]>=bounds3857[3]||
   !Array.isArray(heightRange)||heightRange.length!==2||heightRange.some(value=>!Number.isFinite(value))||
-  heightRange[0]<0||heightRange[1]>MAX_HEIGHT||heightRange[0]>=heightRange[1])throw Error('Invalid Hanford volume geometry');
+  heightRange[0]<0||heightRange[1]>(cloud?16000:MAX_HEIGHT)||heightRange[0]>=heightRange[1])throw Error('Invalid weather volume geometry');
  let maximum=-Infinity;
  for(const dbz of values){
-  if(dbz!==-999&&(!Number.isFinite(dbz)||dbz<10||dbz>=80))throw Error('Invalid Hanford volume reflectivity');
+  if(!cloud&&dbz!==-999&&(!Number.isFinite(dbz)||dbz<10||dbz>=80))throw Error('Invalid Hanford volume reflectivity');
   maximum=Math.max(maximum,dbz);
  }
  const [west,south,east,north]=bounds3857,southAngle=south/PROJECTED_RADIUS,angleSpan=(north-south)/PROJECTED_RADIUS;
@@ -187,10 +200,10 @@ function shader(gl,type,code){
  throw Error(`Hanford volume shader failed: ${message}`);
 }
 
-function program(gl){
+function program(gl,cloud){
  let vert,frag,linked;
  try{
-  vert=shader(gl,gl.VERTEX_SHADER,vertex);frag=shader(gl,gl.FRAGMENT_SHADER,fragment);
+  vert=shader(gl,gl.VERTEX_SHADER,vertex);frag=shader(gl,gl.FRAGMENT_SHADER,fragment(cloud));
   linked=gl.createProgram();if(!linked)throw Error('Hanford volume program unavailable');
   gl.attachShader(linked,vert);gl.attachShader(linked,frag);gl.linkProgram(linked);
   if(!gl.getProgramParameter(linked,gl.LINK_STATUS))throw Error(`Hanford volume link failed: ${gl.getProgramInfoLog(linked)}`);
@@ -199,35 +212,43 @@ function program(gl){
  finally{if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);}
 }
 
-function textureState(gl){
- const active=gl.getParameter(gl.ACTIVE_TEXTURE);gl.activeTexture(gl.TEXTURE0);
- return {active,texture:gl.getParameter(gl.TEXTURE_BINDING_3D),sampler:gl.getParameter(gl.SAMPLER_BINDING)};
+function textureState(gl,cloud){
+ const active=gl.getParameter(gl.ACTIVE_TEXTURE);
+ const units=Array.from({length:cloud?2:1},(_,unit)=>{
+  gl.activeTexture(gl.TEXTURE0+unit);
+  return {texture:gl.getParameter(gl.TEXTURE_BINDING_3D),sampler:gl.getParameter(gl.SAMPLER_BINDING)};
+ });
+ gl.activeTexture(gl.TEXTURE0);
+ return {active,units};
 }
 function restoreTexture(gl,state){
- gl.bindTexture(gl.TEXTURE_3D,state.texture);gl.bindSampler(0,state.sampler);gl.activeTexture(state.active);
+ state.units.forEach(({texture,sampler},unit)=>{
+  gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_3D,texture);gl.bindSampler(unit,sampler);
+ });
+ gl.activeTexture(state.active);
 }
 
 /** Upload under known unpack settings; restore map buffers, row strides and image flags. */
-function upload(gl,texture,volume){
+function upload(gl,texture,volume,cloud){
  const keys=['UNPACK_ALIGNMENT','UNPACK_ROW_LENGTH','UNPACK_IMAGE_HEIGHT','UNPACK_SKIP_PIXELS','UNPACK_SKIP_ROWS',
   'UNPACK_SKIP_IMAGES','UNPACK_FLIP_Y_WEBGL','UNPACK_PREMULTIPLY_ALPHA_WEBGL'];
  const saved=keys.map(key=>gl.getParameter(gl[key])),buffer=gl.getParameter(gl.PIXEL_UNPACK_BUFFER_BINDING);
  try{
   gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER,null);
-  keys.forEach((key,i)=>gl.pixelStorei(gl[key],i===0?4:i>=6?false:0));
+  keys.forEach((key,i)=>gl.pixelStorei(gl[key],i===0?(cloud?1:4):i>=6?false:0));
   gl.bindTexture(gl.TEXTURE_3D,texture);
-  for(const parameter of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_3D,parameter,gl.NEAREST);
+  for(const parameter of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_3D,parameter,cloud?gl.LINEAR:gl.NEAREST);
   for(const parameter of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T,gl.TEXTURE_WRAP_R])gl.texParameteri(gl.TEXTURE_3D,parameter,gl.CLAMP_TO_EDGE);
   const [z,y,x]=volume.shape;
-  gl.texImage3D(gl.TEXTURE_3D,0,gl.R32F,x,y,z,0,gl.RED,gl.FLOAT,volume.values);
+  gl.texImage3D(gl.TEXTURE_3D,0,cloud?gl.R8:gl.R32F,x,y,z,0,gl.RED,cloud?gl.UNSIGNED_BYTE:gl.FLOAT,volume.values);
   if(gl.getError()!==gl.NO_ERROR)throw Error('Hanford volume texture upload failed');
  }finally{
   keys.forEach((key,i)=>gl.pixelStorei(gl[key],saved[i]));gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER,buffer);
  }
 }
 
-function renderState(gl){
- return {texture:textureState(gl),program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),
+function renderState(gl,cloud){
+ return {texture:textureState(gl,cloud),program:gl.getParameter(gl.CURRENT_PROGRAM),vao:gl.getParameter(gl.VERTEX_ARRAY_BINDING),
   depthWrite:gl.getParameter(gl.DEPTH_WRITEMASK),depthFunc:gl.getParameter(gl.DEPTH_FUNC),
   enabled:[gl.DEPTH_TEST,gl.CULL_FACE,gl.BLEND].map(key=>gl.isEnabled(key)),
   blend:['BLEND_SRC_RGB','BLEND_DST_RGB','BLEND_SRC_ALPHA','BLEND_DST_ALPHA','BLEND_EQUATION_RGB','BLEND_EQUATION_ALPHA'].map(key=>gl.getParameter(gl[key]))};
@@ -243,10 +264,11 @@ function restoreRender(gl,state){
  * Experimental Mercator-only measured-echo volume. Input is immutable, x-fastest,
  * y northward and z upward, with -999 unknown. No gap filling or weather inference.
  * Each R32F texture is <=1 MiB; at most two observed frames during an opacity fade.
- * Each frame uses <=160 samples/pixel. No scalar interpolation or invented motion.
+ * Measured echoes use <=160 samples/pixel without scalar interpolation.
+ * Forecast clouds use a separate R8 texture and blend display density in one pass.
  * Place before gauges, roads and labels. GPU failures throw for the caller's fallback.
  */
-export function createHanfordVolumeLayer(MercatorCoordinate){
+export function createHanfordVolumeLayer(MercatorCoordinate,{cloud=false}={}){
  let map,context,compiled,vao,uniforms,current={volume:null,geometry:null,minimum:20,texture:null,pending:false},previous=null,transition=null;
  const dispose=frame=>{if(frame?.texture)context.deleteTexture(frame.texture);if(frame)frame.texture=null;};
  const release=gl=>{
@@ -255,33 +277,36 @@ export function createHanfordVolumeLayer(MercatorCoordinate){
   vao=compiled=null;
  };
  return {
-  id:'watch-hanford-volume',type:'custom',renderingMode:'3d',
+  id:cloud?'watch-forecast-cloud-volume':'watch-hanford-volume',type:'custom',renderingMode:'3d',
   onAdd(owner,gl){
    if(typeof gl.texImage3D!=='function'||typeof gl.createVertexArray!=='function')throw Error('Hanford volume requires WebGL2');
    context=gl;
    try{
-    compiled=program(gl);vao=gl.createVertexArray();current.texture=gl.createTexture();
+    compiled=program(gl,cloud);vao=gl.createVertexArray();current.texture=gl.createTexture();
     if(!vao||!current.texture)throw Error('Hanford volume GPU allocation failed');
-    uniforms=Object.fromEntries(['echoes','localMatrix','inverseMatrix','screenBounds','gridSize','heightMapping','heightSpan','minimumDbz','frameOpacity']
+    uniforms=Object.fromEntries(['echoes','localMatrix','inverseMatrix','screenBounds','gridSize','heightMapping','heightSpan','minimumDbz','frameOpacity',
+     ...(cloud?['previousClouds','cloudBlend']:[])]
      .map(name=>[name,gl.getUniformLocation(compiled,name)]));
-    if(Object.values(uniforms).some(value=>value===null))throw Error('Hanford volume shader uniforms unavailable');
+    if(Object.entries(uniforms).some(([name,value])=>value===null&&(!cloud||name!=='minimumDbz')))
+     throw Error('Weather volume shader uniforms unavailable');
     map=owner;current.pending=!!current.volume;
    }catch(error){release(gl);throw error;}
   },
-  setVolume(next,minDbz=20,{durationMs=0}={}){
-   if(!Number.isFinite(minDbz)||minDbz<10||minDbz>79.5)throw Error('Invalid Hanford volume threshold');
+  setVolume(next,minDbz=20,{durationMs=0,onTransitionEnd}={}){
+   if(cloud)minDbz=1;
+   else if(!Number.isFinite(minDbz)||minDbz<10||minDbz>79.5)throw Error('Invalid Hanford volume threshold');
    const animate=Number.isFinite(durationMs)&&durationMs>0,changed=next!==current.volume;
    if(!changed&&minDbz===current.minimum){
     if(previous&&!animate){dispose(previous);previous=transition=null;map?.triggerRepaint();}
     return;
    }
-   const geometry=changed&&next?volumeGeometry(next,MercatorCoordinate):current.geometry;
+   const geometry=changed&&next?volumeGeometry(next,MercatorCoordinate,cloud):current.geometry;
    dispose(previous);previous=transition=null;
    if(!changed){current.minimum=minDbz;}
    else{
     const frame={volume:next,geometry:next?geometry:null,minimum:minDbz,texture:null,pending:!!next};
     if(animate&&compiled&&next&&current.volume&&minDbz===current.minimum&&(geometry.maximum>=minDbz||current.geometry.maximum>=minDbz)){
-     previous=current;transition={durationMs,start:null};
+     previous=current;transition={durationMs,start:null,onTransitionEnd};
     }else{frame.texture=current.texture;current.texture=null;}
     current=frame;
    }
@@ -289,23 +314,27 @@ export function createHanfordVolumeLayer(MercatorCoordinate){
   },
   render(gl,{defaultProjectionData}){
    if(!compiled||!current.volume&&!previous?.volume)return;
-   const saved=renderState(gl);
+   const saved=renderState(gl,cloud);
    try{
     if(gl.isContextLost())throw Error('Hanford volume WebGL context lost');
     const frames=[];
-    for(const frame of [previous,current])if(frame?.volume&&frame.geometry.maximum>=frame.minimum){
+    for(const frame of [previous,current])if(frame?.volume&&(cloud||frame.geometry.maximum>=frame.minimum)){
      const matrices=volumeMatrices(defaultProjectionData?.mainMatrix,frame.geometry),{screenBounds}=matrices;
      if(screenBounds[0]>=screenBounds[2]||screenBounds[1]>=screenBounds[3])continue;
      if(frame.volume.shape.some(size=>size>gl.getParameter(gl.MAX_3D_TEXTURE_SIZE)))throw Error('Hanford volume exceeds GPU texture size');
      if(!frame.texture){frame.texture=gl.createTexture();if(!frame.texture)throw Error('Hanford volume GPU allocation failed');}
-     if(frame.pending){upload(gl,frame.texture,frame.volume);frame.pending=false;}
+     if(frame.pending){upload(gl,frame.texture,frame.volume,cloud);frame.pending=false;}
      frames.push({frame,...matrices});
     }
     let progress=1;
     if(transition){
      const now=performance.now();transition.start??=now;
      progress=Math.max(0,Math.min(1,(now-transition.start)/transition.durationMs));
-     if(progress===1){dispose(previous);previous=transition=null;}
+    if(progress===1){
+     const finished=transition.onTransitionEnd;
+     dispose(previous);previous=transition=null;
+     if(finished)queueMicrotask(finished);
+    }
     }
     gl.bindSampler(0,null);
     gl.useProgram(compiled);gl.bindVertexArray(vao);
@@ -313,9 +342,19 @@ export function createHanfordVolumeLayer(MercatorCoordinate){
     gl.blendFuncSeparate(gl.ONE,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.blendEquationSeparate(gl.FUNC_ADD,gl.FUNC_ADD);
     gl.uniform1i(uniforms.echoes,0);
-    // Composite the colors of two observed volumes; their unknown masks and dBZ stay separate.
+    if(cloud){
+     const previousTexture=previous?.texture;
+     gl.activeTexture(gl.TEXTURE0+1);
+     gl.bindSampler(1,null);
+     gl.bindTexture(gl.TEXTURE_3D,previousTexture??current.texture);
+     gl.activeTexture(gl.TEXTURE0);
+     gl.uniform1i(uniforms.previousClouds,1);
+     gl.uniform1f(uniforms.cloudBlend,previousTexture?progress*progress*(3-2*progress):1);
+    }
+    // Observed frames composite separately so each unknown mask and dBZ stays intact.
     for(const {frame,matrix,inverse,screenBounds}of frames){
-     const opacity=frame===current?progress:1-progress;
+     if(cloud&&frame!==current)continue;
+     const opacity=cloud?1:frame===current?progress:1-progress;
      if(opacity<=0)continue;
      const {volume,geometry,minimum,texture}=frame;
      gl.bindTexture(gl.TEXTURE_3D,texture);gl.uniform1f(uniforms.frameOpacity,opacity);gl.uniform1f(uniforms.minimumDbz,minimum);

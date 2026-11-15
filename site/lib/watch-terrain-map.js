@@ -42,8 +42,6 @@ export async function createWatchTerrain({container,onSelect,onError}){
  let destroyed=false,overhead=false,pendingBounds=null;
  const imageUrls=new Map();
  let radarLayer;
- let volumeLayer;
- let volumeFailure;
  let cloudTopLayer;
  let cloudMetadata;
  const inspection=installCloudTopInspection({map,Popup:ml.Popup,recordAt,onSelect,getSurface:()=>cloudTopLayer,getMetadata:()=>cloudMetadata});
@@ -59,28 +57,32 @@ export async function createWatchTerrain({container,onSelect,onError}){
   }
   radarLayer.setSamples(samples,minDbz,options);
  }
- function radarVolume(volume,minDbz,onFailure,options){
-  const id='watch-hanford-volume';
-  if(!volume){if(map.getLayer(id))map.removeLayer(id);volumeLayer=volumeFailure=null;return;}
-  if(onFailure)volumeFailure=onFailure;
-  if(!map.getLayer(id)){
-   const candidate=createHanfordVolumeLayer(ml.MercatorCoordinate);
+ function volumeDisplay(id,cloud=false){
+  let layer,onDrawFailure;
+  return function display(volume,minDbz,onFailure,options){
+  if(!volume){if(map.getLayer(id))map.removeLayer(id);layer=onDrawFailure=null;return;}
+  if(onFailure)onDrawFailure=onFailure;
+  if(!layer){
+   const candidate=createHanfordVolumeLayer(ml.MercatorCoordinate,{cloud});
    const draw=candidate.render.bind(candidate);let failed=false;
    candidate.render=(gl,args)=>{
     if(failed)return;
     try{draw(gl,args);}catch{
      failed=true;
      queueMicrotask(()=>{
-      if(destroyed||volumeLayer!==candidate)return;
-      const notify=volumeFailure;radarVolume(null);notify?.();
+      if(destroyed||layer!==candidate)return;
+      const notify=onDrawFailure;display(null);notify?.();
      });
     }
    };
-   try{map.addLayer(candidate,'watch-lines');volumeLayer=candidate;}
+   try{map.addLayer(candidate,'watch-lines');layer=candidate;}
    catch(error){if(map.getLayer(id))map.removeLayer(id);throw error;}
   }
-  volumeLayer.setVolume(volume,minDbz,options);
+  layer.setVolume(volume,minDbz,options);
+  };
  }
+ const radarVolume=volumeDisplay('watch-hanford-volume');
+ const forecastClouds=volumeDisplay('watch-forecast-cloud-volume',true);
  function cloudTops(vertices,options={}){
   inspection.clear();cloudMetadata=vertices?.length?options:null;
   const id='watch-goes-cloud-tops';
@@ -120,7 +122,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
  return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
-  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,cloudTops,
+  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
   destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
