@@ -95,16 +95,16 @@ export function createMission({workspace,watershedTimeline,exercise=false,onSele
   mapActions.append(button('Focus area',()=>{workspace.showFocusedMap?.();map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}),button('View in 3D',async()=>{workspace.showFocusedMap?.();await map?.setViewMode('3d');if(stillSelected())await map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}));
   const mapDetails=disclosure('Map, trends & technical tools');mapDetails.append(mapActions);
   let forecastSelection=0;
-  watershedTimeline?.append(host,id,rows,{open:upstream,onWindow:async(window,station,{navigate})=>{
+  watershedTimeline?.append(host,id,rows,{open:upstream,onWindow:async(window,station,{navigate,...options})=>{
    const selection=++forecastSelection;
    // Initial timeline rendering is synchronous. Wait for the evidence pane to open.
    await Promise.resolve();
    const current=()=>stillSelected()&&selection===forecastSelection;
    if(!map||!current())return;
    if(navigate){workspace.setExplore(false);workspace.showFocusedMap?.();}
-   if(map.selectWatershedWindow(station,window,{openIfClosed:navigate})||!navigate)return;
+   if(map.selectWatershedWindow(station,window,{...options,navigate,openIfClosed:navigate})||!navigate)return;
    await map.inspectPlanningPoints(s.points,{areaId:id,canNavigate:current});
-   if(current())map.selectWatershedWindow(station,window);
+   if(current())map.selectWatershedWindow(station,window,{...options,navigate});
   }});
   appendReservoirWatch(host,row,time);
   for(const id of [...new Set((row.releases||[]).map(r=>r.station))])mapDetails.append(button('Compare release & gauge trends · '+id,()=>onTrends(id)));
@@ -130,7 +130,9 @@ export function createMission({workspace,watershedTimeline,exercise=false,onSele
   if(focus){
    if(upstream)workspace.showFocusedMap?.();else workspace.showMap();
    void map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected}).then(()=>{
-    if(upstream&&stillSelected())void map.openUpstreamWatershed();
+    if(!stillSelected())return;
+    watershedTimeline?.syncMap();
+    if(upstream)void map.openUpstreamWatershed();
    });
   }
   // The Calcite panel owns its scroll container; replacing children does not reset it.

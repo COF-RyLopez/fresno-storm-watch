@@ -17,12 +17,12 @@ export function installWatchTerrain({wanted,snapshot,onSelect,detach,restore,exe
  const watershed=installWatchWatershed({session,exercise,repaint:()=>api.refresh(),localBounds:()=>data()?.bounds});
  function data(){return target?snapshot(target,watershed.feature):null;}
  function caption(d){
-  note.hidden=false;note.textContent=`Reference terrain · not flood depth · ${d.facilities} facilities shown · nearby search: 5 km${d.facilities?'':' (inventory may be unassessed)'} · proximity, not verified connections`;
+  note.hidden=false;note.textContent=`Reference terrain · ${d.facilities?d.facilities+' nearby facilities':'Facility inventory may be unassessed'}`;
   note.title='Nearby means within 5 km of selected watchpoints or the focus center, not a verified downstream connection, power service or safe route. Reference waterbody outlines are not current pool levels.';
   roadNote.hidden=!d.roadStatus;
   const state=d.roadStatus?.state;
   roadNote.textContent=state==='unavailable'?(exercise?'Live county road records are disabled in exercise mode.':'Fresno County road records unavailable.'):state==='old'?`${d.roads} retained Fresno County road records · gray · verify status with the county.`:
-   `${d.roads} Fresno County road records in the basin or near watchpoints. ${d.roads?'Orange = block or closure · dashed teal = detour. ':''}Confirm access with the road owner.`;
+   `${d.roads} Fresno County road records${d.roads?' · orange closures/blocks · dashed teal detours':''}`;
  }
  function setOverhead(value){overhead=value;session.overhead(overhead);button.textContent=overhead?'View terrain':'Overhead';button.setAttribute('aria-pressed',String(overhead));}
  button.addEventListener('click',()=>setOverhead(!overhead));

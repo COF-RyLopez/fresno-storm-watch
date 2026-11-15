@@ -21,7 +21,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#1d2224"
+        "background-color": "#263339"
       }
     },
     {
@@ -38,22 +38,7 @@
       "minzoom": 0,
       "layout": {},
       "paint": {
-        "fill-color": {
-          "stops": [
-            [
-              0,
-              "#3b3c3c"
-            ],
-            [
-              12,
-              "#353636"
-            ],
-            [
-              15,
-              "#323333"
-            ]
-          ]
-        }
+        "fill-color": "#263339"
       }
     },
     {
@@ -4213,7 +4198,8 @@
               2.8
             ]
           ]
-        }
+        },
+        "line-opacity": 0.8
       }
     },
     {
@@ -4265,7 +4251,8 @@
         "line-dasharray": [
           1,
           3
-        ]
+        ],
+        "line-opacity": 0.8
       }
     },
     {
@@ -4312,7 +4299,8 @@
         "line-dasharray": [
           4,
           2
-        ]
+        ],
+        "line-opacity": 0.8
       }
     },
     {
@@ -4351,7 +4339,8 @@
         "line-dasharray": [
           1,
           3
-        ]
+        ],
+        "line-opacity": 0.66
       }
     },
     {
@@ -4394,7 +4383,8 @@
               1.26
             ]
           ]
-        }
+        },
+        "line-opacity": 0.66
       }
     },
     {
@@ -4425,7 +4415,7 @@
           0
         ]
       ],
-      "minzoom": 8,
+      "minzoom": 10,
       "layout": {
         "line-cap": "round",
         "line-join": "round"
@@ -4447,7 +4437,8 @@
               2.6599999999999997
             ]
           ]
-        }
+        },
+        "line-opacity": 0.66
       }
     },
     {
@@ -4478,7 +4469,7 @@
           0
         ]
       ],
-      "minzoom": 9,
+      "minzoom": 10,
       "layout": {
         "line-cap": "round",
         "line-join": "round"
@@ -4504,7 +4495,8 @@
         "line-dasharray": [
           1,
           3
-        ]
+        ],
+        "line-opacity": 0.66
       }
     },
     {
@@ -4556,7 +4548,8 @@
         "line-dasharray": [
           4,
           2
-        ]
+        ],
+        "line-opacity": 0.66
       }
     },
     {
@@ -4603,7 +4596,8 @@
         "line-dasharray": [
           4,
           2
-        ]
+        ],
+        "line-opacity": 0.66
       }
     },
     {
@@ -4642,7 +4636,8 @@
         "line-dasharray": [
           2,
           3
-        ]
+        ],
+        "line-opacity": 0.66
       }
     },
     {
@@ -41748,7 +41743,7 @@
       "type": "symbol",
       "source": "frog",
       "source-layer": "names",
-      "minzoom": 6,
+      "minzoom": 8,
       "filter": [
         "==",
         "rank",
@@ -41759,7 +41754,7 @@
         "text-font": [
           "Arial Regular"
         ],
-        "text-size": 16,
+        "text-size": 13,
         "text-max-width": 15,
         "text-padding": 12,
         "text-allow-overlap": false,

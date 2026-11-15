@@ -1,13 +1,13 @@
 import {countyGeometry} from './model.js';
 import {PILOT_BOUNDS,collection} from './pilot-model.js';
-import {waterwayStyle} from './waterway-basemap.js';
+import {waterwayStyle,WATERWAY_BASEMAP} from './waterway-basemap.js';
 import {withTimeout} from './with-timeout.js';
 
 let archiveProtocol;
-export const styleId=()=> 'frog-waterways-0.33.0';
+export const styleId=()=> 'frog-waterways-'+WATERWAY_BASEMAP.styleRevision;
 /** Both engines reference the same publisher tiles and existing cached county tiles. */
 export async function pilotStyle(view,delivery='tiles',fetchImpl=fetch){
- const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetchImpl(new URL('root.json?v=0.33.0',base),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});
+ const base=new URL('../basemaps/frog-waterways-dark/',import.meta.url),r=await fetchImpl(new URL('root.json?v='+WATERWAY_BASEMAP.styleRevision,base),{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw Error('Waterways basemap unavailable');
  const style=waterwayStyle(await r.json(),base);
  if(delivery==='pmtiles'){

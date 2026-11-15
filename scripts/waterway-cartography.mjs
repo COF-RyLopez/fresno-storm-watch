@@ -8,3 +8,14 @@ export function waterwayRole({name,kind}){
   return 'connector';
 }
 export const overviewRank=properties=>OVERVIEW_NAMES.has(normalizedName(properties.name))?0:1;
+
+/** Keep watershed reference detail legible when operational markers are present. */
+export function applyWaterwayOverviewStyle(style){
+ for(const layer of style.layers){
+  if(layer.type==='background')layer.paint['background-color']='#263339';
+  if(layer.id==='Land')layer.paint['fill-color']='#263339';
+  if(layer.id==='frog-named-streams'||layer.id==='frog-named-waterbody-centrelines')layer.minzoom=10;
+  if(layer.source==='frog'&&layer.type==='line')layer.paint['line-opacity']=layer.id.startsWith('frog-overview-')?.8:.66;
+  if(layer.id==='frog-overview-names'){layer.minzoom=8;layer.layout['text-size']=13;}
+ }
+}

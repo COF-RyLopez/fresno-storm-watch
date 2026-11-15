@@ -1,7 +1,7 @@
 import {buildReleaseTrend,TREND_REACHES} from './release-trend-model.js';
 import {HOUR,riverValue} from './river-model.js';
 import {upstreamReservoir} from './watch-watershed-data.js';
-import {precipitationTimeline,timelineSnapshotCurrent,RESERVOIR_NAMES,RISE_OUTLET,TIMELINE_QPF_URL} from './watershed-timeline-model.js';
+import {precipitationTimeline,timelineSnapshotCurrent,RISE_OUTLET,TIMELINE_QPF_URL} from './watershed-timeline-model.js';
 import {watershedTimelineChart} from './watershed-timeline-chart.js';
 import {positiveChange} from './planning-model.js';
 import {el,elClass,link} from './dom.js';
@@ -25,16 +25,14 @@ export function createWatershedTimeline({config,timeZone,exercise}){
    .then(data=>{snapshot=data;}).catch(()=>{snapshot=null;}).finally(()=>{pending=null;render();});
  }
 
- function render({navigate=false}={}){
-  if(!active?.details.open||!active.details.isConnected)return;
+ function render({navigate=false,force=false,play=false}={}){
+  if(!active?.details.isConnected)return;
   const {station,options,picker,windowPicker,output,chart,readout}=active;
   const now=Date.now();
-  const gaugeId=picker.value;
-  const measure=entries.get(gaugeId)?.gauge?.observed?.name?.toLowerCase()==='flow'?'flow':'stage';
-  const trend=buildReleaseTrend({stationId:station,gaugeId,gaugeIds:options.map(g=>g.id),measure,historyHours:72,futureHours:168,reservoirs,entries,config,now});
   const rain=precipitationTimeline(snapshot,now);
   const signature=rain.windows.map(row=>`${row.layer}:${row.issue}:${row.start}:${row.end}`).join(',');
-  if(signature!==active.signature){
+  const changed=signature!==active.signature;
+  if(changed){
    windowPicker.replaceChildren(new Option('72-hour overview',''),...rain.windows.map(row=>new Option(windowTime(row),String(row.start))));
    windowPicker.value=rain.windows.some(row=>String(row.start)===active.choice)?active.choice:'';
    active.signature=signature;
@@ -44,18 +42,28 @@ export function createWatershedTimeline({config,timeZone,exercise}){
   const expired=!!active.choice&&!window;
   if(expired)active.choice='';
   const mapKey=window?`${window.layer}:${window.issue}:${window.start}:${window.end}`:'';
-  if(navigate||active.mapKey!==mapKey){
+  if(navigate||force||changed||active.mapKey!==mapKey){
    active.mapKey=mapKey;
-   active.onWindow(window??null,station,{navigate});
+   const current=active;
+   active.onWindow(window??null,station,{navigate,windows:rain.windows,play,onFrame(row){
+    if(active!==current||!current.details.isConnected)return;
+    current.choice=row?String(row.start):'';
+    current.windowPicker.value=current.choice;
+    current.mapKey=row?`${row.layer}:${row.issue}:${row.start}:${row.end}`:'';
+    render();
+   }});
   }
+  active.play.disabled=!rain.windows.length;
+  if(!active.details.open)return;
+  const gaugeId=picker.value;
+  const measure=entries.get(gaugeId)?.gauge?.observed?.name?.toLowerCase()==='flow'?'flow':'stage';
+  const trend=buildReleaseTrend({stationId:station,gaugeId,gaugeIds:options.map(g=>g.id),measure,historyHours:72,futureHours:168,reservoirs,entries,config,now});
   chart.replaceChildren(watershedTimelineChart(trend,rain,station,window,timeZone));
   const best=rain.peaks[station];
   const heading=best.length?`${best[0].max[station].toFixed(2)} in · ${best.length>1?`${best.length} tied peak windows`:'Heaviest mapped 6-hour window'}`:
    exercise?'Exercise timeline':pending?'Checking precipitation timing…':rain.windows.length?'No ≥0.01 in contour in available windows':'Precipitation timing unavailable';
   output.replaceChildren(el('strong',heading));
   if(best.length)output.append(el('p',`${windowTime(best[0])}${best.length>1?' · first tied window':''}`));
-  const other=station==='MIL'?'PNF':'MIL',otherPeak=rain.peaks[other][0];
-  if(otherPeak)output.append(el('small',`${RESERVOIR_NAMES[other]} peak ${otherPeak.max[other].toFixed(2)} in · ${windowTime(otherPeak)}`));
   if(rain.windows.length&&!rain.continuous)output.append(elClass('p','Forecast coverage is incomplete. Peak applies to available windows.','watch-gap'));
   if(expired)output.append(elClass('p','The selected window is no longer current. The 72-hour overview is selected.','watch-gap'));
   readout.replaceChildren();
@@ -106,22 +114,24 @@ export function createWatershedTimeline({config,timeZone,exercise}){
   const selector=el('label','Gauge'),picker=el('select');
   picker.append(...options.map(g=>new Option(`${g.side} · ${g.id}`,g.id)));picker.value=preferred;selector.append(picker);
   const windowLabel=el('label','Map forecast window'),windowPicker=el('select');windowLabel.append(windowPicker);
+  const play=el('calcite-button','Play on map');play.scale='s';play.iconStart='play';play.disabled=true;
   const output=elClass('div','','watershed-timeline-peak');output.setAttribute('role','status');
   const chart=elClass('div','','watershed-timeline-chart'),readout=elClass('div','','watershed-timeline-readout');
-  details.append(el('summary','Rain, gauges & releases timeline'),output,windowLabel,chart,selector,readout,
-   el('small','Bars show the highest six-hour liquid-equivalent precipitation mapped inside each watershed. Outlines mark peaks. Solid lines and dots are reports, dashed lines are forecasts, and diamonds are planned releases. Gray indicates old or unverified data. Tracks share Pacific time and use separate units. Confirm release plans and resource lead times with the operators.'),
-   link('WPC forecast windows',TIMELINE_QPF_URL));
-  if(station==='MIL'&&!exercise)details.append(document.createTextNode(' · '),link('WWDH Millerton catalog',wwdh));
+  const evidence=el('details');evidence.append(el('summary','Charts & source details'),chart,selector,readout,
+   el('small','Bars show peak six-hour precipitation in each watershed. Solid lines and dots are reports, dashed lines are forecasts, and diamonds are planned releases. Gray indicates old or unverified data.'),link('WPC forecast windows',TIMELINE_QPF_URL));
+  if(station==='MIL'&&!exercise)evidence.append(document.createTextNode(' · '),link('WWDH Millerton catalog',wwdh));
+  details.append(el('summary','Rain, gauges & releases timeline'),output,windowLabel,play,evidence);
   if(exercise)details.append(el('p','Gauge and release evidence is exercise data. Live forecast and Reclamation values are disabled.'));
   host.append(details);
-  active={station,options,details,picker,windowPicker,output,chart,readout,signature:null,choice:'',mapKey:null,onWindow};
+  active={station,options,details,picker,windowPicker,output,chart,readout,play,signature:null,choice:'',mapKey:null,onWindow};
   picker.onchange=()=>render();windowPicker.onchange=()=>{active.choice=windowPicker.value;render({navigate:true});};
+  play.addEventListener('click',()=>render({navigate:true,play:true}));
   details.ontoggle=()=>{if(active?.details===details&&details.open){collect();render();}};
-  if(open){collect();render();}
+  collect();render();
  }
 
- setInterval(()=>{if(!document.hidden&&active?.details.open&&active.details.isConnected){collect();render();}},60_000);
- return {append,setReservoirData(data){reservoirs=data;render();},setRiverData(data){entries=new Map(data.entries);if(data.stations)stations=new Map(data.stations.map(s=>[s.id,s]));render();}};
+ setInterval(()=>{if(!document.hidden&&active?.details.isConnected){collect();render();}},60_000);
+ return {append,syncMap(){render({force:true});},setReservoirData(data){reservoirs=data;render();},setRiverData(data){entries=new Map(data.entries);if(data.stations)stations=new Map(data.stations.map(s=>[s.id,s]));render();}};
 }
 
 function metric(title,value,note,url){
