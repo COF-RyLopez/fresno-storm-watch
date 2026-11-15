@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-351kWN5nb85aHy69enXdNSRn+SJGRoO5ZIQI/6YsOCk='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-TMr9SMS9AU6ZTSdvJPnGEU1L79YtrqA2EBu3rgZiFvs='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
-<link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=705da4256b"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=f415341917"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
+<link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=31d486d23c"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=4280bc3fdf"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
 <!-- The unified Esri 5.1 entry loads Calcite and the Maps SDK together. -->
 <script type="importmap">
 {"imports":{
-"./app.js":"./app.js?v=672fc437b4",
+"./app.js":"./app.js?v=f1077f2214",
 "./config.js":"./config.js?v=d82b554e1d",
 "./eoc-config.js":"./eoc-config.js?v=7e4e01a397",
 "./lib/acs-data.js":"./lib/acs-data.js?v=722d46192c",
@@ -67,7 +67,7 @@
 "./lib/dwr-supply-planning-ui.js":"./lib/dwr-supply-planning-ui.js?v=f6776c263d",
 "./lib/environment-data.js":"./lib/environment-data.js?v=650d68b6fa",
 "./lib/environment-model.js":"./lib/environment-model.js?v=6dabe56702",
-"./lib/environment-ui.js":"./lib/environment-ui.js?v=0cdffe59ec",
+"./lib/environment-ui.js":"./lib/environment-ui.js?v=6a28c9f4f1",
 "./lib/eoc-forms.js":"./lib/eoc-forms.js?v=39ada755f2",
 "./lib/eoc-model.js":"./lib/eoc-model.js?v=97ebee8586",
 "./lib/eoc-store.js":"./lib/eoc-store.js?v=f222ebd168",
@@ -87,8 +87,9 @@
 "./lib/forecast-review-ui.js":"./lib/forecast-review-ui.js?v=728c6c44f5",
 "./lib/frame-window.js":"./lib/frame-window.js?v=2db08f9200",
 "./lib/google-tiles.js":"./lib/google-tiles.js?v=7b7b30bf91",
-"./lib/hanford-radar-data.js":"./lib/hanford-radar-data.js?v=9fff8b6134",
-"./lib/hanford-radar-layer.js":"./lib/hanford-radar-layer.js?v=01c9370c2f",
+"./lib/hanford-radar-cells.js":"./lib/hanford-radar-cells.js?v=f89312541c",
+"./lib/hanford-radar-data.js":"./lib/hanford-radar-data.js?v=4c95332a2a",
+"./lib/hanford-radar-layer.js":"./lib/hanford-radar-layer.js?v=5ed93943b4",
 "./lib/hrrr-model.js":"./lib/hrrr-model.js?v=287b38e666",
 "./lib/hrrr-ui.js":"./lib/hrrr-ui.js?v=0ccd57ba81",
 "./lib/hydrography-status.js":"./lib/hydrography-status.js?v=8ff4a34604",
@@ -97,10 +98,11 @@
 "./lib/library-status-model.js":"./lib/library-status-model.js?v=3bbd67ec96",
 "./lib/map-context.js":"./lib/map-context.js?v=5307914c1e",
 "./lib/map-events.js":"./lib/map-events.js?v=47c9f9b76f",
+"./lib/map-hover.js":"./lib/map-hover.js?v=9dc185bb8f",
 "./lib/map-labels.js":"./lib/map-labels.js?v=fba4179d48",
 "./lib/map-search-model.js":"./lib/map-search-model.js?v=15c71c913e",
 "./lib/map-search-ui.js":"./lib/map-search-ui.js?v=79d5ed1f89",
-"./lib/map.js":"./lib/map.js?v=5688e9f432",
+"./lib/map.js":"./lib/map.js?v=328ef304d8",
 "./lib/mission-followup-model.js":"./lib/mission-followup-model.js?v=4d8e320998",
 "./lib/mission-followup-ui.js":"./lib/mission-followup-ui.js?v=28098fab4b",
 "./lib/mission-model.js":"./lib/mission-model.js?v=e03ed8dcaf",
@@ -194,13 +196,14 @@
 "./lib/usgs-gauges.js":"./lib/usgs-gauges.js?v=ee6db16686",
 "./lib/watch-focus.js":"./lib/watch-focus.js?v=7c7e697094",
 "./lib/watch-proximity.js":"./lib/watch-proximity.js?v=9c81ff8698",
-"./lib/watch-terrain-map.js":"./lib/watch-terrain-map.js?v=aa90542a2f",
+"./lib/watch-radar-ui.js":"./lib/watch-radar-ui.js?v=0862f0b3e1",
+"./lib/watch-terrain-map.js":"./lib/watch-terrain-map.js?v=1d5449ec17",
 "./lib/watch-terrain-model.js":"./lib/watch-terrain-model.js?v=57b281d505",
 "./lib/watch-terrain-ready.js":"./lib/watch-terrain-ready.js?v=f7102473b2",
-"./lib/watch-terrain-session.js":"./lib/watch-terrain-session.js?v=5423d7cb61",
+"./lib/watch-terrain-session.js":"./lib/watch-terrain-session.js?v=f89f72642a",
 "./lib/watch-terrain-ui.js":"./lib/watch-terrain-ui.js?v=4800189a17",
 "./lib/watch-watershed-data.js":"./lib/watch-watershed-data.js?v=70e215b710",
-"./lib/watch-watershed-ui.js":"./lib/watch-watershed-ui.js?v=2911025700",
+"./lib/watch-watershed-ui.js":"./lib/watch-watershed-ui.js?v=fc1dc1ff1c",
 "./lib/water-operators.js":"./lib/water-operators.js?v=66cda7290e",
 "./lib/watershed-playback.js":"./lib/watershed-playback.js?v=59f91c8ea9",
 "./lib/watershed-timeline-chart.js":"./lib/watershed-timeline-chart.js?v=c619145038",
@@ -222,7 +225,7 @@
 "./scenario-config.js":"./scenario-config.js?v=3da6a248c8"
 }}
 </script>
-<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=672fc437b4"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./app.js?v=f1077f2214"></script>
 </head><body>
 <a class="skip-link" href="#planning-workspace">Skip to mission map</a>
 <calcite-shell id="storm-shell">

@@ -34,10 +34,23 @@ export async function createWatchTerrain({container,onSelect,onError}){
  map.addLayer({id:'watch-facilities',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'facility']],layout:{'icon-image':'facility','icon-size':.6,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#e8f6fb','icon-halo-width':1}});
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
- map.on('click',e=>{const f=map.queryRenderedFeatures(e.point,{layers:['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours']})[0];if(f)onSelect(f.properties);});
+ const records=['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours'];
+ const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
+ const hover=new ml.Popup({className:'watch-feature-hover',closeButton:false,closeOnClick:false,focusAfterOpen:false,offset:12});
+ const clearHover=()=>{hover.remove();map.getCanvas().style.cursor='';};
+ map.on('mousemove',e=>{
+  if(!matchMedia('(hover: hover)').matches||map.isMoving())return;
+  const record=recordAt(e.point);
+  if(!record?.name){clearHover();return;}
+  map.getCanvas().style.cursor='pointer';
+  hover.setText(record.name).setLngLat(e.lngLat);
+  if(!hover.isOpen())hover.addTo(map);
+ });
+ map.on('mouseout',clearHover);map.on('movestart',clearHover);
+ map.on('click',e=>{clearHover();const record=recordAt(e.point);if(record)onSelect(record);});
  let destroyed=false,overhead=false,pendingBounds=null,rainUrl=null;
  let radarLayer;
- function radar(samples){
+ function radar(samples,minDbz){
   if(!samples?.length){
    if(map.getLayer('watch-hanford-radar'))map.removeLayer('watch-hanford-radar');
    radarLayer=null;
@@ -47,7 +60,7 @@ export async function createWatchTerrain({container,onSelect,onError}){
    radarLayer=createHanfordRadarLayer(ml.MercatorCoordinate);
    map.addLayer(radarLayer,'watch-lines');
   }
-  radarLayer.setSamples(samples);
+  radarLayer.setSamples(samples,minDbz);
  }
  function rain(image){
   if(map.getLayer('watch-basin-rain'))map.removeLayer('watch-basin-rain');
@@ -63,5 +76,5 @@ export async function createWatchTerrain({container,onSelect,onError}){
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds,false);});observer.observe(container);
  return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true){if(destroyed)return;map.resize();fit(bounds,animate);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},rain,radar,
-  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();map.remove();if(rainUrl)URL.revokeObjectURL(rainUrl);}};
+  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();clearHover();map.remove();if(rainUrl)URL.revokeObjectURL(rainUrl);}};
 }

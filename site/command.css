@@ -230,7 +230,17 @@
 .watershed-weather-modes,.watershed-player-controls,.watershed-player-colors{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
 .watershed-weather-modes{margin-bottom:6px}
 .watershed-player-controls select{min-width:0;max-width:100%;min-height:32px;background:var(--calcite-color-surface-2);border:1px solid var(--calcite-color-border-2);color:inherit;font:inherit}
-.watershed-player :is(select,a,summary):focus-visible{outline:2px solid var(--calcite-color-focus);outline-offset:2px}
+.watershed-radar-controls{flex-wrap:nowrap}
+.watershed-radar-controls calcite-button:first-child{min-width:62px}
+.watershed-radar-controls input{flex:1 1 90px;min-width:48px;margin:0;accent-color:var(--calcite-color-brand)}
+.watershed-player :is(input,select,a,summary):focus-visible{outline:2px solid var(--calcite-color-focus);outline-offset:2px}
+.watch-feature-hover{pointer-events:none}
+.watch-feature-hover .maplibregl-popup-content{pointer-events:none;background:var(--calcite-color-surface-1);color:var(--calcite-color-text-1);padding:5px 9px;border:1px solid var(--calcite-color-border-2);font-weight:600}
+.watch-feature-hover .maplibregl-popup-tip{display:none}
+@media(prefers-reduced-motion:no-preference){
+ #release-trend-dialog[open]{animation:reservoir-evidence-in 220ms ease-out}
+ @keyframes reservoir-evidence-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+}
 .watershed-player p{margin:5px 0;line-height:1.35}
 .watershed-player-colors .briefing-layer-symbols{max-height:48px;overflow:auto;margin:0}
 .watershed-player-links{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin-top:4px}
@@ -243,6 +253,7 @@
  .watershed-player{left:46px;right:8px;bottom:42px;width:auto;max-width:none;transform:none}
  .watershed-player-controls{gap:4px 8px}
  .watershed-player-controls :is(select,calcite-button){min-height:44px;align-content:center}
+ .watershed-radar-controls input{min-height:44px}
  .watershed-weather-modes calcite-button{min-height:44px;align-content:center}
  .watershed-player-links a,.watershed-player-links summary{display:inline-flex;min-height:30px;align-items:center}
  .watershed-player-controls select{font-size:16px;flex:1 1 145px}
