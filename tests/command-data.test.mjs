@@ -26,7 +26,10 @@ test('overview gauges and dams resolve to evidence; utility timestamps are numer
  const f=planningExercise(gauges.stations,points,reservoirSettings,'combined',now);
  const row={key:'test-outage',utility:'PG&E',feedId:'pge-outages',name:'Exercise outage',status:'outage',updated:{time:now-1000},start:{time:null},end:{time:null},restoration:{time:null},issues:[],geometries:[{x:-119.7,y:36.8}],official:'https://example.org',revision:'test'};
  const bundle={schemaVersion:1,generatedAt:new Date(now).toISOString(),dataId:'a'.repeat(64),input:{areas,gauges,reservoirSettings,associations,windSettings,points,entries:[...f.entries].map(([id,e])=>({id,...e})),rain:f.rain,reservoirs:f.reservoirs.snapshot,power:{feeds:[{id:'pge-outages',lastSuccess:new Date(now-3600000).toISOString(),rows:[row]}]},wind:{sites:[]},comparisons:{points:[]},utilityFeatures:[]}};
+ row.details='Equipment issue · Crew is assessing the outage';
  const result=riverConcerns(bundle,now);
  for(const f of result.features)assert.ok(result.rows.some(r=>r.id===f.properties.id),f.properties.name+' must select a concern');
  const power=result.rows.find(r=>r.kind==='power');assert.equal(power.time,now-1000);assert.match(power.quality,/overdue/);
+ assert.deepEqual(power.utilityUpdate,{publisher:'PG&E',text:row.details});assert.ok(power.details.includes(row.details));
+ row.details='';assert.match(riverConcerns(bundle,now).rows.find(r=>r.kind==='power').utilityUpdate.text,/No event details supplied/);
 });

@@ -476,8 +476,9 @@ function renderList() {
     b.append(
       el("span", category[c.group] || "Reference", "kind"),
       el("strong", c.name),
+      ...(c.utilityUpdate ? [el("span", `${c.utilityUpdate.publisher}: ${c.utilityUpdate.text}`, "utility-update")] : []),
       el("span", c.change, "reason"),
-      el("span", c.time ? date(c.time) : "Time not supplied", "when"),
+      el("span", `${c.utilityUpdate ? "Utility updated · " : ""}${c.time ? date(c.time) : "Time not supplied"}`, "when"),
       el("span", c.quality, "quality"),
     );
     target.append(b);
@@ -630,6 +631,7 @@ function renderEvidence() {
     c.revision,
     c.change,
     c.quality,
+    c.utilityUpdate,
     c.evidence,
     nearby(c).map((r: Concern) => [r.id, r.change, r.time, r.quality]),
   ]);
@@ -638,9 +640,11 @@ function renderEvidence() {
   $("evidence-name").textContent = c.name;
   const out = $("evidence-content");
   out.replaceChildren(
+    ...(c.utilityUpdate ? [el("p", `${c.utilityUpdate.publisher}: ${c.utilityUpdate.text}`, "utility-update")] : []),
     el("p", c.change, "summary"),
     el("p", c.quality, "quality"),
   );
+  if (c.utilityUpdate) out.append(el("p", `Utility updated · ${date(c.time)}`, "when"));
   const next = el("section", undefined, "next-step");
   next.append(el("h3", "Next review"), el("p", c.nextAction));
   const actions = el("div", undefined, "actions");

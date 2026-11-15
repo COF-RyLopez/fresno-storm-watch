@@ -29,6 +29,7 @@ export interface Concern {
   revision?: string;
   watershed?: string;
   private?: boolean;
+  utilityUpdate?: { publisher: string; text: string };
 }
 export interface FeedState {
   concerns: Concern[];
