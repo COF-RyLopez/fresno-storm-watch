@@ -48,7 +48,8 @@ export async function createWatchTerrain({container,onSelect,onError}){
  });
  map.on('mouseout',clearHover);map.on('movestart',clearHover);
  map.on('click',e=>{clearHover();const record=recordAt(e.point);if(record)onSelect(record);});
- let destroyed=false,overhead=false,pendingBounds=null,rainUrl=null;
+ let destroyed=false,overhead=false,pendingBounds=null;
+ const imageUrls=new Map();
  let radarLayer;
  function radar(samples,minDbz){
   if(!samples?.length){
@@ -62,19 +63,21 @@ export async function createWatchTerrain({container,onSelect,onError}){
   }
   radarLayer.setSamples(samples,minDbz);
  }
- function rain(image){
-  if(map.getLayer('watch-basin-rain'))map.removeLayer('watch-basin-rain');
-  if(map.getSource('watch-basin-rain'))map.removeSource('watch-basin-rain');
-  if(rainUrl)URL.revokeObjectURL(rainUrl);
-  rainUrl=null;
+ function setImage(id,image,paint){
+  if(map.getLayer(id))map.removeLayer(id);
+  if(map.getSource(id))map.removeSource(id);
+  const previous=imageUrls.get(id);
+  if(previous){URL.revokeObjectURL(previous);imageUrls.delete(id);}
   if(!image?.blob)return;
-  rainUrl=URL.createObjectURL(image.blob);
-  map.addSource('watch-basin-rain',{type:'image',url:rainUrl,coordinates:image.coordinates});
-  map.addLayer({id:'watch-basin-rain',type:'raster',source:'watch-basin-rain',paint:{'raster-opacity':0.34,'raster-fade-duration':0}},'frog-overview-rivers');
+  const url=URL.createObjectURL(image.blob);imageUrls.set(id,url);
+  map.addSource(id,{type:'image',url,coordinates:image.coordinates});
+  map.addLayer({id,type:'raster',source:id,paint:{'raster-fade-duration':0,...paint}},'frog-overview-rivers');
  }
- const fit=(bounds,animate)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds=bounds;return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
- const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds,false);});observer.observe(container);
- return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true){if(destroyed)return;map.resize();fit(bounds,animate);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
-  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},rain,radar,
-  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();clearHover();map.remove();if(rainUrl)URL.revokeObjectURL(rainUrl);}};
+ const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
+ const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
+ return {set(data){if(destroyed)return;map.getSource('watch-records').setData(data);},focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
+  watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,
+  rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
+  cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
+  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();clearHover();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
 }

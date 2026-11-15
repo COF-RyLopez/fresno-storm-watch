@@ -16,15 +16,15 @@ export async function fetchCurrentWind({previous=null,fetchImpl=fetch,now=Date.n
   return validateWindSnapshot(await fetchWindForecasts({selection,previous:prior,fetchImpl,now}));
 }
 
-/** @param {Function} fetchImpl @param {number} now @returns {Promise<object>} Validate WMS layer names and advertised frame times in the browser. */
-export async function fetchSatelliteCatalog(fetchImpl=fetch,now=Date.now()){
+/** Validate requested WMS layer names and advertised frame times in the browser. */
+export async function fetchSatelliteCatalog(fetchImpl=fetch,now=Date.now(),products=GOES_PRODUCTS){
   const url=new URL(GOES_URL);url.search=new URLSearchParams({service:'WMS',version:'1.3.0',request:'GetCapabilities'});
   const response=await fetchImpl(url,{signal:AbortSignal.timeout(25_000),credentials:'omit',cache:'no-store'});
   if(!response.ok)throw new Error(`GOES catalog HTTP ${response.status}`);
   const xml=new DOMParser().parseFromString(await response.text(),'application/xml');
   if(xml.querySelector('parsererror')||xml.getElementsByTagNameNS('*','ServiceException').length)throw new Error('GOES capabilities could not be read.');
   const layers=[...xml.getElementsByTagNameNS('*','Layer')],result={};
-  for(const product of GOES_PRODUCTS){
+  for(const product of products){
     const node=layers.find(n=>[...n.children].some(c=>c.localName==='Name'&&c.textContent.trim()===product.id));
     const dimension=node&&[...node.children].find(c=>c.localName==='Dimension'&&c.getAttribute('name')==='time');
     if(!dimension)throw new Error(`GOES ${product.label} time catalog is missing.`);

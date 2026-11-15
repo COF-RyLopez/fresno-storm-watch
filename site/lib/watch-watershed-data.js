@@ -9,6 +9,7 @@ const areaReservoirs=new Map([
  ['kings-lower','PNF'],['kings-upper','PNF']
 ]);
 export const upstreamReservoir=key=>key?.startsWith('river:')?areaReservoirs.get(key.slice(6)):undefined;
+export const regionalForecastBounds=Object.freeze([-131,28,-107.5,47]);
 
 export async function loadWatershed(reservoir,{signal,fetchImpl=fetch}={}){
  const response=await fetchImpl(new URL('../data/reservoir-watersheds.geojson',import.meta.url),{signal,credentials:'omit'});
@@ -21,7 +22,7 @@ export async function loadWatershed(reservoir,{signal,fetchImpl=fetch}={}){
  return {feature,bounds};
 }
 
-const mercator=(lon,lat)=>[lon*Math.PI/180*6378137,Math.asinh(Math.tan(lat*Math.PI/180))*6378137];
+export const mercator=(lon,lat)=>[lon*Math.PI/180*6378137,Math.asinh(Math.tan(lat*Math.PI/180))*6378137];
 
 /** Fetch a compact map image tied to one verified WPC forecast cycle. */
 export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,clock=Date.now}={}){
@@ -36,7 +37,8 @@ export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,cl
  const [west,south,east,north]=bounds;
  const [xmin,ymin]=mercator(west,south),[xmax,ymax]=mercator(east,north);
  // Match the image aspect ratio to the Web Mercator extent to avoid edge shifts.
- const size=[800,Math.round(800*(ymax-ymin)/(xmax-xmin))];
+ const width=1400;
+ const size=[width,Math.round(width*(ymax-ymin)/(xmax-xmin))];
  const definitionExpression=`issue_time = '${cycle.issueText}' AND start_time = '${cycle.startText}' AND end_time = '${cycle.endText}' AND units = 'Inches' AND qpf >= 0.01`;
  const query=new URL(`${QPF_URL}/${period.id}/query`);
  query.search=new URLSearchParams({f:'json',where:definitionExpression,geometry:bounds.join(','),geometryType:'esriGeometryEnvelope',inSR:'4326',outFields:'qpf',returnGeometry:'false'});
