@@ -90,9 +90,20 @@ export async function createWatchTerrain({container,onSelect,onError}){
    return;
   }
   if(!map.getLayer(id)){
-   cloudTopLayer=createCloudTopLayer(ml.MercatorCoordinate);
+   const candidate=createCloudTopLayer(ml.MercatorCoordinate),draw=candidate.render.bind(candidate);let failed=false;
+   candidate.render=(gl,args)=>{
+    if(failed)return;
+    try{draw(gl,args);}catch{
+     failed=true;
+     queueMicrotask(()=>{
+      if(destroyed||cloudTopLayer!==candidate)return;
+      const notify=cloudMetadata?.onFailure;cloudTops(null);notify?.();
+     });
+    }
+   };
    const before=map.getLayer('watch-hanford-radar')?'watch-hanford-radar':map.getLayer('watch-hanford-volume')?'watch-hanford-volume':'watch-lines';
-   map.addLayer(cloudTopLayer,before);
+   try{map.addLayer(candidate,before);cloudTopLayer=candidate;}
+   catch(error){if(map.getLayer(id))map.removeLayer(id);throw error;}
   }
   return cloudTopLayer.setSurface(vertices,options);
  }

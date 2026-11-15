@@ -20,7 +20,7 @@ export function installWatchClouds(session){
   label.append(swatch,band.label);legend.append(label);
  }
  legend.title='GOES geopotential altitude, not height above local terrain or storm severity. Hover or tap a cloud for its estimate.';
- let enabled=true,lifecycle,target,rendered=null,generation=0;
+ let enabled=true,lifecycle,target,rendered=null,generation=0,surfaceFailed=false;
  const catalogs=new Map(),frames=createWeatherFrameCache(4);
  function sync(){
   button.appearance=enabled?'solid':'outline';button.kind='neutral';
@@ -57,6 +57,7 @@ export function installWatchClouds(session){
  async function prepare(when){
   if(!lifecycle||!enabled||!Number.isFinite(when))return null;
   const signal=lifecycle.signal,observation=Math.min(when,Date.now());
+  if(surfaceFailed)return infrared(observation,signal);
   try{
    const catalogFrames=await catalog('surface',loadCloudTopCatalog,signal);
    signal.throwIfAborted();
@@ -85,7 +86,7 @@ export function installWatchClouds(session){
    const old=rendered;
    if(old?.kind==='infrared')clearImage();
    const fade=old?.kind==='surface'&&next.stamp>old.stamp&&next.stamp-old.stamp<=CLOUD_TOP_MAX_GAP?durationMs:0;
-   const finished=session.cloudTops(next.mesh.vertices,{durationMs:fade,observedAt:next.stamp,source:next.scene.source});
+   const finished=session.cloudTops(next.mesh.vertices,{durationMs:fade,observedAt:next.stamp,source:next.scene.source,onFailure:failSurface});
    rendered=next;sync();
    const label=`GOES-18 · ${time.format(next.stamp)} · hover/tap tops`;
    status.textContent=fade?`GOES transition · ${time.formatRange(old.stamp,next.stamp)}`:label;
@@ -95,6 +96,7 @@ export function installWatchClouds(session){
    return;
    }catch{
     if(!current())return;
+    surfaceFailed=true;
     try{session.cloudTops(null);}catch{/* A failed graphics context may already be gone. */}
     rendered=null;sync();
     next=await infrared(observation,signal);
@@ -107,12 +109,16 @@ export function installWatchClouds(session){
   }else{clearImage();status.textContent=next.kind==='missing'?'No GOES image near this scan':'GOES clouds unavailable';}
   }catch{rendered=null;sync();status.textContent='GOES clouds unavailable';}
  }
+ function failSurface(){
+  if(!lifecycle||!enabled||rendered?.kind!=='surface')return;
+  surfaceFailed=true;clearImage();void observe(target);
+ }
  function cancelPending(){
   generation++;lifecycle?.abort();if(lifecycle)lifecycle=new AbortController();frames.cancelPending();
   for(const [key,entry] of catalogs)if(!entry.settled)catalogs.delete(key);
   if(rendered?.kind==='surface'){
    // Settle any in-progress blend at the selected observation when paused/hidden.
-   try{session.cloudTops(rendered.mesh.vertices,{observedAt:rendered.stamp,source:rendered.scene.source});}catch{}
+   try{session.cloudTops(rendered.mesh.vertices,{observedAt:rendered.stamp,source:rendered.scene.source,onFailure:failSurface});}catch{}
    status.textContent=`GOES-18 · ${time.format(rendered.stamp)} · hover/tap tops`;
   }
  }
@@ -122,7 +128,7 @@ export function installWatchClouds(session){
   else{cancelPending();clearImage();}
  });
  return {button,status,legend,observe,prepare,cancelPending,
-  open(){lifecycle=new AbortController();button.hidden=false;sync();void observe(Date.now());},
+  open(){lifecycle=new AbortController();surfaceFailed=false;button.hidden=false;sync();void observe(Date.now());},
   close(){lifecycle?.abort();lifecycle=null;button.hidden=true;frames.clear();catalogs.clear();clearImage();sync();}
  };
 }

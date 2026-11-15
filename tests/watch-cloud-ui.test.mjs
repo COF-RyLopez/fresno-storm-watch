@@ -64,3 +64,10 @@ test('cloud off aborts pending retrieval and cannot paint a late completion',asy
  assert.equal(state.hold.signal.aborted,true);state.hold.resolve();await sleep(25);
  assert.equal(state.writes.filter(w=>w.vertices).length,0);assert.equal(ui.legend.hidden,true);
 });
+
+test('a later GPU draw failure falls back to infrared without repeatedly trying the failed surface',async t=>{
+ const {ui,state}=harness(t);ui.open();await until(()=>ui.status.textContent.includes('hover/tap'));
+ state.writes.at(-1).options.onFailure();await until(()=>ui.status.textContent.includes('2D IR'));
+ const count=state.writes.filter(w=>w.vertices).length;await ui.observe(now-15*minute);
+ assert.equal(state.writes.filter(w=>w.vertices).length,count);assert.equal(ui.legend.hidden,true);
+});
