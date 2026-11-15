@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import {riverConcerns,roadConcerns,alertConcerns} from '../site/lib/command-data.js';
 import {arcGeometry} from '../site/lib/command-model.js';
 import {normalizeRoad} from '../site/lib/roads.js';
+import {planningExercise} from '../site/lib/planning-exercise.js';
+import {planningPoints} from '../site/lib/planning-model.js';
+import {siteJson} from '../scripts/lib/snapshot-io.mjs';
 
 test('disjoint polygon islands and a hole keep their distinct topology',()=>{
  const a=[[0,0],[0,5],[5,5],[5,0],[0,0]],hole=[[1,1],[2,1],[2,2],[1,2],[1,1]],b=[[7,0],[7,2],[9,2],[9,0],[7,0]];
@@ -19,8 +21,12 @@ test('elapsed road dates become one backlog item, never inferred open or current
  assert.equal(rows.find(r=>r.id===road.key).review,false);assert.equal(rows.find(r=>r.id==='roads:legacy-review').review,true);assert.match(rows[1].quality,/not confirmed/);
 });
 test('overview gauges and dams resolve to evidence; utility timestamps are numeric',async()=>{
- const bundle=JSON.parse(await readFile(new URL('../site/data/map-pilot-latest.json',import.meta.url),'utf8'));
- const result=riverConcerns(bundle,Date.parse(bundle.generatedAt)+60000);
+ const [areas,gauges,reservoirSettings,associations,windSettings]=await Promise.all(['river-areas.json','river-watchlist.json','reservoir-watchlist.json','area-concerns.json','wind-watchlist.json'].map(siteJson));
+ const now=Date.parse('2026-11-15T08:00:00Z'),points=planningPoints(areas,gauges.stations,reservoirSettings.stations);
+ const f=planningExercise(gauges.stations,points,reservoirSettings,'combined',now);
+ const row={key:'test-outage',utility:'PG&E',feedId:'pge-outages',name:'Exercise outage',status:'outage',updated:{time:now-1000},start:{time:null},end:{time:null},restoration:{time:null},issues:[],geometries:[{x:-119.7,y:36.8}],official:'https://example.org',revision:'test'};
+ const bundle={schemaVersion:1,generatedAt:new Date(now).toISOString(),dataId:'a'.repeat(64),input:{areas,gauges,reservoirSettings,associations,windSettings,points,entries:[...f.entries].map(([id,e])=>({id,...e})),rain:f.rain,reservoirs:f.reservoirs.snapshot,power:{feeds:[{id:'pge-outages',lastSuccess:new Date(now-3600000).toISOString(),rows:[row]}]},wind:{sites:[]},comparisons:{points:[]},utilityFeatures:[]}};
+ const result=riverConcerns(bundle,now);
  for(const f of result.features)assert.ok(result.rows.some(r=>r.id===f.properties.id),f.properties.name+' must select a concern');
- for(const r of result.rows.filter(r=>r.kind==='power'))assert.ok(r.time===null||Number.isFinite(r.time));
+ const power=result.rows.find(r=>r.kind==='power');assert.equal(power.time,now-1000);assert.match(power.quality,/overdue/);
 });
