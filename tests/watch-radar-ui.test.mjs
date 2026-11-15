@@ -107,7 +107,7 @@ test('failed replacement cube and patches preserve the earlier rendered cube and
  assert.equal(previous.values.filter(value=>value!==-999)[0],35);
  h.config.volumes=[second.record];h.config.failedVolumes.add(second.frame.file);h.config.failedPatches.add(second.frame.file);
  h.refresh();await until(()=>h.info.textContent.includes('Update unavailable'),'failed replacement status');
- assert.equal(h.state.cube,previous,'A failed fetch must not remove the last successfully displayed cube.');
+ assert.ok(h.state.cube===previous,'A failed fetch must not remove the last successfully displayed cube.');
  assert.equal(h.state.patches,null);
  assert.equal(h.scanLink.href,first.frame.source);
  assert.equal(h.ui.controls.children[1].attributes.get('aria-valuetext'),previousTime);
