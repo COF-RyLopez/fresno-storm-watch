@@ -14,7 +14,7 @@ test('waterbody reference snapshot is reconciled and qualified independently fro
   assert.equal(Object.values(manifest.featureTypes).reduce((a,b)=>a+b,0),manifest.accepted);
   assert.equal(manifest.displayAccounting.inputFeatures,manifest.accepted);
   assert.equal(manifest.displayAccounting.representedAtMaxZoom+manifest.displayAccounting.notRepresentedAtMaxZoom.length,manifest.accepted);
-  assert.match(manifest.limitations,/not current shorelines/);assert.match(manifest.scope,/boundary-crossing/);
+  assert.match(manifest.limitations,/not current shorelines/);assert.match(manifest.scope,/Millerton Lake and Pine Flat Lake/);
   for(const name of ['Millerton Lake','Pine Flat Lake','Shaver Lake','Huntington Lake'])assert(manifest.labelNames.includes(name));
   assert(!manifest.labelNames.includes('San Joaquin River'));assert(!manifest.labelNames.includes('Kings River'));
 });

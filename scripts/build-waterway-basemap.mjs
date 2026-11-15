@@ -66,7 +66,7 @@ const hydro=[
   line('frog-overview-canals',['all',['==','role','canal'],['==','rank',0]],'#83d4e6',1.7,6,[4,2]),
   line('frog-network-connectors',['==','role','connector'],'#667f8d',.8,14,[1,3]),
   line('frog-unnamed-streams',['all',['==','role','river'],['==','name','']],'#4e839e',.9,13),
-  line('frog-named-streams',['all',['==','role','river'],['!=','name',''],['!=','kind',5],['!=','rank',0]],'#70b9f4',1.9,9),
+  line('frog-named-streams',['all',['==','role','river'],['!=','name',''],['!=','kind',5],['!=','rank',0]],'#70b9f4',1.9,8),
   line('frog-named-waterbody-centrelines',['all',['==','role','river'],['!=','name',''],['==','kind',5],['!=','rank',0]],'#70b9f4',1.3,9,[1,3]),
   line('frog-canals-ditches',['all',['==','role','canal'],['!=','name',''],['!=','rank',0]],'#83d4e6',1.6,10,[4,2]),
   line('frog-unnamed-canals',['all',['==','role','canal'],['==','name','']],'#83d4e6',1.1,12,[4,2]),

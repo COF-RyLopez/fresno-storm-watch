@@ -26,15 +26,22 @@ def read(path: Path) -> dict:
     return json.loads(path.read_text(encoding='utf-8'))
 
 
-def validate_inventory(previous: dict, current: dict) -> None:
+def validate_inventory(previous: dict, current: dict, expand: bool = False) -> None:
     """Reject scope changes, dropped records and major changes requiring review."""
-    for field in ('source', 'countyGeoid', 'boundarySha256', 'crs', 'bounds'):
+    for field in ('source', 'countyGeoid', 'boundarySha256', 'crs'):
+        if current.get(field) != previous.get(field):
+            raise ValueError(f'Changed {field}; review the reference contract first')
+    for field in ('bounds', 'watershedsSha256') if not expand else ():
         if current.get(field) != previous.get(field):
             raise ValueError(f'Changed {field}; review the reference contract first')
     count = current.get('accepted', 0)
     if not count or current.get('rejected') != 0 or current.get('downloaded') != count:
         raise ValueError('Incomplete source inventory; prior map retained')
-    if abs(count / previous['accepted'] - 1) > .10:
+    if expand and (previous.get('watershedsSha256') or not current.get('watershedsSha256') or
+                   current.get('addedUpstreamCount', 0) <= 0 or
+                   abs(current['countyInventoryCount'] / previous['accepted'] - 1) > .10):
+        raise ValueError('Expected reviewed reservoir expansion with stable county inventory')
+    if not expand and abs(count / previous['accepted'] - 1) > .10:
         raise ValueError('Source count changed by more than 10%; technical review required')
     if any(n and not current.get('featureTypes', {}).get(k) for k, n in previous.get('featureTypes', {}).items()):
         raise ValueError('A previously mapped feature class disappeared; review required')
@@ -65,7 +72,7 @@ def record_failure(root: Path = ROOT) -> None:
     path.write_text(json.dumps(status, indent=2) + '\n', encoding='utf-8')
 
 
-def refresh(apply: bool = False) -> Path:
+def refresh(apply: bool = False, expand: bool = False) -> Path:
     """Acquire both sources, build and validate in isolation, optionally apply outputs."""
     (ROOT / 'work').mkdir(exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix='hydrography-refresh-', dir=ROOT / 'work'))
@@ -77,26 +84,34 @@ def refresh(apply: bool = False) -> Path:
     shutil.copytree(ROOT / 'tests', stage / 'tests')
     for relative in [BASEMAP, *SEARCH]:
         shutil.copytree(ROOT / relative, stage / relative, ignore=shutil.ignore_patterns('archives'))
-    for name in ('counties.geojson', 'reservoir-watchlist.json'):
+    for name in ('counties.geojson', 'reservoir-watchlist.json', 'reservoir-watersheds.geojson'):
         shutil.copy2(ROOT / 'site/data' / name, stage / 'site/data' / name)
     shutil.copy2(ROOT / 'package.json', stage / 'package.json')
 
-    def run(*args: str) -> None:
-        LOG.info('Running %s', ' '.join(args))
-        subprocess.run(args, cwd=stage, check=True, timeout=1200)
+    run_in_stage(stage, sys.executable, 'scripts/acquire-waterways-county.py')
+    run_in_stage(stage, sys.executable, 'scripts/acquire-waterbodies-county.py')
+    return build_reference(stage, apply, expand)
 
-    run(sys.executable, 'scripts/acquire-waterways-county.py')
-    run(sys.executable, 'scripts/acquire-waterbodies-county.py')
+
+def run_in_stage(stage: Path, *args: str) -> None:
+    """Run one bounded preparation step in the isolated staging directory."""
+    LOG.info('Running %s', ' '.join(args))
+    subprocess.run(args, cwd=stage, check=True, timeout=1200)
+
+
+def build_reference(stage: Path, apply: bool, expand: bool) -> Path:
+    """Validate the completed acquisition, rebuild public outputs, then promote."""
     for folder, manifest in [('waterways-county', 'manifest.json'), ('waterbodies-county', 'waterbodies-manifest.json')]:
-        validate_inventory(read(ROOT / BASEMAP / manifest), read(stage / 'work' / folder / 'manifest.json'))
-    run(sys.executable, 'scripts/build-map-search.py', '--waterways-only')
-    run(sys.executable, 'scripts/build-waterbody-search.py')
-    run('node', 'scripts/build-waterway-basemap.mjs')
-    run('node', 'scripts/build-waterbody-basemap.mjs')
-    run('node', '--test', 'tests/waterway-basemap.test.mjs', 'tests/waterbodies.test.mjs', 'tests/waterbody-search.test.mjs', 'tests/map-search.test.mjs')
-    run('node', 'scripts/pack-waterway-archives.mjs')
+        validate_inventory(read(ROOT / BASEMAP / manifest), read(stage / 'work' / folder / 'manifest.json'), expand=expand)
+    run_in_stage(stage, sys.executable, 'scripts/build-map-search.py', '--waterways-only')
+    run_in_stage(stage, sys.executable, 'scripts/build-waterbody-search.py')
+    run_in_stage(stage, 'node', 'scripts/build-waterway-basemap.mjs')
+    run_in_stage(stage, 'node', 'scripts/build-waterbody-basemap.mjs')
+    run_in_stage(stage, 'node', '--test', 'tests/waterway-basemap.test.mjs', 'tests/waterbodies.test.mjs', 'tests/waterbody-search.test.mjs', 'tests/map-search.test.mjs')
+    run_in_stage(stage, 'node', 'scripts/pack-waterway-archives.mjs')
     status = {'schemaVersion': 1, 'state': 'current', 'lastAttemptAt': datetime.now(timezone.utc).isoformat(),
               'lastSuccessAt': datetime.now(timezone.utc).isoformat(), 'schedule': 'Weekly, Sunday 12:30 UTC',
+              'coverage': 'Fresno County and the Millerton and Pine Flat upstream drainage areas',
               'message': 'Both USGS sources freshly retrieved, geometry and tiles validated. Retrieval is not a new survey date.',
               'flowlines': read(stage / BASEMAP / 'manifest.json')['accepted'],
               'waterbodies': read(stage / BASEMAP / 'waterbodies-manifest.json')['accepted']}
@@ -112,8 +127,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--apply', action='store_true', help='Apply validated public outputs; does not push or deploy')
     parser.add_argument('--record-failure', action='store_true', help='Write public failure status only')
+    parser.add_argument('--expand-to-reservoirs', action='store_true', help='One-time migration from the county-only contract')
     args = parser.parse_args()
     if args.record_failure:
         record_failure()
     else:
-        refresh(args.apply)
+        refresh(args.apply, expand=args.expand_to_reservoirs)

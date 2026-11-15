@@ -91,7 +91,7 @@ def main() -> None:
             accounting[kind]['rejected'] += 1
             rejects.append({'kind': kind, 'id': source_id, 'reason': 'Empty/invalid source geometry'})
             return
-        clipped = geometry.intersection(county)
+        clipped = geometry.intersection(county) if kind == 'street' else geometry
         parts = [clipped] if clipped.geom_type == 'LineString' else [p for p in getattr(clipped, 'geoms', []) if p.geom_type == 'LineString' and not p.is_empty]
         if not parts:
             accounting[kind]['rejected'] += 1
@@ -168,7 +168,7 @@ def main() -> None:
     result = {'version': VERSION, 'countyGeoid': '06019', 'generatedAt': datetime.now(timezone.utc).isoformat(),
               'sources': {'street': street_source,
                           'waterway': {'url': helper['SOURCE'], 'publisher': 'USGS 3D Hydrography Program', 'retrievedAt': water_manifest['retrievedAt']}},
-              'geometryNote': 'Public reference snapshot, clipped to Fresno; 5 m display simplification in EPSG:26944, returned as EPSG:4326. Grouped names do not establish connection, travel direction, road access, current conditions or routing.',
+              'geometryNote': 'Public reference snapshot. County street search and 3DHP waterways covering Fresno and both reservoir watersheds. 5 m display simplification in EPSG:26944, returned as EPSG:4326. Grouped names do not establish connection, travel direction, road access, current conditions or routing.',
               'entries': entries}
     (output / 'index.json').write_text(json.dumps(result, separators=(',', ':'), ensure_ascii=False) + '\n', encoding='utf-8')
     manifest = {'accounting': accounting, 'namedGroups': len(entries), 'boundarySha256': hashlib.sha256(boundary.read_bytes()).hexdigest(),

@@ -61,13 +61,15 @@ def acquire() -> None:
     from shapely import from_wkb
     from shapely.geometry import box, mapping
 
+    from hydrography_scope import SCOPE, basin_manifest, reference_scope
+
     source = runpy.run_path(str(ROOT / 'scripts' / 'export-waterways.py'))
     output = ROOT / 'work' / 'waterways-county'
     output.mkdir(parents=True, exist_ok=True)
     cache = output / 'batches'
     cache.mkdir(exist_ok=True)
     boundary_path = ROOT / 'site' / 'data' / 'counties.geojson'
-    county, geometry = source['county_filter'](boundary_path)
+    county, coverage, geometry, watershed_hash = reference_scope(boundary_path, source)
     started = datetime.now(timezone.utc).isoformat()
 
     def request(url: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -85,6 +87,10 @@ def acquire() -> None:
     params = {'where': '1=1', 'geometry': json.dumps(geometry), 'geometryType': 'esriGeometryPolygon',
               'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true'}
     ids = source['inventory_ids'](request(source['SOURCE'] + '/query', params))
+    _, county_geometry = source['county_filter'](boundary_path)
+    county_ids = source['inventory_ids'](request(source['SOURCE'] + '/query', {**params, 'geometry': json.dumps(county_geometry)}))
+    if not set(county_ids).issubset(ids):
+        raise RuntimeError('Expanded acquisition omitted county flowlines')
     if not ids or len(ids) != len(set(ids)) or len(ids) > 500_000:
         raise RuntimeError('Unexpected or duplicated county inventory; do not publish.')
     inventory_hash = hashlib.sha256(json.dumps(ids).encode()).hexdigest()
@@ -110,11 +116,11 @@ def acquire() -> None:
     raw_hash = hashlib.sha256()
     for feature in downloaded:
         raw_hash.update(json.dumps(feature, sort_keys=True, separators=(',', ':')).encode())
-    rows, rejected = source['convert'](downloaded, county, oid)
+    rows, rejected = source['convert'](downloaded, coverage, oid)
     (output / 'rejected.json').write_text(json.dumps(rejected, indent=2), encoding='utf-8')
     if rejected or len(rows) != len(ids):
         raise RuntimeError('County validation failed; inspect rejected.json. No geometry is silently discarded.')
-    scope = box(*county.bounds)
+    scope = box(*coverage.bounds)
     rendered, types = [], dict(Counter(str(row['featuretype']) for row in rows))
     for row in rows:
         clipped = from_wkb(row['geometry']).intersection(scope)
@@ -126,12 +132,13 @@ def acquire() -> None:
     audit = network_audit(downloaded)
     manifest = {'source': source['SOURCE'], 'publisher': 'USGS 3D Hydrography Program',
         'retrievalStartedAt': started, 'retrievedAt': datetime.now(timezone.utc).isoformat(), 'crs': 'OGC:CRS84',
-        'bounds': list(county.bounds), 'countyGeoid': '06019', 'boundarySha256': hashlib.sha256(boundary_path.read_bytes()).hexdigest(),
+        'bounds': list(coverage.bounds), 'watershedsSha256': watershed_hash, 'watersheds': basin_manifest(ROOT),
+        'countyInventoryCount': len(county_ids), 'addedUpstreamCount': len(ids) - len(county_ids), 'countyGeoid': '06019', 'boundarySha256': hashlib.sha256(boundary_path.read_bytes()).hexdigest(),
         'sourceSha256': raw_hash.hexdigest(), 'inventorySha256': inventory_hash,
-        'downloaded': len(downloaded), 'accepted': len(rendered), 'outsideCounty': 0, 'rejected': 0, 'featureTypes': types,
+        'downloaded': len(downloaded), 'accepted': len(rendered), 'outsideScope': 0, 'rejected': 0, 'featureTypes': types,
         'namedSegments': sum(bool(f['properties']['name']) for f in rendered),
         'unnamedSegments': sum(not f['properties']['name'] for f in rendered),
-        'scope': 'Every USGS flowline intersecting the app Fresno County polygon, including named and unnamed canals, ditches, streams and network connectors. Full intersecting segments retained within the county envelope; border-crossing parts can lie outside the county.',
+        'scope': SCOPE + ' Intersecting segments retained within the combined map envelope.',
         'dimensionPolicy': 'Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.',
         'limitations': 'Countywide USGS reference coverage, not a complete verified irrigation-district ditch inventory. Not live flow, gate state, hydraulic routing or predicted inundation.',
         'networkAudit': audit, 'license': 'USGS public-domain federal reference data; Esri background attribution retained separately.'}

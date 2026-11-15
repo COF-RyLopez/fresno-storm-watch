@@ -27,6 +27,17 @@ class RefreshTests(unittest.TestCase):
             with self.subTest(changes=changes),self.assertRaises(ValueError):
                 api['validate_inventory'](self.old,{**self.old,**changes})
 
+    def test_expansion_requires_a_reviewed_contract_and_preserves_county_inventory(self):
+        expanded = {**self.old, 'accepted': 140, 'downloaded': 140, 'watershedsSha256': 'expanded',
+                    'countyInventoryCount': 100, 'addedUpstreamCount': 40, 'bounds': [1, 2, 5, 6]}
+        api['validate_inventory'](self.old, expanded, expand=True)
+        with self.assertRaises(ValueError):
+            api['validate_inventory'](self.old, expanded)
+        with self.assertRaises(ValueError):
+            api['validate_inventory'](self.old, {**expanded, 'countyInventoryCount': 70}, expand=True)
+        with self.assertRaises(ValueError):
+            api['validate_inventory'](expanded, {**expanded, 'watershedsSha256': 'changed'})
+
     def test_promotion_includes_validated_archives_but_excludes_work_and_private_files(self):
         with tempfile.TemporaryDirectory() as directory:
             stage=Path(directory)/'stage';root=Path(directory)/'root'

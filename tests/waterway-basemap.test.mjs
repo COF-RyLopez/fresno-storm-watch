@@ -30,7 +30,7 @@ test('shared style replaces repeated river/canal labels and retains background r
 });
 
 test('snapshot explicitly accounts for outside-only and rejected geometry without claiming complete county coverage',()=>{
-  assert.equal(manifest.downloaded,manifest.outsideCounty+manifest.accepted+manifest.rejected);
+  assert.equal(manifest.downloaded,manifest.outsideScope+manifest.accepted+manifest.rejected);
   assert.equal(manifest.accepted,Object.values(manifest.featureTypes).reduce((a,b)=>a+b,0));
   assert.equal(manifest.rejected,0);assert.equal(manifest.countyGeoid,'06019');assert.equal(manifest.namedSegments+manifest.unnamedSegments,manifest.accepted);
   assert.match(manifest.limitations,/not a complete verified irrigation-district ditch inventory/);

@@ -1,56 +1,93 @@
 {
   "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
   "publisher": "USGS 3D Hydrography Program",
-  "retrievalStartedAt": "2026-11-14T23:46:41.086721+00:00",
-  "retrievedAt": "2026-11-14T23:47:38.689765+00:00",
+  "retrievalStartedAt": "2026-11-15T00:43:28.337493+00:00",
+  "retrievedAt": "2026-11-15T00:44:29.181036+00:00",
   "crs": "OGC:CRS84",
   "bounds": [
     -120.91873100010041,
     35.906914000095696,
-    -118.36058599987905,
-    37.58583700006363
+    -118.334284974,
+    37.739163907
   ],
+  "watershedsSha256": "d63728c558fb55bc39c49ddc145a63bff5431e6975099557b66ff42b4a0456af",
+  "watersheds": {
+    "MIL": {
+      "reservoir": "MIL",
+      "station": "11250100",
+      "name": "Millerton Lake",
+      "source": "https://api.water.usgs.gov/nldi/linked-data/nwissite/USGS-11250100/basin?simplified=false",
+      "retrievedAt": "2026-11-15T00:36:36.831628+00:00",
+      "sourceSha256": "39d7a64146c30644b3c88034e355fdda811f1fbe030d08507eb91d7ff5576ebc",
+      "areaSqMi": 1638.4,
+      "publishedAreaSqMi": 1638,
+      "bounds": [
+        -119.735425806,
+        36.983207375,
+        -118.65450197,
+        37.739163907
+      ]
+    },
+    "PNF": {
+      "reservoir": "PNF",
+      "station": "11221000",
+      "name": "Pine Flat Lake",
+      "source": "https://api.water.usgs.gov/nldi/linked-data/nwissite/USGS-11221000/basin?simplified=false",
+      "retrievedAt": "2026-11-15T00:36:36.831628+00:00",
+      "sourceSha256": "44824bb597c3307e460f14635e823e87a7d0ae22962f1024972126f7802aac84",
+      "areaSqMi": 1544.1,
+      "publishedAreaSqMi": 1545,
+      "bounds": [
+        -119.42264357,
+        36.592904125,
+        -118.334284974,
+        37.209267426
+      ]
+    }
+  },
+  "countyInventoryCount": 142595,
+  "addedUpstreamCount": 49907,
   "countyGeoid": "06019",
   "boundarySha256": "caca43ac4a58464db728d5e92461ff0fcf03b3ca0a63afc796caa9d2f7f066f2",
-  "sourceSha256": "72a58ff2dbdd51d20385e6a8323dd9198b9aef618943a86f270765ad03b7625a",
-  "inventorySha256": "87b2e2e7b648357ad870574e808656050bc54c6737738e69348bdd5d33b2beb3",
-  "downloaded": 142595,
-  "accepted": 142595,
-  "outsideCounty": 0,
+  "sourceSha256": "d81dfb0891bfffea518740fe72dc0bb1db3dade0182b44af8ca4f0b9729a109b",
+  "inventorySha256": "fac85b2c3cc45c762df5d74f529721853903b22a4263ac221fbb1c727e7a65d6",
+  "downloaded": 192502,
+  "accepted": 192502,
+  "outsideScope": 0,
   "rejected": 0,
   "featureTypes": {
-    "1": 122967,
-    "2": 4291,
+    "1": 168694,
+    "2": 4388,
     "3": 3,
-    "4": 1766,
-    "5": 13283,
-    "7": 285
+    "4": 2654,
+    "5": 16430,
+    "7": 333
   },
-  "namedSegments": 16184,
-  "unnamedSegments": 126411,
-  "scope": "Every USGS flowline intersecting the app Fresno County polygon, including named and unnamed canals, ditches, streams and network connectors. Full intersecting segments retained within the county envelope; border-crossing parts can lie outside the county.",
+  "namedSegments": 22924,
+  "unnamedSegments": 169578,
+  "scope": "Fresno County and the USGS drainage areas upstream of Millerton Lake and Pine Flat Lake. Intersecting segments retained within the combined map envelope.",
   "dimensionPolicy": "Requested XY geometry in OGC:CRS84 with returnZ=false and returnM=false for display. Original publisher Z/M values are not retained; no vertical datum or hydraulic-elevation use is implied.",
   "limitations": "Countywide USGS reference coverage, not a complete verified irrigation-district ditch inventory. Not live flow, gate state, hydraulic routing or predicted inundation.",
   "networkAudit": {
     "fields": {
       "mainstemid": {
-        "nonNull": 142595,
-        "nonBlankNonZero": 142595
+        "nonNull": 192502,
+        "nonBlankNonZero": 192502
       },
       "flowdirection": {
-        "nonNull": 142595,
-        "nonBlankNonZero": 138062
+        "nonNull": 192502,
+        "nonBlankNonZero": 187858
       },
       "flowdirectionlabel": {
-        "nonNull": 142595,
-        "nonBlankNonZero": 142595
+        "nonNull": 192502,
+        "nonBlankNonZero": 192502
       },
       "waterbodyid3dhp": {
-        "nonNull": 13283,
-        "nonBlankNonZero": 13283
+        "nonNull": 16430,
+        "nonBlankNonZero": 16430
       },
       "catchmentid3dhp": {
-        "nonNull": 142595,
+        "nonNull": 192502,
         "nonBlankNonZero": 0
       },
       "flowpathid3dhp": {
@@ -58,50 +95,50 @@
         "nonBlankNonZero": 0
       },
       "streamorder": {
-        "nonNull": 137837,
-        "nonBlankNonZero": 137837
+        "nonNull": 187625,
+        "nonBlankNonZero": 187625
       },
       "hydrosequence": {
-        "nonNull": 137837,
-        "nonBlankNonZero": 137837
+        "nonNull": 187625,
+        "nonBlankNonZero": 187625
       },
       "uphydrosequence": {
-        "nonNull": 137837,
-        "nonBlankNonZero": 77466
+        "nonNull": 187625,
+        "nonBlankNonZero": 104898
       },
       "dnhydrosequence": {
-        "nonNull": 137837,
-        "nonBlankNonZero": 137612
+        "nonNull": 187625,
+        "nonBlankNonZero": 187393
       },
       "divergence": {
-        "nonNull": 142595,
-        "nonBlankNonZero": 1023
+        "nonNull": 192502,
+        "nonBlankNonZero": 1179
       },
       "divergencelabel": {
-        "nonNull": 142595,
-        "nonBlankNonZero": 142595
+        "nonNull": 192502,
+        "nonBlankNonZero": 192502
       },
       "workunitid": {
-        "nonNull": 142595,
-        "nonBlankNonZero": 142595
+        "nonNull": 192502,
+        "nonBlankNonZero": 192502
       }
     },
     "mappedFlowDirectionCodes": {
-      "0": 4533,
-      "1": 138062
+      "0": 4644,
+      "1": 187858
     },
     "bySourceFeatureType": {
       "1": {
-        "records": 122967,
-        "hydrosequencePopulated": 122758,
-        "downstreamPointerPopulated": 122643,
+        "records": 168694,
+        "hydrosequencePopulated": 168478,
+        "downstreamPointerPopulated": 168362,
         "unknownMappedDirection": 23
       },
       "2": {
-        "records": 4291,
-        "hydrosequencePopulated": 290,
-        "downstreamPointerPopulated": 272,
-        "unknownMappedDirection": 3988
+        "records": 4388,
+        "hydrosequencePopulated": 321,
+        "downstreamPointerPopulated": 303,
+        "unknownMappedDirection": 4054
       },
       "3": {
         "records": 3,
@@ -110,22 +147,22 @@
         "unknownMappedDirection": 0
       },
       "4": {
-        "records": 1766,
-        "hydrosequencePopulated": 1560,
-        "downstreamPointerPopulated": 1553,
+        "records": 2654,
+        "hydrosequencePopulated": 2448,
+        "downstreamPointerPopulated": 2440,
         "unknownMappedDirection": 201
       },
       "5": {
-        "records": 13283,
-        "hydrosequencePopulated": 13125,
-        "downstreamPointerPopulated": 13043,
+        "records": 16430,
+        "hydrosequencePopulated": 16271,
+        "downstreamPointerPopulated": 16184,
         "unknownMappedDirection": 142
       },
       "7": {
-        "records": 285,
-        "hydrosequencePopulated": 101,
-        "downstreamPointerPopulated": 98,
-        "unknownMappedDirection": 179
+        "records": 333,
+        "hydrosequencePopulated": 104,
+        "downstreamPointerPopulated": 101,
+        "unknownMappedDirection": 224
       }
     },
     "interpretation": "Population counts only. Primary upstream/downstream pointers do not include every branch. No connectivity or live operating state is inferred from visual crossings, names or null fields.",
@@ -147,7 +184,7 @@
     "buffer": 128,
     "maxzoom": 14,
     "simplificationTolerance": 2,
-    "labelAnchors": 496,
+    "labelAnchors": 575,
     "labelTargets": {
       "san joaquin river": [
         -119.733,
@@ -170,11 +207,11 @@
     "symbolRule": "Canal: source type 2 or published name containing canal/ditch; source type 3 is a drainageway. River: type 1 or named type 5 containing river. Other network connectors dotted. Drainageways are distinct from canals. Named waterbody centerlines remain references, not channel beds."
   },
   "displayAccounting": {
-    "inputFeatures": 142595,
-    "representedAtMaxZoom": 142595,
+    "inputFeatures": 192502,
+    "representedAtMaxZoom": 192502,
     "notRepresentedAtMaxZoom": []
   },
-  "tileCount": 15250,
-  "tileBytes": 61479495,
-  "tilesSha256": "4ba2fbdc1a3eb6e98275a2972d68a95125a83634a432681df0ec1cc0f85385d0"
+  "tileCount": 16795,
+  "tileBytes": 82281097,
+  "tilesSha256": "681722ced5d5a5b438565515068fe49ae39faefadceb3503b7c0696264a88df6"
 }
