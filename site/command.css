@@ -187,6 +187,8 @@
 @media(max-width:900px){
  #map-wrap>.watch-map-heading{flex-wrap:nowrap!important}
  #map-wrap>.watch-map-heading>div{flex:1!important}
+ #map-wrap>.watch-map-heading:has(#watch-terrain-upstream[aria-pressed=true]){flex-wrap:wrap!important}
+ #map-wrap>.watch-map-heading:has(#watch-terrain-upstream[aria-pressed=true])>div{flex:1 1 100%!important}
  #map-wrap #watch-map-explore{display:none}
  #phone-explore-menu{margin:4px 8px}
 }

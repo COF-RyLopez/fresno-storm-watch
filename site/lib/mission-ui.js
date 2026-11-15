@@ -94,7 +94,18 @@ export function createMission({workspace,watershedTimeline,exercise=false,onSele
   const mapActions=el('div');mapActions.className='watch-map-actions';
   mapActions.append(button('Focus area',()=>{workspace.showFocusedMap?.();map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}),button('View in 3D',async()=>{workspace.showFocusedMap?.();await map?.setViewMode('3d');if(stillSelected())await map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}));
   const mapDetails=disclosure('Map, trends & technical tools');mapDetails.append(mapActions);
-  watershedTimeline?.append(host,id,rows,{open:upstream});
+  let forecastSelection=0;
+  watershedTimeline?.append(host,id,rows,{open:upstream,onWindow:async(window,station,{navigate})=>{
+   const selection=++forecastSelection;
+   // Initial timeline rendering is synchronous. Wait for the evidence pane to open.
+   await Promise.resolve();
+   const current=()=>stillSelected()&&selection===forecastSelection;
+   if(!map||!current())return;
+   if(navigate){workspace.setExplore(false);workspace.showFocusedMap?.();}
+   if(map.selectWatershedWindow(station,window,{openIfClosed:navigate})||!navigate)return;
+   await map.inspectPlanningPoints(s.points,{areaId:id,canNavigate:current});
+   if(current())map.selectWatershedWindow(station,window);
+  }});
   appendReservoirWatch(host,row,time);
   for(const id of [...new Set((row.releases||[]).map(r=>r.station))])mapDetails.append(button('Compare release & gauge trends · '+id,()=>onTrends(id)));
   const gaps=disclosure(`Source gaps · ${s.gaps.length}`);for(const gap of s.gaps)gaps.append(el('p',gap));if(s.gaps.length)host.append(gaps);

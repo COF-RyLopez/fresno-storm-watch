@@ -25,12 +25,9 @@ export function powerGeometry(geometry){
 export function powerScope(county){
   const rings=powerGeometry(county).rings,envelope=bounds(rings.flat());
   const edges=rings.flatMap(r=>r.slice(1).map((b,i)=>({a:r[i],b,box:bounds([r[i],b])})));
-  return {envelope,intersects(raw){
-    const g=powerGeometry(raw);
-    if(!g.rings)return pointInRings([g.x,g.y],rings);
-    if(!overlaps(envelope,bounds(g.rings.flat())))return false;
-    if(g.rings.some(r=>pointInRings(r[0],rings))||rings.some(r=>pointInRings(r[0],g.rings)))return true;
-    for(const r of g.rings)for(let i=1;i<r.length;i++){
+  function intersectsPaths(paths){
+    if(paths.some(path=>pointInRings(path[0],rings)))return true;
+    for(const r of paths)for(let i=1;i<r.length;i++){
       const a=r[i-1],b=r[i],box=bounds([a,b]);
       for(const e of edges){
         if(!overlaps(box,e.box))continue;
@@ -39,5 +36,14 @@ export function powerScope(county){
       }
     }
     return false;
+  }
+  return {envelope,intersectsLine(paths){
+    return Array.isArray(paths)&&paths.length>0&&paths.every(path=>Array.isArray(path)&&path.length>=2&&path.every(validPoint))&&
+      overlaps(envelope,bounds(paths.flat()))&&intersectsPaths(paths);
+  },intersects(raw){
+    const g=powerGeometry(raw);
+    if(!g.rings)return pointInRings([g.x,g.y],rings);
+    if(!overlaps(envelope,bounds(g.rings.flat())))return false;
+    return rings.some(r=>pointInRings(r[0],g.rings))||intersectsPaths(g.rings);
   }};
 }

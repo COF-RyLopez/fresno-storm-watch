@@ -11,7 +11,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=
     document.getElementById('road-times').textContent=snapshot?`Application checked ${time(snapshot.checked)} · source dates appear on each record`:'';
     host.replaceChildren();
     onData({snapshot:exercise?null:snapshot,error:error?.message||null});
-    if(!snapshot)return;
+    if(!snapshot){map?.setRoads([],{error:!!error});return;}
     const all=document.getElementById('roads-all').checked;
     const rows=snapshot.rows.filter(r=>all||roadInCurrentView(r));
     const conflicts=roadConflictBacklog(snapshot.rows).length;
@@ -23,7 +23,7 @@ export function createRoadWatch({exercise=false,timeZone,onOpen=()=>{},onMap=()=
       card.append(el('p',`Source updated ${time(row.sourceTime)} · edited ${time(row.edited)}`));
       locate.setAttribute('aria-label',`Review ${row.kind} · ${row.name}`);host.append(card);
     }
-    map?.setRoads(rows);
+    map?.setRoads(rows,{checked:snapshot.checked,error:!!error});
   }
   function detail(row){
     selected=row.key;const d=document.getElementById('road-detail');d.replaceChildren();
