@@ -163,11 +163,12 @@ export function createWatchWindTrails(map){
  return {
   set(next,{durationMs=0}={}){
    const wasVisible=!!current;
-   prior=(next&&next!==current&&durationMs>0&&!motion.matches)?current:null;
+   const changed=next!==current;
+   prior=(next&&changed&&durationMs>0&&!motion.matches)?current:null;
    current=next;start=performance.now();duration=durationMs;
    canvas.hidden=!current||moving;
    if(!current){stop();particles=[];last=0;return;}
-   if(!wasVisible)reset();else schedule();
+   if(!wasVisible||(changed&&!prior))reset();else schedule();
   },
   destroy(){
    stop();map.off('movestart',moveStart);map.off('moveend',moveEnd);map.off('resize',reset);
