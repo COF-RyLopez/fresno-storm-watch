@@ -31,7 +31,7 @@ export function gaugeTrendSeries(raw,measure,start,end){
 }
 
 /** @param {object} input @returns {object} A single clock and x-domain for the paired charts. */
-export function buildReleaseTrend({stationId='MIL',gaugeId='SJXC1',measure='flow',historyHours=168,futureHours=72,reservoirs={},entries=new Map(),config,now=Date.now()}){
+export function buildReleaseTrend({stationId='MIL',gaugeId='SJXC1',gaugeIds,measure='flow',historyHours=168,futureHours=72,reservoirs={},entries=new Map(),config,now=Date.now()}){
   const reach=TREND_REACHES[stationId];
   if(!reach||![72,168].includes(historyHours)||![72,168].includes(futureHours)||!['flow','stage'].includes(measure))throw new Error('Invalid release trend selection.');
   const start=now-historyHours*HOUR,end=now+futureHours*HOUR;
@@ -47,13 +47,14 @@ export function buildReleaseTrend({stationId='MIL',gaugeId='SJXC1',measure='flow
   const markers=notices.filter(n=>n.valid).map(n=>({...n,kind:'scheduled',current:schedule.current}));
   const releaseFresh=[Date.parse(row?.lastSuccess),Date.parse(reservoirs.snapshot?.generatedAt)].every(t=>Number.isFinite(t)&&t<=now+120000&&now-t<=config.environment.collectorMaxAgeMs)&&Number.isFinite(reservoirs.checked)&&reservoirs.checked<=now+120000&&now-reservoirs.checked<=config.environment.weatherCheckMaxAgeMs&&!row?.error&&!reservoirs.error;
   const release={title:daily?'River outlet release · daily reports':'Reported outflow / release · hourly',units:'cfs',observed,forecast:[],daily,current:!!releaseFresh&&state.tone!=='gap',health:[state.label,!releaseFresh?'Collection failed or overdue · retained history':null].filter(Boolean).join(' · '),source:station?.source||null,collected:Date.parse(row?.lastSuccess),metric};
-  const selected=reach.gauges.includes(gaugeId)?gaugeId:reach.gauges[0]||null,entry=selected?entries.get(selected):null,g=selected==='PFQC1'?telemetryGauge(reservoirs.snapshot?.telemetry?.PFQC1):entry?.gauge;
+  const options=gaugeIds??reach.gauges;
+  const selected=options.includes(gaugeId)?gaugeId:options[0]||null,entry=selected?entries.get(selected):null,g=selected==='PFQC1'?telemetryGauge(reservoirs.snapshot?.telemetry?.PFQC1):entry?.gauge;
   const telemetryFresh=[g?.fetched,Date.parse(reservoirs.snapshot?.generatedAt),reservoirs.checked].every(t=>Number.isFinite(t)&&t<=now+120000&&now-t<=config.environment.collectorMaxAgeMs);
   const assessment=assessGauge(g,selected==='PFQC1'?{...config.rivers,staleMs:config.environment.collectorMaxAgeMs}:config.rivers,futureHours,now,entry?.error||(selected==='PFQC1'?(reservoirs.error||reservoirs.snapshot?.telemetry?.PFQC1?.error||(!telemetryFresh?'Telemetry check overdue':null)):null));
   const obs=gaugeTrendSeries(g?.observed,measure,start,now),fc=gaugeTrendSeries(g?.forecast,measure,now,end);
   const observationCurrent=assessment.current&&Number.isFinite(obs.points.at(-1)?.value)&&now-obs.points.at(-1).time<=config.rivers.observationMaxAgeMs;
   const hasForecast=fc.points.some(p=>Number.isFinite(p.value)),forecastCurrent=assessment.forecastUsable&&hasForecast;
-  const gauge={id:selected,title:g?.name||selected||'Downstream gauge coverage',units:obs.units,observed:obs.points,forecast:fc.points.map(p=>({...p,kind:'NWS forecast'})),daily:false,current:observationCurrent,forecastCurrent,issued:g?.forecast?.issued??null,checked:g?.fetched??null,source:g?.sourceUrl||null,health:!selected?'Coverage gap':!g?(entry?.error||'Waiting for NWPS gauge'):`${observationCurrent?'Current observation':'Observation missing, old or unverified'} · ${hasForecast?forecastCurrent?'Published forecast':'Forecast old / unverified':'No forecast for this measure'}${obs.supported?'':' · Measure unavailable'}`};
+  const gauge={id:selected,title:g?.name||selected||'Downstream gauge coverage',units:obs.units,observed:obs.points,forecast:fc.points.map(p=>({...p,kind:'NWS forecast'})),daily:false,current:observationCurrent,forecastCurrent,assessment,issued:g?.forecast?.issued??null,checked:g?.fetched??null,source:g?.sourceUrl||null,health:!selected?'Coverage gap':!g?(entry?.error||'Waiting for NWPS gauge'):`${observationCurrent?'Current observation':'Observation missing, old or unverified'} · ${hasForecast?forecastCurrent?'Published forecast':'Forecast old / unverified':'No forecast for this measure'}${obs.supported?'':' · Measure unavailable'}`};
   const flowValues=[...release.observed,...markers,...(measure==='flow'?[...gauge.observed,...gauge.forecast]:[])].map(p=>p.value).filter(Number.isFinite);
   const sharedFlowDomain=[Math.min(0,...flowValues)*1.1,Math.max(1,...flowValues)*1.1];
   const stageValues=[...gauge.observed,...gauge.forecast].map(p=>p.value).filter(Number.isFinite);

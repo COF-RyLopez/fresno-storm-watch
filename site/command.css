@@ -209,3 +209,18 @@
 #watch-terrain .maplibregl-ctrl-attrib{font-size:10px;color:#e0e5e9;background:#20282ee8;max-width:calc(100% - 12px)}
 #watch-terrain .maplibregl-ctrl-attrib a{color:#e0e5e9}
 @media(max-width:600px){:is(#watch-terrain-overhead,#watch-terrain-upstream){min-height:44px;padding:4px 8px}#map-wrap>.watch-map-heading{flex-wrap:wrap!important}#map-wrap>.watch-map-heading>div{flex-basis:100%!important}#watch-terrain-note{font-size:10px}}
+
+.watershed-timeline{margin:12px 0;border:1px solid var(--calcite-color-border-2);border-radius:4px;padding:0 12px 10px;background:var(--calcite-color-surface-1)}
+.watershed-timeline summary{min-height:42px;line-height:1.4;align-content:center;cursor:pointer;font-weight:600}
+.watershed-timeline:not([open]){padding-bottom:0}
+.watershed-timeline-peak{border-inline-start:3px solid var(--chart-forecast);padding:4px 10px;margin:6px 0 12px}
+.watershed-timeline-peak p,.watershed-timeline-readout p{margin:4px 0}
+.watershed-timeline-peak small,.watershed-timeline-readout small,.watershed-timeline>small{display:block;color:var(--calcite-color-text-2)}
+.watershed-timeline label{display:block;font-size:12px;color:var(--calcite-color-text-2)}
+.watershed-timeline select{display:block;width:100%;min-height:36px;margin:4px 0 8px;color:var(--calcite-color-text-1);background:var(--calcite-color-surface-2);border:1px solid var(--calcite-color-border-2);font:inherit}
+.watershed-timeline :is(select,summary):focus-visible{outline:2px solid var(--calcite-color-focus);outline-offset:2px}
+.watershed-timeline-chart svg{display:block;width:100%;height:auto;background:var(--chart-background);border-radius:3px;margin:8px 0}
+.watershed-timeline-readout{font-size:13px;margin:6px 0 12px}
+.watershed-timeline-readout section{padding:6px 0;border-bottom:1px solid var(--calcite-color-border-2)}
+.watershed-timeline-readout a{font-size:12px}
+@media(max-width:600px){.watershed-timeline select{min-height:44px;font-size:16px}}
