@@ -1,6 +1,7 @@
 import {loadWatershed,loadWatershedRain,regionalForecastBounds,upstreamReservoir} from './watch-watershed-data.js';
 import {createWatershedPlayback} from './watershed-playback.js';
 import {installWatchRadar} from './watch-radar-ui.js';
+import {installForecastClouds} from './watch-forecast-cloud-ui.js';
 
 const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 const key=window=>window?`${window.layer}:${window.issue}:${window.start}:${window.end}`:'';
@@ -17,7 +18,8 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
  const modes=document.createElement('div');modes.className='watershed-weather-modes';modes.hidden=true;
  modes.setAttribute('role','group');modes.setAttribute('aria-label','Weather layer');
  const forecast=document.createElement('calcite-button'),radar=document.createElement('calcite-button');
- for(const [button,label] of [[forecast,'Forecast'],[radar,'Hanford radar']]){
+ const forecastClouds=document.createElement('calcite-button');
+ for(const [button,label] of [[forecast,'Rain forecast'],[radar,'Hanford radar'],[forecastClouds,'Forecast clouds']]){
   button.scale='s';button.textContent=label;modes.append(button);
  }
  const regional=document.createElement('calcite-button');regional.scale='s';regional.appearance='outline';regional.kind='neutral';
@@ -33,8 +35,10 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
  legendTitle.textContent='Sources';legend.append(legendTitle,items);legend.hidden=true;
  const links=document.createElement('div');links.className='watershed-player-links';links.append(legend);
  const radarView=installWatchRadar({session,info,items,renderColors,visible:()=>panel.getClientRects().length>0,source});
+ const cloudForecastView=installForecastClouds({session,info,items,source,visible:()=>panel.getClientRects().length>0});
  modes.append(radarView.cloudButton,radarView.volumeButton);
- panel.append(modes,controls,radarView.controls,info,radarView.cloudStatus,radarView.cloudLegend,colors,links);document.querySelector('#map-wrap').append(panel);
+ cloudForecastView.controls.classList.add('watershed-radar-controls');
+ panel.append(modes,controls,radarView.controls,cloudForecastView.controls,info,radarView.cloudStatus,radarView.cloudLegend,colors,links);document.querySelector('#map-wrap').append(panel);
  let reservoir,basin,abort,timer,rainRequest,selectedWindow=null,displayedUntil=0;
  let windows=[],onFrame,autoplay=false,sequence='';
  let mode='forecast',regionalView=false,basinOverhead=false;
@@ -65,25 +69,32 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
   player.pause();autoplay=false;displayedUntil=0;session.rain(null);
  }
  function syncMode(){
-  for(const [button,active] of [[forecast,mode==='forecast'],[radar,mode==='radar']]){
+  for(const [button,active] of [[forecast,mode==='forecast'],[radar,mode==='radar'],[forecastClouds,mode==='cloud-forecast']]){
    button.appearance=active?'solid':'outline';
    button.kind=active?'brand':'neutral';
    button.setAttribute('aria-pressed',String(active));
   }
-  controls.hidden=exercise||mode==='radar';
+  controls.hidden=exercise||mode!=='forecast';
   regional.hidden=exercise||mode!=='forecast'||!basin;
   regional.textContent=regionalView?'Watershed':'California';
   regional.setAttribute('aria-label',regionalView?'Fit selected watershed':'Fit California forecast');
  }
  function setMode(next,load=true){
   if(next===mode||exercise||!basin)return;
+  if(mode==='forecast')cancelForecast();
+  if(mode==='radar')radarView.close();
+  if(mode==='cloud-forecast')cloudForecastView.close();
   mode=next;syncMode();colors.hidden=true;legend.open=false;legend.hidden=true;
   if(next==='radar'){
-   cancelForecast();
    legend.hidden=false;
    radarView.open();
+  }else if(next==='cloud-forecast'){
+   if(regionalView){
+    regionalView=false;setOverhead(basinOverhead);session.focus(basin.bounds);
+   }
+   legend.hidden=false;
+   cloudForecastView.open();
   }else{
-   radarView.close();
    if(selectedWindow&&!currentWindows().some(row=>key(row)===key(selectedWindow)))selectedWindow=null;
    picker.value=key(selectedWindow);
    if(load)void updateRain(true,true);
@@ -91,6 +102,7 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
  }
  forecast.addEventListener('click',()=>setMode('forecast'));
  radar.addEventListener('click',()=>setMode('radar'));
+ forecastClouds.addEventListener('click',()=>setMode('cloud-forecast'));
  regional.addEventListener('click',()=>{
   if(!basin||mode!=='forecast')return;
   if(!regionalView)basinOverhead=getOverhead();
@@ -132,7 +144,7 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
 
  function close(returnToConcern=false){
   if(returnToConcern&&regionalView)setOverhead(basinOverhead);
-  abort?.abort();abort=null;cancelForecast();radarView.close();mode='forecast';regionalView=false;
+  abort?.abort();abort=null;cancelForecast();radarView.close();cloudForecastView.close();mode='forecast';regionalView=false;
   basin=null;if(!returnToConcern){selectedWindow=null;setWindows([]);onFrame=null;}
   syncMode();
   panel.hidden=true;modes.hidden=true;legend.hidden=true;colors.hidden=true;play.disabled=picker.disabled=true;
@@ -218,13 +230,13 @@ export function installWatchWatershed({session,repaint,localBounds,getOverhead,s
   if(exercise||reservoir!==id||!session.active)return false;
   if(next)setWindows(next);
   if(notify)onFrame=notify;
-  const wasRadar=mode==='radar';
+  const wasOtherMode=mode!=='forecast';
   if(navigate){player.pause();if(basin)setMode('forecast',false);}
   if(key(selectedWindow)!==key(window)){
    player.pause();selectedWindow=window;picker.value=key(window);
    if(basin&&!play)void updateRain(true);
   }
-  else if(navigate&&wasRadar&&basin&&!play)void updateRain(true);
+  else if(navigate&&wasOtherMode&&basin&&!play)void updateRain(true);
   if(play){if(basin)start();else autoplay=true;}
   if(!abort&&openIfClosed)void open();
   return true;

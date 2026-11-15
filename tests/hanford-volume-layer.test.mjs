@@ -24,6 +24,7 @@ function context({compile=true,link=true,allocation=true}={}){
  const names=['VERTEX_SHADER','FRAGMENT_SHADER','COMPILE_STATUS','LINK_STATUS','CURRENT_PROGRAM','VERTEX_ARRAY_BINDING',
   'ACTIVE_TEXTURE','TEXTURE0','TEXTURE_3D','TEXTURE_BINDING_3D','SAMPLER_BINDING','MAX_3D_TEXTURE_SIZE','TEXTURE_MIN_FILTER',
   'TEXTURE_MAG_FILTER','TEXTURE_WRAP_S','TEXTURE_WRAP_T','TEXTURE_WRAP_R','NEAREST','CLAMP_TO_EDGE','R32F','RED','FLOAT',
+  'R8','UNSIGNED_BYTE','LINEAR',
   'UNPACK_ALIGNMENT','UNPACK_ROW_LENGTH','UNPACK_IMAGE_HEIGHT','UNPACK_SKIP_PIXELS','UNPACK_SKIP_ROWS','UNPACK_SKIP_IMAGES',
   'UNPACK_FLIP_Y_WEBGL','UNPACK_PREMULTIPLY_ALPHA_WEBGL','PIXEL_UNPACK_BUFFER','PIXEL_UNPACK_BUFFER_BINDING',
   'DEPTH_WRITEMASK','DEPTH_TEST','DEPTH_FUNC','CULL_FACE','BLEND','BLEND_SRC_RGB','BLEND_DST_RGB','BLEND_SRC_ALPHA',
@@ -35,6 +36,7 @@ function context({compile=true,link=true,allocation=true}={}){
  for(const name of names.filter(name=>name.startsWith('UNPACK_')))state.set(gl[name],name.endsWith('WEBGL')?true:7);
  for(const name of names.filter(name=>name.startsWith('BLEND_')))state.set(gl[name],999);
  textures.set(gl.TEXTURE0,{old:'volume texture'});samplers.set(gl.TEXTURE0,{old:'sampler'});
+ textures.set(gl.TEXTURE0+1,{old:'second texture'});samplers.set(gl.TEXTURE0+1,{old:'second sampler'});
  textures.set(gl.TEXTURE0+4,{other:'texture'});samplers.set(gl.TEXTURE0+4,{other:'sampler'});
  gl.getParameter=key=>key===gl.TEXTURE_BINDING_3D?textures.get(state.get(gl.ACTIVE_TEXTURE)):key===gl.SAMPLER_BINDING?samplers.get(state.get(gl.ACTIVE_TEXTURE)):state.get(key);
  gl.isEnabled=key=>enabled.has(key);gl.enable=key=>enabled.add(key);gl.disable=key=>enabled.delete(key);
@@ -138,6 +140,25 @@ test('empty and cleared volumes never draw or start a repaint loop',()=>{
  layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});layer.setVolume(null);
  layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
  assert.equal(calls.filter(row=>row[0]==='draw').length,0);assert.equal(repaints,2);
+});
+
+test('forecast clouds blend two R8 textures in one raymarch and restore both texture units',t=>{
+ let now=100;t.mock.method(performance,'now',()=>now);
+ const {gl,calls,snapshot,uniforms,allocated}=context(),before=snapshot();
+ const layer=createHanfordVolumeLayer(coordinates,{cloud:true});
+ const base={...fixture(),shape:[2,2,2],heightRange:[0,16000]};
+ const draw=()=>layer.render(gl,{defaultProjectionData:{mainMatrix:identity}});
+ layer.onAdd({triggerRepaint(){}},gl);
+ layer.setVolume({...base,values:new Uint8Array(8).fill(22)});draw();
+ layer.setVolume({...base,values:new Uint8Array(8)},undefined,{durationMs:700});draw();
+ now=450;const callsBefore=calls.filter(row=>row[0]==='draw').length;draw();
+ assert.equal(calls.filter(row=>row[0]==='draw').length,callsBefore+1);
+ assert.deepEqual(uniforms.get('cloudBlend'),[.5]);assert.deepEqual(snapshot(),before);
+ assert.equal(allocated.size,2);
+ const upload=calls.find(row=>row[0]==='upload');
+ assert.deepEqual(upload.slice(1,10),[gl.TEXTURE_3D,0,gl.R8,2,2,2,0,gl.RED,gl.UNSIGNED_BYTE]);
+ now=800;draw();assert.equal(allocated.size,1);
+ layer.onRemove(null,gl);assert.equal(allocated.size,0);
 });
 
 test('threshold changes hide all lower echoes without throwing away the measured texture',()=>{

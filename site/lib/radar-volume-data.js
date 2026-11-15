@@ -21,12 +21,12 @@ function volumeRecord(record,now){
  return {...frame,start:stamp(record.start),end:stamp(record.end),volumeRecord:record};
 }
 
-async function bounded(stream,limit){
- if(!stream)throw Error('Radar volume response is empty');
+export async function boundedVolumeBytes(stream,limit){
+ if(!stream)throw Error('Weather volume response is empty');
  const reader=stream.getReader(),chunks=[];let size=0;
  try{
   for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;
-   if(size>limit){await reader.cancel();throw Error('Radar volume response exceeds limit');}chunks.push(value);}
+   if(size>limit){await reader.cancel();throw Error('Weather volume response exceeds limit');}chunks.push(value);}
  }finally{reader.releaseLock();}
  const result=new Uint8Array(size);let offset=0;for(const chunk of chunks){result.set(chunk,offset);offset+=chunk.length;}return result;
 }
@@ -34,7 +34,7 @@ async function read(url,limit,{signal,fetchImpl=fetch}){
  const timeout=AbortSignal.timeout(12000);
  const response=await fetchImpl(url,{credentials:'omit',cache:'no-store',redirect:'error',signal:signal?AbortSignal.any([signal,timeout]):timeout});
  if(!response.ok)throw Error(`Radar volume HTTP ${response.status}`);
- return bounded(response.body,limit);
+ return boundedVolumeBytes(response.body,limit);
 }
 async function verified(bytes,expected){
  const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -88,7 +88,7 @@ export async function loadRadarVolumeFrame(record,options={}){
   while(cursor<a.chunks.length){
    const c=a.chunks[cursor++];
    const compressed=await verified(await read(new URL(c.key,folder),c.bytes,{...options,signal}),c.sha256);
-   const bytes=await bounded(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip')),chunkBytes);
+   const bytes=await boundedVolumeBytes(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip')),chunkBytes);
    if(bytes.length!==chunkBytes)throw Error('Radar volume chunk length mismatch');
    const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),[cz,cy,cx]=c.key.split('/').slice(1).map(Number);
    for(let z=0;z<4;z++)for(let y=0;y<16;y++)for(let x=0;x<16;x++){
