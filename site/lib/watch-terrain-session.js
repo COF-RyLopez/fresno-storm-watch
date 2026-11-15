@@ -4,7 +4,7 @@ export function createTerrainSession({create,activate,deactivate,failure}){
  const dispose=value=>{if(value&&!disposed.has(value)){disposed.add(value);value.destroy();}};
  const clear=()=>{epoch++;dispose(adapter);adapter=null;pending=null;deactivate();};
  return {clear,refresh(data){adapter?.set(data);},overhead(value){adapter?.overhead(value);},
-  focus(bounds){adapter?.focus(bounds);},watershed(feature){adapter?.watershed(feature);},rain(image){adapter?.rain(image);},radar(samples){adapter?.radar(samples);},get active(){return !!adapter;},async open(data,animate=true){
+  focus(bounds){adapter?.focus(bounds);},watershed(feature){adapter?.watershed(feature);},rain(image){adapter?.rain(image);},radar(samples,minDbz){adapter?.radar(samples,minDbz);},get active(){return !!adapter;},async open(data,animate=true){
   const request=++epoch;
   try{
    if(!adapter){const loading=pending??=create();const created=await loading;if(request!==epoch){if(pending!==loading&&created!==adapter)dispose(created);return false;}adapter=created;pending=null;}

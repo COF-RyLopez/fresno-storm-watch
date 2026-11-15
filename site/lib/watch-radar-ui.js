@@ -1,0 +1,141 @@
+import {loadHanfordTimeline,loadHanfordFrame,RADAR_BANDS,RADAR_MAX_AGE} from './hanford-radar-data.js';
+import {createWatershedPlayback} from './watershed-playback.js';
+
+const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+const sameScan=(left,right)=>left?.file===right?.file&&left?.sha256===right?.sha256;
+
+/** Keep live-follow and replay on the same renderer. Replay holds a bounded, dated scan list. */
+export function installWatchRadar({session,info,items,renderColors,visible,source}){
+ const controls=document.createElement('div');controls.className='watershed-player-controls watershed-radar-controls';controls.hidden=true;
+ const play=document.createElement('calcite-button'),latest=document.createElement('calcite-button');
+ play.scale=latest.scale='s';play.textContent='Play';latest.textContent='Latest';latest.appearance='outline';latest.kind='neutral';
+ const scrub=document.createElement('input');scrub.type='range';scrub.min='0';scrub.step='1';scrub.value='0';scrub.setAttribute('aria-label','Hanford radar scan');
+ controls.append(play,scrub,latest);
+ const weak=document.createElement('input');weak.type='checkbox';
+ const weakLabel=document.createElement('label');weakLabel.append(weak,' Show weak returns (10–<20 dBZ)');
+ const scanLink=source('NOAA scan file','https://www.ncei.noaa.gov/products/radar/next-generation-weather-radar');
+ const coverage=source('Hanford coverage and scan details','https://frog-demo.ryanlopez.tech/?view=storm');
+ let active=false,following=true,request,timer,expiry,timeline,displayed,samples,next=0,failed=false;
+ const cache=new Map();
+ const frames=()=>timeline?.frames??[];
+ const minimum=()=>weak.checked?10:20;
+ const stillRecent=frame=>frame&&Date.now()-frame.end<=RADAR_MAX_AGE;
+ const index=()=>frames().findIndex(frame=>sameScan(frame,displayed));
+ const playback=createWatershedPlayback({dwell:750,
+  canAdvance:()=>active&&!document.hidden&&visible()&&next<frames().length,
+  changed(){syncControls();},
+  advance(){return choose(next++);}
+ });
+
+ function syncControls(){
+  play.textContent=playback.playing?'Pause':'Play';play.iconStart=playback.playing?'pause':'play';
+  play.disabled=frames().length<2;
+  scrub.disabled=frames().length<2;scrub.max=String(Math.max(0,frames().length-1));scrub.value=String(Math.max(0,index()));
+  scrub.setAttribute('aria-valuetext',displayed?time.format(displayed.end):'No scan selected');
+  latest.disabled=following&&!failed;
+ }
+ function colors(){
+  renderColors('Radar reflectivity (dBZ)',RADAR_BANDS.filter(band=>band.min>=minimum())
+   .map(band=>({value:band.label,color:`rgb(${band.color.join(',')})`})));
+ }
+ function report(){
+  clearTimeout(expiry);
+  syncControls();
+  if(!stillRecent(displayed)){
+   session.radar(null);scanLink.hidden=true;
+   info.textContent=failed?'Hanford radar unavailable':'No recent Hanford scans available';
+   return;
+  }
+  const scanTime=time.formatRange(displayed.start,displayed.end);
+  expiry=setTimeout(report,Math.max(1,displayed.end+RADAR_MAX_AGE-Date.now()+1));
+  const status=following?'Observed':`Replay ${index()+1}/${frames().length}`;
+  const delay=following&&Date.now()-displayed.end>20*60_000?' · Stale scan':following&&timeline?.delayed?' · Feed delayed':'';
+  const subset=samples.some((value,i)=>i%4===3&&value>=minimum())?'':` · No echoes ≥${minimum()} dBZ shown`;
+  const message=`${status} · ${scanTime}${delay}${subset}${!following&&timeline?.gaps?' · Gaps in scans':''}${failed?' · Update unavailable':''}`;
+  if(info.textContent!==message)info.textContent=message;
+  scanLink.href=displayed.source;scanLink.hidden=false;
+ }
+ async function draw(frame,signal){
+  if(!frame){
+   if(!signal.aborted){displayed=samples=null;report();}
+   return;
+  }
+  const key=`${frame.sha256}:${frame.count}`;
+  let values=cache.get(key);
+  if(!values)values=await loadHanfordFrame(frame,{signal});
+  if(signal.aborted)return;
+  cache.set(key,values);
+  if(cache.size>12)cache.delete(cache.keys().next().value);
+  session.radar(values,minimum());displayed=frame;samples=values;
+ }
+ function abortRequest(){request?.abort();request=null;}
+ async function run(action){
+  abortRequest();
+  const current=request=new AbortController();
+  try{
+   await action(current.signal);
+   if(current.signal.aborted)return false;
+   failed=false;report();return true;
+  }catch{
+   if(!current.signal.aborted){failed=true;report();}
+   return false;
+  }finally{if(request===current)request=null;}
+ }
+ async function refresh(){
+  clearTimeout(timer);
+  if(!active||!following||document.hidden)return;
+  await run(async signal=>{
+   const updated=await loadHanfordTimeline({signal});
+   if(signal.aborted)return;
+   await draw(updated.frames.at(-1),signal);
+   if(!signal.aborted)timeline=updated;
+  });
+  if(active&&following&&!request){clearTimeout(timer);timer=setTimeout(()=>void refresh(),60_000);}
+ }
+ function hold(){
+  following=false;clearTimeout(timer);abortRequest();playback.pause();report();
+ }
+ function choose(frameIndex){
+  const frame=frames()[frameIndex];
+  if(!stillRecent(frame))return false;
+  return run(signal=>draw(frame,signal));
+ }
+ play.addEventListener('click',()=>{
+  if(playback.playing){hold();return;}
+  if(frames().length<2)return;
+  const at=index();
+  next=following||at===frames().length-1?0:at+1;
+  hold();playback.play();
+ });
+ scrub.addEventListener('change',()=>{
+  const frameIndex=Number(scrub.value);
+  hold();void choose(frameIndex);
+ });
+ latest.addEventListener('click',()=>{
+  playback.pause();following=true;failed=false;syncControls();void refresh();
+ });
+ weak.addEventListener('change',()=>{
+  colors();
+  if(stillRecent(displayed))session.radar(samples,minimum());
+  report();
+ });
+ document.addEventListener('visibilitychange',()=>{
+  if(!active)return;
+  if(document.hidden){clearTimeout(timer);abortRequest();playback.pause();}
+  else if(following)void refresh();
+  else report();
+ });
+ return {controls,
+  open(){
+   active=true;following=true;failed=false;controls.hidden=false;
+   info.textContent='Loading Hanford radar…';scanLink.hidden=true;syncControls();colors();
+   items.replaceChildren(document.createTextNode('Shaded cells show the strongest sampled echo in each roughly 4 km × 4 km × 1 km cell, at estimated height above mean sea level. Coverage varies. Empty space can include weak returns or unsampled areas.'),
+    document.createElement('br'),weakLabel,document.createElement('br'),scanLink,document.createTextNode(' '),coverage);
+   void refresh();
+  },
+  close(){
+   active=false;controls.hidden=true;playback.pause();clearTimeout(timer);clearTimeout(expiry);abortRequest();cache.clear();
+   timeline=displayed=samples=null;session.radar(null);
+  }
+ };
+}

@@ -1,6 +1,6 @@
 import {loadWatershed,loadWatershedRain,upstreamReservoir} from './watch-watershed-data.js';
 import {createWatershedPlayback} from './watershed-playback.js';
-import {loadHanfordRadar,RADAR_BANDS} from './hanford-radar-data.js';
+import {installWatchRadar} from './watch-radar-ui.js';
 
 const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 const key=window=>window?`${window.layer}:${window.issue}:${window.start}:${window.end}`:'';
@@ -29,10 +29,11 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
  const legend=document.createElement('details'),legendTitle=document.createElement('summary'),items=document.createElement('div');
  legendTitle.textContent='Sources';legend.append(legendTitle,items);legend.hidden=true;
  const links=document.createElement('div');links.className='watershed-player-links';links.append(legend);
- panel.append(modes,controls,info,colors,links);document.querySelector('#map-wrap').append(panel);
+ const radarView=installWatchRadar({session,info,items,renderColors,visible:()=>panel.getClientRects().length>0,source});
+ panel.append(modes,controls,radarView.controls,info,colors,links);document.querySelector('#map-wrap').append(panel);
  let reservoir,basin,abort,timer,rainRequest,selectedWindow=null,displayedUntil=0;
  let windows=[],onFrame,autoplay=false,sequence='';
- let mode='forecast',radarRequest,radarTimer,latestRadar;
+ let mode='forecast';
  const currentWindows=()=>windows.filter(row=>row.end>Date.now());
  const player=createWatershedPlayback({canAdvance:()=>mode==='forecast'&&!!basin&&!document.hidden&&panel.getClientRects().length>0,
   changed(playing){play.iconStart=playing?'pause':'play';play.textContent=playing?'Pause':'Play';},
@@ -44,7 +45,6 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
   }});
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden)player.pause();
-  else if(mode==='radar'&&basin)void refreshRadar();
  });
 
  function renderColors(title,bands){
@@ -60,34 +60,6 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
   clearTimeout(timer);rainRequest?.abort();rainRequest=null;
   player.pause();autoplay=false;displayedUntil=0;session.rain(null);
  }
- function cancelRadar(){
-  clearTimeout(radarTimer);radarRequest?.abort();radarRequest=null;latestRadar=null;
-  session.radar(null);
- }
- function drawRadar(data,failed=false){
-  const current=data?.frame&&Date.now()-data.frame.end<=120*60_000;
-  session.radar(current?data.samples:null);
-  if(!current){info.textContent=failed?'Hanford radar unavailable':'No completed Hanford radar scan available';return;}
-  const {frame}=data,old=Date.now()-frame.end>20*60_000;
-  info.textContent=`Observed · ${time.formatRange(frame.start,frame.end)}${old?' · Stale scan':failed||data.delayed?' · Feed delayed':''}${data.samples.length?'':' · No samples shown'}`;
-  items.replaceChildren(document.createTextNode('Sampled KHNX Level II echoes at estimated beam heights above mean sea level. Coverage varies by scan and terrain. Gaps can include unsampled areas and weak returns.'),document.createElement('br'),
-   source('NOAA scan file',frame.source),document.createTextNode(' · '),source('Radar coverage and playback','https://frog-demo.ryanlopez.tech/?view=storm'));
- }
- async function refreshRadar(){
-  clearTimeout(radarTimer);
-  if(radarRequest||mode!=='radar'||!basin)return;
-  const request=radarRequest=new AbortController(),{signal}=request;
-  try{
-   if(document.hidden)return;
-   const data=await loadHanfordRadar({signal,previous:latestRadar});
-   if(signal.aborted)return;
-   drawRadar(data);latestRadar=data;
-  }catch{
-   if(!signal.aborted)drawRadar(latestRadar,true);
-  }finally{
-   if(!signal.aborted){radarRequest=null;radarTimer=setTimeout(()=>void refreshRadar(),60_000);}
-  }
- }
  function syncMode(){
   for(const [button,active] of [[forecast,mode==='forecast'],[radar,mode==='radar']]){
    button.appearance=active?'solid':'outline';
@@ -101,13 +73,10 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
   mode=next;syncMode();colors.hidden=true;legend.open=false;legend.hidden=true;
   if(next==='radar'){
    cancelForecast();
-   info.textContent='Loading Hanford radar…';
-   renderColors('Radar reflectivity (dBZ)',RADAR_BANDS.map(band=>({value:band.label,color:`rgb(${band.color.join(',')})`})));
-   items.replaceChildren(source('Hanford radar coverage and playback','https://frog-demo.ryanlopez.tech/?view=storm'));
    legend.hidden=false;
-   void refreshRadar();
+   radarView.open();
   }else{
-   cancelRadar();
+   radarView.close();
    if(selectedWindow&&!currentWindows().some(row=>key(row)===key(selectedWindow)))selectedWindow=null;
    picker.value=key(selectedWindow);
    if(load)void updateRain(true,true);
@@ -147,7 +116,7 @@ export function installWatchWatershed({session,repaint,localBounds,exercise=fals
  });
 
  function close(returnToConcern=false){
-  abort?.abort();abort=null;cancelForecast();cancelRadar();mode='forecast';syncMode();
+  abort?.abort();abort=null;cancelForecast();radarView.close();mode='forecast';syncMode();
   basin=null;if(!returnToConcern){selectedWindow=null;setWindows([]);onFrame=null;}
   panel.hidden=true;modes.hidden=true;legend.hidden=true;colors.hidden=true;play.disabled=picker.disabled=true;
   button.textContent='Upstream watershed';button.setAttribute('aria-pressed','false');

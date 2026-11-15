@@ -1,23 +1,31 @@
 import {radarSampleColor} from './hanford-radar-data.js';
+import {radarEchoCells} from './hanford-radar-cells.js';
 
 const vertex=`#version 300 es
-layout(location=0) in vec3 position;
-layout(location=1) in vec3 reflectivityColor;
+layout(location=0) in vec3 minimum;
+layout(location=1) in vec3 maximum;
+layout(location=2) in vec3 reflectivityColor;
 uniform mat4 matrix;
-uniform float size;
 out vec3 color;
+const vec3 corners[8] = vec3[8](
+  vec3(0,0,0),vec3(1,0,0),vec3(1,1,0),vec3(0,1,0),
+  vec3(0,0,1),vec3(1,0,1),vec3(1,1,1),vec3(0,1,1)
+);
+const int faces[36] = int[36](
+  0,2,1,0,3,2, 4,5,6,4,6,7, 0,1,5,0,5,4,
+  1,2,6,1,6,5, 2,3,7,2,7,6, 3,0,4,3,4,7
+);
+const float shade[6] = float[6](0.65,1.0,0.76,0.87,0.76,0.87);
 void main() {
-  gl_Position = matrix * vec4(position, 1.0);
-  gl_PointSize = size;
-  color = reflectivityColor;
+  gl_Position = matrix * vec4(mix(minimum, maximum, corners[faces[gl_VertexID]]), 1.0);
+  color = shade[gl_VertexID / 6] * reflectivityColor;
 }`;
 const fragment=`#version 300 es
 precision mediump float;
 in vec3 color;
 out vec4 pixel;
 void main() {
-  if (distance(gl_PointCoord, vec2(0.5)) > 0.5) discard;
-  pixel = vec4(color * 0.82, 0.82);
+  pixel = vec4(color * 0.74, 0.74);
 }`;
 
 function shader(gl,type,code){
@@ -46,9 +54,9 @@ function program(gl){
  finally{if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);}
 }
 
-/** Use MapLibre's existing context and depth buffer. One static point buffer per scan. */
+/** Use MapLibre's existing depth buffer and one instance per occupied echo cell. */
 export function createHanfordRadarLayer(MercatorCoordinate){
- let map,compiled,buffer,vao,matrix,size,vertices=null,count=0,input=null;
+ let map,compiled,buffer,vao,matrix,vertices=null,count=0,input=null,minimum;
  const mvp=new Float32Array(16);
  const release=gl=>{
   if(vao)gl.deleteVertexArray(vao);
@@ -63,23 +71,26 @@ export function createHanfordRadarLayer(MercatorCoordinate){
    try{
     compiled=program(gl);buffer=gl.createBuffer();vao=gl.createVertexArray();
     if(!buffer||!vao)throw Error('Hanford radar buffer unavailable');
-    matrix=gl.getUniformLocation(compiled,'matrix');size=gl.getUniformLocation(compiled,'size');
+    matrix=gl.getUniformLocation(compiled,'matrix');
     gl.bindVertexArray(vao);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-    gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);
-    gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,12);
+    for(let index=0;index<3;index++){
+     gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,3,gl.FLOAT,false,36,index*12);
+     gl.vertexAttribDivisor(index,1);
+    }
    }catch(error){release(gl);throw error;}
    finally{gl.bindVertexArray(null);gl.bindBuffer(gl.ARRAY_BUFFER,null);}
   },
-  setSamples(samples){
-   if(input===samples)return;
-   input=samples;count=samples.length/4;
-   vertices=new Float32Array(count*6);
-   for(let i=0,j=0;i<samples.length;i+=4,j+=6){
-    const point=MercatorCoordinate.fromLngLat({lng:samples[i],lat:samples[i+1]},samples[i+2]);
-    const [r,g,b]=radarSampleColor(samples[i+3]);
-    vertices[j]=point.x;vertices[j+1]=point.y;vertices[j+2]=point.z;
-    vertices[j+3]=r/255;vertices[j+4]=g/255;vertices[j+5]=b/255;
-   }
+  setSamples(samples,minDbz){
+   if(input===samples&&minimum===minDbz)return;
+   input=samples;minimum=minDbz;
+   const cells=radarEchoCells(samples,minDbz);
+   count=cells.length;vertices=new Float32Array(count*9);
+   cells.forEach(({west,south,east,north,bottom,top,dbz},index)=>{
+    const start=MercatorCoordinate.fromLngLat([west,north],bottom);
+    const end=MercatorCoordinate.fromLngLat([east,south],top);
+    const [r,g,b]=radarSampleColor(dbz);
+    vertices.set([start.x,start.y,start.z,end.x,end.y,end.z,r/255,g/255,b/255],index*9);
+   });
    map.triggerRepaint();
   },
   render(gl,{defaultProjectionData}){
@@ -93,8 +104,7 @@ export function createHanfordRadarLayer(MercatorCoordinate){
    gl.useProgram(compiled);
    mvp.set(defaultProjectionData.mainMatrix);
    gl.uniformMatrix4fv(matrix,false,mvp);
-   gl.uniform1f(size,Math.min(6,3*(globalThis.devicePixelRatio||1)));
-   gl.drawArrays(gl.POINTS,0,count);
+   gl.drawArraysInstanced(gl.TRIANGLES,0,36,count);
    gl.bindVertexArray(null);
   },
   onRemove(_map,gl){release(gl);count=0;vertices=input=map=null;}
