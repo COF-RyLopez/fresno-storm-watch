@@ -290,6 +290,7 @@ export function alertConcerns(alerts) {
       review: true,
       time: a.onset || a.issued,
       timeLabel: a.onset ? "Effective" : "Issued",
+      alertTiming: { start: a.onset ?? null, end: a.ends ?? null },
       quality: a.quality || "Official NWS " + a.category,
       nextAction: advisoryProfile(a.type).nextAction,
       details: [

@@ -27,6 +27,7 @@ export interface Concern {
   details: string[];
   links: Array<{ label: string; url: string }>;
   revision?: string;
+  alertTiming?: { start: number | null; end: number | null };
   watershed?: string;
   private?: boolean;
   mapGap?: string;

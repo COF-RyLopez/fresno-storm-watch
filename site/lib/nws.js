@@ -31,7 +31,7 @@ export async function queryCounty(feature, config, fetcher = fetch) {
     const body = new URLSearchParams({
       f: 'json', where: '1=1', geometry, geometryType: 'esriGeometryPolygon', inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects', outSR: '4326', returnGeometry: 'true', returnZ: 'false',
-      outFields: 'objectid,cap_id,prod_type,issuance,onset,expiration,wfo,idp_ingestdate,msg_type',
+      outFields: 'objectid,cap_id,prod_type,issuance,onset,ends,expiration,wfo,idp_ingestdate,msg_type',
       orderByFields: 'objectid ASC', resultOffset: String(offset), resultRecordCount: '1000'
     });
     const data = await fetchJson(`${config.nwsLayerUrl}/query`, { method: 'POST', body }, config.requestTimeoutMs, fetcher);

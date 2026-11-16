@@ -84,10 +84,10 @@ export function normalizeAlerts(batches, now = Date.now()) {
       if (!feature.geometry?.rings?.length) throw new Error('NWS returned an alert without polygon geometry.');
       for (const ring of feature.geometry.rings) checkRing(ring, 'NWS polygon coordinates are invalid.', 'NWS polygon ring is not closed.');
       const key = `${a.cap_id}|${a.issuance}`;
-      const content = JSON.stringify([a.prod_type, a.issuance, a.onset ?? '', a.expiration ?? '', a.wfo ?? '']);
+      const content = JSON.stringify([a.prod_type, a.issuance, a.onset ?? '', a.expiration ?? '', a.wfo ?? '', a.ends ?? '']);
       if (!grouped.has(key)) grouped.set(key, {
         key, capId: a.cap_id, type: a.prod_type.trim(), category: category(a.prod_type),
-        issued: sourceTime(a.issuance), issuance: a.issuance, onset: sourceTime(a.onset),
+        issued: sourceTime(a.issuance), issuance: a.issuance, onset: sourceTime(a.onset), ends: sourceTime(a.ends),
         expires, expiration: a.expiration ?? '', office: a.wfo || 'Not supplied',
         ingested: sourceTime(a.idp_ingestdate), content, counties: new Set(), geometries: new Map(),
         sourceUrl: `https://api.weather.gov/alerts/${encodeURIComponent(a.cap_id)}`,

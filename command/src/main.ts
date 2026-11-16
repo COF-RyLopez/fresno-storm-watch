@@ -80,7 +80,7 @@ let showAll = false,
   weatherEpoch = 0,
   weatherMode = "off",
   weatherViews: any = {},
-  rainRequest: AbortController | undefined,
+  forecastRequest: AbortController | undefined,
   rainTimer: any,
   rainPlaying = false;
 let referenceMatches: any[] = [],
@@ -755,8 +755,11 @@ function renderEvidence() {
     const tools = el("div", undefined, "actions");
     tools.append(button("Open focused map", () => { pane("map"); pendingFit = true; void ensureMap().then(updateMap); }),
       button("PIO outreach", () => privateView.openPio()));
-    if (model.advisoryProfile(c.name).type === "water")
-      tools.append(button("Rain forecast", () => { pane("map"); selectWeather("rain"); }));
+    const mode = model.advisoryForecastMode(c);
+    if (mode) tools.append(button(mode === "rain" ? "Rain forecast" : "Gust forecast", () => {
+      pane("map");
+      syncAdvisoryWeather(true);
+    }));
     out.append(tools);
   }
   const summaries = [
@@ -881,6 +884,8 @@ function renderIncident() {
 function updateMap() {
   if (!map) return;
   const c = current();
+  const floodGauges: any[] = c && model.advisoryForecastMode(c) === "rain"
+    ? model.advisoryGauges(c, feeds.features) : [];
   let features = feeds.features;
   const triggerFeatures = c ? [...(c.trigger?.features || []),
     ...(c.trigger?.relatedIds?.length ? nearby(c).flatMap(r => r.features) : [])] : [];
@@ -889,6 +894,7 @@ function updateMap() {
     features = [
       ...c.features,
       ...triggerFeatures,
+      ...floodGauges,
       ...nearby(c).flatMap((r) => r.features).filter(f => c.kind !== "alert" || model.advisoryMatches(c, f)),
       ...feeds.features.filter((f) => {
         if (c.kind === "alert" && model.advisoryProfile(c.name).type !== "water") return false;
@@ -917,14 +923,16 @@ function updateMap() {
   $("map-scope").textContent = c?.mapGap || (triggerFeatures.length
     ? c?.kind === "care" ? "Highlighted records prompted review · proximity only" : "Highlighted points prompted review"
     : c?.kind === "alert"
-    ? `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
+    ? model.advisoryForecastMode(c) === "rain"
+      ? (floodGauges.length ? "Gauge dots · observations near the alert" : "No nearby gauge locations returned")
+      : `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
     : c
     ? "Selected place · nearby context · current observations"
     : "Reference terrain · major waterways");
   if (pendingFit && c) {
     const b = model.geometryBounds(triggerFeatures.length
       ? [...triggerFeatures, ...(c.kind === "care" ? c.features : [])]
-      : [...c.features, ...(basin ? [basin] : [])]);
+      : [...c.features, ...floodGauges, ...(basin ? [basin] : [])]);
     if (b) map.focus(b, true, { top: 75, bottom: c.kind === "alert" ? 205 : 170, left: 50, right: 50 });
     else if (c.mapGap) map.focus([-120.94, 35.89, -118.34, 37.61], false);
     pendingFit = false;
@@ -1063,18 +1071,22 @@ function syncAdvisoryWeather(reopen = false) {
   const request = new AbortController(), epoch = weatherEpoch;
   advisoryRequest = request;
   void (async () => {
-    const source = await moduleAt("command-snow");
-    if (request.signal.aborted || epoch !== weatherEpoch || !source.snowAdvisoryCandidate(c)) return;
-    if (matchMedia("(max-width:700px)").matches && state.value.mobile === "attention") pane("map");
-    const timing = await source.loadSnowAdvisory(c, request.signal);
+    const mode = model.advisoryForecastMode(c);
+    let timing = c.alertTiming ?? { start: null, end: null };
+    if (!mode) {
+      const source = await moduleAt("command-snow");
+      if (request.signal.aborted || epoch !== weatherEpoch || !source.snowAdvisoryCandidate(c)) return;
+      timing = await source.loadSnowAdvisory(c, request.signal);
+    }
     if (!timing || request.signal.aborted || epoch !== weatherEpoch) return;
+    if (matchMedia("(max-width:700px)").matches && state.value.mobile === "attention") pane("map");
     advisoryWeatherId = id;
-    await chooseWeather("snow-forecast", timing);
+    await chooseWeather(mode || "snow-forecast", timing);
   })().catch(() => {
     if (!request.signal.aborted && advisoryWeatherId === id) {
       advisoryWeatherId = undefined;
       pauseWeather();
-      notify("Snow forecast could not be opened. The official advisory remains available in Details.");
+      notify("Forecast could not be opened. The official advisory remains available in Details.");
     }
   });
 }
@@ -1247,10 +1259,11 @@ function pauseWeather() {
   map?.snowCover(null);
   map?.snowfall(null);
   map?.snowPoints([]);
+  map?.gust(null);
   weatherSuspended = false;
   lastRain = null;
   weatherEpoch++;
-  rainRequest?.abort();
+  forecastRequest?.abort();
   clearTimeout(rainTimer);
   rainPlaying = false;
   weatherViews.radar?.close();
@@ -1277,12 +1290,67 @@ function colors(bands: any[]) {
     box.append(span);
   }
 }
+
+async function showGust(epoch: number, advisory?: AdvisoryTiming) {
+  const source = await moduleAt("command-gust");
+  if (epoch !== weatherEpoch) return;
+  const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
+  const request = new AbortController();
+  forecastRequest = request;
+  items.replaceChildren(
+    el("p", "Regional HRRR model forecast of surface gusts. Clear areas are outside coverage or have missing values."),
+    link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/"),
+  );
+  try {
+    const { manifest, windows } = await source.loadGustForecast(request.signal);
+    if (epoch !== weatherEpoch || request.signal.aborted) return;
+    items.append(el("p", manifest.attribution));
+    const picker = el("select") as HTMLSelectElement;
+    picker.setAttribute("aria-label", "Gust forecast time");
+    if (advisory) picker.append(new Option("Choose a forecast time", ""));
+    for (const step of windows) picker.append(new Option(localForecastTime.format(step.start), String(step.start)));
+    const initial = advisory ? model.advisoryForecastWindow(windows, advisory) : windows[0];
+    picker.value = initial ? String(initial.start) : "";
+    controls.replaceChildren(picker);
+    const draw = async () => {
+      forecastRequest?.abort();
+      const frameRequest = new AbortController();
+      forecastRequest = frameRequest;
+      map.gust(null);
+      $("weather-legend").hidden = true;
+      const step = windows.find((entry: {start: number}) => String(entry.start) === picker.value);
+      if (!step) {
+        info.textContent = "No gust forecast time available during this alert";
+        return;
+      }
+      const valid = localForecastTime.format(step.start);
+      info.textContent = "Loading gusts · " + valid;
+      try {
+        const image = await source.loadGustImage(manifest, step.entry, frameRequest.signal);
+        if (epoch !== weatherEpoch || frameRequest.signal.aborted) return;
+        map.gust(image);
+        info.textContent = `HRRR gusts · valid ${valid} · model run ${localForecastTime.format(Date.parse(manifest.run))}`;
+        colors(source.gustLegend);
+        $("weather-legend").prepend(el("strong", "Surface gusts · mph "));
+      } catch {
+        if (epoch === weatherEpoch && !frameRequest.signal.aborted)
+          info.textContent = "Gust forecast unavailable · " + valid;
+      }
+    };
+    picker.onchange = () => void draw();
+    await draw();
+  } catch {
+    if (epoch === weatherEpoch && !request.signal.aborted)
+      info.textContent = "Current regional gust forecast unavailable";
+  }
+}
+
 async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
   const rainWindow = currentRainWindow;
   pauseWeather();
   weatherMode = mode;
   $<HTMLSelectElement>("weather").value = mode;
-  if (advisory) $("weather-dock").dataset.advisory = "snow";
+  if (advisory) $("weather-dock").dataset.advisory = mode;
   const epoch = weatherEpoch;
   if (mode === "off") return;
   await ensureMap();
@@ -1297,19 +1365,35 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
     await showSnow(mode, epoch, rainWindow, advisory);
     return;
   }
+  if (mode === "gust") {
+    await showGust(epoch, advisory);
+    return;
+  }
   if (mode === "rain") {
     const { loadWatershedRain, regionalForecastBounds } = await moduleAt(
       "watch-watershed-data",
     );
     if (epoch !== weatherEpoch) return;
-    const windows = (feeds.timeline?.windows || []).filter(
-      (w: any) => Number.isFinite(w.end) && w.end > Date.now(),
-    );
+    const { precipitationTimeline } = await moduleAt("watershed-timeline-model");
+    let timeline = feeds.timeline;
+    // The alert can arrive before the independent timeline collector finishes.
+    if (advisory && !timeline) {
+      try {
+        const response = await fetch(new URL("data/watershed-timeline.json", root), {
+          signal: AbortSignal.timeout(6000), credentials: "omit", cache: "no-store",
+        });
+        if (response.ok) timeline = await response.json();
+      } catch { /* The independently verified 72-hour product remains available. */ }
+    }
+    if (epoch !== weatherEpoch) return;
+    const { windows } = precipitationTimeline(timeline, Date.now());
     const choose = el("select") as HTMLSelectElement;
     choose.setAttribute("aria-label", "Rain forecast window");
     choose.append(new Option("72-hour overview", ""));
     for (const w of windows)
       choose.append(new Option(date(w.start) + " · 6 h", String(w.layer)));
+    const initial = advisory && model.advisoryForecastWindow(windows, advisory);
+    if (initial) choose.value = String(initial.layer);
     const play = button("Play", () => {
       rainPlaying = !rainPlaying;
       play.textContent = rainPlaying ? "Pause" : "Play";
@@ -1319,10 +1403,10 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
     play.dataset.rainPlay = "true";
     play.disabled = !windows.length;
     controls.append(play, choose);
-    const draw = async () => {
-      rainRequest?.abort();
+    const draw = async (auto = false) => {
+      forecastRequest?.abort();
       const request = new AbortController();
-      rainRequest = request;
+      forecastRequest = request;
       currentRainWindow =
         windows.find((w: any) => String(w.layer) === choose.value) || null;
       info.textContent = "Loading selected forecast window…";
@@ -1332,11 +1416,20 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
           signal: request.signal,
         });
         if (epoch !== weatherEpoch || request.signal.aborted) return;
+        if (auto && advisory && !model.advisoryForecastWindow([rain.cycle], advisory)) {
+          lastRain = null;
+          map.rain(null);
+          info.textContent = "No rainfall forecast window overlaps this alert";
+          items.replaceChildren(link("WPC forecast source", "https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
+          return;
+        }
         lastRain = rain;
         if (!weatherSuspended) map.rain(rain);
-        info.textContent = `${currentRainWindow ? "6-hour" : "72-hour"} forecast · ${date(rain.cycle.start)} → ${date(rain.cycle.end)}`;
+        info.textContent = `${rain.cycle.hours}-hour WPC rain · ${localForecastTime.formatRange(rain.cycle.start, rain.cycle.end)} · issued ${localForecastTime.format(rain.cycle.issue)}${rain.legend.length ? "" : " · No contours ≥0.01 in shown"}`;
         colors(rain.legend);
-        $("weather-legend").prepend(el("strong", "Forecast rain · inches "));
+        const legend = $("weather-legend");
+        legend.prepend(el("strong", "Forecast rain · inches "));
+        if (advisory) legend.append(el("small", "Blue dots mark gauges within about 5 mi of the alert area. Readings are observations."));
         items.replaceChildren(
           el(
             "p",
@@ -1349,6 +1442,11 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
         );
       } catch (e: any) {
         if (request.signal.aborted || epoch !== weatherEpoch) return;
+        if (auto && initial && choose.value === String(initial.layer)) {
+          choose.value = "";
+          await draw(true);
+          return;
+        }
         lastRain = null;
         map.rain(null);
         $("weather-legend").hidden = true;
@@ -1373,7 +1471,7 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
       clearTimeout(rainTimer);
       void draw();
     };
-    await draw();
+    await draw(true);
   } else {
     if (!weatherViews[mode]) {
       const mod = await moduleAt(
