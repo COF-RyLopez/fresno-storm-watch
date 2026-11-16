@@ -39,6 +39,19 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-road-blocks',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'road']],layout:{'icon-image':'road-block','icon-size':.75,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#15191a','icon-halo-width':1.5}});
  map.addLayer({id:'watch-facilities',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'facility']],layout:{'icon-image':'facility','icon-size':.6,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#e8f6fb','icon-halo-width':1}});
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
+ map.addSource('command-triggers',{type:'geojson',data:empty});
+ map.addLayer({id:'command-trigger-lines',type:'line',source:'command-triggers',
+  filter:['all',['!=',['geometry-type'],'Point'],['!=',['get','detour'],true]],paint:{'line-color':'#ffce91','line-width':5,'line-opacity':.85}});
+ map.addLayer({id:'command-trigger-detours',type:'line',source:'command-triggers',
+  filter:['all',['==',['geometry-type'],'LineString'],['==',['get','detour'],true]],paint:{'line-color':'#ffce91','line-width':5,'line-opacity':.85,'line-dasharray':[3,2]}});
+ map.addLayer({id:'command-trigger-points',type:'circle',source:'command-triggers',
+  filter:['==',['geometry-type'],'Point'],paint:{'circle-color':'rgba(0,0,0,0)','circle-stroke-color':'#ffce91','circle-stroke-width':3,'circle-radius':10}});
+ const triggerLabel={'text-field':['get','name'],'text-size':13,...(fonts?{'text-font':fonts}:{})};
+ const triggerPaint={'text-color':'#ffe5c4','text-halo-color':'#172126','text-halo-width':2};
+ map.addLayer({id:'command-trigger-labels',type:'symbol',source:'command-triggers',
+  filter:['==',['geometry-type'],'Point'],layout:{...triggerLabel,'text-offset':[0,-1.1],'text-anchor':'bottom','text-allow-overlap':true},paint:triggerPaint});
+ map.addLayer({id:'command-trigger-road-labels',type:'symbol',source:'command-triggers',
+  filter:['==',['geometry-type'],'LineString'],layout:{...triggerLabel,'symbol-placement':'line-center','text-allow-overlap':true},paint:triggerPaint});
  map.addSource('command-snow-points',{type:'geojson',data:empty});
  map.addLayer({id:'command-snow-dots',type:'circle',source:'command-snow-points',paint:{'circle-radius':6,'circle-color':'#cde8ff','circle-stroke-color':'#172126','circle-stroke-width':2,'circle-pitch-alignment':'viewport'}});
  map.addLayer({id:'command-snow-labels',type:'symbol',source:'command-snow-points',layout:{'text-field':['get','label'],'text-size':13,'text-anchor':'bottom','text-offset':[0,-.75],...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#eef8ff','text-halo-color':'#172126','text-halo-width':2}});
@@ -138,6 +151,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   snowCover(image){setImage('command-snow-cover',image,{'raster-opacity':['interpolate',['linear'],['zoom'],9,.7,11,.25,12,0],'raster-resampling':'nearest'});},
+  snowfall(image){setImage('command-snowfall',image,{'raster-resampling':'nearest'});},
+  highlightTriggers(features){map.getSource('command-triggers').setData({type:'FeatureCollection',features});},
   snowPoints(features){map.getSource('command-snow-points').setData({type:'FeatureCollection',features});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
   destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();windTrails?.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};

@@ -29,6 +29,9 @@ export interface Concern {
   revision?: string;
   watershed?: string;
   private?: boolean;
+  mapGap?: string;
+  memberIds?: string[];
+  trigger?: { lines: string[]; features?: any[]; relatedIds?: string[]; firstCharts?: string[]; question: string };
   utilityUpdate?: {
     publisher: string; text: string; customers: number | null;
     restoration: { key: string; label: string; passed: boolean };

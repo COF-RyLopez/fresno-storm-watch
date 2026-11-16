@@ -1,4 +1,5 @@
 import {nextReview} from './county-watch-focus.js';
+import {riverTrigger} from './watch-triggers.js';
 import {appendReservoirWatch} from './reservoir-watch-ui.js';
 import {riverValue} from './river-model.js';
 import {createMissionFollowups} from './mission-followup-ui.js';
@@ -42,7 +43,9 @@ export function createMission({workspace,watershedTimeline,exercise=false,onSele
  function openConcern(item){
   selectedConcern=item.key;
   const care=item.type==='care'?careRows.find(r=>r.key===item.id):null;
-  workspace.selectConcern?.(care?{...item,related:{zones:[...care.zones,...care.zoneFollowups].map(z=>z.key)}}:item);renderConcerns(true);
+  const road=item.type==='road'?countyRoads?.snapshot?.rows.find(r=>r.key===item.id):null;
+  workspace.selectConcern?.(care?{...item,related:{zones:[...care.zones,...care.zoneFollowups].map(z=>z.key),roads:care.roads.map(r=>r.key)}}:
+    road&&!road.geometry?{...item,change:'Location unavailable in county source · map is reference only'}:item);renderConcerns(true);
   if(item.type==='river')inspect(item.id);
   else if(item.type==='care')onCare(item.id);
   else if(item.type==='pump')onDrainage(item.groupId,item.id);
@@ -90,9 +93,12 @@ export function createMission({workspace,watershedTimeline,exercise=false,onSele
   selectedConcern='river:'+id;workspace.selectConcern?.({type:'river',id,name:s.name,change:row.status,related:{power:[...(row.power?.matches||[]),...(row.power?.followups||[])].map(m=>m.row.key),roads:(g?.roads||[]).map(m=>m.row.key),facilities:(g?.facilities||[]).map(m=>m.row.site.key)}});renderConcerns(true);
   const inspection=inspectionRevision,stillSelected=()=>inspection===inspectionRevision&&$('mission-evidence').hasAttribute('open');
   const headline=el('p',row.status);headline.className='watch-condition-title';host.append(headline,el('p',id==='kings-lower'?'Confirm release timing with USACE and verify downstream access, field conditions and site power.':s.nextReview));
+  const trigger=riverTrigger(row,row.samplePoints.filter(p=>['MIL','PNF'].includes(p.id)));
+  const focusPoints=trigger.points.length?trigger.points:s.points;
+  if(trigger.lines.length){host.append(el('h3','Why this needs attention'));for(const line of trigger.lines.slice(0,5))host.append(el('p',line));host.append(el('p',trigger.question));}
   const captureNote=disclosure('Evidence capture & timing');captureNote.append(el('p',`Captured ${time(Date.now())}. Reopen this area to refresh; live monitoring continues.`),el('p',`Latest gauge observation: ${time(s.observed)} · first sampled forecast high: ${time(s.forecast)}`));
   const mapActions=el('div');mapActions.className='watch-map-actions';
-  mapActions.append(button('Focus area',()=>{workspace.showFocusedMap?.();map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}),button('View in 3D',async()=>{workspace.showFocusedMap?.();await map?.setViewMode('3d');if(stillSelected())await map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected});}));
+  mapActions.append(button('Focus area',()=>{workspace.showFocusedMap?.();map?.inspectPlanningPoints(focusPoints,{areaId:id,canNavigate:stillSelected});}),button('View in 3D',async()=>{workspace.showFocusedMap?.();await map?.setViewMode('3d');if(stillSelected())await map?.inspectPlanningPoints(focusPoints,{areaId:id,canNavigate:stillSelected});}));
   const mapDetails=disclosure('Map, trends & technical tools');mapDetails.append(mapActions);
   let forecastSelection=0;
   watershedTimeline?.append(host,id,rows,{open:upstream,onWindow:async(window,station,{navigate,...options})=>{
@@ -129,7 +135,7 @@ export function createMission({workspace,watershedTimeline,exercise=false,onSele
   $('mission-evidence').setAttribute('open','');
   if(focus){
    if(upstream)workspace.showFocusedMap?.();else workspace.showMap();
-   void map?.inspectPlanningPoints(s.points,{areaId:id,canNavigate:stillSelected}).then(()=>{
+   void map?.inspectPlanningPoints(upstream?s.points:focusPoints,{areaId:id,canNavigate:stillSelected}).then(()=>{
     if(!stillSelected())return;
     watershedTimeline?.syncMap();
     if(upstream)void map.openUpstreamWatershed();

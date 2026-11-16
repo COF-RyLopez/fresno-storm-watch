@@ -80,6 +80,7 @@ export function rankDifferences(areas,metric='rain'){
 
 /** One area counts once even if its hydrology, power and forecast all need review. */
 export function mergeForecastReviews(rows,differences){
-  const compact=p=>p?{point:p.point,checked:p.checked,rainSpread:p.rainSpread,windTiming:p.windTiming,rainTiming:p.rainTiming}:null;
+  const compact=p=>p?{point:p.point,checked:p.checked,window:p.window,rainSpread:p.rainSpread,windTiming:p.windTiming,rainTiming:p.rainTiming,
+    values:p.rows.filter(r=>!r.error).map(r=>({source:r.label,rain:r.summary?.rain?.value}))}:null;
   return rows.map(r=>{const f=differences.find(d=>d.id===r.area.id),forecast=f?{id:f.id,review:f.review,complete:f.complete,checked:f.checked,rain:compact(f.rain),wind:compact(f.wind),rainTiming:compact(f.rainTiming)}:null;return {...r,forecastDifference:forecast,review:r.review||!!forecast?.review,gaps:[...r.gaps,...(!forecast?.complete?['Forecast comparison coverage incomplete or awaiting collection']:[])],status:!r.review&&forecast?.review?'Forecast differences need planning review':r.status};});
 }

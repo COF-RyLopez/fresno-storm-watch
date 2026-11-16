@@ -1,5 +1,5 @@
 /** Presentation only: no new risk score, source assessment, permissions or stored state. */
-const layers={river:['areas','power','roads','facilities'],care:['care','evacuations'],pump:['drainage','power'],drainage:['drainage','power'],power:['power'],road:['roads'],asset:['facilities','power']};
+const layers={river:['areas','power','roads','facilities'],care:['care','evacuations','roads'],pump:['drainage','power'],drainage:['drainage','power'],power:['power'],road:['roads'],asset:['facilities','power']};
 export function focusLayerAllowed(workspace,explore,selected,key){
  return workspace!=='watch'||explore||!!layers[selected?.type]?.includes(key);
 }

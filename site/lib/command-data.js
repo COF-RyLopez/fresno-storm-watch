@@ -13,6 +13,7 @@ import {
 import { fetchRegionalAlerts, loadCounties } from "./nws.js";
 import { CONFIG } from "../config.js";
 import { concernSummary } from "./mission-model.js";
+import { careRoadTriggers, riverTrigger } from "./watch-triggers.js";
 import {
   arcGeometry,
   boundedFigure,
@@ -81,6 +82,11 @@ export function riverConcerns(bundle, now = Date.now()) {
       "kings-lower": "PNF",
       "kings-upper": "PNF",
     }[row.area.id];
+    const trigger = riverTrigger(row, input.reservoirSettings.stations);
+    c.trigger = { ...trigger, features: trigger.points.map(p => ({
+      ...point(c.id, p.name || p.id, p, "#ffce91", "trigger"),
+      id: c.id + ":trigger:" + p.id,
+    })) };
     const rain = row.rainfall;
     c.evidence.push({
       label: "Rain forecast · 72 h",
@@ -174,6 +180,8 @@ export function riverConcerns(bundle, now = Date.now()) {
       c.group = 1;
       c.time = r.updated?.time || null;
       c.quality = r.health || "Utility published area";
+      if (!r.geometries?.some(g => g.rings || /Polygon/.test(g.type || "")))
+        c.mapGap = "Utility reported a point. Affected area and individual service are unverified.";
       c.nextAction = "Verify affected sites and backup power";
       c.details = [
         r.details,
@@ -226,6 +234,11 @@ export function roadConcerns(snapshot, error = null, now = Date.now()) {
       r.alternateRoute,
       ...r.issues,
     ].filter(Boolean);
+    c.trigger = {
+      lines: [r.location, ...(r.issues.length ? r.issues : [r.status]), r.reason].filter(Boolean),
+      question: "Does this segment restrict travel now, and which alternate access has Road Maintenance confirmed?",
+    };
+    if (!geometry) c.mapGap = "The county source has no usable location for this record.";
     c.features = geometry
       ? [
           {
@@ -261,6 +274,8 @@ export function roadConcerns(snapshot, error = null, now = Date.now()) {
       nextAction:
         "Reconcile old dates with Road Maintenance before treating these roads as open or closed",
       details: conflicts.map((r) => r.name + " · " + r.status),
+      memberIds: conflicts.map((r) => r.key),
+      mapGap: "This is a list of dated records. Choose an individual road below to locate it.",
       links: [{ label: "County road status source", url: ROAD_MAP }],
     });
   return result;
@@ -320,6 +335,7 @@ export function createCommandFeeds({
     counties,
     care = [],
     zones = [],
+    careRoadIndex = [],
     watersheds,
     timeline;
   const read = async (name) => {
@@ -389,6 +405,11 @@ export function createCommandFeeds({
         missing = missingRoadRecords(roads?.rows || [], next.rows, missing);
         roads = next;
         sources.roads = roadConcerns(next);
+        const byId = new Map(sources.roads.map(c => [c.id, c.features[0]]));
+        careRoadIndex = next.rows.map(row => {
+          const feature = byId.get(row.key);
+          return {row, feature, bounds: feature && geometryBounds([feature])};
+        });
         sources.missing = [...missing.values()]
           .map(({ row }) => ({
             ...roadConcerns({ rows: [row] }, "Source record disappeared")[0],
@@ -423,6 +444,7 @@ export function createCommandFeeds({
         ...c,
         quality: "Last returned alert; current source check failed",
       }));
+    if (care.length) publishCare();
     busy = false;
     publish();
     clearTimeout(timer);
@@ -473,16 +495,21 @@ export function createCommandFeeds({
           { label: "Official zone reference", url: CARE_SOURCES.zoneItem },
         ],
       }));
+      publishCare();
+    });
+  }
+  function publishCare() {
       sources.care = care.map((r) => {
         const zs = zonesAt(r.geometry, zones).filter((z) =>
           ["Order", "Warn"].includes(z.status),
         );
+        const roadMatches = careRoadTriggers(r.geometry, careRoadIndex);
         return {
           ...base(r.key, "care", r.name),
           change: zs.length
             ? "Mapped in evacuation area"
-            : "Resident-care reference",
-          review: !!zs.length,
+            : roadMatches.length ? "Nearby road records · review access" : "Resident-care reference",
+          review: !!(zs.length || roadMatches.length),
           group: 1,
           quality: "Facility operating / evacuation status unverified",
           nextAction: "Verify contact, backup power and transport needs",
@@ -490,7 +517,16 @@ export function createCommandFeeds({
             r.address,
             r.kind,
             ...zs.map((z) => z.name + " · " + ZONE_STATUS[z.status]),
+            ...(errors["County roads"] ? ["County road check failed. Access remains unassessed."] : []),
           ],
+          trigger: {
+            lines: [
+              ...zs.map(z => z.name + " · " + ZONE_STATUS[z.status]),
+              ...roadMatches.map(({row, miles}) => `${row.name} · ${row.status} · approx. ${miles.toFixed(2)} mi from facility.`),
+            ],
+            relatedIds: [...zs.map(z => z.key), ...roadMatches.map(({row}) => row.key)],
+            question: "Which route can transport providers use, and should the facility stage help?",
+          },
           features: [
             {
               type: "Feature",
@@ -509,7 +545,6 @@ export function createCommandFeeds({
           ],
         };
       });
-    });
   }
   return {
     refresh,
