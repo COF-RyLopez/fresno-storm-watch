@@ -1,4 +1,5 @@
 import { POWER_COLORS, POWER_STATES } from "./power-model.js";
+import { restorationEstimate, createEstimateTracker } from "./command-power.js";
 import { CATEGORIES } from "./model.js";
 import { pilotAssessment, validatePilot } from "./pilot-model.js";
 import { refreshPilotSnapshot } from "./pilot-data.js";
@@ -166,6 +167,8 @@ export function riverConcerns(bundle, now = Date.now()) {
       c.utilityUpdate = {
         publisher: r.utility,
         text: r.details || "No event details supplied by the utility.",
+        customers: Number.isFinite(r.customers) && r.customers >= 0 ? r.customers : null,
+        restoration: restorationEstimate(r.restoration, r.utility, now),
       };
       c.review = true;
       c.group = 1;
@@ -176,6 +179,7 @@ export function riverConcerns(bundle, now = Date.now()) {
         r.details,
         ...(r.issues || []),
         "Building or site service is unverified.",
+        "Customer counts are utility-reported accounts, not people or buildings; PSPS counts can span counties or overlap. Restoration is an estimate, not confirmation. Estimate changes are compared while this page is open; reload starts a new baseline.",
       ];
       c.features = input.utilityFeatures
         .filter((f) => f.properties.powerKey === r.key)
@@ -308,6 +312,7 @@ export function createCommandFeeds({
   const sources = {},
     errors = {},
     checked = {};
+  const estimateTracker = createEstimateTracker();
   let bundle,
     assessment = { rows: [], features: [] },
     roads,
@@ -366,6 +371,7 @@ export function createCommandFeeds({
         if (!alive) return;
         bundle = next;
         assessment = riverConcerns(next);
+        assessment.rows = estimateTracker.apply(assessment.rows);
         if (Date.now() - Date.parse(next.generatedAt) > 45 * 60000)
           errors["Published source bundle"] = "Scheduled collection overdue";
         else delete errors["Published source bundle"];
@@ -374,6 +380,7 @@ export function createCommandFeeds({
         if (alive) {
           bundle = refreshed;
           assessment = riverConcerns(refreshed);
+          assessment.rows = estimateTracker.apply(assessment.rows);
         }
       }),
       job("County roads", async () => {
@@ -511,6 +518,7 @@ export function createCommandFeeds({
       alive = false;
       epoch++;
       clearTimeout(timer);
+      estimateTracker.clear();
     },
     get state() {
       return { bundle, roads };

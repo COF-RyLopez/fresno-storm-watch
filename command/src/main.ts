@@ -477,6 +477,7 @@ function renderList() {
       el("span", category[c.group] || "Reference", "kind"),
       el("strong", c.name),
       ...(c.utilityUpdate ? [el("span", `${c.utilityUpdate.publisher}: ${c.utilityUpdate.text}`, "utility-update")] : []),
+      ...utilityFacts(c, true),
       el("span", c.change, "reason"),
       el("span", `${c.utilityUpdate ? "Utility updated · " : ""}${c.time ? date(c.time) : "Time not supplied"}`, "when"),
       el("span", c.quality, "quality"),
@@ -538,6 +539,21 @@ function renderList() {
   $("show-all").textContent = showAll
     ? "Show first five"
     : `Show all ${rows.length} concerns`;
+}
+function utilityFacts(c: Concern, compact = false) {
+  const u = c.utilityUpdate;
+  if (!u) return [];
+  const tag = compact ? "span" : "p";
+  const rows = [
+    el(tag, `Estimated restoration: ${u.restoration.label}`, "utility-fact"),
+    el(tag, `Customers reported: ${u.customers === null ? "Not supplied" : u.customers.toLocaleString("en-US")}`, "utility-fact"),
+  ];
+  if (u.estimateChange) {
+    rows.push(el(tag, u.estimateChange.type === "conflict" ? "Conflicting restoration estimates — review" : "Restoration estimate changed — review", "estimate-review"));
+    if (!compact) rows.push(el("p", `Previously: ${u.estimateChange.previous}. Detected ${date(u.estimateChange.detected)} while this page was open.`, "utility-fact"));
+  }
+  if (u.restoration.passed) rows.push(el(tag, "Estimate has passed · restoration unconfirmed", "estimate-review"));
+  return rows;
 }
 function nearby(c: Concern): Concern[] {
   if (c.kind === "alert") return model.advisoryContext(c, [...feeds.reference, ...authorizedSites]);
@@ -641,6 +657,7 @@ function renderEvidence() {
   const out = $("evidence-content");
   out.replaceChildren(
     ...(c.utilityUpdate ? [el("p", `${c.utilityUpdate.publisher}: ${c.utilityUpdate.text}`, "utility-update")] : []),
+    ...utilityFacts(c),
     el("p", c.change, "summary"),
     el("p", c.quality, "quality"),
   );
@@ -757,10 +774,11 @@ function renderCoverage() {
     due = privateTasks().filter(
       (c) => c.quality === "Overdue" || c.quality === "Conflicting versions" || c.id.startsWith("private-pio:"),
     );
+  const changedEstimates = feeds.concerns.filter(c => c.utilityUpdate?.estimateChange);
   const important = $("important");
   important.replaceChildren();
   important.hidden =
-    !warnings.length && !due.length && !Object.keys(feeds.errors).length;
+    !warnings.length && !due.length && !changedEstimates.length && !Object.keys(feeds.errors).length;
   if (warnings.length)
     important.append(
       el(
@@ -795,6 +813,10 @@ function renderCoverage() {
           ?.scrollIntoView({ block: "nearest" });
       }),
     );
+  if (changedEstimates.length) important.append(button(
+    `${changedEstimates.length} restoration estimate${changedEstimates.length === 1 ? "" : "s"} to review`,
+    () => select(changedEstimates[0].id),
+  ));
 }
 function renderIncident() {
   const s = privateController.state;
