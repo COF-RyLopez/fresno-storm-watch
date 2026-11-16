@@ -341,6 +341,44 @@ small {
   margin-top: 6px;
   font-size: 13px;
 }
+.utility-fact {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.estimate-review {
+  color: #f0ca85;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 6px;
+  font-weight: 600;
+}
+/* MapLibre popup defaults are white; keep inherited Command text legible. */
+.maplibregl-popup-content {
+  background: #253239;
+  color: #f4f8fa;
+  border: 1px solid #7b929e;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px #0008;
+  padding: 12px 16px;
+  font: 14px/1.5 Inter, Arial, sans-serif;
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: #253239; }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: #253239; }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #253239; }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #253239; }
+.maplibregl-popup-close-button {
+  color: #f4f8fa;
+  min-width: 44px;
+  min-height: 44px;
+}
+.watch-cloud-readout .maplibregl-popup-content { padding-right: 48px; }
 .concern .when {
   font-size: 12px;
   margin-top: 8px;

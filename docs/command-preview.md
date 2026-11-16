@@ -68,6 +68,8 @@ The built shell is approximately 21 KB JavaScript, 13 KB CSS and 26 KB HTML befo
 
 ## Release and rollback
 
+Command outage cards show utility restoration estimates and customer counts, with explicit unknown values and elapsed-estimate warnings. SCE date text lacking a time zone stays publisher text. A memory-only tracker compares the same stable outage ID across utility updates while the page is open. Newer changed/removed estimates and equal-time conflicting estimates remain review cues on the card and alert strip; ordinary refreshes do not clear them. Older responses cannot replace a newer displayed outage record. Reload establishes a new baseline; there is no unattended notification or persistent estimate archive. Briefing capture freezes the displayed estimate, count and change history. Counts are utility-reported accounts, not residents or buildings. Hover popups use a dark surface with light text in Command.
+
 The Pages workflow builds Command separately with Vite after installing pinned dependencies. A content-keyed import map keeps shared modules consistent with the new shell. Only the public `site/` artifact is deployed; private datasets and working evidence stay out of it.
 
 The original front door is unchanged. Rollback the preview by redeploying the preceding code version; no data migration or AGOL item deletion is required.

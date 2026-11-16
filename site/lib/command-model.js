@@ -167,7 +167,11 @@ export function snapshotConcern(c, now = Date.now()) {
     nextAction: c.nextAction,
     time: c.time,
     sourceRevision: c.revision,
-    details: c.details,
+    details: [...(c.details || []), ...(c.utilityUpdate ? [
+      `Estimated restoration: ${c.utilityUpdate.restoration.label}`,
+      `Customers reported: ${c.utilityUpdate.customers ?? 'Not supplied'}`,
+      ...(c.utilityUpdate.estimateChange ? [`Restoration estimate review: previously ${c.utilityUpdate.estimateChange.previous}; now ${c.utilityUpdate.restoration.label}. Detected ${new Date(c.utilityUpdate.estimateChange.detected).toISOString()}.`] : []),
+    ] : [])],
     evidence: (c.evidence || []).map((e) => ({
       ...e,
       points: boundedFigure(e.points),

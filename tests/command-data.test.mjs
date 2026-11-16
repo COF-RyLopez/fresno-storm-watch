@@ -30,6 +30,8 @@ test('overview gauges and dams resolve to evidence; utility timestamps are numer
  const result=riverConcerns(bundle,now);
  for(const f of result.features)assert.ok(result.rows.some(r=>r.id===f.properties.id),f.properties.name+' must select a concern');
  const power=result.rows.find(r=>r.kind==='power');assert.equal(power.time,now-1000);assert.match(power.quality,/overdue/);
- assert.deepEqual(power.utilityUpdate,{publisher:'PG&E',text:row.details});assert.ok(power.details.includes(row.details));
+ assert.equal(power.utilityUpdate.publisher,'PG&E');assert.equal(power.utilityUpdate.text,row.details);assert.ok(power.details.includes(row.details));
+ assert.equal(power.utilityUpdate.customers,null);assert.equal(power.utilityUpdate.restoration.label,'Not supplied');
+ row.customers=0;assert.equal(riverConcerns(bundle,now).rows.find(r=>r.kind==='power').utilityUpdate.customers,0);
  row.details='';assert.match(riverConcerns(bundle,now).rows.find(r=>r.kind==='power').utilityUpdate.text,/No event details supplied/);
 });
