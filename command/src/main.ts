@@ -33,6 +33,10 @@ const date = (value: any) => {
       })
     : "Time not supplied";
 };
+const localForecastTime = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles", month: "short", day: "numeric",
+  hour: "numeric", minute: "2-digit", timeZoneName: "short",
+});
 const link = (text: string, href: string) => {
   const a = el("a", text) as HTMLAnchorElement;
   try {
@@ -92,6 +96,10 @@ let snowRequest: AbortController | undefined,
   snowFrameRequest: AbortController | undefined,
   snowTimer: ReturnType<typeof setTimeout> | undefined,
   snowDraw: (() => void) | null = null;
+type AdvisoryTiming = { start: number | null; end: number | null };
+let checkedAdvisory: string | undefined,
+  advisoryRequest: AbortController | undefined,
+  advisoryWeatherId: string | undefined;
 const snowSummaries = new Map<string, string>();
 let currentRainWindow: any = null,
   privateSelection: Concern | undefined;
@@ -296,7 +304,7 @@ function route() {
   state.patch(next);
   if (changed) {
     const saved = cameras.get(next.selected);
-    if (saved) {
+    if (saved && !(pendingFit && current()?.kind === "alert")) {
       state.patch({ camera: saved });
       map?.restore(saved);
       pendingFit = false;
@@ -323,6 +331,7 @@ function route() {
   renderList();
   renderEvidence();
   updateMap();
+  syncAdvisoryWeather();
 }
 window.addEventListener("hashchange", route);
 document
@@ -356,6 +365,7 @@ function select(id: string) {
   if (state.value.selected === id) {
     renderEvidence();
     updateMap();
+    syncAdvisoryWeather(true);
   }
   if (matchMedia("(max-width:700px)").matches) {
     const clicked = feeds.reference.find((c) => c.id === id) ?? referenceResults.get(id);
@@ -746,7 +756,7 @@ function renderEvidence() {
     tools.append(button("Open focused map", () => { pane("map"); pendingFit = true; void ensureMap().then(updateMap); }),
       button("PIO outreach", () => privateView.openPio()));
     if (model.advisoryProfile(c.name).type === "water")
-      tools.append(button("Rain forecast", () => { pane("map"); void chooseWeather("rain"); }));
+      tools.append(button("Rain forecast", () => { pane("map"); selectWeather("rain"); }));
     out.append(tools);
   }
   const summaries = [
@@ -915,7 +925,7 @@ function updateMap() {
     const b = model.geometryBounds(triggerFeatures.length
       ? [...triggerFeatures, ...(c.kind === "care" ? c.features : [])]
       : [...c.features, ...(basin ? [basin] : [])]);
-    if (b) map.focus(b, true, { top: 100, bottom: 170, left: 50, right: 50 });
+    if (b) map.focus(b, true, { top: 75, bottom: c.kind === "alert" ? 205 : 170, left: 50, right: 50 });
     else if (c.mapGap) map.focus([-120.94, 35.89, -118.34, 37.61], false);
     pendingFit = false;
   }
@@ -1039,7 +1049,37 @@ $("sign-in").addEventListener(
   },
   { once: true },
 );
-async function showSnow(mode: string, epoch: number, rainWindow: any) {
+function syncAdvisoryWeather(reopen = false) {
+  const c = state.value.view === "watch" ? current() : undefined;
+  const id = c?.kind === "alert" ? c.id : undefined;
+  if (!reopen && id === checkedAdvisory) return;
+  checkedAdvisory = id;
+  advisoryRequest?.abort();
+  if (advisoryWeatherId && advisoryWeatherId !== id) {
+    advisoryWeatherId = undefined;
+    pauseWeather();
+  }
+  if (!c || !id) return;
+  const request = new AbortController(), epoch = weatherEpoch;
+  advisoryRequest = request;
+  void (async () => {
+    const source = await moduleAt("command-snow");
+    if (request.signal.aborted || epoch !== weatherEpoch || !source.snowAdvisoryCandidate(c)) return;
+    if (matchMedia("(max-width:700px)").matches && state.value.mobile === "attention") pane("map");
+    const timing = await source.loadSnowAdvisory(c, request.signal);
+    if (!timing || request.signal.aborted || epoch !== weatherEpoch) return;
+    advisoryWeatherId = id;
+    await chooseWeather("snow-forecast", timing);
+  })().catch(() => {
+    if (!request.signal.aborted && advisoryWeatherId === id) {
+      advisoryWeatherId = undefined;
+      pauseWeather();
+      notify("Snow forecast could not be opened. The official advisory remains available in Details.");
+    }
+  });
+}
+
+async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?: AdvisoryTiming) {
   const source = await moduleAt("command-snow");
   if (epoch !== weatherEpoch) return;
   const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
@@ -1067,33 +1107,53 @@ async function showSnow(mode: string, epoch: number, rainWindow: any) {
           source.loadSnowGrid(request.signal).catch(() => null),
         ]);
         if (!active()) return;
-        if (!grid?.frames.length && sites.every((site: any) => !site.issued)) throw Error("No recent NWS snow forecasts returned");
+        if (!advisory && !grid?.frames.length && sites.every((site: any) => !site.issued)) throw Error("No recent NWS snow forecasts returned");
         const step = 6 * 3600000, first = Math.floor(Date.now() / step) * step;
+        const starts = Array.from({ length: 12 }, (_, i) => first + i * step);
         const select = el("select") as HTMLSelectElement;
         select.setAttribute("aria-label", "Six-hour snow forecast window");
-        for (let i = 0; i < 12; i++) {
-          const start = first + i * step;
-          select.append(new Option(date(start) + " · 6 h", String(start)));
+        if (advisory) {
+          select.append(new Option("Choose a six-hour window", ""));
+          items.prepend(el("p", "Advisory period · " + date(advisory.start) + " → " + date(advisory.end) +
+            ". Each map frame shows six hours of snowfall."));
         }
-        const desired = Number((controls.querySelector("select") as HTMLSelectElement | null)?.value || rainWindow?.start || grid?.frames[0]?.start);
-        if ([...select.options].some(o => Number(o.value) === desired)) select.value = String(desired);
-        const fit = button("Fit snow", () => {
+        for (const start of starts) select.append(new Option(date(start) + " · 6 h", String(start)));
+        const previous = (controls.querySelector("select") as HTMLSelectElement | null)?.value;
+        const pointFrames = advisory ? starts.filter(start => sites.some((site: any) =>
+          source.snowWindow(site, start, start + step).inches !== null)).map(start => ({ start })) : [];
+        const initial = advisory ? source.advisorySnowWindow(starts, grid?.frames ?? [], advisory) ??
+          source.advisorySnowWindow(starts, pointFrames, advisory) : rainWindow?.start ?? grid?.frames[0]?.start;
+        const desired = previous || (initial == null ? "" : String(initial));
+        if ([...select.options].some(o => o.value === desired)) select.value = desired;
+        const fit = button(advisory ? "Fit advisory" : "Fit snow", () => {
+          if (advisory) {
+            pendingFit = true;
+            updateMap();
+            return;
+          }
           const corners = grid?.coordinates;
           if (corners) map?.focus([corners[0][0], corners[2][1], corners[2][0], corners[0][1]], true);
         });
-        fit.setAttribute("aria-label", "Fit snowfall area");
-        controls.replaceChildren(select, ...(grid?.frames.length ? [fit] : []));
+        fit.setAttribute("aria-label", advisory ? "Fit advisory area" : "Fit snowfall area");
+        controls.replaceChildren(select, ...(advisory ? current()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
         $("weather-legend").hidden = true;
         let cached: { start: number; image: any } | null = null;
         snowDraw = () => {
           if (!active()) return;
           snowFrameRequest?.abort();
-          const start = Number(select.value), end = start + step;
-          const frame = grid?.frames.find((candidate: any) => candidate.start === start);
-          const timeLabel = date(start) + " → " + date(end);
-          info.textContent = frame ? "Loading snowfall · " + timeLabel : "Snowfall grid unavailable · point guidance · " + timeLabel;
           $("weather-legend").hidden = true;
           map?.snowfall(null);
+          if (!select.value) {
+            info.textContent = "No six-hour snowfall forecast available during this advisory";
+            snowSummaries.clear();
+            map?.snowPoints([]);
+            renderEvidence();
+            return;
+          }
+          const start = Number(select.value), end = start + step;
+          const frame = grid?.frames.find((candidate: any) => candidate.start === start);
+          const timeLabel = localForecastTime.formatRange(start, end);
+          info.textContent = frame ? "Loading snowfall · " + timeLabel : "Snowfall grid unavailable · point guidance · " + timeLabel;
           const points = sites.map((site: any) => {
             const values = source.snowWindow(site, start, end);
             const depth = values.inches === null ? "Unavailable" : values.inches.toLocaleString("en-US", { maximumFractionDigits: 1 }) + " in";
@@ -1111,7 +1171,7 @@ async function showSnow(mode: string, epoch: number, rainWindow: any) {
             if (!active() || frameRequest.signal.aborted || weatherSuspended) return;
             cached = { start, image };
             map?.snowfall(image);
-            info.textContent = "NWS new snowfall · " + timeLabel + " · issued " + date(frame.issued) +
+            info.textContent = "NWS new snowfall · " + timeLabel + " · issued " + localForecastTime.format(frame.issued) +
               (frame.snowCells === 0 ? " · No accumulation in valid cells" : "");
             colors([{ label: "0", color: "#365f75" }, ...grid.legend]);
             $("weather-legend").prepend(el("strong", "New snow · inches "));
@@ -1200,6 +1260,7 @@ function pauseWeather() {
   $<HTMLSelectElement>("weather").value = "off";
   $("weather-controls").replaceChildren();
   $("weather-time").hidden = true;
+  delete $("weather-dock").dataset.advisory;
   $("weather-legend").hidden = true;
   $("weather-details").hidden = true;
   renderEvidence();
@@ -1216,11 +1277,12 @@ function colors(bands: any[]) {
     box.append(span);
   }
 }
-async function chooseWeather(mode: string) {
+async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
   const rainWindow = currentRainWindow;
   pauseWeather();
   weatherMode = mode;
   $<HTMLSelectElement>("weather").value = mode;
+  if (advisory) $("weather-dock").dataset.advisory = "snow";
   const epoch = weatherEpoch;
   if (mode === "off") return;
   await ensureMap();
@@ -1232,7 +1294,7 @@ async function chooseWeather(mode: string) {
   $("weather-details").hidden = false;
   info.textContent = "Loading dated weather evidence…";
   if (mode.startsWith("snow-")) {
-    await showSnow(mode, epoch, rainWindow);
+    await showSnow(mode, epoch, rainWindow, advisory);
     return;
   }
   if (mode === "rain") {
@@ -1348,11 +1410,15 @@ async function chooseWeather(mode: string) {
     if (weatherSuspended) view.suspend();
   }
 }
-$<HTMLSelectElement>("weather").onchange = () =>
-  void chooseWeather($<HTMLSelectElement>("weather").value).catch(() => {
+function selectWeather(mode: string) {
+  advisoryRequest?.abort();
+  advisoryWeatherId = undefined;
+  void chooseWeather(mode).catch(() => {
     pauseWeather();
     notify("Weather display unavailable. Try another product.");
   });
+}
+$<HTMLSelectElement>("weather").onchange = () => selectWeather($<HTMLSelectElement>("weather").value);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) suspendWeather();
   else resumeWeather();
@@ -1365,6 +1431,7 @@ const collector = data.createCommandFeeds({
     renderCoverage();
     renderEvidence();
     updateMap();
+    syncAdvisoryWeather();
   },
 });
 $("refresh").onclick = () => void collector.refresh();
@@ -1397,6 +1464,7 @@ try {
 window.addEventListener(
   "pagehide",
   () => {
+    advisoryRequest?.abort();
     pauseWeather();
     collector.destroy();
     privateView.destroy();

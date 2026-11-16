@@ -27,6 +27,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-basin-outline',type:'line',source:'watch-basin',paint:{'line-color':'#e4d8aa','line-width':2,'line-dasharray':[3,2]}});
  map.addSource('watch-records',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
  map.addLayer({id:'watch-polygons',type:'fill',source:'watch-records',filter:['==',['geometry-type'],'Polygon'],paint:{'fill-color':['get','color'],'fill-opacity':.13}});
+ map.addLayer({id:'watch-alert-outline-halo',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'Polygon'],['==',['get','kind'],'alert']],paint:{'line-color':'#edf5fb','line-width':4,'line-opacity':.85}});
  map.addLayer({id:'watch-polygon-outlines',type:'line',source:'watch-records',filter:['==',['geometry-type'],'Polygon'],paint:{'line-color':['get','color'],'line-width':2}});
  map.addLayer({id:'watch-lines',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['!=',['get','detour'],true]],paint:{'line-color':['get','color'],'line-width':3}});
  map.addLayer({id:'watch-detours',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['==',['get','detour'],true]],paint:{'line-color':['get','color'],'line-width':2.5,'line-dasharray':[3,2]}});

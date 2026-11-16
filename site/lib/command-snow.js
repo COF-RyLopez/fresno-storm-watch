@@ -1,4 +1,5 @@
 import { mercator } from './watch-watershed-data.js';
+import { sourceTime } from './model.js';
 
 export const IMS = 'https://mapservices.weather.noaa.gov/raster/rest/services/obs/usnic_ims_snow_ice_1km/ImageServer';
 export const HANFORD_WINTER = 'https://www.weather.gov/hnx/winter';
@@ -14,6 +15,48 @@ async function json(url, signal) {
   const body = await response.json();
   if (body.error) throw Error('Snow source rejected the request');
   return body;
+}
+
+const mixedWinterProduct = /^(?:winter weather advisory|winter storm (?:watch|warning))$/i;
+const snowfallProduct = /^(?:(?:lake effect|heavy) snow (?:advisory|watch|warning)|snow squall warning)$/i;
+
+export function snowAdvisoryCandidate(concern) {
+  return concern?.kind === 'alert' && (mixedWinterProduct.test(concern.name) || snowfallProduct.test(concern.name));
+}
+
+export function snowAdvisoryTiming(concern, alert) {
+  if (!snowAdvisoryCandidate(concern)) return null;
+  if (mixedWinterProduct.test(concern.name)) {
+    const description = alert?.description ?? '';
+    const what = /(?:^|\n)\s*\*?\s*WHAT\s*\.{2,}([\s\S]*?)(?=\n\s*\*?\s*(?:WHERE|WHEN|IMPACTS|ADDITIONAL DETAILS)\s*\.{2,}|$)/i.exec(description)?.[1];
+    const text = what ?? description;
+    // NWS sometimes sends one description for several alerts with separate WHAT clauses.
+    const products = [...text.matchAll(/\bfor (?:the )?(winter weather advisory|winter storm (?:watch|warning))\b/gi)];
+    const selected = products.findIndex(match => match[1].toLowerCase() === concern.name.toLowerCase());
+    const selectedText = selected < 0 ? text : text.slice(products[selected].index, products[selected + 1]?.index);
+    if (selected < 0 && products.length) return null;
+    const fallingSnow = selectedText.replace(/\b(?:blowing|drifting|patches of|existing) snow\b/gi, '');
+    if (!/\b(?:snowfall|snow accumulations?|(?:heavy|light|moderate|new|additional|wet) snow|snow (?:is |are )?(?:expected|possible|likely|developing)|(?:inch(?:es)?|feet|foot) of snow|snow (?:and|mixed with|changing to) (?:ice|rain|sleet|freezing rain))\b/i.test(fallingSnow)) return null;
+  }
+  const start = sourceTime(alert?.onset) ?? (concern.timeLabel === 'Effective' ? sourceTime(concern.time) : null);
+  const end = sourceTime(alert?.ends);
+  return { start, end: end !== null && (start === null || end > start) ? end : null };
+}
+
+export async function loadSnowAdvisory(concern, signal) {
+  const url = concern.links?.[0]?.url;
+  const alert = typeof url === 'string' && url.startsWith('https://api.weather.gov/alerts/')
+    ? await json(url, signal).then(body => body.properties).catch(() => null) : null;
+  return snowAdvisoryTiming(concern, alert);
+}
+
+/** Select the earliest available window overlapping the remaining hazard period. */
+export function advisorySnowWindow(starts, frames, timing, now = Date.now()) {
+  const from = Math.max(timing.start ?? now, now);
+  const until = timing.end ?? from + 6 * hour;
+  if (from >= until) return null;
+  const available = new Set(frames.map(frame => frame.start));
+  return starts.find(start => available.has(start) && start < until && start + 6 * hour > from) ?? null;
 }
 const lonLat = (x, y) => [x / 6378137 * 180 / Math.PI, Math.atan(Math.sinh(y / 6378137)) * 180 / Math.PI];
 const snowGridRoot = new URL('../data/ndfd-snow/', import.meta.url);
