@@ -89,6 +89,7 @@ const referenceSearch = (
 let weatherSuspended = false,
   lastRain: any = null;
 let snowRequest: AbortController | undefined,
+  snowFrameRequest: AbortController | undefined,
   snowTimer: ReturnType<typeof setTimeout> | undefined,
   snowDraw: (() => void) | null = null;
 const snowSummaries = new Map<string, string>();
@@ -561,6 +562,10 @@ function utilityFacts(c: Concern, compact = false) {
 }
 function nearby(c: Concern): Concern[] {
   if (c.kind === "alert") return model.advisoryContext(c, [...feeds.reference, ...authorizedSites]);
+  if (c.trigger?.relatedIds?.length) {
+    const byId = new Map(feeds.reference.map(entry => [entry.id, entry]));
+    return c.trigger.relatedIds.flatMap(id => byId.has(id) ? [byId.get(id)!] : []);
+  }
   const b = model.geometryBounds(c.features);
   if (!b) return [];
   const pad = 0.05,
@@ -652,6 +657,9 @@ function renderEvidence() {
     c.change,
     c.quality,
     c.utilityUpdate,
+    c.trigger,
+    c.mapGap,
+    c.memberIds,
     c.watershed ? snowSummaries.get(c.watershed) : null,
     c.evidence,
     nearby(c).map((r: Concern) => [r.id, r.change, r.time, r.quality]),
@@ -667,6 +675,26 @@ function renderEvidence() {
     el("p", c.quality, "quality"),
   );
   if (c.utilityUpdate) out.append(el("p", `Utility updated · ${date(c.time)}`, "when"));
+  if (c.mapGap) out.append(el("p", c.mapGap, "quality"));
+  if (c.trigger?.lines.length) {
+    const trigger = el("section", undefined, "next-step");
+    trigger.append(el("h3", "Why this needs attention"));
+    for (const line of c.trigger.lines.slice(0, 5)) trigger.append(el("p", line));
+    trigger.append(el("p", c.trigger.question, "quality"));
+    out.append(trigger);
+  }
+  if (c.memberIds?.length) {
+    const picker = el("select") as HTMLSelectElement;
+    picker.setAttribute("aria-label", "Choose a road verification record");
+    picker.append(new Option("Choose a road record to inspect", ""));
+    const members = new Map(feeds.reference.map(r => [r.id, r]));
+    for (const id of c.memberIds) {
+      const member = members.get(id);
+      if (member) picker.append(new Option(`${member.name} · ${date(member.time)} · ${member.features.length ? "mapped" : "location unavailable"}`, id));
+    }
+    picker.onchange = () => { if (picker.value) select(picker.value); };
+    out.append(picker);
+  }
   const next = el("section", undefined, "next-step");
   next.append(el("h3", "Next review"), el("p", c.nextAction));
   const actions = el("div", undefined, "actions");
@@ -722,20 +750,21 @@ function renderEvidence() {
     out.append(tools);
   }
   const summaries = [
+    ...(c.trigger?.firstCharts || []).map(label => c.evidence.find(e => e.label === label)),
     c.evidence.find((e) => e.label.toLowerCase().includes("rain")),
     c.evidence.find((e) => /release/i.test(e.label)),
     c.evidence.find((e) => !/(rain|pool|release)/i.test(e.label)),
   ].filter(Boolean);
   for (const e of [
     ...new Set(summaries.length ? summaries : c.evidence.slice(0, 3)),
-  ])
+  ].slice(0, 3))
     out.append(chart(e));
   const near = el("details", undefined, "nearby");
   near.append(
     el("summary", c.kind === "alert" ? model.advisoryProfile(c.name).label : "Nearby concerns"),
     el("p", c.kind === "alert" ? model.advisoryProfile(c.name).qualification : "Map proximity only. Connections and access are not established."),
   );
-  (near as HTMLDetailsElement).open = c.kind === "alert";
+  (near as HTMLDetailsElement).open = c.kind === "alert" || !!c.trigger?.relatedIds?.length;
   const related = nearby(c);
   for (const r of related.slice(0, c.kind === "alert" ? 5 : 8))
     near.append(button(r.name + " · " + r.change, () => select(r.id)));
@@ -843,10 +872,13 @@ function updateMap() {
   if (!map) return;
   const c = current();
   let features = feeds.features;
+  const triggerFeatures = c ? [...(c.trigger?.features || []),
+    ...(c.trigger?.relatedIds?.length ? nearby(c).flatMap(r => r.features) : [])] : [];
   if (c) {
     const b = model.geometryBounds(c.features);
     features = [
       ...c.features,
+      ...triggerFeatures,
       ...nearby(c).flatMap((r) => r.features).filter(f => c.kind !== "alert" || model.advisoryMatches(c, f)),
       ...feeds.features.filter((f) => {
         if (c.kind === "alert" && model.advisoryProfile(c.name).type !== "water") return false;
@@ -864,6 +896,7 @@ function updateMap() {
   }
   features = [...new Map(features.map((f) => [JSON.stringify([f.id, f.properties?.id, f.geometry]), f])).values()];
   map.set({ type: "FeatureCollection", features });
+  map.highlightTriggers(triggerFeatures);
   const basin = c?.watershed
     ? feeds.watersheds?.features.find(
         (f: any) => f.properties.reservoir === c.watershed,
@@ -871,14 +904,19 @@ function updateMap() {
     : null;
   map.watershed(basin);
   $("map-place").textContent = c?.name || "Fresno County & upstream watersheds";
-  $("map-scope").textContent = c?.kind === "alert"
+  $("map-scope").textContent = c?.mapGap || (triggerFeatures.length
+    ? c?.kind === "care" ? "Highlighted records prompted review · proximity only" : "Highlighted points prompted review"
+    : c?.kind === "alert"
     ? `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
     : c
     ? "Selected place · nearby context · current observations"
-    : "Reference terrain · major waterways";
+    : "Reference terrain · major waterways");
   if (pendingFit && c) {
-    const b = model.geometryBounds([...c.features, ...(basin ? [basin] : [])]);
+    const b = model.geometryBounds(triggerFeatures.length
+      ? [...triggerFeatures, ...(c.kind === "care" ? c.features : [])]
+      : [...c.features, ...(basin ? [basin] : [])]);
     if (b) map.focus(b, true, { top: 100, bottom: 170, left: 50, right: 50 });
+    else if (c.mapGap) map.focus([-120.94, 35.89, -118.34, 37.61], false);
     pendingFit = false;
   }
 }
@@ -1021,11 +1059,15 @@ async function showSnow(mode: string, epoch: number, rainWindow: any) {
         info.textContent = "Snow cover · source file " + date(snow.fileTime);
         colors([{ label: "Mapped snow", color: "#eef8ff" }]);
       } else {
-        items.replaceChildren(el("p", "NWS forecasts at two upstream sample points. Snow level is the forecast elevation of the rain–snow transition. Local conditions can vary within each watershed."),
+        items.replaceChildren(el("p", "NWS six-hour new snowfall in inches. Points show separate local guidance. Snow level is the forecast elevation of the rain–snow transition."),
+          link("NWS snowfall grid metadata", "https://www.weather.gov/gis/ndfd_metadata.html"),
           link("NWS Hanford snowfall ranges and probabilities", source.HANFORD_WINTER));
-        const sites = await source.loadSnowForecast(request.signal);
+        const [sites, grid] = await Promise.all([
+          source.loadSnowForecast(request.signal),
+          source.loadSnowGrid(request.signal).catch(() => null),
+        ]);
         if (!active()) return;
-        if (sites.every((site: any) => !site.issued)) throw Error("No recent NWS snow forecasts returned");
+        if (!grid?.frames.length && sites.every((site: any) => !site.issued)) throw Error("No recent NWS snow forecasts returned");
         const step = 6 * 3600000, first = Math.floor(Date.now() / step) * step;
         const select = el("select") as HTMLSelectElement;
         select.setAttribute("aria-label", "Six-hour snow forecast window");
@@ -1033,13 +1075,25 @@ async function showSnow(mode: string, epoch: number, rainWindow: any) {
           const start = first + i * step;
           select.append(new Option(date(start) + " · 6 h", String(start)));
         }
-        const desired = Number((controls.querySelector("select") as HTMLSelectElement | null)?.value || rainWindow?.start);
+        const desired = Number((controls.querySelector("select") as HTMLSelectElement | null)?.value || rainWindow?.start || grid?.frames[0]?.start);
         if ([...select.options].some(o => Number(o.value) === desired)) select.value = String(desired);
-        controls.replaceChildren(select);
+        const fit = button("Fit snow", () => {
+          const corners = grid?.coordinates;
+          if (corners) map?.focus([corners[0][0], corners[2][1], corners[2][0], corners[0][1]], true);
+        });
+        fit.setAttribute("aria-label", "Fit snowfall area");
+        controls.replaceChildren(select, ...(grid?.frames.length ? [fit] : []));
+        $("weather-legend").hidden = true;
+        let cached: { start: number; image: any } | null = null;
         snowDraw = () => {
           if (!active()) return;
+          snowFrameRequest?.abort();
           const start = Number(select.value), end = start + step;
-          info.textContent = "NWS forecast · " + date(start) + " → " + date(end);
+          const frame = grid?.frames.find((candidate: any) => candidate.start === start);
+          const timeLabel = date(start) + " → " + date(end);
+          info.textContent = frame ? "Loading snowfall · " + timeLabel : "Snowfall grid unavailable · point guidance · " + timeLabel;
+          $("weather-legend").hidden = true;
+          map?.snowfall(null);
           const points = sites.map((site: any) => {
             const values = source.snowWindow(site, start, end);
             const depth = values.inches === null ? "Unavailable" : values.inches.toLocaleString("en-US", { maximumFractionDigits: 1 }) + " in";
@@ -1050,6 +1104,24 @@ async function showSnow(mode: string, epoch: number, rainWindow: any) {
           });
           if (!weatherSuspended) map?.snowPoints(points);
           renderEvidence();
+          if (weatherSuspended || !frame) return;
+          const frameRequest = new AbortController();
+          snowFrameRequest = frameRequest;
+          const ready = (image: any) => {
+            if (!active() || frameRequest.signal.aborted || weatherSuspended) return;
+            cached = { start, image };
+            map?.snowfall(image);
+            info.textContent = "NWS new snowfall · " + timeLabel + " · issued " + date(frame.issued) +
+              (frame.snowCells === 0 ? " · No accumulation in valid cells" : "");
+            colors([{ label: "0", color: "#365f75" }, ...grid.legend]);
+            $("weather-legend").prepend(el("strong", "New snow · inches "));
+            $("weather-legend").append(el("small", "Clear outside grid or where data is missing"));
+          };
+          if (cached?.start === start) ready(cached.image);
+          else void source.loadSnowGridImage(frame, grid.coordinates, frameRequest.signal).then(ready).catch(() => {
+            if (!active() || frameRequest.signal.aborted || weatherSuspended) return;
+            info.textContent = "Snowfall grid unavailable · point guidance · " + timeLabel;
+          });
         };
         select.onchange = snowDraw;
         snowDraw();
@@ -1059,6 +1131,7 @@ async function showSnow(mode: string, epoch: number, rainWindow: any) {
       snowDraw = null;
       snowSummaries.clear();
       map?.snowCover(null);
+      map?.snowfall(null);
       map?.snowPoints([]);
       controls.replaceChildren();
       $("weather-legend").hidden = true;
@@ -1081,7 +1154,9 @@ function suspendWeather() {
   weatherViews[weatherMode]?.suspend();
   if (weatherMode === "rain") map?.rain(null);
   if (weatherMode.startsWith("snow-")) {
+    snowFrameRequest?.abort();
     map?.snowCover(null);
+    map?.snowfall(null);
     map?.snowPoints([]);
   }
 }
@@ -1105,10 +1180,12 @@ function resumeWeather() {
 }
 function pauseWeather() {
   snowRequest?.abort();
+  snowFrameRequest?.abort();
   snowDraw = null;
   snowSummaries.clear();
   clearTimeout(snowTimer);
   map?.snowCover(null);
+  map?.snowfall(null);
   map?.snowPoints([]);
   weatherSuspended = false;
   lastRain = null;

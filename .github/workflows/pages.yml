@@ -106,6 +106,14 @@ jobs:
       - name: Collect shared public MapLibre and ArcGIS pilot inputs
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:map-pilot
+      - name: Collect six-hour NWS snowfall grids
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          python3 -m venv work/ndfd-env
+          work/ndfd-env/bin/python -m pip install --disable-pip-version-check -r scripts/ndfd-snow-requirements.txt
+          work/ndfd-env/bin/python scripts/collect-ndfd-snow.py
       - name: Collect public NWS Hanford briefing
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:briefing -- --published

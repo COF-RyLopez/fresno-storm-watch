@@ -17,6 +17,7 @@ site/data/hrrr-clouds/
 site/data/goes-cloud-tops/
 site/data/radar-volume/
 site/data/map-pilot-latest.json
+site/data/ndfd-snow/
 site/data/waze-latest.json
 site/data/google-tiles.json
 ux/

@@ -16,6 +16,31 @@ async function json(url, signal) {
   return body;
 }
 const lonLat = (x, y) => [x / 6378137 * 180 / Math.PI, Math.atan(Math.sinh(y / 6378137)) * 180 / Math.PI];
+const snowGridRoot = new URL('../data/ndfd-snow/', import.meta.url);
+
+export async function loadSnowGrid(signal) {
+  const data = await json(new URL('manifest.json', snowGridRoot), signal);
+  if (data.schemaVersion !== 1 || data.units !== 'in' ||
+      !Array.isArray(data.bounds) || data.bounds.length !== 4 || !data.bounds.every(Number.isFinite) ||
+      !Array.isArray(data.legend) || data.legend.length !== 6 ||
+      !data.legend.every(band => typeof band.label === 'string' && /^#[\da-f]{6}$/i.test(band.color)) ||
+      !Array.isArray(data.frames)) throw Error('Invalid snowfall grid manifest');
+  const now = Date.now();
+  const frames = data.frames.filter(frame => Number.isFinite(frame.issued) && frame.issued <= now + 900000 &&
+    now - frame.issued <= 12 * hour && Number.isFinite(frame.end) && frame.end > now &&
+    frame.end - frame.start === 6 * hour && Number.isSafeInteger(frame.validCells) && frame.validCells > 0 &&
+    Number.isSafeInteger(frame.snowCells) && frame.snowCells >= 0 && frame.snowCells <= frame.validCells &&
+    typeof frame.file === 'string' && /^\d+-[a-f0-9]{16}\.png$/.test(frame.file));
+  const [west, south, east, north] = data.bounds;
+  return { frames, legend: data.legend, coordinates: [[west,north],[east,north],[east,south],[west,south]] };
+}
+
+export async function loadSnowGridImage(frame, coordinates, signal) {
+  const response = await fetch(new URL(frame.file, snowGridRoot), options(signal));
+  if (!response.ok || !response.headers.get('content-type')?.startsWith('image/png'))
+    throw Error('Snowfall grid image unavailable');
+  return { blob: await response.blob(), coordinates };
+}
 
 export async function loadSnowCover(signal) {
   const query = new URLSearchParams({ where: 'category=1', outFields: 'objectid,idp_filedate', orderByFields: 'idp_filedate DESC', resultRecordCount: '1', returnGeometry: 'false', f: 'json' });

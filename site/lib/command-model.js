@@ -167,7 +167,7 @@ export function snapshotConcern(c, now = Date.now()) {
     nextAction: c.nextAction,
     time: c.time,
     sourceRevision: c.revision,
-    details: [...(c.details || []), ...(c.utilityUpdate ? [
+    details: [...(c.trigger?.lines || []), ...(c.details || []), ...(c.utilityUpdate ? [
       `Estimated restoration: ${c.utilityUpdate.restoration.label}`,
       `Customers reported: ${c.utilityUpdate.customers ?? 'Not supplied'}`,
       ...(c.utilityUpdate.estimateChange ? [`Restoration estimate review: previously ${c.utilityUpdate.estimateChange.previous}; now ${c.utilityUpdate.restoration.label}. Detected ${new Date(c.utilityUpdate.estimateChange.detected).toISOString()}.`] : []),
