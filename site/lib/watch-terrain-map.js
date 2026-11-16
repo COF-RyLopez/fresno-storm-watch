@@ -39,6 +39,9 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-road-blocks',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'road']],layout:{'icon-image':'road-block','icon-size':.75,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#15191a','icon-halo-width':1.5}});
  map.addLayer({id:'watch-facilities',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'facility']],layout:{'icon-image':'facility','icon-size':.6,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#e8f6fb','icon-halo-width':1}});
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
+ map.addSource('command-snow-points',{type:'geojson',data:empty});
+ map.addLayer({id:'command-snow-dots',type:'circle',source:'command-snow-points',paint:{'circle-radius':6,'circle-color':'#cde8ff','circle-stroke-color':'#172126','circle-stroke-width':2,'circle-pitch-alignment':'viewport'}});
+ map.addLayer({id:'command-snow-labels',type:'symbol',source:'command-snow-points',layout:{'text-field':['get','label'],'text-size':13,'text-anchor':'bottom','text-offset':[0,-.75],...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#eef8ff','text-halo-color':'#172126','text-halo-width':2}});
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
  const records=['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-polygons'];
  const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
@@ -134,6 +137,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
+  snowCover(image){setImage('command-snow-cover',image,{'raster-opacity':['interpolate',['linear'],['zoom'],9,.7,11,.25,12,0],'raster-resampling':'nearest'});},
+  snowPoints(features){map.getSource('command-snow-points').setData({type:'FeatureCollection',features});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
   destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();windTrails?.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
 }

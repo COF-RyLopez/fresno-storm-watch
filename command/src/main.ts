@@ -88,6 +88,10 @@ const referenceSearch = (
 ).createCommandSearch();
 let weatherSuspended = false,
   lastRain: any = null;
+let snowRequest: AbortController | undefined,
+  snowTimer: ReturnType<typeof setTimeout> | undefined,
+  snowDraw: (() => void) | null = null;
+const snowSummaries = new Map<string, string>();
 let currentRainWindow: any = null,
   privateSelection: Concern | undefined;
 let authorizedSites: Concern[] = [];
@@ -648,6 +652,7 @@ function renderEvidence() {
     c.change,
     c.quality,
     c.utilityUpdate,
+    c.watershed ? snowSummaries.get(c.watershed) : null,
     c.evidence,
     nearby(c).map((r: Concern) => [r.id, r.change, r.time, r.quality]),
   ]);
@@ -700,6 +705,11 @@ function renderEvidence() {
   );
   next.append(actions);
   out.append(next);
+  if (c.watershed && snowSummaries.has(c.watershed)) {
+    const snow = el("section", undefined, "next-step");
+    snow.append(el("h3", "Rain–snow transition"), el("p", snowSummaries.get(c.watershed)));
+    out.append(snow);
+  }
   if (c.kind === "alert") {
     out.append(el("p", `${c.timeLabel} ${date(c.time)}`));
     for (const l of c.links) out.append(link(l.label, l.url));
@@ -991,6 +1001,75 @@ $("sign-in").addEventListener(
   },
   { once: true },
 );
+async function showSnow(mode: string, epoch: number, rainWindow: any) {
+  const source = await moduleAt("command-snow");
+  if (epoch !== weatherEpoch) return;
+  const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
+  const request = new AbortController();
+  snowRequest = request;
+  const active = () => epoch === weatherEpoch && !request.signal.aborted;
+  const update = async () => {
+    try {
+      if (mode === "snow-now") {
+        items.replaceChildren(el("p", "Daily 1 km analysis from satellite and surface evidence. Unshaded areas may be snow-free or have missing coverage. The overlay fades at close zoom."), link("U.S. National Ice Center source", source.IMS));
+        const snow = await source.loadSnowCover(request.signal);
+        if (!active()) return;
+        snowDraw = () => {
+          if (!weatherSuspended && active()) map?.snowCover(snow);
+        };
+        snowDraw();
+        info.textContent = "Snow cover · source file " + date(snow.fileTime);
+        colors([{ label: "Mapped snow", color: "#eef8ff" }]);
+      } else {
+        items.replaceChildren(el("p", "NWS forecasts at two upstream sample points. Snow level is the forecast elevation of the rain–snow transition. Local conditions can vary within each watershed."),
+          link("NWS Hanford snowfall ranges and probabilities", source.HANFORD_WINTER));
+        const sites = await source.loadSnowForecast(request.signal);
+        if (!active()) return;
+        if (sites.every((site: any) => !site.issued)) throw Error("No recent NWS snow forecasts returned");
+        const step = 6 * 3600000, first = Math.floor(Date.now() / step) * step;
+        const select = el("select") as HTMLSelectElement;
+        select.setAttribute("aria-label", "Six-hour snow forecast window");
+        for (let i = 0; i < 12; i++) {
+          const start = first + i * step;
+          select.append(new Option(date(start) + " · 6 h", String(start)));
+        }
+        const desired = Number((controls.querySelector("select") as HTMLSelectElement | null)?.value || rainWindow?.start);
+        if ([...select.options].some(o => Number(o.value) === desired)) select.value = String(desired);
+        controls.replaceChildren(select);
+        snowDraw = () => {
+          if (!active()) return;
+          const start = Number(select.value), end = start + step;
+          info.textContent = "NWS forecast · " + date(start) + " → " + date(end);
+          const points = sites.map((site: any) => {
+            const values = source.snowWindow(site, start, end);
+            const depth = values.inches === null ? "Unavailable" : values.inches.toLocaleString("en-US", { maximumFractionDigits: 1 }) + " in";
+            const level = values.level ? [...new Set<number>(values.level)].map(n => n.toLocaleString("en-US")).join("–") + " ft" : "unavailable";
+            snowSummaries.set(site.basin, `${date(start)} to ${date(end)} · ${site.name} sample. Snow level ${level}. New snow: ${depth}. ${site.issued ? "NWS grid updated " + date(site.issued) + "." : "NWS forecast unavailable."}`);
+            return { type: "Feature", geometry: { type: "Point", coordinates: site.coordinates },
+              properties: { label: site.name + "\n" + depth + (values.inches === null ? "" : " new snow") } };
+          });
+          if (!weatherSuspended) map?.snowPoints(points);
+          renderEvidence();
+        };
+        select.onchange = snowDraw;
+        snowDraw();
+      }
+    } catch {
+      if (!active()) return;
+      snowDraw = null;
+      snowSummaries.clear();
+      map?.snowCover(null);
+      map?.snowPoints([]);
+      controls.replaceChildren();
+      $("weather-legend").hidden = true;
+      info.textContent = mode === "snow-now" ? "Recent snow cover unavailable" : "Recent snow forecast unavailable";
+      renderEvidence();
+    }
+    if (active()) snowTimer = setTimeout(() => void update(), 15 * 60000);
+  };
+  await update();
+}
+
 function suspendWeather() {
   if (weatherSuspended) return;
   weatherSuspended = true;
@@ -1001,6 +1080,10 @@ function suspendWeather() {
     ?.replaceChildren(document.createTextNode("Play"));
   weatherViews[weatherMode]?.suspend();
   if (weatherMode === "rain") map?.rain(null);
+  if (weatherMode.startsWith("snow-")) {
+    map?.snowCover(null);
+    map?.snowPoints([]);
+  }
 }
 function resumeWeather() {
   if (
@@ -1012,6 +1095,7 @@ function resumeWeather() {
     return;
   weatherSuspended = false;
   weatherViews[weatherMode]?.resume();
+  snowDraw?.();
   if (weatherMode === "rain" && lastRain) {
     if (lastRain.cycle.end > Date.now()) map?.rain(lastRain);
     else
@@ -1020,6 +1104,12 @@ function resumeWeather() {
   }
 }
 function pauseWeather() {
+  snowRequest?.abort();
+  snowDraw = null;
+  snowSummaries.clear();
+  clearTimeout(snowTimer);
+  map?.snowCover(null);
+  map?.snowPoints([]);
   weatherSuspended = false;
   lastRain = null;
   weatherEpoch++;
@@ -1035,6 +1125,7 @@ function pauseWeather() {
   $("weather-time").hidden = true;
   $("weather-legend").hidden = true;
   $("weather-details").hidden = true;
+  renderEvidence();
 }
 function colors(bands: any[]) {
   const box = $("weather-legend");
@@ -1049,6 +1140,7 @@ function colors(bands: any[]) {
   }
 }
 async function chooseWeather(mode: string) {
+  const rainWindow = currentRainWindow;
   pauseWeather();
   weatherMode = mode;
   $<HTMLSelectElement>("weather").value = mode;
@@ -1062,6 +1154,10 @@ async function chooseWeather(mode: string) {
   info.hidden = false;
   $("weather-details").hidden = false;
   info.textContent = "Loading dated weather evidence…";
+  if (mode.startsWith("snow-")) {
+    await showSnow(mode, epoch, rainWindow);
+    return;
+  }
   if (mode === "rain") {
     const { loadWatershedRain, regionalForecastBounds } = await moduleAt(
       "watch-watershed-data",
