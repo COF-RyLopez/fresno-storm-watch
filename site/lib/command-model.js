@@ -1,5 +1,6 @@
-import {powerScope} from "./power-geometry.js";
+import {powerScope, validPoint} from "./power-geometry.js";
 import {countyGeometry} from "./model.js";
+import {METERS_PER_MILE} from "./nearby-search.js";
 /** Presentation state is memory-only. Refresh never replaces the selected place or camera. */
 export function createCommandState() {
   let value = {
@@ -198,6 +199,49 @@ export function advisoryProfile(name = "") {
       : "Review official instructions and confirm local needs with the responsible teams",
     qualification: "Mapped overlap with the advisory; not confirmed impacts. Reported status and timestamps still need review. Overlap does not establish safe access or hydraulic/electrical connections.",
   };
+}
+
+export function advisoryForecastMode(concern) {
+  if (concern?.kind !== "alert") return null;
+  if (/^(?:(?:flash|areal|river) )?flood (?:advisory|watch|warning)$/i.test(concern.name)) return "rain";
+  if (/^(?:(?:high|strong|lake|damaging) )?wind (?:advisory|watch|warning)$/i.test(concern.name)) return "gust";
+  return null;
+}
+
+/** An accumulation may overlap; an instantaneous gust step must occur during the alert. */
+export function advisoryForecastWindow(windows, timing, now = Date.now()) {
+  const from = Math.max(timing.start ?? now, now);
+  const until = timing.end ?? from + 6 * 3_600_000;
+  if (until <= from) return null;
+  return windows.reduce((earliest, window) => {
+    const {start, end} = window;
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start || start >= until ||
+      (start === end ? start < from : end <= from)) return earliest;
+    return !earliest || start < earliest.start ? window : earliest;
+  }, null);
+}
+
+export const ADVISORY_GAUGE_RADIUS = 5;
+
+/** Use the actual alert footprint and short horizontal distances, not drainage connectivity. */
+export function advisoryGauges(alert, features) {
+  const rings = alert.features.flatMap(({geometry}) => geometry?.type === "Polygon" ? geometry.coordinates
+    : geometry?.type === "MultiPolygon" ? geometry.coordinates.flat() : []);
+  const radius = ADVISORY_GAUGE_RADIUS * METERS_PER_MILE;
+  return features.filter(feature => {
+    const xy = feature.geometry?.coordinates;
+    if (feature.properties?.kind !== "gauge" || feature.geometry?.type !== "Point" || !validPoint(xy)) return false;
+    if (advisoryMatches(alert, feature)) return true;
+    const xScale = 111195 * Math.cos(xy[1] * Math.PI / 180);
+    const relative = ([x, y]) => [(x - xy[0]) * xScale, (y - xy[1]) * 111195];
+    return rings.some(ring => ring.slice(1).some((end, i) => {
+      const [x, y] = relative(ring[i]), [bx, by] = relative(end);
+      const dx = bx - x, dy = by - y;
+      const lengthSquared = dx * dx + dy * dy;
+      const t = lengthSquared ? Math.max(0, Math.min(1, -(x * dx + y * dy) / lengthSquared)) : 0;
+      return Math.hypot(x + t * dx, y + t * dy) <= radius;
+    }));
+  });
 }
 
 const advisoryScopes = new WeakMap();

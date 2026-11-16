@@ -151,6 +151,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
+  gust(image){setImage('command-gust',image,{'raster-opacity':.62,'raster-resampling':'nearest'});},
   snowCover(image){setImage('command-snow-cover',image,{'raster-opacity':['interpolate',['linear'],['zoom'],9,.7,11,.25,12,0],'raster-resampling':'nearest'});},
   snowfall(image){setImage('command-snowfall',image,{'raster-resampling':'nearest'});},
   highlightTriggers(features){map.getSource('command-triggers').setData({type:'FeatureCollection',features});},

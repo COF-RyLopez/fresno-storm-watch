@@ -986,13 +986,13 @@ summary {
 .weather-dock {
   bottom: 88px;
 }
-.weather-dock[data-advisory="snow"] {
+.weather-dock[data-advisory] {
   bottom: 30px;
   width: min(410px, calc(100% - 112px));
   min-width: 0;
 }
 @media (max-width: 700px) {
-  .weather-dock[data-advisory="snow"] {
+  .weather-dock[data-advisory] {
     width: calc(100% - 76px);
   }
 }
