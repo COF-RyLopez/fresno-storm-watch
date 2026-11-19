@@ -87,3 +87,13 @@ Command outage cards show utility restoration estimates and customer counts, wit
 The Pages workflow builds Command separately with Vite after installing pinned dependencies. A content-keyed import map keeps shared modules consistent with the new shell. Only the public `site/` artifact is deployed; private datasets and working evidence stay out of it.
 
 The original front door is unchanged. Rollback the preview by redeploying the preceding code version; no data migration or AGOL item deletion is required.
+
+## Gauge symbols and regional reference context (0.98.0 preview)
+
+Command renders screen-facing thermometer symbols for the existing NWPS stations. A solid mark shows the observation; compatible published threshold ticks set the station-specific scale; a hollow diamond identifies the published forecast high where available. The recent observed trend uses the same variable and units. These are not capacity percentages or water-depth estimates. Unknown/contradictory thresholds have no invented fill scale. Failed checks, old readings and out-of-service stations stay neutral and qualified; retained readings are re-evaluated each minute. Hover/tap and the collapsed Map key & gauge readings provide textual details.
+
+County outlines and labels cover the existing five-county operating region. Incorporated-place boundaries intersecting Fresno County appear at closer scales, including neighboring Avenal as context. The Census vintage is January 1, 2026. County and city lines are reference context, distinct from hazard polygons. County names retain the basemap's existing placement to avoid duplicate polygon labels.
+
+Explore a watershed → Burn scars & rainfall opens recent public county-intersecting perimeters with the rainfall forecast. Perimeters also appear as optional rain/radar context. Search a fire name to inspect one outline. CAL FIRE 2024–25 and provisional NIFC 2026 coverage is incomplete. Basin and Garnet link to dated USGS assessments with different design storms; these do not classify current danger. Six-hour rainfall cannot establish a 15-minute debris-flow trigger. The private partner email and matrix are not deployed. See docs/command-context-sources.md for provenance and the daily refresh/fallback procedure.
+
+No private storage, access or official alert rules change. This increment remains a preview until its PR is merged and deployed.

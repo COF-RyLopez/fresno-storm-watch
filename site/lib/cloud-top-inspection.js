@@ -11,7 +11,7 @@ export function cloudTopReadout(height,stamp){
 /** Screen-surface picking for mouse and touch; ground records retain interaction priority. */
 export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurface,getMetadata}){
  const hover=new Popup({className:'watch-feature-hover',closeButton:false,closeOnClick:false,focusAfterOpen:false,offset:12});
- const cloud=new Popup({className:'watch-cloud-readout',closeButton:true,closeOnClick:false,focusAfterOpen:false,offset:12});
+ const cloud=new Popup({className:'watch-cloud-readout',maxWidth:'min(340px, calc(100vw - 32px))',closeButton:true,closeOnClick:false,focusAfterOpen:false,offset:12});
  const canvas=map.getCanvas();let scheduled=null;
  function clear(){
   if(scheduled!==null)cancelAnimationFrame(scheduled);
@@ -42,7 +42,7 @@ export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurfac
   scheduled=requestAnimationFrame(()=>{
    scheduled=null;
    const record=recordAt(event.point);
-   if(record?.name){cloud.remove();canvas.style.cursor='pointer';hover.setText(record.name).setLngLat(event.lngLat);if(!hover.isOpen())hover.addTo(map);return;}
+   if(record?.name){cloud.remove();canvas.style.cursor='pointer';hover.setText(record.hoverText||record.name).setLngLat(event.lngLat);if(!hover.isOpen())hover.addTo(map);return;}
    const text=cloudAt(event);if(text)showCloud(text,event);else clear();
   });
  };
@@ -53,8 +53,12 @@ export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurfac
   const text=cloudAt(event);if(text)showCloud(text,event);
  };
  const moving=()=>{getSurface()?.invalidatePick?.();clear();};
+ const leave=event=>{
+  if(cloud.isOpen()&&event?.originalEvent?.relatedTarget?.closest?.('.watch-cloud-readout')){hover.remove();return;}
+  clear();
+ };
  const key=event=>{if(event.key==='Escape')clear();};
- map.on('mousemove',move);map.on('mouseout',clear);map.on('movestart',moving);map.on('click',click);
+ map.on('mousemove',move);map.on('mouseout',leave);map.on('movestart',moving);map.on('click',click);
  canvas.addEventListener('keydown',key);
- return {clear,destroy(){clear();map.off('mousemove',move);map.off('mouseout',clear);map.off('movestart',moving);map.off('click',click);canvas.removeEventListener('keydown',key);}};
+ return {clear,destroy(){clear();map.off('mousemove',move);map.off('mouseout',leave);map.off('movestart',moving);map.off('click',click);canvas.removeEventListener('keydown',key);}};
 }

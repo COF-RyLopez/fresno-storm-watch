@@ -24,6 +24,8 @@ import {
 } from "./command-model.js";
 import { readCareCollection } from "./care-data.js";
 import { nwsGuidance } from "./command-alert-guidance.js";
+import { gaugeDisplay, refreshGaugeFeatures } from "./command-gauge.js";
+import { contextRecords } from "./command-context.js";
 import { CARE_SOURCES, ZONE_STATUS, zonesAt } from "./care-model.js";
 
 const num = (n) => (Number.isFinite(n) ? n : null);
@@ -146,17 +148,23 @@ export function riverConcerns(bundle, now = Date.now()) {
     c.revision = bundle.dataId;
     return c;
   });
-  const features = assessment.gauges.map((g) =>
-    point(
+  const features = assessment.gauges.map((g) => {
+    const display = gaugeDisplay(g.gauge,g.assessment,g.station);
+    const feature = point(
       rows.find((r) =>
         assessment.areas
           .find((a) => "river:" + a.area.id === r.id)
           ?.gauges.some((x) => x.id === g.station.id),
       )?.id || "gauge:" + g.station.id,
       g.station.name,
-      g.station,
-    ),
-  );
+      g.gauge || g.station,
+      display.color,
+    );
+    feature.id = "gauge:" + g.station.id;
+    Object.assign(feature.properties,{gaugeId:g.station.id,gaugeDisplay:display,
+      gaugeLabel:display.mapLabel,readout:display.readout,hoverText:display.hoverText});
+    return feature;
+  });
   for (const r of input.reservoirSettings.stations)
     features.push(
       point(
@@ -334,6 +342,7 @@ export function createCommandFeeds({
   let alive = true,
     busy = false,
     timer,
+    freshnessTimer,
     epoch = 0;
   const sources = {},
     errors = {},
@@ -348,7 +357,8 @@ export function createCommandFeeds({
     zones = [],
     careRoadIndex = [],
     watersheds,
-    timeline;
+    timeline,
+    mapContext;
   const read = async (name) => {
     const r = await fetchImpl(new URL("data/" + name, baseUrl), {
       credentials: "omit",
@@ -364,7 +374,7 @@ export function createCommandFeeds({
     onChange({
       concerns: orderedConcerns(all.filter((c) => c.review)),
       reference: all,
-      features: assessment.features,
+      features: refreshGaugeFeatures(assessment.features,bundle,CONFIG.rivers,Date.now(),errors["River & reservoir evidence"]),
       errors: { ...errors },
       checked: { ...checked },
       loading: busy,
@@ -372,6 +382,7 @@ export function createCommandFeeds({
       watersheds,
       timeline,
       counties,
+      mapContext,
     });
   }
   async function job(name, fn) {
@@ -445,6 +456,11 @@ export function createCommandFeeds({
           watersheds = w;
           timeline = t;
         }
+      }),
+      job("Burn scars & city boundaries", async () => {
+        const context = await read("command-context.json");
+        const rows = contextRecords(context);
+        if (alive) { mapContext = context; sources.context = rows; }
       }),
     ]);
     if (!alive) return;
@@ -557,6 +573,12 @@ export function createCommandFeeds({
         };
       });
   }
+  function ageReadings() {
+    if (!alive) return;
+    publish();
+    freshnessTimer = setTimeout(ageReadings,60000);
+  }
+  freshnessTimer = setTimeout(ageReadings,60000);
   return {
     refresh,
     loadPlaces,
@@ -564,6 +586,7 @@ export function createCommandFeeds({
       alive = false;
       epoch++;
       clearTimeout(timer);
+      clearTimeout(freshnessTimer);
       estimateTracker.clear();
     },
     get state() {

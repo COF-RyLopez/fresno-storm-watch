@@ -59,9 +59,13 @@ test('authorized sites are opt-in, county AGOL only, private, opaque and read-on
   await assets.load(county);
   assert.equal(assets.state.error, null);
   assert.deepEqual(assets.state.concerns.map(row => row.kind), ['asset', 'pump']);
-  assert.ok(assets.state.concerns.every(row => row.private && /^authorized-[a-f0-9-]+$/.test(row.id) && !row.links.length));
+  const opaqueId = /^authorized-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+  assert.ok(assets.state.concerns.every(row => row.private && opaqueId.test(row.id) && !row.links.length));
   assert.ok(assets.state.features.every(feature => feature.properties.private));
-  assert.doesNotMatch(JSON.stringify(assets.state), /private-original-id|941|offline-test-token/);
+  // A random opaque UUID can legitimately contain 941; inspect source leakage outside those IDs.
+  const withoutOpaqueIds = JSON.stringify(assets.state, (_key, value) =>
+    typeof value === 'string' && opaqueId.test(value) ? 'opaque-id' : value);
+  assert.doesNotMatch(withoutOpaqueIds, /private-original-id|941|offline-test-token/);
   const ids = assets.state.concerns.map(row => row.id);
   await assets.load(county);
   assert.deepEqual(assets.state.concerns.map(row => row.id), ids);
