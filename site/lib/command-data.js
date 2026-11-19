@@ -6,11 +6,12 @@ import { refreshPilotSnapshot } from "./pilot-data.js";
 import {
   fetchRoads,
   roadInCurrentView,
+  isRoadTestRecord,
   roadConflictBacklog,
   missingRoadRecords,
   ROAD_MAP,
 } from "./roads.js";
-import { fetchRegionalAlerts, loadCounties } from "./nws.js";
+import { fetchFresnoAlerts, loadCounties } from "./nws.js";
 import { CONFIG } from "../config.js";
 import { concernSummary } from "./mission-model.js";
 import { careRoadTriggers, riverTrigger } from "./watch-triggers.js";
@@ -219,14 +220,17 @@ export function roadConcerns(snapshot, error = null, now = Date.now()) {
       geometry = arcGeometry(r.geometry);
     c.change = r.status;
     c.review = roadInCurrentView(r, now);
+    c.sourceReview = isRoadTestRecord(r);
     c.group = 1;
     c.time = r.sourceTime || r.edited;
-    c.quality = error
+    c.quality = c.sourceReview ? "Source test entry · owner review needed" : error
       ? "Last successful query; current status unverified"
       : r.issues.length
         ? "Record needs verification"
         : "County published record";
-    c.nextAction = "Confirm road status and access with Road Maintenance";
+    c.nextAction = c.sourceReview
+      ? "Ask the road-data owner to confirm or retire this source test entry"
+      : "Confirm road status and access with Road Maintenance";
     c.details = [
       r.location,
       r.reason,
@@ -236,7 +240,8 @@ export function roadConcerns(snapshot, error = null, now = Date.now()) {
     ].filter(Boolean);
     c.trigger = {
       lines: [r.location, ...(r.issues.length ? r.issues : [r.status]), r.reason].filter(Boolean),
-      question: "Does this segment restrict travel now, and which alternate access has Road Maintenance confirmed?",
+      question: c.sourceReview ? "Should the road-data owner retire or correct this source test entry?"
+        : "Does this segment restrict travel now, and which alternate access has Road Maintenance confirmed?",
     };
     if (!geometry) c.mapGap = "The county source has no usable location for this record.";
     c.features = geometry
@@ -294,6 +299,7 @@ export function alertConcerns(alerts) {
       quality: a.quality || "Official NWS " + a.category,
       nextAction: advisoryProfile(a.type).nextAction,
       details: [
+        a.headline, a.area, a.description, a.instruction,
         `Issuing office ${a.office}`,
         "Issued " + (a.issued ? new Date(a.issued).toISOString() : "not supplied"),
         "Expires " +
@@ -301,6 +307,7 @@ export function alertConcerns(alerts) {
       ],
       links: [{ label: "Official NWS alert", url: a.sourceUrl }],
       revision: a.signature,
+      mapGap: a.geometries.length ? undefined : "NWS alert geometry is unavailable; check the affected places in the official alert.",
       features: a.geometries.map((g, i) => ({
         type: "Feature",
         id: a.key + ":" + i,
@@ -423,7 +430,7 @@ export function createCommandFeeds({
           new URL("data/counties.geojson", baseUrl),
           fetchImpl,
         );
-        const alerts = await fetchRegionalAlerts(counties, CONFIG, fetchImpl);
+        const alerts = await fetchFresnoAlerts(counties.find(c => c.properties.GEOID === '06019'), CONFIG, fetchImpl);
         if (alive) sources.alerts = alertConcerns(alerts);
       }),
       job("Watershed timing", async () => {

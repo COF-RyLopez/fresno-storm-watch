@@ -22,6 +22,7 @@ export interface Concern {
   nextAction: string;
   group: number;
   review: boolean;
+  sourceReview?: boolean;
   features: any[];
   evidence: Evidence[];
   details: string[];

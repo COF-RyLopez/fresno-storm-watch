@@ -82,6 +82,7 @@ let showAll = false,
   weatherViews: any = {},
   forecastRequest: AbortController | undefined,
   rainTimer: any,
+  gustTimer: any,
   rainPlaying = false;
 let referenceMatches: any[] = [],
   referenceResults = new Map<string, Concern>(),
@@ -813,6 +814,13 @@ function renderCoverage() {
     target.append(el("p", `${name} · checked ${date(t)}`));
   for (const [name, error] of Object.entries(feeds.errors))
     target.append(el("p", `${name}: ${error}`, "quality"));
+  const sourceReview = feeds.reference.filter(c => c.sourceReview);
+  if (sourceReview.length) {
+    const review = el("details");
+    review.append(el("summary", `${sourceReview.length} road source test entries · owner review`));
+    for (const c of sourceReview) review.append(button(`${c.name} · ${date(c.time)}`, () => select(c.id)));
+    target.append(review);
+  }
   target.append(
     el(
       "p",
@@ -822,7 +830,7 @@ function renderCoverage() {
   $("coverage-title").textContent = Object.keys(feeds.errors).length
     ? `Coverage · ${Object.keys(feeds.errors).length} checks need review`
     : "Coverage & sources";
-  const warnings = feeds.concerns.filter((c) => c.group === 0),
+  const warnings = feeds.concerns.filter((c) => c.kind === "alert"),
     due = privateTasks().filter(
       (c) => c.quality === "Overdue" || c.quality === "Conflicting versions" || c.id.startsWith("private-pio:"),
     );
@@ -1260,6 +1268,8 @@ function pauseWeather() {
   map?.snowfall(null);
   map?.snowPoints([]);
   map?.gust(null);
+  map?.gustPoints([]);
+  clearTimeout(gustTimer);
   weatherSuspended = false;
   lastRain = null;
   weatherEpoch++;
@@ -1291,25 +1301,41 @@ function colors(bands: any[]) {
   }
 }
 
-async function showGust(epoch: number, advisory?: AdvisoryTiming) {
+async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = false) {
   const source = await moduleAt("command-gust");
   if (epoch !== weatherEpoch) return;
   const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
+  const previousTime = Number(controls.querySelector<HTMLSelectElement>("select")?.value);
+  forecastRequest?.abort();
   const request = new AbortController();
   forecastRequest = request;
+  clearTimeout(gustTimer);
+  controls.replaceChildren();
+  map.gust(null);
+  map.gustPoints([]);
+  $("weather-legend").hidden = true;
+  info.textContent = "Checking current gust forecasts…";
   items.replaceChildren(
     el("p", "Regional HRRR model forecast of surface gusts. Clear areas are outside coverage or have missing values."),
     link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/"),
   );
   try {
-    const { manifest, windows } = await source.loadGustForecast(request.signal);
+    const forecast = await source.loadGustForecast(request.signal, {preferNws});
+    const { manifest, windows, snapshot } = forecast;
     if (epoch !== weatherEpoch || request.signal.aborted) return;
-    items.append(el("p", manifest.attribution));
+    items.replaceChildren(...(forecast.provider === 'nws' ? [
+      el("p", "NWS gust forecasts at nine named sample locations. Values apply to those samples; coverage between them is unassessed."),
+      el("p", "Regional HRRR unavailable. Showing current NWS samples."),
+      ...snapshot.sites.filter((site: any) => site.error).map((site: any) => el("p", `${site.name} · source check failed`)),
+      link("NWS Hanford", "https://www.weather.gov/hnx/"),
+    ] : [el("p", manifest.attribution), link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/")]));
     const picker = el("select") as HTMLSelectElement;
     picker.setAttribute("aria-label", "Gust forecast time");
     if (advisory) picker.append(new Option("Choose a forecast time", ""));
     for (const step of windows) picker.append(new Option(localForecastTime.format(step.start), String(step.start)));
-    const initial = advisory ? model.advisoryForecastWindow(windows, advisory) : windows[0];
+    const retained = windows.find((step: {start:number; end:number}) => step.start === previousTime &&
+      (advisory ? model.advisoryForecastWindow([step], advisory) : step.end >= Date.now()));
+    const initial = retained || (advisory ? model.advisoryForecastWindow(windows, advisory) : windows[0]);
     picker.value = initial ? String(initial.start) : "";
     controls.replaceChildren(picker);
     const draw = async () => {
@@ -1317,15 +1343,27 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming) {
       const frameRequest = new AbortController();
       forecastRequest = frameRequest;
       map.gust(null);
+      map.gustPoints([]);
       $("weather-legend").hidden = true;
       const step = windows.find((entry: {start: number}) => String(entry.start) === picker.value);
       if (!step) {
         info.textContent = "No gust forecast time available during this alert";
         return;
       }
-      const valid = localForecastTime.format(step.start);
+      const valid = localForecastTime.format(step.start) + (forecast.provider === 'nws' ? ` → ${localForecastTime.format(step.end)}` : "");
       info.textContent = "Loading gusts · " + valid;
       try {
+        if (forecast.provider === 'nws') {
+          const features = source.gustPointFeatures(snapshot, step.start);
+          if (!features.length) throw Error("Selected NWS forecast time is unavailable");
+          map.gustPoints(features);
+          const issued = Math.min(...features.map((feature: any) => feature.properties.issued));
+          info.textContent = `NWS gust samples · valid ${valid} · ${features.length}/9 locations · earliest issue ${localForecastTime.format(issued)}`;
+          colors(source.gustLegend);
+          $("weather-legend").prepend(el("strong", "Sample gusts · mph "));
+          $("weather-legend").append(el("small", "Dots show named samples. Tap a dot for its forecast period and issue time."));
+          return;
+        }
         const image = await source.loadGustImage(manifest, step.entry, frameRequest.signal);
         if (epoch !== weatherEpoch || frameRequest.signal.aborted) return;
         map.gust(image);
@@ -1333,7 +1371,9 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming) {
         colors(source.gustLegend);
         $("weather-legend").prepend(el("strong", "Surface gusts · mph "));
       } catch {
-        if (epoch === weatherEpoch && !frameRequest.signal.aborted)
+        if (epoch === weatherEpoch && !frameRequest.signal.aborted && forecast.provider === 'hrrr')
+          await showGust(epoch, advisory, true);
+        else if (epoch === weatherEpoch && !frameRequest.signal.aborted)
           info.textContent = "Gust forecast unavailable · " + valid;
       }
     };
@@ -1342,6 +1382,12 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming) {
   } catch {
     if (epoch === weatherEpoch && !request.signal.aborted)
       info.textContent = "Current regional gust forecast unavailable";
+  }
+  if (epoch === weatherEpoch) {
+    clearTimeout(gustTimer);
+    gustTimer = setTimeout(() => {
+      if (epoch === weatherEpoch) void showGust(epoch, advisory);
+    }, 15 * 60000);
   }
 }
 
