@@ -48,6 +48,7 @@ export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurfac
  };
  const click=event=>{
   clear();const record=recordAt(event.point);
+  if(record?.readout){showCloud(record.readout,event);return;}
   if(record){onSelect(record);return;}
   const text=cloudAt(event);if(text)showCloud(text,event);
  };

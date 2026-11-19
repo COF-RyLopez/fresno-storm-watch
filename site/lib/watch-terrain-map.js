@@ -29,7 +29,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-polygons',type:'fill',source:'watch-records',filter:['==',['geometry-type'],'Polygon'],paint:{'fill-color':['get','color'],'fill-opacity':.13}});
  map.addLayer({id:'watch-alert-outline-halo',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'Polygon'],['==',['get','kind'],'alert']],paint:{'line-color':'#edf5fb','line-width':4,'line-opacity':.85}});
  map.addLayer({id:'watch-polygon-outlines',type:'line',source:'watch-records',filter:['==',['geometry-type'],'Polygon'],paint:{'line-color':['get','color'],'line-width':2}});
- map.addLayer({id:'watch-lines',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['!=',['get','detour'],true]],paint:{'line-color':['get','color'],'line-width':3}});
+ map.addLayer({id:'watch-lines',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['!=',['get','detour'],true],['!=',['get','kind'],'nws-corridor']],paint:{'line-color':['get','color'],'line-width':3}});
+ map.addLayer({id:'watch-nws-corridors',type:'line',source:'watch-records',filter:['==',['get','kind'],'nws-corridor'],paint:{'line-color':['get','color'],'line-width':3,'line-dasharray':[3,2]}});
  map.addLayer({id:'watch-detours',type:'line',source:'watch-records',filter:['all',['==',['geometry-type'],'LineString'],['==',['get','detour'],true]],paint:{'line-color':['get','color'],'line-width':2.5,'line-dasharray':[3,2]}});
  map.addLayer({id:'watch-points',type:'circle',source:'watch-records',filter:['==',['geometry-type'],'Point'],paint:{'circle-color':['get','color'],'circle-radius':['case',['==',['get','kind'],'facility'],5,7],'circle-stroke-color':'#e8f6fb','circle-stroke-width':1.5}});
  // Facility diamonds distinguish assets from round gauge/watchpoint symbols without relying on color.
@@ -40,6 +41,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-road-blocks',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'road']],layout:{'icon-image':'road-block','icon-size':.75,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#15191a','icon-halo-width':1.5}});
  map.addLayer({id:'watch-facilities',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'facility']],layout:{'icon-image':'facility','icon-size':.6,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#e8f6fb','icon-halo-width':1}});
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
+ map.addLayer({id:'watch-nws-corridor-labels',type:'symbol',source:'watch-records',minzoom:8,filter:['==',['get','kind'],'nws-corridor'],layout:{'text-field':['get','citation'],'symbol-placement':'line','text-size':12,...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#c9eef4','text-halo-color':'#172126','text-halo-width':2}});
  map.addSource('command-triggers',{type:'geojson',data:empty});
  map.addLayer({id:'command-trigger-lines',type:'line',source:'command-triggers',
   filter:['all',['!=',['geometry-type'],'Point'],['!=',['get','detour'],true]],paint:{'line-color':'#ffce91','line-width':5,'line-opacity':.85}});
@@ -56,8 +58,11 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addSource('command-snow-points',{type:'geojson',data:empty});
  map.addLayer({id:'command-snow-dots',type:'circle',source:'command-snow-points',paint:{'circle-radius':6,'circle-color':'#cde8ff','circle-stroke-color':'#172126','circle-stroke-width':2,'circle-pitch-alignment':'viewport'}});
  map.addLayer({id:'command-snow-labels',type:'symbol',source:'command-snow-points',layout:{'text-field':['get','label'],'text-size':13,'text-anchor':'bottom','text-offset':[0,-.75],...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#eef8ff','text-halo-color':'#172126','text-halo-width':2}});
+ map.addSource('command-gust-points',{type:'geojson',data:empty});
+ map.addLayer({id:'command-gust-dots',type:'circle',source:'command-gust-points',paint:{'circle-radius':8,'circle-color':['get','color'],'circle-stroke-color':'#eef8ff','circle-stroke-width':2,'circle-pitch-alignment':'viewport'}});
+ map.addLayer({id:'command-gust-labels',type:'symbol',source:'command-gust-points',layout:{'text-field':['get','label'],'text-size':13,'text-anchor':'bottom','text-offset':[0,-1],...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#eef8ff','text-halo-color':'#172126','text-halo-width':2}});
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
- const records=['watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-polygons'];
+ const records=['command-gust-dots','command-gust-labels','watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-nws-corridors','watch-nws-corridor-labels','watch-polygons'];
  const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
  let destroyed=false,overhead=false,pendingBounds=null;
  const imageUrls=new Map();
@@ -156,6 +161,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   snowfall(image){setImage('command-snowfall',image,{'raster-resampling':'nearest'});},
   highlightTriggers(features){map.getSource('command-triggers').setData({type:'FeatureCollection',features});},
   snowPoints(features){map.getSource('command-snow-points').setData({type:'FeatureCollection',features});},
+  gustPoints(features){map.getSource('command-gust-points').setData({type:'FeatureCollection',features});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
   destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();windTrails?.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
 }

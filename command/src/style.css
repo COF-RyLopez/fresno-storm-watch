@@ -583,6 +583,37 @@ summary {
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
+.nws-guidance {
+  margin: 16px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.nws-guidance h3,
+.nws-corridors h3 {
+  margin: 8px 0 5px;
+  font-size: 13px;
+}
+.nws-guidance p,
+.nws-corridors p {
+  margin: 5px 0 12px;
+  font-size: 13px;
+}
+.nws-guidance .when,
+.nws-corridors .when {
+  font-size: 12px;
+  color: var(--muted);
+}
+.nws-guidance details,
+.nws-corridors {
+  margin-top: 12px;
+}
+.nws-guidance summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
 .next-step p {
   margin: 7px 0 12px;
   font-size: 13px;

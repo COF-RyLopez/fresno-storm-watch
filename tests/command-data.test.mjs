@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {riverConcerns,roadConcerns,alertConcerns} from '../site/lib/command-data.js';
 import {arcGeometry} from '../site/lib/command-model.js';
-import {normalizeRoad} from '../site/lib/roads.js';
+import {normalizeRoad,missingRoadRecords} from '../site/lib/roads.js';
 import {planningExercise} from '../site/lib/planning-exercise.js';
 import {planningPoints} from '../site/lib/planning-model.js';
 import {siteJson} from '../scripts/lib/snapshot-io.mjs';
@@ -19,6 +19,18 @@ test('elapsed road dates become one backlog item, never inferred open or current
  const raw={attributes:{globalid:'A',blocknm:'Road A',active:'yes',enddate:1000},geometry:{x:-119,y:36}};
  const road=normalizeRoad(raw,1,2000),rows=roadConcerns({rows:[road]},null,2000);
  assert.equal(rows.find(r=>r.id===road.key).review,false);assert.equal(rows.find(r=>r.id==='roads:legacy-review').review,true);assert.match(rows[1].quality,/not confirmed/);
+});
+
+test('source test entries stay inspectable but cannot become current road impacts or missing-road alerts',()=>{
+ const now=2000;
+ const roads=['test',' TEST ','Testing Road','Unnamed county record'].map((blocknm,i)=>normalizeRoad({
+   attributes:{globalid:String(i),blocknm,active:null},geometry:{x:-119.8,y:36.7},
+ },1,now));
+ const rows=roadConcerns({rows:roads},null,now);
+ assert.deepEqual(rows.filter(r=>r.review).map(r=>r.name),['Testing Road','Unnamed county record']);
+ assert.equal(rows.filter(r=>r.sourceReview).length,2);
+ assert.ok(rows.filter(r=>r.sourceReview).every(r=>r.features.length===1 && /test/i.test(r.quality)));
+ assert.deepEqual([...missingRoadRecords(roads,[]).keys()],roads.slice(2).map(r=>r.key));
 });
 test('overview gauges and dams resolve to evidence; utility timestamps are numeric',async()=>{
  const [areas,gauges,reservoirSettings,associations,windSettings]=await Promise.all(['river-areas.json','river-watchlist.json','reservoir-watchlist.json','area-concerns.json','wind-watchlist.json'].map(siteJson));

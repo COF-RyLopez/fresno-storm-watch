@@ -1,5 +1,7 @@
 import { GUST_STOPS, MPH, hrrrAt, validateHrrrFrame, validateHrrrManifest } from './hrrr-model.js';
 import { mercator } from './watch-watershed-data.js';
+import { fetchCurrentWind } from './weather-data.js';
+import { windAt, HOUR } from './weather-model.js';
 
 const root = new URL('../data/hrrr/', import.meta.url);
 export const gustLegend = GUST_STOPS.map(([mph, color], i) => ({
@@ -8,21 +10,62 @@ export const gustLegend = GUST_STOPS.map(([mph, color], i) => ({
 }));
 const palette = GUST_STOPS.map(([, color]) => color.match(/\w{2}/g).map(value => parseInt(value, 16)));
 
-async function read(file, signal) {
-  const response = await fetch(new URL(file, root), {
+async function read(file, signal, fetchImpl = fetch) {
+  const response = await fetchImpl(new URL(file, root), {
     signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]), credentials: 'omit', cache: 'no-store',
   });
   if (!response.ok) throw Error('HRRR forecast source unavailable');
   return response.json();
 }
 
-export async function loadGustForecast(signal) {
-  const now = Date.now();
-  const manifest = validateHrrrManifest(await read('latest.json', signal), now);
-  const windows = manifest.frames.map(entry => ({start: Date.parse(entry.valid), end: Date.parse(entry.valid), entry}))
-    .filter(window => window.start >= now && hrrrAt(manifest, window.start, now).frame);
-  if (!windows.length) throw Error('No current regional HRRR gust forecast');
-  return {manifest, windows};
+export async function loadGustForecast(signal, {fetchImpl = fetch, now = Date.now(), preferNws = false} = {}) {
+  signal.throwIfAborted();
+  let reason;
+  try {
+    if (preferNws) throw Error('Regional HRRR image unavailable');
+    const manifest = validateHrrrManifest(await read('latest.json', signal, fetchImpl), now);
+    const windows = manifest.frames.map(entry => ({start: Date.parse(entry.valid), end: Date.parse(entry.valid), entry}))
+      .filter(window => window.start >= now && hrrrAt(manifest, window.start, now).frame);
+    if (!windows.length) throw Error(hrrrAt(manifest, now, now).reason || 'No current regional HRRR gust forecast');
+    return {provider:'hrrr', manifest, windows};
+  } catch (error) {
+    signal.throwIfAborted();
+    reason = error.message;
+  }
+  const snapshot = await fetchCurrentWind({now, fetchImpl:(url, options = {}) => {
+    signal.throwIfAborted();
+    return fetchImpl(url, {...options, signal:AbortSignal.any([signal, ...(options.signal ? [options.signal] : [])])});
+  }});
+  signal.throwIfAborted();
+  const instants = new Set();
+  for (const site of snapshot.sites) for (const sample of site.forecast?.series.windGust || []) {
+    const start = Math.max(sample.start, now), end = Math.min(sample.end, now + 72 * HOUR);
+    if (sample.value === null || start >= end) continue;
+    instants.add(start);
+    for (let next = Math.floor(start / HOUR) * HOUR + HOUR; next < end; next += HOUR) instants.add(next);
+  }
+  const boundaries = snapshot.sites.flatMap(site => (site.forecast?.series.windGust || []).flatMap(sample => [sample.start,sample.end]));
+  const windows = [...instants].sort((a,b) => a-b)
+    .filter(time => snapshot.sites.some(site => windAt(site, time, now).gust !== null))
+    .map(start => ({start, end:Math.min(Math.floor(start / HOUR) * HOUR + HOUR, ...boundaries.filter(time => time > start))}));
+  if (!windows.length) throw Error('No current NWS gust samples available');
+  return {provider:'nws', snapshot, windows, reason};
+}
+
+/** Named NWS samples retain their actual spatial support, missing intervals and forecast issuance. */
+export function gustPointFeatures(snapshot, target, now = Date.now()) {
+  return snapshot.sites.flatMap(site => {
+    const state = windAt(site, target, now);
+    if (state.gust === null) return [];
+    const time = new Intl.DateTimeFormat('en-US', {timeZone:'America/Los_Angeles', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short'});
+    const label = `${Math.round(state.gust)} mph`;
+    const readout = `${site.name} · gust ${label}\nNWS forecast · ${time.format(state.samples.windGust.start)} → ${time.format(state.samples.windGust.end)}\nIssued ${time.format(site.forecast.issued)}`;
+    const band = GUST_STOPS.findLast(([mph]) => state.gust >= mph);
+    return [{type:'Feature', geometry:{type:'Point', coordinates:[site.longitude,site.latitude]}, properties:{
+      id:'nws-wind:' + site.id, kind:'gust', name:readout, readout, label, value:state.gust, color:band[1],
+      issued:site.forecast.issued, source:site.source,
+    }}];
+  });
 }
 
 export async function loadGustImage(manifest, entry, signal) {

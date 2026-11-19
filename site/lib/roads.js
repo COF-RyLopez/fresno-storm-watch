@@ -8,8 +8,10 @@ const REQUEST_TIMEOUT_MS=25000,RETRY_DELAY_MS=500,MAX_ATTEMPTS=2,BATCH_SIZE=200;
 export const ROAD_MAP='https://gisportal.co.fresno.ca.us/portal/apps/webappviewer/index.html?id=f972a2f1457f4115b964019f8c914fba';
 export const EVAC_MAP='https://www.arcgis.com/home/item.html?id=07e6ba11ae8c47fcb81208873ac43947';
 const ROAD_TYPES=['Road block','Road closure','Detour'];
-export const roadInCurrentView=(r,now=Date.now())=>r.active!=='no'&&(!r.end||r.end>now);
-export const roadConflictBacklog=(rows,now=Date.now())=>rows.filter(r=>!roadInCurrentView(r,now)&&r.active==='yes'&&r.end&&r.end<=now);
+/** Exact source name only; an unnamed road or a road containing 'test' still needs status verification. */
+export const isRoadTestRecord=r=>/^test$/i.test(String(r.name||'').trim());
+export const roadInCurrentView=(r,now=Date.now())=>!isRoadTestRecord(r)&&r.active!=='no'&&(!r.end||r.end>now);
+export const roadConflictBacklog=(rows,now=Date.now())=>rows.filter(r=>!isRoadTestRecord(r)&&!roadInCurrentView(r,now)&&r.active==='yes'&&r.end&&r.end<=now);
 export function missingRoadRecords(previous,next,known=new Map(),now=Date.now()){
   const missing=new Map(known),keys=new Set(next.map(r=>r.key));
   for(const row of previous)if(roadInCurrentView(row,now)&&!keys.has(row.key)&&!missing.has(row.key))missing.set(row.key,{row,detected:now});

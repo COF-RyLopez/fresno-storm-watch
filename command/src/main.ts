@@ -82,6 +82,7 @@ let showAll = false,
   weatherViews: any = {},
   forecastRequest: AbortController | undefined,
   rainTimer: any,
+  gustTimer: any,
   rainPlaying = false;
 let referenceMatches: any[] = [],
   referenceResults = new Map<string, Concern>(),
@@ -100,6 +101,11 @@ type AdvisoryTiming = { start: number | null; end: number | null };
 let checkedAdvisory: string | undefined,
   advisoryRequest: AbortController | undefined,
   advisoryWeatherId: string | undefined;
+let advisoryRoadRequest: AbortController | undefined;
+let advisoryRoadContext: {
+  id:string; revision?:string; status:string; features:any[];
+  matched:string[]; unmatched:string[]; failed:string[]; limited:boolean;
+} | undefined;
 const snowSummaries = new Map<string, string>();
 let currentRainWindow: any = null,
   privateSelection: Concern | undefined;
@@ -667,6 +673,9 @@ function renderEvidence() {
     c.change,
     c.quality,
     c.utilityUpdate,
+    c.guidance,
+    advisoryRoadContext?.id === c.id ? [advisoryRoadContext.status, advisoryRoadContext.matched,
+      advisoryRoadContext.unmatched, advisoryRoadContext.failed, advisoryRoadContext.limited] : null,
     c.trigger,
     c.mapGap,
     c.memberIds,
@@ -685,6 +694,22 @@ function renderEvidence() {
     el("p", c.quality, "quality"),
   );
   if (c.utilityUpdate) out.append(el("p", `Utility updated · ${date(c.time)}`, "when"));
+  if (c.guidance) {
+    const g = c.guidance, guidance = el("section", undefined, "nws-guidance");
+    guidance.append(el("h3", "NWS expects"), el("p", g.what));
+    if (g.impacts) guidance.append(el("h3", "Potential impacts"), el("p", g.impacts));
+    guidance.append(el("p", g.when || `${date(c.alertTiming?.start)} → ${date(c.alertTiming?.end)}`, "when"));
+    guidance.append(el("p", `${g.publisher} · issued ${date(g.issued)}`, "when"));
+    for (const tag of g.tags) guidance.append(el("p", `${tag.label} · ${tag.value}`, "quality"));
+    const instructions = el("details");
+    instructions.append(el("summary", "Affected places & NWS instructions"));
+    if (g.where) instructions.append(el("p", g.where));
+    if (g.instruction) instructions.append(el("p", g.instruction));
+    if (g.source) instructions.append(el("p", "NWS source · " + g.source));
+    for (const l of c.links) instructions.append(link(l.label, l.url));
+    guidance.append(instructions);
+    out.append(guidance);
+  }
   if (c.mapGap) out.append(el("p", c.mapGap, "quality"));
   if (c.trigger?.lines.length) {
     const trigger = el("section", undefined, "next-step");
@@ -761,6 +786,22 @@ function renderEvidence() {
       syncAdvisoryWeather(true);
     }));
     out.append(tools);
+    const context = advisoryRoadContext?.id === c.id ? advisoryRoadContext : undefined;
+    if (c.guidance?.corridors.length) {
+      const roads = el("section", undefined, "nws-corridors");
+      roads.append(el("h3", "Roads named by NWS"));
+      roads.append(el("p", c.guidance.corridors.map(route => route.label).join(" · ")));
+      if (!context || context.status === "loading") roads.append(el("p", "Finding county reference segments…", "when"));
+      else if (context.status === "unassessed") roads.append(el("p", "Alert geometry is unavailable. Named corridors have not been spatially assessed.", "quality"));
+      else if (context.status === "error") roads.append(el("p", "Road reference unavailable. Verify the cited corridors with Road Maintenance.", "quality"));
+      else {
+        if (context.matched.length) roads.append(el("p", "Dashed map lines · " + context.matched.join(" · "), "when"));
+        if (context.unmatched.length) roads.append(el("p", "No overlapping county road reference returned · " + context.unmatched.join(" · "), "when"));
+        if (context.failed.length || context.limited) roads.append(el("p", "Some reference segments could not be assessed. Corridor coverage is incomplete.", "quality"));
+        roads.append(el("p", "Named-corridor reference. Check current closures and access.", "when"));
+      }
+      out.append(roads);
+    }
   }
   const summaries = [
     ...(c.trigger?.firstCharts || []).map(label => c.evidence.find(e => e.label === label)),
@@ -813,6 +854,13 @@ function renderCoverage() {
     target.append(el("p", `${name} · checked ${date(t)}`));
   for (const [name, error] of Object.entries(feeds.errors))
     target.append(el("p", `${name}: ${error}`, "quality"));
+  const sourceReview = feeds.reference.filter(c => c.sourceReview);
+  if (sourceReview.length) {
+    const review = el("details");
+    review.append(el("summary", `${sourceReview.length} road source test entries · owner review`));
+    for (const c of sourceReview) review.append(button(`${c.name} · ${date(c.time)}`, () => select(c.id)));
+    target.append(review);
+  }
   target.append(
     el(
       "p",
@@ -822,7 +870,7 @@ function renderCoverage() {
   $("coverage-title").textContent = Object.keys(feeds.errors).length
     ? `Coverage · ${Object.keys(feeds.errors).length} checks need review`
     : "Coverage & sources";
-  const warnings = feeds.concerns.filter((c) => c.group === 0),
+  const warnings = feeds.concerns.filter((c) => c.kind === "alert"),
     due = privateTasks().filter(
       (c) => c.quality === "Overdue" || c.quality === "Conflicting versions" || c.id.startsWith("private-pio:"),
     );
@@ -884,6 +932,8 @@ function renderIncident() {
 function updateMap() {
   if (!map) return;
   const c = current();
+  const citedRoads = advisoryRoadContext?.id === c?.id && advisoryRoadContext?.revision === c?.revision
+    ? advisoryRoadContext?.features || [] : [];
   const floodGauges: any[] = c && model.advisoryForecastMode(c) === "rain"
     ? model.advisoryGauges(c, feeds.features) : [];
   let features = feeds.features;
@@ -893,6 +943,7 @@ function updateMap() {
     const b = model.geometryBounds(c.features);
     features = [
       ...c.features,
+      ...citedRoads,
       ...triggerFeatures,
       ...floodGauges,
       ...nearby(c).flatMap((r) => r.features).filter(f => c.kind !== "alert" || model.advisoryMatches(c, f)),
@@ -925,6 +976,7 @@ function updateMap() {
     : c?.kind === "alert"
     ? model.advisoryForecastMode(c) === "rain"
       ? (floodGauges.length ? "Gauge dots · observations near the alert" : "No nearby gauge locations returned")
+      : citedRoads.length ? "Dashed corridors named by NWS · verify current access"
       : `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
     : c
     ? "Selected place · nearby context · current observations"
@@ -1057,7 +1109,45 @@ $("sign-in").addEventListener(
   },
   { once: true },
 );
+function syncAdvisoryRoads() {
+  const c = state.value.view === "watch" ? current() : undefined;
+  if (c?.id === advisoryRoadContext?.id && c?.revision === advisoryRoadContext?.revision) return;
+  advisoryRoadRequest?.abort();
+  advisoryRoadContext = undefined;
+  if (c?.kind !== "alert" || !c.guidance?.corridors.length) return;
+  const routes = c.guidance.corridors;
+  const request = new AbortController();
+  advisoryRoadRequest = request;
+  const context = {id:c.id,revision:c.revision,status:"loading",features:[] as any[],matched:[] as string[],unmatched:[] as string[],failed:[] as string[],limited:false};
+  advisoryRoadContext = context;
+  renderEvidence();
+  if (!c.features.length) {
+    context.status = "unassessed";
+    renderEvidence();
+    return;
+  }
+  void referenceSearch.citedCorridors(routes, {signal:request.signal}).then((result: any) => {
+    if (request.signal.aborted || advisoryRoadContext !== context) return;
+    context.features = result.records.flatMap(({route,record}: any) => record.features
+      .filter((feature: any) => model.advisoryMatches(c, feature))
+      .map((feature: any) => ({...feature, id:`${c.id}:road:${record.id}`, properties:{
+        id:c.id,kind:"nws-corridor",name:route.label,citation:route.label,color:"#9cdae1",
+        readout:`${route.label} · named in this NWS alert\n${record.name}\nCounty reference prepared ${date(record.time)}\nVerify current road closures and access.`,
+      }})));
+    context.matched = [...new Set(context.features.map(feature => feature.properties.citation))] as string[];
+    context.failed = result.incomplete.map((route: any) => route.label);
+    context.unmatched = routes.map(route => route.label).filter(label => !context.matched.includes(label) && !context.failed.includes(label));
+    context.limited = result.limited;
+    context.status = "ready";
+    renderEvidence(); updateMap();
+  }).catch(() => {
+    if (request.signal.aborted || advisoryRoadContext !== context) return;
+    context.status = "error";
+    renderEvidence(); updateMap();
+  });
+}
 function syncAdvisoryWeather(reopen = false) {
+  syncAdvisoryRoads();
   const c = state.value.view === "watch" ? current() : undefined;
   const id = c?.kind === "alert" ? c.id : undefined;
   if (!reopen && id === checkedAdvisory) return;
@@ -1260,6 +1350,8 @@ function pauseWeather() {
   map?.snowfall(null);
   map?.snowPoints([]);
   map?.gust(null);
+  map?.gustPoints([]);
+  clearTimeout(gustTimer);
   weatherSuspended = false;
   lastRain = null;
   weatherEpoch++;
@@ -1291,25 +1383,41 @@ function colors(bands: any[]) {
   }
 }
 
-async function showGust(epoch: number, advisory?: AdvisoryTiming) {
+async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = false) {
   const source = await moduleAt("command-gust");
   if (epoch !== weatherEpoch) return;
   const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
+  const previousTime = Number(controls.querySelector<HTMLSelectElement>("select")?.value);
+  forecastRequest?.abort();
   const request = new AbortController();
   forecastRequest = request;
+  clearTimeout(gustTimer);
+  controls.replaceChildren();
+  map.gust(null);
+  map.gustPoints([]);
+  $("weather-legend").hidden = true;
+  info.textContent = "Checking current gust forecasts…";
   items.replaceChildren(
     el("p", "Regional HRRR model forecast of surface gusts. Clear areas are outside coverage or have missing values."),
     link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/"),
   );
   try {
-    const { manifest, windows } = await source.loadGustForecast(request.signal);
+    const forecast = await source.loadGustForecast(request.signal, {preferNws});
+    const { manifest, windows, snapshot } = forecast;
     if (epoch !== weatherEpoch || request.signal.aborted) return;
-    items.append(el("p", manifest.attribution));
+    items.replaceChildren(...(forecast.provider === 'nws' ? [
+      el("p", "NWS gust forecasts at nine named sample locations. Values apply to those samples; coverage between them is unassessed."),
+      el("p", "Regional HRRR unavailable. Showing current NWS samples."),
+      ...snapshot.sites.filter((site: any) => site.error).map((site: any) => el("p", `${site.name} · source check failed`)),
+      link("NWS Hanford", "https://www.weather.gov/hnx/"),
+    ] : [el("p", manifest.attribution), link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/")]));
     const picker = el("select") as HTMLSelectElement;
     picker.setAttribute("aria-label", "Gust forecast time");
     if (advisory) picker.append(new Option("Choose a forecast time", ""));
     for (const step of windows) picker.append(new Option(localForecastTime.format(step.start), String(step.start)));
-    const initial = advisory ? model.advisoryForecastWindow(windows, advisory) : windows[0];
+    const retained = windows.find((step: {start:number; end:number}) => step.start === previousTime &&
+      (advisory ? model.advisoryForecastWindow([step], advisory) : step.end >= Date.now()));
+    const initial = retained || (advisory ? model.advisoryForecastWindow(windows, advisory) : windows[0]);
     picker.value = initial ? String(initial.start) : "";
     controls.replaceChildren(picker);
     const draw = async () => {
@@ -1317,15 +1425,27 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming) {
       const frameRequest = new AbortController();
       forecastRequest = frameRequest;
       map.gust(null);
+      map.gustPoints([]);
       $("weather-legend").hidden = true;
       const step = windows.find((entry: {start: number}) => String(entry.start) === picker.value);
       if (!step) {
         info.textContent = "No gust forecast time available during this alert";
         return;
       }
-      const valid = localForecastTime.format(step.start);
+      const valid = localForecastTime.format(step.start) + (forecast.provider === 'nws' ? ` → ${localForecastTime.format(step.end)}` : "");
       info.textContent = "Loading gusts · " + valid;
       try {
+        if (forecast.provider === 'nws') {
+          const features = source.gustPointFeatures(snapshot, step.start);
+          if (!features.length) throw Error("Selected NWS forecast time is unavailable");
+          map.gustPoints(features);
+          const issued = Math.min(...features.map((feature: any) => feature.properties.issued));
+          info.textContent = `NWS gust samples · valid ${valid} · ${features.length}/9 locations · earliest issue ${localForecastTime.format(issued)}`;
+          colors(source.gustLegend);
+          $("weather-legend").prepend(el("strong", "Sample gusts · mph "));
+          $("weather-legend").append(el("small", "Dots show named samples. Tap a dot for its forecast period and issue time."));
+          return;
+        }
         const image = await source.loadGustImage(manifest, step.entry, frameRequest.signal);
         if (epoch !== weatherEpoch || frameRequest.signal.aborted) return;
         map.gust(image);
@@ -1333,7 +1453,9 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming) {
         colors(source.gustLegend);
         $("weather-legend").prepend(el("strong", "Surface gusts · mph "));
       } catch {
-        if (epoch === weatherEpoch && !frameRequest.signal.aborted)
+        if (epoch === weatherEpoch && !frameRequest.signal.aborted && forecast.provider === 'hrrr')
+          await showGust(epoch, advisory, true);
+        else if (epoch === weatherEpoch && !frameRequest.signal.aborted)
           info.textContent = "Gust forecast unavailable · " + valid;
       }
     };
@@ -1342,6 +1464,12 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming) {
   } catch {
     if (epoch === weatherEpoch && !request.signal.aborted)
       info.textContent = "Current regional gust forecast unavailable";
+  }
+  if (epoch === weatherEpoch) {
+    clearTimeout(gustTimer);
+    gustTimer = setTimeout(() => {
+      if (epoch === weatherEpoch) void showGust(epoch, advisory);
+    }, 15 * 60000);
   }
 }
 
