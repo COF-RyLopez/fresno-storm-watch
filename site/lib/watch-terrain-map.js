@@ -170,7 +170,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   if(!image?.blob)return;
   const url=URL.createObjectURL(image.blob);imageUrls.set(id,url);
   map.addSource(id,{type:'image',url,coordinates:image.coordinates});
-  map.addLayer({id,type:'raster',source:id,paint:{'raster-fade-duration':0,...paint}},'frog-overview-rivers');
+  const before=id==='watch-goes-clouds'&&map.getLayer('watch-regional-radar')?'watch-regional-radar':'frog-overview-rivers';
+  map.addLayer({id,type:'raster',source:id,paint:{'raster-fade-duration':0,...paint}},before);
  }
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
@@ -187,6 +188,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  },focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
+  viewBounds(){const b=map.getBounds();return [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];},
+  regionalRadar(image){setImage('watch-regional-radar',image,{'raster-opacity':.72});},
   context({key,counties,cities,burnScars}){
    if(destroyed||key===contextKey&&counties===countiesRef)return;
    contextKey=key;countiesRef=counties;

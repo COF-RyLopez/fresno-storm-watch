@@ -6,7 +6,7 @@ import {CLOUD_TOP_HEIGHT_BANDS} from './cloud-top-style.js';
 const time=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 
 /** The satellite overlay follows the radar observation, with its own time and failure state. */
-export function installWatchClouds(session){
+export function installWatchClouds(session,{allowSurface=true}={}){
  const button=document.createElement('calcite-button');
  button.scale='s';button.textContent='Clouds';button.hidden=true;
  const status=document.createElement('p');
@@ -20,7 +20,7 @@ export function installWatchClouds(session){
   label.append(swatch,band.label);legend.append(label);
  }
  legend.title='GOES geopotential altitude, not height above local terrain or storm severity. Hover or tap a cloud for its estimate.';
- let enabled=true,lifecycle,target,rendered=null,generation=0,surfaceFailed=false;
+ let enabled=true,lifecycle,target,rendered=null,generation=0,surfaceFailed=false,expiry;
  const catalogs=new Map(),frames=createWeatherFrameCache(4);
  function sync(){
   button.appearance=enabled?'solid':'outline';button.kind='neutral';
@@ -29,6 +29,7 @@ export function installWatchClouds(session){
   legend.hidden=!lifecycle||!enabled||rendered?.kind!=='surface';
  }
  function clearImage(){
+  clearTimeout(expiry);
   if(rendered?.kind==='surface')session.cloudTops(null);
   if(rendered?.kind==='infrared')session.cloud(null);
   rendered=null;
@@ -57,7 +58,7 @@ export function installWatchClouds(session){
  async function prepare(when){
   if(!lifecycle||!enabled||!Number.isFinite(when))return null;
   const signal=lifecycle.signal,observation=Math.min(when,Date.now());
-  if(surfaceFailed)return infrared(observation,signal);
+  if(surfaceFailed||!allowSurface)return infrared(observation,signal);
   try{
    const catalogFrames=await catalog('surface',loadCloudTopCatalog,signal);
    signal.throwIfAborted();
@@ -105,7 +106,8 @@ export function installWatchClouds(session){
   }
   try{if(next.kind==='infrared'){
    if(rendered?.kind==='surface')clearImage();
-   session.cloud(next.image);rendered=next;sync();status.textContent=`Clouds (2D IR) · ${time.format(next.stamp)} · height unavailable`;
+   session.cloud(next.image);rendered=next;sync();status.textContent=allowSurface?`Clouds (2D IR) · ${time.format(next.stamp)} · height unavailable`:`GOES infrared · ${time.format(next.stamp)} · observed`;
+   if(!allowSurface){clearTimeout(expiry);expiry=setTimeout(()=>{if(rendered===next){clearImage();status.textContent='GOES infrared observation expired';}},Math.max(1,next.stamp+120*60000-Date.now()));}
   }else{clearImage();status.textContent=next.kind==='missing'?'No GOES image near this scan':'GOES clouds unavailable';}
   }catch{rendered=null;sync();status.textContent='GOES clouds unavailable';}
  }

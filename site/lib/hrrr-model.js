@@ -9,8 +9,11 @@ export const RAIN_MIN=.01;
 export function validateHrrrManifest(m,now=Date.now()){
   const g=m?.grid,run=Date.parse(m?.run),checked=Date.parse(m?.generatedAt);
   if(m?.schemaVersion!==1||m.product!=='noaa-hrrr-forecast-48-hour'||m.units!=='m/s'||(m.rainUnits!==undefined&&m.rainUnits!=='in/h')||m.vectorConvention!=='earth-east-north'||m.license!=='CC-BY-4.0'||typeof m.attribution!=='string'||!Number.isFinite(run)||!Number.isFinite(checked)||run>now+120000||checked>now+120000)throw Error('HRRR identity, units, wind convention or timestamps changed.');
-  if(!g||g.wkid!==4326||g.width!==101||g.height!==80||g.x0!==-121.25||g.y0!==38.12||g.dx!==0.03||g.dy!==-0.03)throw Error('HRRR regional grid changed; review coverage.');
-  if(!Array.isArray(m.frames)||m.frames.length!==49||m.frames.some((f,i)=>f.leadHours!==i||Date.parse(f.valid)!==run+i*HOUR||!/^\d{8}T\d{6}Z-f\d{2}\.json$/.test(f.file)||f.file!==m.run.replace(/[-:]/g,'')+`-f${String(i).padStart(2,'0')}.json`))throw Error('HRRR forecast run/frame inventory is inconsistent.');
+  const reviewed=g&&[[101,80,-121.25,38.12,.03,-.03],[201,176,-125,42.5,.06,-.06]]
+    .some(values=>['width','height','x0','y0','dx','dy'].every((k,i)=>g[k]===values[i]));
+  if(g?.wkid!==4326||!reviewed)throw Error('HRRR regional grid changed; review coverage.');
+  const prefix=m.run.replace(/[-:]/g,'')+(g.width===201?'-canv':'');
+  if(!Array.isArray(m.frames)||m.frames.length!==49||m.frames.some((f,i)=>f.leadHours!==i||Date.parse(f.valid)!==run+i*HOUR||f.file!==prefix+`-f${String(i).padStart(2,'0')}.json`))throw Error('HRRR forecast run/frame inventory is inconsistent.');
   return m;
 }
 /** Reject mismatched files and preserve missing cells independently of valid zeros. Rain (in/h) is optional: collections before it was added have none. */

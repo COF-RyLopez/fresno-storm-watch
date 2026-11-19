@@ -1042,7 +1042,7 @@ async function ensureMap() {
             if (c) select(c.id);
           }
         },
-        onCamera: (camera: any) => state.patch({ camera }),
+        onCamera: (camera: any) => {state.patch({ camera });weatherViews.radar?.viewportChanged?.();},
         onError: () => {
           $("map-failure").textContent =
             "Some reference map tiles are unavailable. Evidence and Work remain accessible.";
@@ -1578,9 +1578,7 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming, autoplay =
     if (!frames.length) info.textContent = "No rainfall forecast window overlaps this alert";
   } else {
     if (!weatherViews[mode]) {
-      const mod = await moduleAt(
-        mode === "radar" ? "watch-radar-ui" : "watch-forecast-cloud-ui",
-      );
+      const mod = await moduleAt("watch-regional-radar-ui");
       if (epoch !== weatherEpoch) return;
       const options = {
         allowVolume: false,
@@ -1597,10 +1595,7 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming, autoplay =
           $("weather-legend").prepend(el("strong", title + " "));
         },
       };
-      weatherViews[mode] =
-        mode === "radar"
-          ? mod.installWatchRadar(options)
-          : mod.installForecastClouds(options);
+      weatherViews[mode] = mod.installRegionalRadar(options);
     }
     const view = weatherViews[mode];
     controls.append(view.controls);

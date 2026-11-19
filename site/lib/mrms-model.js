@@ -1,10 +1,10 @@
-/** NOAA MRMS observed rainfall (radar + gauges) on the HRRR display grid. Observations, not forecasts or flood depth. */
+/** NOAA MRMS observed rainfall on its local reference grid. Observations, not forecasts or flood depth. */
 import {HOUR,RAIN_STOPS,RAIN_MIN} from './hrrr-model.js';
 export {RAIN_STOPS};
 /** 24-hour total (in), evenly spaced like its legend; 2+ in is a very wet day for the valley. */
 export const TOTAL_STOPS=Object.freeze([[0,'#7fd1a0'],[.4,'#3fa66a'],[.8,'#2f86b8'],[1.2,'#6c5cc4'],[1.6,'#b04fae'],[2,'#e2558a']]);
 const fileName=valid=>`mrms-${valid.replace(/[-:]/g,'').replace('.000','')}.json`;
-/** Validate provenance, units, the shared HRRR grid and 24 consecutive hours. */
+/** Validate provenance, units, the local QPE grid and 24 consecutive hours. */
 export function validateMrmsManifest(m,now=Date.now()){
   const g=m?.grid,checked=Date.parse(m?.generatedAt);
   if(m?.schemaVersion!==1||m.product!=='noaa-mrms-conus-analysis-hourly'||m.license!=='CC-BY-4.0'||typeof m.attribution!=='string'||m.hourlyUnits!=='in/h'||m.totalUnits!=='in'||m.total!=='total-24h.json'||!Number.isFinite(checked)||checked>now+120000)throw Error('MRMS identity, units or timestamps changed.');

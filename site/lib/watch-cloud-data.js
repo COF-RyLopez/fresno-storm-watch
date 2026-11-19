@@ -10,9 +10,9 @@ export function matchCloudObservation(frames,target,now){
 
 /** Regional WMS image north-up in Web Mercator, with the exact requested image corners. */
 export function cloudMapRequest(time){
- const [west,south,east,north]=[-122.5,34.75,-116.5,39.6];
+ const [west,south,east,north]=[-125,32,-113,42.5];
  const [xmin,ymin]=mercator(west,south),[xmax,ymax]=mercator(east,north);
- const width=896,height=Math.round(width*(ymax-ymin)/(xmax-xmin));
+ const width=1000,height=Math.round(width*(ymax-ymin)/(xmax-xmin));
  const url=new URL(GOES_URL);
  url.search=new URLSearchParams({service:'WMS',version:'1.3.0',request:'GetMap',layers:product.id,styles:'',
   crs:'EPSG:3857',bbox:[xmin,ymin,xmax,ymax].join(','),width:String(width),height:String(height),

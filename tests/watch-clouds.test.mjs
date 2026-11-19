@@ -18,7 +18,7 @@ test('satellite image request uses a fixed regional Mercator footprint and expli
  assert.equal(url.searchParams.get('time'),new Date(now).toISOString());
  assert.equal(url.searchParams.get('layers'),'goes_longwave_imagery');
  assert.equal(url.searchParams.get('crs'),'EPSG:3857');
- assert.equal(width,896);assert(height>0&&height<=1024);
- assert.deepEqual(coordinates,[[-122.5,39.6],[-116.5,39.6],[-116.5,34.75],[-122.5,34.75]]);
+ assert.equal(width,1000);assert(height>0&&height<=1400);
+ assert.deepEqual(coordinates,[[-125,42.5],[-113,42.5],[-113,32],[-125,32]]);
  await assert.rejects(loadCloudImage(now,{fetchImpl:async()=>new Response('<ServiceException/>',{headers:{'Content-Type':'text/xml'}})}),/image unavailable/);
 });

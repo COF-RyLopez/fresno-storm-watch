@@ -15,7 +15,7 @@ export function createHrrrWeather({time,exercise,target,onTime,onMap}){
   const showStatus=()=>{
     const state=hrrrAt(manifest,target()),available=!!state.frame&&!error&&!mapError;
     $('hrrr-time').textContent=state.frame?`HRRR step ${time(Date.parse(state.frame.valid))} · +${state.frame.leadHours}h · instantaneous model forecast`:state.reason;
-    $('hrrr-run').textContent=manifest?`Model run ${time(Date.parse(manifest.run))} · 3 km native grid · prepared 0.03° cells`:'Waiting for public HRRR collection';
+    $('hrrr-run').textContent=manifest?`Model run ${time(Date.parse(manifest.run))} · 3 km native grid · prepared ${manifest.grid.dx}° cells`:'Waiting for public HRRR collection';
     const health=exercise?'Live HRRR disabled in exercise':error||mapError||state.reason||`Collected ${time(Date.parse(manifest.generatedAt))} · app checked ${time(checked)}`;
     $('hrrr-health').textContent=health;$('hrrr-health').dataset.tone=available?'normal':'gap';
     $('timeline-hrrr').textContent=exercise?'Exercise · live feed disabled':error||mapError||state.reason||(loading?'Loading selected HRRR field…':`Step ${time(Date.parse(state.frame.valid))} · run ${time(Date.parse(manifest.run))}`);
