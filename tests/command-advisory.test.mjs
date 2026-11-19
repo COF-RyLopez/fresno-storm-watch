@@ -17,8 +17,11 @@ test('advisories select hazard-specific context, de-duplicate and keep screening
 });
 
 test('auto-opens rain and surface gust modes only for the corresponding alert products', () => {
-  for (const name of ['Flood Advisory', 'Flash Flood Warning', 'Flood Watch']) {
+  for (const name of ['Flood Advisory', 'Flash Flood Watch', 'Flood Watch']) {
     assert.equal(advisoryForecastMode({...alert,name}), 'rain');
+  }
+  for (const name of ['Flash Flood Warning', 'Severe Thunderstorm Warning', 'Tornado Warning']) {
+    assert.equal(advisoryForecastMode({...alert,name}), 'radar');
   }
   for (const name of ['Wind Advisory', 'High Wind Warning', 'High Wind Watch', 'Lake Wind Advisory']) {
     assert.equal(advisoryForecastMode({...alert,name}), 'gust');

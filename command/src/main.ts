@@ -60,6 +60,9 @@ const [model, data, privateModel, privateUI, config, eoc] = await Promise.all([
 ]);
 const { current: currentRecord } = await moduleAt("eoc-model");
 const state = model.createCommandState();
+const { createForecastPlayback } = await moduleAt("command-weather-player");
+let forecastPlayer: any;
+let advisoryPlaybackIntent: string | undefined;
 const cameras = new Map<string, any>();
 let feeds: FeedState = {
   concerns: [],
@@ -81,9 +84,7 @@ let showAll = false,
   weatherMode = "off",
   weatherViews: any = {},
   forecastRequest: AbortController | undefined,
-  rainTimer: any,
-  gustTimer: any,
-  rainPlaying = false;
+  gustTimer: any;
 let referenceMatches: any[] = [],
   referenceResults = new Map<string, Concern>(),
   searchGeneration = 0,
@@ -350,6 +351,7 @@ document
   .querySelectorAll<HTMLButtonElement>("[data-place]")
   .forEach((b) => (b.onclick = () => select(b.dataset.place!)));
 function select(id: string) {
+  advisoryPlaybackIntent = id;
   invalidateSearch();
   const site = [...authorizedSites, ...privateTasks()].find((c) => c.id === id);
   if (site) {
@@ -781,7 +783,8 @@ function renderEvidence() {
     tools.append(button("Open focused map", () => { pane("map"); pendingFit = true; void ensureMap().then(updateMap); }),
       button("PIO outreach", () => privateView.openPio()));
     const mode = model.advisoryForecastMode(c);
-    if (mode) tools.append(button(mode === "rain" ? "Rain forecast" : "Gust forecast", () => {
+    if (mode) tools.append(button(mode === "rain" ? "Rain forecast" : mode === "radar" ? "Recent radar" : "Gust forecast", () => {
+      advisoryPlaybackIntent = c.id;
       pane("map");
       syncAdvisoryWeather(true);
     }));
@@ -934,7 +937,7 @@ function updateMap() {
   const c = current();
   const citedRoads = advisoryRoadContext?.id === c?.id && advisoryRoadContext?.revision === c?.revision
     ? advisoryRoadContext?.features || [] : [];
-  const floodGauges: any[] = c && model.advisoryForecastMode(c) === "rain"
+  const floodGauges: any[] = c?.kind === "alert" && model.advisoryProfile(c.name).type === "water"
     ? model.advisoryGauges(c, feeds.features) : [];
   let features = feeds.features;
   const triggerFeatures = c ? [...(c.trigger?.features || []),
@@ -974,7 +977,7 @@ function updateMap() {
   $("map-scope").textContent = c?.mapGap || (triggerFeatures.length
     ? c?.kind === "care" ? "Highlighted records prompted review · proximity only" : "Highlighted points prompted review"
     : c?.kind === "alert"
-    ? model.advisoryForecastMode(c) === "rain"
+    ? model.advisoryProfile(c.name).type === "water"
       ? (floodGauges.length ? "Gauge dots · observations near the alert" : "No nearby gauge locations returned")
       : citedRoads.length ? "Dashed corridors named by NWS · verify current access"
       : `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
@@ -1159,6 +1162,8 @@ function syncAdvisoryWeather(reopen = false) {
   }
   if (!c || !id) return;
   const request = new AbortController(), epoch = weatherEpoch;
+  const autoplay = advisoryPlaybackIntent === id;
+  advisoryPlaybackIntent = undefined;
   advisoryRequest = request;
   void (async () => {
     const mode = model.advisoryForecastMode(c);
@@ -1171,7 +1176,7 @@ function syncAdvisoryWeather(reopen = false) {
     if (!timing || request.signal.aborted || epoch !== weatherEpoch) return;
     if (matchMedia("(max-width:700px)").matches && state.value.mobile === "attention") pane("map");
     advisoryWeatherId = id;
-    await chooseWeather(mode || "snow-forecast", timing);
+    await chooseWeather(mode || "snow-forecast", timing, autoplay);
   })().catch(() => {
     if (!request.signal.aborted && advisoryWeatherId === id) {
       advisoryWeatherId = undefined;
@@ -1181,7 +1186,8 @@ function syncAdvisoryWeather(reopen = false) {
   });
 }
 
-async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?: AdvisoryTiming) {
+async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?: AdvisoryTiming, autoplay = false) {
+  let shouldAutoplay = autoplay;
   const source = await moduleAt("command-snow");
   if (epoch !== weatherEpoch) return;
   const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
@@ -1201,92 +1207,61 @@ async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?:
         info.textContent = "Snow cover · source file " + date(snow.fileTime);
         colors([{ label: "Mapped snow", color: "#eef8ff" }]);
       } else {
-        items.replaceChildren(el("p", "NWS six-hour new snowfall in inches. Points show separate local guidance. Snow level is the forecast elevation of the rain–snow transition."),
-          link("NWS snowfall grid metadata", "https://www.weather.gov/gis/ndfd_metadata.html"),
+        items.replaceChildren(el("p", "NWS six-hour new snowfall in inches. Point guidance is separate; missing coverage stays unknown."),
           link("NWS Hanford snowfall ranges and probabilities", source.HANFORD_WINTER));
         const [sites, grid] = await Promise.all([
-          source.loadSnowForecast(request.signal),
-          source.loadSnowGrid(request.signal).catch(() => null),
+          source.loadSnowForecast(request.signal), source.loadSnowGrid(request.signal).catch(() => null),
         ]);
         if (!active()) return;
-        if (!advisory && !grid?.frames.length && sites.every((site: any) => !site.issued)) throw Error("No recent NWS snow forecasts returned");
         const step = 6 * 3600000, first = Math.floor(Date.now() / step) * step;
-        const starts = Array.from({ length: 12 }, (_, i) => first + i * step);
-        const select = el("select") as HTMLSelectElement;
-        select.setAttribute("aria-label", "Six-hour snow forecast window");
-        if (advisory) {
-          select.append(new Option("Choose a six-hour window", ""));
-          items.prepend(el("p", "Advisory period · " + date(advisory.start) + " → " + date(advisory.end) +
-            ". Each map frame shows six hours of snowfall."));
-        }
-        for (const start of starts) select.append(new Option(date(start) + " · 6 h", String(start)));
-        const previous = (controls.querySelector("select") as HTMLSelectElement | null)?.value;
-        const pointFrames = advisory ? starts.filter(start => sites.some((site: any) =>
-          source.snowWindow(site, start, start + step).inches !== null)).map(start => ({ start })) : [];
-        const initial = advisory ? source.advisorySnowWindow(starts, grid?.frames ?? [], advisory) ??
-          source.advisorySnowWindow(starts, pointFrames, advisory) : rainWindow?.start ?? grid?.frames[0]?.start;
-        const desired = previous || (initial == null ? "" : String(initial));
-        if ([...select.options].some(o => o.value === desired)) select.value = desired;
-        const fit = button(advisory ? "Fit advisory" : "Fit snow", () => {
-          if (advisory) {
-            pendingFit = true;
-            updateMap();
-            return;
-          }
-          const corners = grid?.coordinates;
-          if (corners) map?.focus([corners[0][0], corners[2][1], corners[2][0], corners[0][1]], true);
+        const starts = Array.from({length:12},(_,i)=>first+i*step);
+        const frames = starts.map(start=>({start,end:start+step,grid:grid?.frames.find((f: any)=>f.start===start)}))
+          .filter(w=>(w.grid || sites.some((site: any)=>source.snowWindow(site,w.start,w.end).inches!==null)) &&
+            (!advisory || model.advisoryForecastWindow([w],advisory)));
+        const picker = el("select") as HTMLSelectElement;
+        picker.setAttribute("aria-label", "Six-hour snow forecast window");
+        if (!frames.length) picker.append(new Option("No matching snowfall windows", ""));
+        for (const w of frames) picker.append(new Option(date(w.start) + " · 6 h",String(w.start)));
+        const previous = controls.querySelector<HTMLSelectElement>("select")?.value;
+        const desired = previous || String(advisory ? frames[0]?.start : rainWindow?.start ?? frames[0]?.start);
+        if ([...picker.options].some(o=>o.value===desired)) picker.value=desired;
+        const fit = button(advisory ? "Fit advisory" : "Fit snow",()=>{
+          if (advisory) {pendingFit=true;updateMap();}
+          else if(grid?.coordinates){const c=grid.coordinates;map?.focus([c[0][0],c[2][1],c[2][0],c[0][1]],true);}
         });
-        fit.setAttribute("aria-label", advisory ? "Fit advisory area" : "Fit snowfall area");
-        controls.replaceChildren(select, ...(advisory ? current()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
-        $("weather-legend").hidden = true;
-        let cached: { start: number; image: any } | null = null;
-        snowDraw = () => {
-          if (!active()) return;
-          snowFrameRequest?.abort();
-          $("weather-legend").hidden = true;
-          map?.snowfall(null);
-          if (!select.value) {
-            info.textContent = "No six-hour snowfall forecast available during this advisory";
-            snowSummaries.clear();
-            map?.snowPoints([]);
+        controls.replaceChildren(picker,...(advisory ? current()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
+        const player = await mountForecastPlayer({frames,picker,key:(w: any)=>String(w.start),epoch,autoplay:shouldAutoplay,
+          load: async (w: any,signal: AbortSignal) => w.grid
+            ? source.loadSnowGridImage(w.grid,grid.coordinates,signal).catch(()=>null) : null,
+          render: (image: any,w: any) => {
+            const timeLabel=localForecastTime.formatRange(w.start,w.end);
+            const points=sites.map((site: any)=>{
+              const values=source.snowWindow(site,w.start,w.end);
+              const depth=values.inches===null ? "Unavailable" : values.inches.toLocaleString("en-US",{maximumFractionDigits:1})+" in";
+              const level=values.level ? [...new Set<number>(values.level)].map(n=>n.toLocaleString("en-US")).join("–")+" ft" : "unavailable";
+              snowSummaries.set(site.basin,`${date(w.start)} to ${date(w.end)} · ${site.name} sample. Snow level ${level}. New snow: ${depth}. ${site.issued ? 'NWS grid updated '+date(site.issued) : 'NWS forecast unavailable.'}`);
+              return {type:"Feature",geometry:{type:"Point",coordinates:site.coordinates},properties:{label:site.name+"\n"+depth+(values.inches===null ? "" : " new snow")}};
+            });
+            if(!weatherSuspended){map?.snowPoints(points);map?.snowfall(image);}
+            if(image){
+              info.textContent="NWS new snowfall · "+timeLabel+" · issued "+localForecastTime.format(w.grid.issued)+(w.grid.snowCells===0 ? " · No accumulation in valid cells" : "");
+              colors([{label:"0",color:"#365f75"},...grid.legend]);
+              $("weather-legend").prepend(el("strong","New snow · inches "));
+              $("weather-legend").append(el("small","Clear outside grid or where data is missing"));
+            } else {
+              $("weather-legend").hidden=true;
+              info.textContent="Snowfall grid unavailable · point guidance · "+timeLabel;
+            }
             renderEvidence();
-            return;
-          }
-          const start = Number(select.value), end = start + step;
-          const frame = grid?.frames.find((candidate: any) => candidate.start === start);
-          const timeLabel = localForecastTime.formatRange(start, end);
-          info.textContent = frame ? "Loading snowfall · " + timeLabel : "Snowfall grid unavailable · point guidance · " + timeLabel;
-          const points = sites.map((site: any) => {
-            const values = source.snowWindow(site, start, end);
-            const depth = values.inches === null ? "Unavailable" : values.inches.toLocaleString("en-US", { maximumFractionDigits: 1 }) + " in";
-            const level = values.level ? [...new Set<number>(values.level)].map(n => n.toLocaleString("en-US")).join("–") + " ft" : "unavailable";
-            snowSummaries.set(site.basin, `${date(start)} to ${date(end)} · ${site.name} sample. Snow level ${level}. New snow: ${depth}. ${site.issued ? "NWS grid updated " + date(site.issued) + "." : "NWS forecast unavailable."}`);
-            return { type: "Feature", geometry: { type: "Point", coordinates: site.coordinates },
-              properties: { label: site.name + "\n" + depth + (values.inches === null ? "" : " new snow") } };
-          });
-          if (!weatherSuspended) map?.snowPoints(points);
-          renderEvidence();
-          if (weatherSuspended || !frame) return;
-          const frameRequest = new AbortController();
-          snowFrameRequest = frameRequest;
-          const ready = (image: any) => {
-            if (!active() || frameRequest.signal.aborted || weatherSuspended) return;
-            cached = { start, image };
-            map?.snowfall(image);
-            info.textContent = "NWS new snowfall · " + timeLabel + " · issued " + localForecastTime.format(frame.issued) +
-              (frame.snowCells === 0 ? " · No accumulation in valid cells" : "");
-            colors([{ label: "0", color: "#365f75" }, ...grid.legend]);
-            $("weather-legend").prepend(el("strong", "New snow · inches "));
-            $("weather-legend").append(el("small", "Clear outside grid or where data is missing"));
-          };
-          if (cached?.start === start) ready(cached.image);
-          else void source.loadSnowGridImage(frame, grid.coordinates, frameRequest.signal).then(ready).catch(() => {
-            if (!active() || frameRequest.signal.aborted || weatherSuspended) return;
-            info.textContent = "Snowfall grid unavailable · point guidance · " + timeLabel;
-          });
-        };
-        select.onchange = snowDraw;
-        snowDraw();
+            if(w.grid&&!image) throw Error("Snowfall frame unavailable");
+          },
+        });
+        shouldAutoplay=false;
+        snowDraw=()=>void player.select(frames.findIndex(w=>String(w.start)===picker.value));
+        if(!frames.length){
+          info.textContent="No six-hour snowfall forecast available during this advisory";
+          map?.snowfall(null);map?.snowPoints([]);$("weather-legend").hidden=true;
+        }
       }
     } catch {
       if (!active()) return;
@@ -1308,11 +1283,7 @@ async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?:
 function suspendWeather() {
   if (weatherSuspended) return;
   weatherSuspended = true;
-  clearTimeout(rainTimer);
-  rainPlaying = false;
-  document
-    .querySelector("[data-rain-play]")
-    ?.replaceChildren(document.createTextNode("Play"));
+  forecastPlayer?.pause();
   weatherViews[weatherMode]?.suspend();
   if (weatherMode === "rain") map?.rain(null);
   if (weatherMode.startsWith("snow-")) {
@@ -1341,6 +1312,8 @@ function resumeWeather() {
   }
 }
 function pauseWeather() {
+  forecastPlayer?.destroy();
+  forecastPlayer = undefined;
   snowRequest?.abort();
   snowFrameRequest?.abort();
   snowDraw = null;
@@ -1356,14 +1329,13 @@ function pauseWeather() {
   lastRain = null;
   weatherEpoch++;
   forecastRequest?.abort();
-  clearTimeout(rainTimer);
-  rainPlaying = false;
   weatherViews.radar?.close();
   weatherViews.clouds?.close();
   map?.rain(null);
   weatherMode = "off";
   $<HTMLSelectElement>("weather").value = "off";
   $("weather-controls").replaceChildren();
+  $("weather-purpose").hidden = true;
   $("weather-time").hidden = true;
   delete $("weather-dock").dataset.advisory;
   $("weather-legend").hidden = true;
@@ -1383,9 +1355,49 @@ function colors(bands: any[]) {
   }
 }
 
-async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = false) {
+async function mountForecastPlayer({frames,picker,key,load,render,epoch,autoplay=false,onError}: any) {
+  forecastPlayer?.destroy();
+  const play = button("Play", () => {
+    if (player.playing) player.pause();
+    else void player.play();
+  });
+  play.setAttribute("aria-label", "Play forecast animation");
+  play.disabled = frames.length < 2;
+  const status = el("span", undefined, "forecast-playback-status");
+  status.setAttribute("role", "status");
+  const player = createForecastPlayback({frames,load,
+    available: () => epoch === weatherEpoch && !weatherSuspended && !document.hidden && state.value.view === "watch",
+    changed: ({playing,status: phase,index}: any) => {
+      if (epoch !== weatherEpoch) return;
+      play.textContent = playing ? "Pause" : "Play";
+      play.setAttribute("aria-label", playing ? "Pause forecast animation" : "Play forecast animation");
+      play.setAttribute("aria-pressed", String(playing));
+      status.textContent = phase === "buffering" ? "Buffering next frame…"
+        : phase === "error" ? "Frame unavailable · playback stopped"
+        : frames.length < 2 ? (frames.length ? "One forecast frame available" : "No playable forecast frames")
+        : index >= 0 ? `${index + 1} of ${frames.length}` : "Choose a forecast time";
+      if (phase === "error") onError?.();
+    },
+    render: (value: any, frame: any, index: number) => {
+      if (epoch !== weatherEpoch) return;
+      picker.value = key(frame);
+      render(value,frame,index);
+    },
+  });
+  forecastPlayer = player;
+  $("weather-controls").prepend(play);
+  $("weather-controls").append(status);
+  picker.onchange = () => void player.select(frames.findIndex((frame: any) => key(frame) === picker.value));
+  const selected = frames.findIndex((frame: any) => key(frame) === picker.value);
+  if (selected >= 0 && await player.select(selected) && autoplay) await player.play({automatic:true});
+  return player;
+}
+
+async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = false, autoplay = false) {
   const source = await moduleAt("command-gust");
   if (epoch !== weatherEpoch) return;
+  forecastPlayer?.destroy();
+  forecastPlayer = undefined;
   const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
   const previousTime = Number(controls.querySelector<HTMLSelectElement>("select")?.value);
   forecastRequest?.abort();
@@ -1413,54 +1425,39 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = fa
     ] : [el("p", manifest.attribution), link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/")]));
     const picker = el("select") as HTMLSelectElement;
     picker.setAttribute("aria-label", "Gust forecast time");
-    if (advisory) picker.append(new Option("Choose a forecast time", ""));
-    for (const step of windows) picker.append(new Option(localForecastTime.format(step.start), String(step.start)));
+    const frames = advisory ? model.advisoryForecastFrames(windows, advisory) : windows;
+    if (advisory && !frames.length) picker.append(new Option("No matching forecast times", ""));
+    for (const step of frames) picker.append(new Option(localForecastTime.format(step.start), String(step.start)));
     const retained = windows.find((step: {start:number; end:number}) => step.start === previousTime &&
       (advisory ? model.advisoryForecastWindow([step], advisory) : step.end >= Date.now()));
     const initial = retained || (advisory ? model.advisoryForecastWindow(windows, advisory) : windows[0]);
     picker.value = initial ? String(initial.start) : "";
     controls.replaceChildren(picker);
-    const draw = async () => {
-      forecastRequest?.abort();
-      const frameRequest = new AbortController();
-      forecastRequest = frameRequest;
-      map.gust(null);
-      map.gustPoints([]);
-      $("weather-legend").hidden = true;
-      const step = windows.find((entry: {start: number}) => String(entry.start) === picker.value);
-      if (!step) {
-        info.textContent = "No gust forecast time available during this alert";
-        return;
-      }
-      const valid = localForecastTime.format(step.start) + (forecast.provider === 'nws' ? ` → ${localForecastTime.format(step.end)}` : "");
-      info.textContent = "Loading gusts · " + valid;
-      try {
+    await mountForecastPlayer({frames,picker,key:(step: any)=>String(step.start),epoch,autoplay,
+      onError: forecast.provider === 'hrrr' ? () => void showGust(epoch,advisory,true,false) : undefined,
+      load: async (step: any, signal: AbortSignal) => {
+        if (forecast.provider === 'hrrr') return {image:await source.loadGustImage(manifest, step.entry, signal)};
+        const features = source.gustPointFeatures(snapshot, step.start);
+        if (!features.length) throw Error("Selected NWS forecast time is unavailable");
+        return {features};
+      },
+      render: (value: any,step: any) => {
+        const valid = localForecastTime.format(step.start) + (forecast.provider === 'nws' ? ` → ${localForecastTime.format(step.end)}` : "");
+        map.gust(null);map.gustPoints([]);
         if (forecast.provider === 'nws') {
-          const features = source.gustPointFeatures(snapshot, step.start);
-          if (!features.length) throw Error("Selected NWS forecast time is unavailable");
-          map.gustPoints(features);
-          const issued = Math.min(...features.map((feature: any) => feature.properties.issued));
-          info.textContent = `NWS gust samples · valid ${valid} · ${features.length}/9 locations · earliest issue ${localForecastTime.format(issued)}`;
-          colors(source.gustLegend);
-          $("weather-legend").prepend(el("strong", "Sample gusts · mph "));
-          $("weather-legend").append(el("small", "Dots show named samples. Tap a dot for its forecast period and issue time."));
-          return;
+          if (!weatherSuspended) map.gustPoints(value.features);
+          const issued = Math.min(...value.features.map((feature: any) => feature.properties.issued));
+          info.textContent = `NWS gust samples · valid ${valid} · ${value.features.length}/9 locations · earliest issue ${localForecastTime.format(issued)}`;
+        } else {
+          if (!weatherSuspended) map.gust(value.image);
+          info.textContent = `HRRR gusts · valid ${valid} · model run ${localForecastTime.format(Date.parse(manifest.run))}`;
         }
-        const image = await source.loadGustImage(manifest, step.entry, frameRequest.signal);
-        if (epoch !== weatherEpoch || frameRequest.signal.aborted) return;
-        map.gust(image);
-        info.textContent = `HRRR gusts · valid ${valid} · model run ${localForecastTime.format(Date.parse(manifest.run))}`;
         colors(source.gustLegend);
-        $("weather-legend").prepend(el("strong", "Surface gusts · mph "));
-      } catch {
-        if (epoch === weatherEpoch && !frameRequest.signal.aborted && forecast.provider === 'hrrr')
-          await showGust(epoch, advisory, true);
-        else if (epoch === weatherEpoch && !frameRequest.signal.aborted)
-          info.textContent = "Gust forecast unavailable · " + valid;
-      }
-    };
-    picker.onchange = () => void draw();
-    await draw();
+        $("weather-legend").prepend(el("strong", forecast.provider === 'nws' ? "Sample gusts · mph " : "Surface gusts · mph "));
+        if (forecast.provider === 'nws') $("weather-legend").append(el("small", "Dots show named samples. Tap a dot for its forecast period and issue time."));
+      },
+    });
+    if (!frames.length) info.textContent = "No gust forecast time available during this alert";
   } catch {
     if (epoch === weatherEpoch && !request.signal.aborted)
       info.textContent = "Current regional gust forecast unavailable";
@@ -1473,7 +1470,7 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = fa
   }
 }
 
-async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
+async function chooseWeather(mode: string, advisory?: AdvisoryTiming, autoplay = false) {
   const rainWindow = currentRainWindow;
   pauseWeather();
   weatherMode = mode;
@@ -1489,12 +1486,16 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
   info.hidden = false;
   $("weather-details").hidden = false;
   info.textContent = "Loading dated weather evidence…";
+  $("weather-purpose").hidden = !advisory;
+  $("weather-purpose").textContent = mode === "radar" ? "Recent precipitation · observed scans, not a forecast"
+    : mode === "gust" ? "Expected gusts during this alert"
+    : mode === "rain" ? "Expected rainfall during this alert" : "Expected new snowfall during this alert";
   if (mode.startsWith("snow-")) {
-    await showSnow(mode, epoch, rainWindow, advisory);
+    await showSnow(mode, epoch, rainWindow, advisory, autoplay);
     return;
   }
   if (mode === "gust") {
-    await showGust(epoch, advisory);
+    await showGust(epoch, advisory, false, autoplay);
     return;
   }
   if (mode === "rain") {
@@ -1514,92 +1515,30 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
       } catch { /* The independently verified 72-hour product remains available. */ }
     }
     if (epoch !== weatherEpoch) return;
-    const { windows } = precipitationTimeline(timeline, Date.now());
+    const { windows: allWindows } = precipitationTimeline(timeline, Date.now());
+    const windows = advisory ? allWindows.filter((w: any) => model.advisoryForecastWindow([w], advisory)) : allWindows;
     const choose = el("select") as HTMLSelectElement;
     choose.setAttribute("aria-label", "Rain forecast window");
-    choose.append(new Option("72-hour overview", ""));
-    for (const w of windows)
-      choose.append(new Option(date(w.start) + " · 6 h", String(w.layer)));
-    const initial = advisory && model.advisoryForecastWindow(windows, advisory);
-    if (initial) choose.value = String(initial.layer);
-    const play = button("Play", () => {
-      rainPlaying = !rainPlaying;
-      play.textContent = rainPlaying ? "Pause" : "Play";
-      if (rainPlaying) advance();
-      else clearTimeout(rainTimer);
-    });
-    play.dataset.rainPlay = "true";
-    play.disabled = !windows.length;
-    controls.append(play, choose);
-    const draw = async (auto = false) => {
-      forecastRequest?.abort();
-      const request = new AbortController();
-      forecastRequest = request;
-      currentRainWindow =
-        windows.find((w: any) => String(w.layer) === choose.value) || null;
-      info.textContent = "Loading selected forecast window…";
-      try {
-        const rain = await loadWatershedRain(regionalForecastBounds, {
-          window: currentRainWindow,
-          signal: request.signal,
-        });
-        if (epoch !== weatherEpoch || request.signal.aborted) return;
-        if (auto && advisory && !model.advisoryForecastWindow([rain.cycle], advisory)) {
-          lastRain = null;
-          map.rain(null);
-          info.textContent = "No rainfall forecast window overlaps this alert";
-          items.replaceChildren(link("WPC forecast source", "https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
-          return;
-        }
+    if (!advisory) choose.append(new Option("72-hour overview", ""));
+    else if (!windows.length) choose.append(new Option("No matching forecast windows", ""));
+    for (const w of windows) choose.append(new Option(date(w.start) + " · 6 h", String(w.layer)));
+    if (advisory && windows.length) choose.value = String(windows[0].layer);
+    controls.append(choose);
+    const frames = [...(!advisory ? [{layer:"",start:0,end:0}] : []), ...windows];
+    await mountForecastPlayer({frames,picker:choose,key:(w: any)=>String(w.layer),epoch,autoplay,
+      load: (w: any,signal: AbortSignal) => loadWatershedRain(regionalForecastBounds, {window:w.layer === "" ? null : w,signal}),
+      render: (rain: any,w: any) => {
+        currentRainWindow = w.layer === "" ? null : w;
         lastRain = rain;
         if (!weatherSuspended) map.rain(rain);
-        info.textContent = `${rain.cycle.hours}-hour WPC rain · ${localForecastTime.formatRange(rain.cycle.start, rain.cycle.end)} · issued ${localForecastTime.format(rain.cycle.issue)}${rain.legend.length ? "" : " · No contours ≥0.01 in shown"}`;
-        colors(rain.legend);
-        const legend = $("weather-legend");
-        legend.prepend(el("strong", "Forecast rain · inches "));
-        if (advisory) legend.append(el("small", "Blue dots mark gauges within about 5 mi of the alert area. Readings are observations."));
-        items.replaceChildren(
-          el(
-            "p",
-            `Rainfall accumulation in inches. Issued ${date(rain.cycle.issue)}. Current gauges, roads and power records remain current context; they are not future predictions.`,
-          ),
-          link(
-            "WPC forecast source",
-            "https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml",
-          ),
-        );
-      } catch (e: any) {
-        if (request.signal.aborted || epoch !== weatherEpoch) return;
-        if (auto && initial && choose.value === String(initial.layer)) {
-          choose.value = "";
-          await draw(true);
-          return;
-        }
-        lastRain = null;
-        map.rain(null);
-        $("weather-legend").hidden = true;
-        info.textContent = "Forecast window unavailable · gap retained";
-        items.textContent = e.message;
-        rainPlaying = false;
-        play.textContent = "Play";
-      }
-    };
-    const advance = async () => {
-      if (!rainPlaying || epoch !== weatherEpoch || document.hidden) return;
-      choose.selectedIndex =
-        choose.selectedIndex >= choose.options.length - 1
-          ? 1
-          : choose.selectedIndex + 1;
-      await draw();
-      if (rainPlaying) rainTimer = setTimeout(advance, 1800);
-    };
-    choose.onchange = () => {
-      rainPlaying = false;
-      play.textContent = "Play";
-      clearTimeout(rainTimer);
-      void draw();
-    };
-    await draw(true);
+        info.textContent = `${rain.cycle.hours}-hour WPC rain · ${localForecastTime.formatRange(rain.cycle.start, rain.cycle.end)} · issued ${localForecastTime.format(rain.cycle.issue)}${rain.legend.length ? '' : ' · No contours ≥0.01 in shown'}`;
+        colors(rain.legend);$("weather-legend").prepend(el("strong", "Forecast rain · inches "));
+        if (advisory) $("weather-legend").append(el("small", "Gauge dots are current observations, not forecasts."));
+        items.replaceChildren(el("p", "Published rainfall accumulation. Gauges, roads and power records remain current context, not future predictions."),
+          link("WPC forecast source", "https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
+      },
+    });
+    if (!frames.length) info.textContent = "No rainfall forecast window overlaps this alert";
   } else {
     if (!weatherViews[mode]) {
       const mod = await moduleAt(
@@ -1607,6 +1546,7 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
       );
       if (epoch !== weatherEpoch) return;
       const options = {
+        allowVolume: false,
         session: map,
         info,
         items,
@@ -1631,8 +1571,7 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming) {
       controls.append(view.cloudButton);
       controls.append(view.cloudStatus, view.cloudLegend);
     }
-    view.open();
-    if (mode === "radar") items.append(view.volumeButton);
+    view.open({autoplay: autoplay && !matchMedia("(prefers-reduced-motion: reduce)").matches});
     if (weatherSuspended) view.suspend();
   }
 }

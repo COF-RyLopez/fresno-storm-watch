@@ -522,6 +522,13 @@ summary {
   align-items: center;
   flex-wrap: wrap;
 }
+.forecast-playback-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+#weather-purpose {
+  font-weight: 600;
+}
 .watershed-player-controls {
   display: flex;
   align-items: center;

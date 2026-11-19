@@ -204,6 +204,7 @@ export function advisoryProfile(name = "") {
 
 export function advisoryForecastMode(concern) {
   if (concern?.kind !== "alert") return null;
+  if (/^(?:flash flood|severe thunderstorm|tornado) warning$/i.test(concern.name)) return "radar";
   if (/^(?:(?:flash|areal|river) )?flood (?:advisory|watch|warning)$/i.test(concern.name)) return "rain";
   if (/^(?:(?:high|strong|lake|damaging) )?wind (?:advisory|watch|warning)$/i.test(concern.name)) return "gust";
   return null;
@@ -220,6 +221,11 @@ export function advisoryForecastWindow(windows, timing, now = Date.now()) {
       (start === end ? start < from : end <= from)) return earliest;
     return !earliest || start < earliest.start ? window : earliest;
   }, null);
+}
+
+/** One list drives both selectable times and playback; no silent nonmatching picker options. */
+export function advisoryForecastFrames(windows, timing, now = Date.now()) {
+  return windows.filter(window => advisoryForecastWindow([window],timing,now));
 }
 
 export const ADVISORY_GAUGE_RADIUS = 5;
