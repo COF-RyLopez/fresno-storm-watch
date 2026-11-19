@@ -18,7 +18,7 @@ export async function radarTimelineForDisplay({volumeWanted,signal,loadVolumes=l
 }
 
 /** Keep live-follow and replay on the same renderer. Replay holds a bounded, dated scan list. */
-export function installWatchRadar({session,info,items,renderColors,visible,source}){
+export function installWatchRadar({session,info,items,renderColors,visible,source,allowVolume=true}){
  const clouds=installWatchClouds(session);
  const volumeButton=document.createElement('calcite-button');volumeButton.scale='s';volumeButton.kind='neutral';
  volumeButton.textContent='Volume';volumeButton.label='Experimental volume';volumeButton.appearance='outline';volumeButton.hidden=true;
@@ -35,6 +35,7 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
  const coverage=source('Hanford coverage and scan details','https://frog-demo.ryanlopez.tech/?view=storm');
  let active=false,following=true,request,timer,expiry,timeline,displayed,samples,cube,next=0,failed=false,volumeWanted=false,volumeIssue=false,gpuFailed=false;
  let warmGeneration=0,transition=null,transitionTimer;
+ let autoplayPending=false,starting=false,replayGeneration=0;
  const cache=createWeatherFrameCache(12),volumeCache=createWeatherFrameCache(3);
  const frames=()=>timeline?.frames??[];
  const minimum=()=>weak.checked?10:20;
@@ -47,7 +48,7 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
  });
 
  function syncControls(){
-  play.textContent=playback.playing?'Pause':'Play';play.iconStart=playback.playing?'pause':'play';
+  play.textContent=playback.playing||starting?'Pause':'Play';play.iconStart=playback.playing||starting?'pause':'play';
   play.disabled=frames().length<2;
   scrub.disabled=frames().length<2;scrub.max=String(Math.max(0,frames().length-1));scrub.value=String(Math.max(0,index()));
   scrub.setAttribute('aria-valuetext',displayed?time.format(displayed.end):'No scan selected');
@@ -142,13 +143,16 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
    if(signal.aborted)return;
    const updated=selected.timeline;volumeIssue=selected.volumeIssue;
    if(gpuFailed&&volumeWanted)volumeIssue=true;
-   await draw(updated.frames.at(-1),signal);
+   await draw(autoplayPending&&updated.frames.length>1&&!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ?updated.frames[0]:updated.frames.at(-1),signal);
    if(!signal.aborted)timeline=updated;
   });
+  if(autoplayPending){autoplayPending=false;if(active&&!failed&&frames().length>1)await startReplay(true);}
   if(active&&following)void warmFrom(0);
   if(active&&following&&!request){clearTimeout(timer);timer=setTimeout(()=>void refresh(),60_000);}
  }
  function hold(){
+  starting=false;replayGeneration++;autoplayPending=false;
   following=false;clearTimeout(timer);cancelPending();playback.pause();report(false);
  }
  function cancelPending(){
@@ -161,19 +165,33 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
   if(!stillRecent(frame))return false;
   return run(signal=>draw(frame,signal)).then(ok=>{if(ok&&active)void warmFrom(frameIndex+1);return ok;});
  }
- play.addEventListener('click',()=>{
-  if(playback.playing){hold();return;}
-  if(frames().length<2)return;
+ async function startReplay(automatic=false){
+  if(frames().length<2||automatic&&globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   const at=index();
   next=following||at===frames().length-1?0:at+1;
-  hold();playback.play();
+  hold();const generation=replayGeneration;starting=true;syncControls();
+  try{
+   for(const frame of frames().slice(next,next+2)){
+    if(generation!==replayGeneration||!active||document.hidden||!visible())return;
+    if(volumeWanted&&!gpuFailed&&frame.volumeRecord){
+     try{await loadVolume(frame);}
+     catch{if(generation!==replayGeneration)return;await loadSamples(frame);}
+    }else await loadSamples(frame);
+   }
+   if(generation!==replayGeneration||!active||document.hidden||!visible())return;
+   starting=false;playback.play();
+  }catch{if(generation===replayGeneration){starting=false;failed=true;report(false);}}
+ }
+ play.addEventListener('click',()=>{
+  if(playback.playing||starting){hold();return;}
+  void startReplay();
  });
  scrub.addEventListener('change',()=>{
   const frameIndex=Number(scrub.value);
   hold();void choose(frameIndex);
  });
  latest.addEventListener('click',()=>{
-  playback.pause();following=true;failed=false;syncControls();void refresh();
+  hold();following=true;failed=false;syncControls();void refresh();
  });
  weak.addEventListener('change',()=>{
   colors();
@@ -181,6 +199,8 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
   report();
  });
  volumeButton.addEventListener('click',()=>{
+  if(!allowVolume)return;
+  hold();
   volumeWanted=!volumeWanted;volumeButton.setAttribute('aria-pressed',String(volumeWanted));
   volumeButton.appearance=volumeWanted?'solid':'outline';
   playback.pause();cancelPending();cache.clear();volumeCache.clear();
@@ -195,14 +215,15 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
   else report();
  });
  return {controls,volumeButton,cloudButton:clouds.button,cloudStatus:clouds.status,cloudLegend:clouds.legend,
-  suspend(){active=false;clearTimeout(timer);clearTimeout(expiry);cancelPending();playback.pause();clouds.close();session.radar(null);session.radarVolume(null);},
+  suspend(){active=false;autoplayPending=false;starting=false;replayGeneration++;clearTimeout(timer);clearTimeout(expiry);cancelPending();playback.pause();clouds.close();session.radar(null);session.radarVolume(null);},
   resume(){
    active=true;controls.hidden=false;clouds.open();clearTimeout(timer);
    if(stillRecent(displayed)){void run(signal=>draw(displayed,signal));if(following)timer=setTimeout(()=>void refresh(),60000);}
    else{scanLink.hidden=true;info.textContent='Selected radar scan expired · use Latest to check again';syncControls();}
   },
-  open(){
-   active=true;following=true;failed=false;controls.hidden=false;volumeButton.hidden=false;
+  open({autoplay=false}={}){
+   autoplayPending=autoplay;starting=false;replayGeneration++;
+   active=true;following=true;failed=false;controls.hidden=false;volumeButton.hidden=!allowVolume;
    clouds.open();
    info.textContent='Loading Hanford radar…';scanLink.hidden=true;syncControls();colors();
    items.replaceChildren(document.createTextNode('Echo patches show the strongest sampled Hanford return per roughly 4 km bin. Experimental volume retains multiple heights in roughly 3 km × 3 km × 500 m bins, streamed from Zarr. Soft edges are display styling. Unsampled and filtered space is unknown. Farther echoes can appear through intervening terrain in this overview. The volume uses completed snapshots updated with the site, so its latest scan may lag the echo view. GOES cloud tops are separate geopotential-height retrievals; apparent positions can shift with satellite viewing angle. Dated 2D infrared imagery is used when matching heights are unavailable.'),
@@ -211,6 +232,7 @@ export function installWatchRadar({session,info,items,renderColors,visible,sourc
    void refresh();
   },
   close(){
+   autoplayPending=false;starting=false;replayGeneration++;
    active=false;controls.hidden=true;volumeButton.hidden=true;playback.pause();clearTimeout(timer);clearTimeout(expiry);clearTimeout(transitionTimer);transition=null;warmGeneration++;abortRequest();cache.clear();volumeCache.clear();
    clouds.close();
    timeline=displayed=samples=cube=null;session.radar(null);session.radarVolume(null);

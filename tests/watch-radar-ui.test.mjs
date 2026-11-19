@@ -33,7 +33,7 @@ async function until(predicate,message){
 
 // Keep the real controller, playback, timeline validation, checksums and decoding.
 // Only the DOM, clock, scheduled callbacks, HTTP transport and map boundary are doubled.
-function harness(t){
+function harness(t,options={}){
  let now=NOW;
  t.mock.method(Date,'now',()=>now);
  const document=new EventTarget();document.hidden=false;
@@ -75,7 +75,7 @@ function harness(t){
   radarVolume(grid,_minimum,onFailure,options){state.cube=grid;if(grid){state.volumeWrites.push(grid);state.transitions.push(options);}if(onFailure)state.failure=onFailure;},
   cloud(){},cloudTops(){}
  };
- const ui=installWatchRadar({session,info,items:new FakeElement(),renderColors(){},visible:()=>true,
+ const ui=installWatchRadar({session,info,items:new FakeElement(),renderColors(){},visible:()=>true,...options,
   source(label,url){const link=new FakeElement('a');link.textContent=label;link.href=url;links.set(label,link);return link;}});
  // Cloud pairing has its own tests; use the actual off control before opening radar.
  click(ui.cloudButton);
@@ -100,6 +100,45 @@ test('an empty volume catalog keeps dated echo patches and explains the fallback
  assert.match(h.ui.controls.children[1].attributes.get('aria-valuetext'),/Nov 15.*12:04.*PST/);
  assert.equal(h.requests.filter(path=>path.endsWith('/khnx-v1/manifest.json')).length,2,
   'The empty cube catalog must still read the direct radar timeline.');
+});
+
+test('Command can expose regular radar only without fetching experimental volume data',async t=>{
+ const h=harness(t,{allowVolume:false});await h.open();
+ assert.equal(h.ui.volumeButton.hidden,true);click(h.ui.volumeButton);await sleep(10);
+ assert.equal(h.requests.some(path=>path.endsWith('/radar-volume/manifest.json')),false);
+ assert.equal(h.state.cube,null);
+});
+
+test('explicit radar autoplay prepares a recent replay while ordinary opening remains paused',async t=>{
+ const h=harness(t);h.config.patches=[first.frame,second.frame];
+ h.ui.open({autoplay:true});
+ await until(()=>h.ui.controls.children[0].textContent==='Pause','automatic replay starts');
+ await until(()=>h.state.patches?.[3]===35,'replay starts with oldest recent scan');
+ assert.ok(h.requests.some(path=>path.endsWith(second.frame.file)),'next scan buffered');
+ click(h.ui.controls.children[0]);assert.equal(h.ui.controls.children[0].textContent,'Play');
+});
+
+test('reduced motion suppresses radar autoplay even for an explicit alert selection',async t=>{
+ const h=harness(t);const restore=stubGlobals({matchMedia:()=>({matches:true})});t.after(restore);
+ h.config.patches=[first.frame,second.frame];h.ui.open({autoplay:true});
+ await until(()=>h.state.patches!==null,'dated radar visible');await sleep(10);
+ assert.equal(h.ui.controls.children[0].textContent,'Play');
+ assert.equal([...h.timers.values()].some(timer=>timer.delay===1100),false);
+});
+
+test('Latest cancels replay preparation even if its buffered scan finishes late',async t=>{
+ const h=harness(t);h.config.volumes=[first.record,second.record];await h.open();
+ const hold=h.holdVolume(first);await h.volume();await hold.started.promise;
+ click(h.ui.controls.children[0]);click(h.ui.controls.children[2]);hold.release.resolve();
+ await sleep(25);assert.equal(h.ui.controls.children[0].textContent,'Play');
+ assert.match(h.info.textContent,/Observed/);
+});
+
+test('replay preparation retains echo fallback when a volume frame is unavailable',async t=>{
+ const h=harness(t);h.config.patches=[first.frame,second.frame];h.config.volumes=[first.record,second.record];
+ h.config.failedVolumes.add(first.frame.file);await h.open();await h.volume();
+ click(h.ui.controls.children[0]);await until(()=>h.state.patches?.[3]===35,'failed replay volume uses dated patches');
+ assert.match(h.info.textContent,/Volume unavailable; echo patches shown/);
 });
 
 test('replay preloads its first scan and fades only forward adjacent observations',async t=>{
