@@ -99,7 +99,7 @@ export async function fetchFresnoAlerts(county, config, fetcher = fetch, now = D
       }
     }
     if (p.status !== 'Actual' || !['Alert','Update'].includes(p.messageType) ||
-        expires !== null && expires <= stamp || ends !== null && ends <= stamp) continue;
+        expires !== null && expires <= stamp) continue;
     const content = JSON.stringify(p);
     const previous = alerts.get(p.id);
     if (previous && previous.content !== content) throw Error('NWS county alert revision conflicts across pages.');
@@ -110,7 +110,8 @@ export async function fetchFresnoAlerts(county, config, fetcher = fetch, now = D
       issued, issuance:p.sent, onset:sourceTime(p.onset), ends, expires, office:p.senderName || 'Not supplied',
       headline:p.headline || '', area:p.areaDesc || '', description:p.description || '', instruction:p.instruction || '',
       sourceUrl:`https://api.weather.gov/alerts/${encodeURIComponent(p.id)}`, geometries, content,
-      quality:expires === null ? 'Expiration unavailable; check NWS.' : '',
+      quality:expires === null ? 'Expiration unavailable; check NWS.' : ends !== null && ends <= stamp
+        ? 'NWS still returns this alert; stated end time has passed. Verify with NWS.' : '',
       signature:`${key}|${fingerprint(content + JSON.stringify(geometries))}`,
     });
   }

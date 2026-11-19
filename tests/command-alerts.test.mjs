@@ -34,11 +34,12 @@ test('an alert arriving before its map shape stays counted and explicitly flags 
  assert.match(c.mapGap,/geometry/i);
  assert.match(c.details.join(' '),/Gusts to 45 mph/);
 });
-test('expired, ended and cancelled county alerts do not inflate current counts',async()=>{
+test('expiry and cancellation remove alerts; a passed hazard end does not override continued NWS publication',async()=>{
  const features=[official(),official({id:'urn:oid:expired',expires:new Date(now-1).toISOString()}),official({id:'urn:oid:ended',ends:new Date(now-1).toISOString()}),official({id:'urn:oid:cancel',messageType:'Cancel'})];
  const rows=await fetchFresnoAlerts(county,CONFIG,async(url)=>reply(String(url).startsWith('https://api.weather.gov/')
   ? {type:'FeatureCollection',features} : {features:[],spatialReference:{wkid:4326}}),()=>now);
- assert.equal(rows.length,1);
+ assert.equal(rows.length,2);
+ assert.match(rows.find(row=>row.capId==='urn:oid:ended').quality,/end time has passed/);
 });
 test('CAP updates and cancellations suppress their older referenced alert across a complete snapshot',async()=>{
  const reference={identifier:id,sent:'2026-11-18T22:00:00Z'};
