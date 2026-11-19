@@ -1253,22 +1253,22 @@ async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?:
         const frames = starts.map(start=>({start,end:start+step,grid:grid?.frames.find((f: any)=>f.start===start)}))
           .filter(w=>(w.grid || sites.some((site: any)=>source.snowWindow(site,w.start,w.end).inches!==null)) &&
             (!advisory || model.advisoryForecastWindow([w],advisory)));
-        const picker = el("select") as HTMLSelectElement;
-        picker.setAttribute("aria-label", "Six-hour snow forecast window");
-        if (!frames.length) picker.append(new Option("No matching snowfall windows", ""));
-        for (const w of frames) picker.append(new Option(date(w.start) + " · 6 h",String(w.start)));
-        const previous = controls.querySelector<HTMLSelectElement>("select")?.value;
-        const desired = previous || String(advisory ? frames[0]?.start : rainWindow?.start ?? frames[0]?.start);
-        if ([...picker.options].some(o=>o.value===desired)) picker.value=desired;
+        const {createForecastTimeline}=await moduleAt("forecast-timeline");
+        if(!active())return;
+        const previous=controls.querySelector<HTMLInputElement>('input[type="range"]')?.dataset.forecastStart;
+        const desired=previous ? Number(previous) : advisory ? frames[0]?.start : rainWindow?.start ?? frames[0]?.start;
+        const timeline=createForecastTimeline({frames,selectedStart:desired,format:(start:number,end:number)=>localForecastTime.formatRange(start,end)+" · 6 h"});
+        const picker=timeline.input;
         const fit = button(advisory ? "Fit advisory" : "Fit snow",()=>{
           if (advisory) {pendingFit=true;updateMap();}
           else if(grid?.coordinates){const c=grid.coordinates;map?.focus([c[0][0],c[2][1],c[2][0],c[0][1]],true);}
         });
-        controls.replaceChildren(picker,...(advisory ? current()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
-        const player = await mountForecastPlayer({frames,picker,key:(w: any)=>String(w.start),epoch,autoplay:shouldAutoplay,
+        controls.replaceChildren(timeline.element,...(advisory ? current()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
+        const player = await mountForecastPlayer({frames,picker,key:(w: any)=>String(frames.indexOf(w)),epoch,autoplay:shouldAutoplay,
           load: async (w: any,signal: AbortSignal) => w.grid
             ? source.loadSnowGridImage(w.grid,grid.coordinates,signal).catch(()=>null) : null,
-          render: (image: any,w: any) => {
+          render: (image: any,w: any,index:number) => {
+            timeline.setIndex(index);
             const timeLabel=localForecastTime.formatRange(w.start,w.end);
             const points=sites.map((site: any)=>{
               const values=source.snowWindow(site,w.start,w.end);
@@ -1292,7 +1292,7 @@ async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?:
           },
         });
         shouldAutoplay=false;
-        snowDraw=()=>void player.select(frames.findIndex(w=>String(w.start)===picker.value));
+        snowDraw=()=>void player.select(Number(picker.value));
         if(!frames.length){
           info.textContent="No six-hour snowfall forecast available during this advisory";
           map?.snowfall(null);map?.snowPoints([]);$("weather-legend").hidden=true;
@@ -1408,6 +1408,7 @@ async function mountForecastPlayer({frames,picker,key,load,render,epoch,autoplay
       play.setAttribute("aria-label", playing ? "Pause forecast animation" : "Play forecast animation");
       play.setAttribute("aria-pressed", String(playing));
       status.textContent = phase === "buffering" ? "Buffering next frame…"
+        : phase === "loading" ? "Loading forecast frame…"
         : phase === "error" ? "Frame unavailable · playback stopped"
         : frames.length < 2 ? (frames.length ? "One forecast frame available" : "No playable forecast frames")
         : index >= 0 ? `${index + 1} of ${frames.length}` : "Choose a forecast time";
@@ -1422,7 +1423,8 @@ async function mountForecastPlayer({frames,picker,key,load,render,epoch,autoplay
   forecastPlayer = player;
   $("weather-controls").prepend(play);
   $("weather-controls").append(status);
-  picker.onchange = () => void player.select(frames.findIndex((frame: any) => key(frame) === picker.value));
+  const selectFrame=()=>void player.select(frames.findIndex((frame:any)=>key(frame)===picker.value));
+  if(picker.type==='range')picker.oninput=selectFrame;else picker.onchange=selectFrame;
   const selected = frames.findIndex((frame: any) => key(frame) === picker.value);
   if (selected >= 0 && await player.select(selected) && autoplay) await player.play({automatic:true});
   return player;
