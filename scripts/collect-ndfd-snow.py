@@ -18,8 +18,8 @@ from rasterio.transform import from_bounds
 from rasterio.warp import Resampling, reproject, transform_bounds
 
 SOURCE = "https://tgftp.nws.noaa.gov/SL.us008001/ST.opnl/DF.gr2/DC.ndfd/AR.conus/VP.001-003/ds.snow.bin"
-BOUNDS = (-121, 35.7, -117, 38.5)
-SIZE = (420, 374)
+BOUNDS = (-125, 32, -113, 42.5)
+SIZE = (1000, 1100)
 PERIOD = 6 * 3600
 MAX_BYTES = 24 * 1024 * 1024
 BANDS = [

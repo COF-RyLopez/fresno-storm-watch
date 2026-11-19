@@ -8,6 +8,10 @@
 
 **Additional user requirement:** Add city and county boundaries for context. Use existing five-county regional outlines and current Census incorporated-place polygons intersecting Fresno County; distinguish neighboring context from Fresno membership. Labels appear at useful scales, with reference symbology distinct from hazards.
 
+**Visual refinement:** The user clarified with a CDEC reservoir graphic that a literal thermometer was not intended. Replace the bulb/stem with a shorter rectangular level column, current line, reference ticks and small trend arrow; preserve the existing values, thresholds, forecast marker and unknown/stale semantics. This is a visual refinement of the approved map interaction, not a reservoir-capacity calculation.
+
+**Context visibility refinement:** Show the existing public burn perimeters by default in County Watch, including Weather Off and advisory selections. Retain the map-key visibility choice in memory across weather changes and refreshes. A compact reference swatch identifies the geometry; missing/overdue sources point to Coverage. Keep reference polygons below official alerts. Desktop and 390×844 checks verified initial visibility, Off → Rain → Off with a user-hidden layer staying hidden, restored visibility, Garnet hover identification, and the winter-warning snow forecast retaining burn context. No new fire data, thresholds or permissions are introduced.
+
 **Constraints:** No capacity percentages, derived water depth, inferred hydraulic connections, automatic debris-flow triggers or current hazard classifications from historical assessments. Fire outlines are not burn severity or inundation boundaries. Published categories, source dates, missing data and differing design storms remain explicit. The forwarded Basin matrix is not a public data feed.
 
 - [x] Test gauge status, units, negative/zero values, trends, stale/missing data and unknown/contradictory thresholds; implement model and icon rendering.

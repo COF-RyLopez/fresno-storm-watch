@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import {validateHrrrManifest,validateHrrrFrame,hrrrAt,hrrrPoint,hrrrPixels,HOUR,MPH} from '../site/lib/hrrr-model.js';
 import {workspaceDefaults,layerVisible} from '../site/lib/workspace-model.js';
 
+test('California/Nevada display grid covers coastal, southern and northern context without accepting arbitrary grids',()=>{
+ const m=manifest();m.grid={wkid:4326,width:201,height:176,x0:-125,y0:42.5,dx:.06,dy:-.06};
+ m.frames=m.frames.map(f=>({...f,file:f.file.replace('-f','-canv-f')}));
+ assert.equal(validateHrrrManifest(m,now),m);
+ for(const [lon,lat] of [[-120,39.1],[-122.4,37.8],[-117.2,32.7],[-121.8,39.7]]){
+  const x=Math.round((lon-m.grid.x0)/m.grid.dx),y=Math.round((lat-m.grid.y0)/m.grid.dy);
+  assert(x>=0&&x<m.grid.width&&y>=0&&y<m.grid.height);
+ }
+ assert.throws(()=>validateHrrrManifest({...m,grid:{...m.grid,width:202}},now));
+ assert.throws(()=>validateHrrrManifest({...m,frames:m.frames.map(f=>({...f,file:f.file.replace('-canv-f','-f')}))},now),'expanded frames must not reuse narrow-grid cache URLs');
+});
+
 const now=Date.parse('2026-10-21T04:30:00Z'),run='2026-10-21T00:00:00Z';
 function manifest(){return {schemaVersion:1,product:'noaa-hrrr-forecast-48-hour',units:'m/s',license:'CC-BY-4.0',attribution:'NOAA HRRR processed by Dynamical',vectorConvention:'earth-east-north',run,generatedAt:new Date(now).toISOString(),grid:{wkid:4326,width:101,height:80,x0:-121.25,y0:38.12,dx:.03,dy:-.03},frames:Array.from({length:49},(_,i)=>({file:`20261021T000000Z-f${String(i).padStart(2,'0')}.json`,valid:new Date(Date.parse(run)+i*HOUR).toISOString().replace('.000Z','Z'),leadHours:i}))};}
 function frame(m,entry=m.frames[4]){return {schemaVersion:1,run:m.run,valid:entry.valid,leadHours:entry.leadHours,width:101,height:80,u:Array(8080).fill(3),v:Array(8080).fill(4),gust:Array(8080).fill(9)};}

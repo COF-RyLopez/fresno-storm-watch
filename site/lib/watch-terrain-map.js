@@ -52,8 +52,9 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-city-names',type:'symbol',source:'watch-cities',minzoom:9.5,
   layout:{'text-field':['concat',['get','name'],' (city)'],'text-size':11,...(fonts?{'text-font':fonts}:{})},
   paint:{'text-color':'#d7e5df','text-halo-color':'#172126','text-halo-width':2}},'watch-lines');
- map.addLayer({id:'watch-burn-fill',type:'fill',source:'watch-burn-scars',paint:{'fill-color':'#cda986','fill-opacity':.07}},'watch-lines');
- map.addLayer({id:'watch-burn-outlines',type:'line',source:'watch-burn-scars',paint:{'line-color':'#cda986','line-width':1.5,'line-dasharray':[2,2]}},'watch-lines');
+ // Reference perimeters sit beneath official alert polygons and their outlines.
+ map.addLayer({id:'watch-burn-fill',type:'fill',source:'watch-burn-scars',paint:{'fill-color':'#cda986','fill-opacity':.07}},'watch-polygons');
+ map.addLayer({id:'watch-burn-outlines',type:'line',source:'watch-burn-scars',paint:{'line-color':'#cda986','line-width':1.5,'line-dasharray':[2,2]}},'watch-polygons');
  let contextKey,countiesRef;
  map.addLayer({id:'watch-nws-corridor-labels',type:'symbol',source:'watch-records',minzoom:8,filter:['==',['get','kind'],'nws-corridor'],layout:{'text-field':['get','citation'],'symbol-placement':'line','text-size':12,...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#c9eef4','text-halo-color':'#172126','text-halo-width':2}});
  map.addSource('command-triggers',{type:'geojson',data:empty});
@@ -169,7 +170,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   if(!image?.blob)return;
   const url=URL.createObjectURL(image.blob);imageUrls.set(id,url);
   map.addSource(id,{type:'image',url,coordinates:image.coordinates});
-  map.addLayer({id,type:'raster',source:id,paint:{'raster-fade-duration':0,...paint}},'frog-overview-rivers');
+  const before=id==='watch-goes-clouds'&&map.getLayer('watch-regional-radar')?'watch-regional-radar':'frog-overview-rivers';
+  map.addLayer({id,type:'raster',source:id,paint:{'raster-fade-duration':0,...paint}},before);
  }
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
@@ -186,6 +188,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  },focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
+  viewBounds(){const b=map.getBounds();return [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];},
+  regionalRadar(image){setImage('watch-regional-radar',image,{'raster-opacity':.72});},
   context({key,counties,cities,burnScars}){
    if(destroyed||key===contextKey&&counties===countiesRef)return;
    contextKey=key;countiesRef=counties;

@@ -10,7 +10,7 @@ const now=Date.parse('2026-11-15T05:26:00Z'),minute=60000;
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
 const click=element=>element.dispatchEvent(new Event('click'));
 async function until(check){for(let n=0;n<200;n++){if(check())return;await sleep(5);}assert.fail('Cloud operation timed out');}
-function harness(t){
+function harness(t,options){
  t.mock.method(Date,'now',()=>now);
  const frames=[10,20].map((end,i)=>{
   const body=new Float32Array([-119.5,36.7,5500+i*500,-119.4,36.7,6000,-119.5,36.8,5750]);
@@ -35,7 +35,7 @@ function harness(t){
   {localName:'Name',textContent:'goes_longwave_imagery'},
   {localName:'Dimension',getAttribute:()=> 'time',textContent:'2026-11-15T05:10:00Z,2026-11-15T05:20:00Z'}]}]:[]};}}
  const restore=stubGlobals({document,fetch,DOMParser,createImageBitmap:async()=>({...cloudMapRequest(now),close(){}})});
- const ui=installWatchClouds({cloudTops(vertices,options){if(vertices&&state.fail)throw Error('GPU allocation failed');state.writes.push({vertices,options});return options?.durationMs?state.fade?.promise:Promise.resolve();},cloud(image){state.ir.push(image);}});
+ const ui=installWatchClouds({cloudTops(vertices,options){if(vertices&&state.fail)throw Error('GPU allocation failed');state.writes.push({vertices,options});return options?.durationMs?state.fade?.promise:Promise.resolve();},cloud(image){state.ir.push(image);}},options);
  t.after(()=>{ui.close();restore();});
  return {ui,state,frames};
 }
@@ -49,6 +49,14 @@ test('lookahead never paints, and both GOES times stay visible until the actual 
  assert.match(ui.status.textContent,/9:10.*9:20/);assert.equal(ui.legend.hidden,false);
  await ui.observe(now);assert.match(ui.status.textContent,/transition/,'Repeated refresh must not prematurely relabel a blend.');
  state.fade.resolve();await painting;assert.match(ui.status.textContent,/9:20 PM PST.*hover\/tap/);
+});
+
+test('Command infrared uses no height mesh and expires on its own observation clock',async t=>{
+ const {ui,state}=harness(t,{allowSurface:false});
+ t.mock.timers.enable({apis:['setTimeout'],now});ui.open();
+ for(let i=0;i<50&&!state.ir.length;i++)await new Promise(r=>setImmediate(r));
+ assert.ok(state.ir.at(-1)?.blob);assert.equal(state.writes.length,0);assert.match(ui.status.textContent,/infrared.*observed/);
+ t.mock.timers.tick(120*minute);assert.equal(state.ir.at(-1),null);assert.match(ui.status.textContent,/expired/);
 });
 
 test('a failed cloud surface uses dated infrared and removes the altitude key',async t=>{

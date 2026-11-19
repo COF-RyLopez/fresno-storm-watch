@@ -91,10 +91,10 @@ export async function loadSnowCover(signal) {
   if (!Number.isSafeInteger(record?.objectid) || !Number.isFinite(record.idp_filedate) ||
       record.idp_filedate > Date.now() + hour || Date.now() - record.idp_filedate > 72 * hour)
     throw Error('Recent snow analysis date unavailable');
-  const [xmin, ymin] = mercator(-121, 35.7), [xmax, ymax] = mercator(-117, 38.5);
+  const [xmin, ymin] = mercator(-125, 32), [xmax, ymax] = mercator(-113, 42.5);
   const params = new URLSearchParams({
     bbox: [xmin, ymin, xmax, ymax].join(','), bboxSR: '3857', imageSR: '3857',
-    size: '500,445', format: 'png32', noData: '0,1,2,3', noDataInterpretation: 'esriNoDataMatchAny',
+    size: '1000,1100', format: 'png32', noData: '0,1,2,3', noDataInterpretation: 'esriNoDataMatchAny',
     interpolation: 'RSP_NearestNeighbor', mosaicRule: JSON.stringify({ mosaicMethod: 'esriMosaicLockRaster', lockRasterIds: [record.objectid] }), f: 'json',
   });
   const image = await json(`${IMS}/exportImage?${params}`, signal);

@@ -20,7 +20,7 @@ from scipy.interpolate import RegularGridInterpolator
 PRODUCT = "noaa-mrms-conus-analysis-hourly"
 CATALOG = f"https://stac.dynamical.org/{PRODUCT}/collection.json"
 VARIABLE = "precipitation_surface"
-# Same rectangle and 0.03 degree display grid as the HRRR fields (101 x 80 cells).
+# Local QPE reference grid (101 x 80); independent of the wider HRRR display grid.
 BOUNDS = [-121.25, 35.75, -118.25, 38.12]
 STEP = 0.03
 HOURS = 24

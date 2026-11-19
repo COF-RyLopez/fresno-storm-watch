@@ -78,36 +78,40 @@ export function refreshGaugeFeatures(features,bundle,config,now=Date.now(),error
  });
 }
 
-/** Fixed-size, screen-facing vector glyph rasterized for MapLibre, independent of terrain height. */
+/** Compact level column, not a thermometer or a capacity percentage. Screen-facing in 3D. */
 export function gaugeIcon(display,createCanvas=()=>document.createElement('canvas')) {
- const canvas=createCanvas();canvas.width=80;canvas.height=128;
+ const canvas=createCanvas();canvas.width=100;canvas.height=100;
  const c=canvas.getContext('2d');if(!c)throw Error('Gauge symbol rendering unavailable');
- const x=25,top=12,bottom=92,width=15;
- c.lineWidth=3;c.strokeStyle='#e8f4f7';c.fillStyle='#19292f';
- c.beginPath();c.roundRect(x-width/2,top,width,bottom-top,7);c.fill();c.stroke();
- c.beginPath();c.arc(x,bottom+3,12,0,Math.PI*2);c.fill();c.stroke();
- c.fillStyle=display.color;
- c.beginPath();c.arc(x,bottom+3,8,0,Math.PI*2);c.fill();
+ const x=50,top=10,bottom=78,width=32,left=x-width/2;
+ c.lineWidth=2.5;c.strokeStyle=display.current?'#dce9ed':'#aab5bf';c.fillStyle='#19292f';
+ c.fillRect(left,top,width,bottom-top);
+ if(display.fraction===null)c.setLineDash([5,4]);
+ c.strokeRect(left,top,width,bottom-top);c.setLineDash([]);
+ // The short locator points to the station; the column is a flat map symbol, not 3D water.
+ c.fillStyle='#19292f';c.beginPath();c.moveTo(x-6,bottom+5);c.lineTo(x,bottom+17);c.lineTo(x+6,bottom+5);c.closePath();c.fill();
+ c.strokeStyle='#dce9ed';c.beginPath();c.moveTo(x-6,bottom+5);c.lineTo(x,bottom+17);c.lineTo(x+6,bottom+5);c.stroke();
  if(display.fraction!==null){
   const y=bottom-(bottom-top)*display.fraction;
-  c.globalAlpha=display.current?1:.45;c.fillRect(x-4,y,8,bottom-y);c.globalAlpha=1;
-  c.strokeStyle='#f5fcff';c.lineWidth=3;c.beginPath();c.moveTo(x-13,y);c.lineTo(x+13,y);c.stroke();
+  c.fillStyle=display.color;c.globalAlpha=display.current ? .9 : .4;
+  c.fillRect(left+3,y+1,width-6,Math.max(0,bottom-y-3));c.globalAlpha=1;
+  c.strokeStyle='#f5fcff';c.lineWidth=3;c.beginPath();c.moveTo(left-4,y);c.lineTo(left+width+4,y);c.stroke();
  }else{
-  c.setLineDash([4,4]);c.strokeStyle=display.color;c.beginPath();c.moveTo(x,top+8);c.lineTo(x,bottom-7);c.stroke();c.setLineDash([]);
+  // No reference scale: an unfilled, dashed column is explicitly unknown, never zero/full.
+  c.fillStyle='#c7d2d7';c.font='bold 25px Arial';c.textAlign='center';c.fillText('?',x,top+43);
  }
  if(display.scale){
   for(const t of display.thresholds){const y=bottom-(bottom-top)*(t.value-display.scale.min)/(display.scale.max-display.scale.min);
-   c.strokeStyle=GAUGE_STATES[t.level].color;c.lineWidth=3;c.beginPath();c.moveTo(x+10,y);c.lineTo(x+24,y);c.stroke();}
+   c.strokeStyle=GAUGE_STATES[t.level].color;c.lineWidth=3;c.beginPath();c.moveTo(left+width+6,y);c.lineTo(left+width+18,y);c.stroke();}
   if(display.forecast){const f=Math.max(0,Math.min(1,(display.forecast.value-display.scale.min)/(display.scale.max-display.scale.min))),y=bottom-(bottom-top)*f;
-   c.strokeStyle='#ffedc0';c.lineWidth=2;c.beginPath();c.moveTo(x-20,y);c.lineTo(x-15,y-5);c.lineTo(x-10,y);c.lineTo(x-15,y+5);c.closePath();c.stroke();}
+   c.strokeStyle='#ffedc0';c.lineWidth=2;c.beginPath();c.moveTo(left-17,y);c.lineTo(left-12,y-5);c.lineTo(left-7,y);c.lineTo(left-12,y+5);c.closePath();c.stroke();}
  }
  if(!display.current){
-  c.strokeStyle=display.color;c.lineWidth=3;c.beginPath();c.arc(60,top+9,8,0,Math.PI*2);c.moveTo(60,top+3);c.lineTo(60,top+9);c.lineTo(65,top+12);c.stroke();
+  c.strokeStyle=display.color;c.lineWidth=2.5;c.beginPath();c.arc(88,top+9,7,0,Math.PI*2);c.moveTo(88,top+4);c.lineTo(88,top+9);c.lineTo(92,top+12);c.stroke();
  }else if(display.trend){
   const rising=display.trend.direction==='rising',falling=display.trend.direction==='falling';
   c.strokeStyle='#eef8ff';c.lineWidth=3;c.beginPath();
-  if(rising||falling){const y=rising?36:58,other=rising?58:36;c.moveTo(60,other);c.lineTo(60,y);c.moveTo(53,y+(rising?7:-7));c.lineTo(60,y);c.lineTo(67,y+(rising?7:-7));}
-  else{c.moveTo(53,46);c.lineTo(67,46);}c.stroke();
+  if(rising||falling){const y=rising?30:52,other=rising?52:30;c.moveTo(89,other);c.lineTo(89,y);c.moveTo(83,y+(rising?6:-6));c.lineTo(89,y);c.lineTo(95,y+(rising?6:-6));}
+  else{c.moveTo(83,41);c.lineTo(95,41);}c.stroke();
  }
  return c.getImageData(0,0,canvas.width,canvas.height);
 }

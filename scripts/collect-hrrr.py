@@ -23,10 +23,10 @@ VARIABLES = ["wind_u_10m", "wind_v_10m", "wind_gust_surface", "precipitation_sur
 WIND = VARIABLES[:3]
 # Precipitation rate (mm/s, averaged over the hour ending at the step) -> inches per hour.
 IN_PER_HOUR = 3600 / 25.4
-# Rectangular weather context, covering Fresno and upper San Joaquin/Kings.
+# California, Nevada and regional approaches. Bound output size at ~35k cells/frame.
 # This is explicitly not a delineated drainage basin or an impact polygon.
-BOUNDS = [-121.25, 35.75, -118.25, 38.12]
-STEP = 0.03
+BOUNDS = [-125, 32, -113, 42.5]
+STEP = 0.06
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "site" / "data" / "hrrr"
 LOG = logging.getLogger("hrrr")
@@ -93,7 +93,7 @@ def collect(output: Path = OUTPUT) -> dict:
         leads = run.lead_time.values/np.timedelta64(1, "h")
         if not np.array_equal(leads, np.arange(49)):
             raise ValueError("Expected hourly HRRR leads 0–48")
-        # Bounded ~110x100 source cells; no full-domain reads.
+        # Bounded western source window; no full-domain reads.
         run = run.load()
         # Rain rate is an average over the previous hour, so lead 0 has none; every later lead must be complete.
         if not all(np.isfinite(run[k].values).all() for k in WIND) or not np.isfinite(run[VARIABLES[3]].values[1:]).all():
@@ -109,7 +109,7 @@ def collect(output: Path = OUTPUT) -> dict:
         if np.nanmin(rain) < 0 or np.nanmax(rain) > 20:
             raise ValueError("Implausible HRRR rain rate")
         run_id = iso(run.init_time.values)
-        name = run_id.replace("-", "").replace(":", "")
+        name = run_id.replace("-", "").replace(":", "") + "-canv"
         frames = []
         for hour in range(49):
             arrays = [RegularGridInterpolator((run.y.values, run.x.values), f[hour],
@@ -131,8 +131,8 @@ def collect(output: Path = OUTPUT) -> dict:
                     "attribution": meta["attribution"], "units": "m/s", "rainUnits": "in/h", "vectorConvention": "earth-east-north",
                     "nativeResolutionKm": 3, "grid": {"wkid": 4326, "width": len(xs), "height": len(ys),
                     "x0": float(xs[0]), "y0": float(ys[0]), "dx": STEP, "dy": -STEP},
-                    "coverageNote": "Rectangular Fresno County and upper San Joaquin/Kings weather context; not watershed boundaries.",
-                    "processing": "Grid-relative winds rotated to earth east/north, then bilinearly resampled to 0.03 degree cells; hourly instantaneous model snapshots. Rain: model precipitation rate averaged over the hour ending at each step, in inches per hour; none at the first step.",
+                    "coverageNote": "California/Nevada regional weather display; not watershed boundaries. Missing cells remain unknown.",
+                    "processing": "Grid-relative winds rotated to earth east/north, then bilinearly resampled to 0.06 degree display cells; hourly instantaneous model snapshots. Native resolution is 3 km. Rain: model precipitation rate averaged over the hour ending at each step, in inches per hour; none at the first step.",
                     "frames": frames, "error": None}
         temporary = output / "latest.json.tmp"
         temporary.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
