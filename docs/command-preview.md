@@ -20,6 +20,10 @@ Watch source corrections, November 18, 2026
 
 ## Data and access
 
+Selected NWS alerts expose the publisher's WHAT/HAZARD, IMPACTS and WHEN text before the county follow-up actions. Affected places and precautionary instructions remain expandable with the official alert link. Supported impact-based warning tags retain their NWS labels. Briefing capture freezes the guidance, original source text and source URL.
+
+Explicitly cited highway numbers are matched against the prepared county street index. Dashed cyan corridors show loaded reference geometry intersecting the selected alert; tapping identifies the source date and the need to check current access. Ramps are excluded from corridor emphasis. Loading is bounded to 24 reference records with two requests in flight. Missing alert geometry remains unassessed, and failed/skipped route loads are labeled incomplete. These reference corridors do not establish closures, utility service or confirmed impacts. The alert footprint and existing dated weather selector continue to control the forecast context.
+
 - Public sources reuse the current validated collectors and domain assessment rules: NWS alerts and gauges, WPC rainfall, scheduled reservoir/power/wind/comparison data, county road records, evacuation zones and resident care.
 - Authorized county facilities and the existing-only AGOL pump copy load only after an explicit action and eligible county AGOL sign-in. No Enterprise prompt is needed for those copies. Proposed pumps are excluded.
 - Private selections, geometries, reports and drafts stay in memory. Private IDs are not put in the URL. Sign-out removes private context. No data export or permission changes are part of this deployment.

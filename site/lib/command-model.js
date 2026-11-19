@@ -165,6 +165,7 @@ export function snapshotConcern(c, now = Date.now()) {
     capturedAt: now,
     change: c.change,
     quality: c.quality,
+    guidance: c.guidance,
     nextAction: c.nextAction,
     time: c.time,
     sourceRevision: c.revision,

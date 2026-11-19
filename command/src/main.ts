@@ -101,6 +101,11 @@ type AdvisoryTiming = { start: number | null; end: number | null };
 let checkedAdvisory: string | undefined,
   advisoryRequest: AbortController | undefined,
   advisoryWeatherId: string | undefined;
+let advisoryRoadRequest: AbortController | undefined;
+let advisoryRoadContext: {
+  id:string; revision?:string; status:string; features:any[];
+  matched:string[]; unmatched:string[]; failed:string[]; limited:boolean;
+} | undefined;
 const snowSummaries = new Map<string, string>();
 let currentRainWindow: any = null,
   privateSelection: Concern | undefined;
@@ -668,6 +673,9 @@ function renderEvidence() {
     c.change,
     c.quality,
     c.utilityUpdate,
+    c.guidance,
+    advisoryRoadContext?.id === c.id ? [advisoryRoadContext.status, advisoryRoadContext.matched,
+      advisoryRoadContext.unmatched, advisoryRoadContext.failed, advisoryRoadContext.limited] : null,
     c.trigger,
     c.mapGap,
     c.memberIds,
@@ -686,6 +694,22 @@ function renderEvidence() {
     el("p", c.quality, "quality"),
   );
   if (c.utilityUpdate) out.append(el("p", `Utility updated · ${date(c.time)}`, "when"));
+  if (c.guidance) {
+    const g = c.guidance, guidance = el("section", undefined, "nws-guidance");
+    guidance.append(el("h3", "NWS expects"), el("p", g.what));
+    if (g.impacts) guidance.append(el("h3", "Potential impacts"), el("p", g.impacts));
+    guidance.append(el("p", g.when || `${date(c.alertTiming?.start)} → ${date(c.alertTiming?.end)}`, "when"));
+    guidance.append(el("p", `${g.publisher} · issued ${date(g.issued)}`, "when"));
+    for (const tag of g.tags) guidance.append(el("p", `${tag.label} · ${tag.value}`, "quality"));
+    const instructions = el("details");
+    instructions.append(el("summary", "Affected places & NWS instructions"));
+    if (g.where) instructions.append(el("p", g.where));
+    if (g.instruction) instructions.append(el("p", g.instruction));
+    if (g.source) instructions.append(el("p", "NWS source · " + g.source));
+    for (const l of c.links) instructions.append(link(l.label, l.url));
+    guidance.append(instructions);
+    out.append(guidance);
+  }
   if (c.mapGap) out.append(el("p", c.mapGap, "quality"));
   if (c.trigger?.lines.length) {
     const trigger = el("section", undefined, "next-step");
@@ -762,6 +786,22 @@ function renderEvidence() {
       syncAdvisoryWeather(true);
     }));
     out.append(tools);
+    const context = advisoryRoadContext?.id === c.id ? advisoryRoadContext : undefined;
+    if (c.guidance?.corridors.length) {
+      const roads = el("section", undefined, "nws-corridors");
+      roads.append(el("h3", "Roads named by NWS"));
+      roads.append(el("p", c.guidance.corridors.map(route => route.label).join(" · ")));
+      if (!context || context.status === "loading") roads.append(el("p", "Finding county reference segments…", "when"));
+      else if (context.status === "unassessed") roads.append(el("p", "Alert geometry is unavailable. Named corridors have not been spatially assessed.", "quality"));
+      else if (context.status === "error") roads.append(el("p", "Road reference unavailable. Verify the cited corridors with Road Maintenance.", "quality"));
+      else {
+        if (context.matched.length) roads.append(el("p", "Dashed map lines · " + context.matched.join(" · "), "when"));
+        if (context.unmatched.length) roads.append(el("p", "No overlapping county road reference returned · " + context.unmatched.join(" · "), "when"));
+        if (context.failed.length || context.limited) roads.append(el("p", "Some reference segments could not be assessed. Corridor coverage is incomplete.", "quality"));
+        roads.append(el("p", "Named-corridor reference. Check current closures and access.", "when"));
+      }
+      out.append(roads);
+    }
   }
   const summaries = [
     ...(c.trigger?.firstCharts || []).map(label => c.evidence.find(e => e.label === label)),
@@ -892,6 +932,8 @@ function renderIncident() {
 function updateMap() {
   if (!map) return;
   const c = current();
+  const citedRoads = advisoryRoadContext?.id === c?.id && advisoryRoadContext?.revision === c?.revision
+    ? advisoryRoadContext?.features || [] : [];
   const floodGauges: any[] = c && model.advisoryForecastMode(c) === "rain"
     ? model.advisoryGauges(c, feeds.features) : [];
   let features = feeds.features;
@@ -901,6 +943,7 @@ function updateMap() {
     const b = model.geometryBounds(c.features);
     features = [
       ...c.features,
+      ...citedRoads,
       ...triggerFeatures,
       ...floodGauges,
       ...nearby(c).flatMap((r) => r.features).filter(f => c.kind !== "alert" || model.advisoryMatches(c, f)),
@@ -933,6 +976,7 @@ function updateMap() {
     : c?.kind === "alert"
     ? model.advisoryForecastMode(c) === "rain"
       ? (floodGauges.length ? "Gauge dots · observations near the alert" : "No nearby gauge locations returned")
+      : citedRoads.length ? "Dashed corridors named by NWS · verify current access"
       : `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
     : c
     ? "Selected place · nearby context · current observations"
@@ -1065,7 +1109,45 @@ $("sign-in").addEventListener(
   },
   { once: true },
 );
+function syncAdvisoryRoads() {
+  const c = state.value.view === "watch" ? current() : undefined;
+  if (c?.id === advisoryRoadContext?.id && c?.revision === advisoryRoadContext?.revision) return;
+  advisoryRoadRequest?.abort();
+  advisoryRoadContext = undefined;
+  if (c?.kind !== "alert" || !c.guidance?.corridors.length) return;
+  const routes = c.guidance.corridors;
+  const request = new AbortController();
+  advisoryRoadRequest = request;
+  const context = {id:c.id,revision:c.revision,status:"loading",features:[] as any[],matched:[] as string[],unmatched:[] as string[],failed:[] as string[],limited:false};
+  advisoryRoadContext = context;
+  renderEvidence();
+  if (!c.features.length) {
+    context.status = "unassessed";
+    renderEvidence();
+    return;
+  }
+  void referenceSearch.citedCorridors(routes, {signal:request.signal}).then((result: any) => {
+    if (request.signal.aborted || advisoryRoadContext !== context) return;
+    context.features = result.records.flatMap(({route,record}: any) => record.features
+      .filter((feature: any) => model.advisoryMatches(c, feature))
+      .map((feature: any) => ({...feature, id:`${c.id}:road:${record.id}`, properties:{
+        id:c.id,kind:"nws-corridor",name:route.label,citation:route.label,color:"#9cdae1",
+        readout:`${route.label} · named in this NWS alert\n${record.name}\nCounty reference prepared ${date(record.time)}\nVerify current road closures and access.`,
+      }})));
+    context.matched = [...new Set(context.features.map(feature => feature.properties.citation))] as string[];
+    context.failed = result.incomplete.map((route: any) => route.label);
+    context.unmatched = routes.map(route => route.label).filter(label => !context.matched.includes(label) && !context.failed.includes(label));
+    context.limited = result.limited;
+    context.status = "ready";
+    renderEvidence(); updateMap();
+  }).catch(() => {
+    if (request.signal.aborted || advisoryRoadContext !== context) return;
+    context.status = "error";
+    renderEvidence(); updateMap();
+  });
+}
 function syncAdvisoryWeather(reopen = false) {
+  syncAdvisoryRoads();
   const c = state.value.view === "watch" ? current() : undefined;
   const id = c?.kind === "alert" ? c.id : undefined;
   if (!reopen && id === checkedAdvisory) return;

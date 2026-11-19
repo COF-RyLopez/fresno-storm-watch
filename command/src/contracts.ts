@@ -29,6 +29,12 @@ export interface Concern {
   links: Array<{ label: string; url: string }>;
   revision?: string;
   alertTiming?: { start: number | null; end: number | null };
+  guidance?: {
+    publisher: string; issued: number | null;
+    what: string; where: string; when: string; impacts: string; source: string; instruction: string;
+    tags: Array<{label:string; value:string}>;
+    corridors: Array<{family:string; number:number; label:string}>;
+  };
   watershed?: string;
   private?: boolean;
   mapGap?: string;

@@ -23,6 +23,7 @@ import {
   advisoryProfile,
 } from "./command-model.js";
 import { readCareCollection } from "./care-data.js";
+import { nwsGuidance } from "./command-alert-guidance.js";
 import { CARE_SOURCES, ZONE_STATUS, zonesAt } from "./care-model.js";
 
 const num = (n) => (Number.isFinite(n) ? n : null);
@@ -296,10 +297,12 @@ export function alertConcerns(alerts) {
       time: a.onset || a.issued,
       timeLabel: a.onset ? "Effective" : "Issued",
       alertTiming: { start: a.onset ?? null, end: a.ends ?? null },
+      guidance: nwsGuidance(a),
       quality: a.quality || "Official NWS " + a.category,
       nextAction: advisoryProfile(a.type).nextAction,
       details: [
         a.headline, a.area, a.description, a.instruction,
+        a.sourceUrl,
         `Issuing office ${a.office}`,
         "Issued " + (a.issued ? new Date(a.issued).toISOString() : "not supplied"),
         "Expires " +

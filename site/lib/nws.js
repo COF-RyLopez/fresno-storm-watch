@@ -109,6 +109,7 @@ export async function fetchFresnoAlerts(county, config, fetcher = fetch, now = D
       key, capId:p.id, type:p.event.trim(), category:category(p.event), counties:['Fresno'],
       issued, issuance:p.sent, onset:sourceTime(p.onset), ends, expires, office:p.senderName || 'Not supplied',
       headline:p.headline || '', area:p.areaDesc || '', description:p.description || '', instruction:p.instruction || '',
+      parameters:p.parameters,
       sourceUrl:`https://api.weather.gov/alerts/${encodeURIComponent(p.id)}`, geometries, content,
       quality:expires === null ? 'Expiration unavailable; check NWS.' : ends !== null && ends <= stamp
         ? 'NWS still returns this alert; stated end time has passed. Verify with NWS.' : '',
