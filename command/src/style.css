@@ -571,6 +571,8 @@ summary {
 }
 #gauge-colors { display:flex; flex-wrap:wrap; gap:6px 10px; margin:10px 0; }
 #gauge-readings p { white-space:pre-line; }
+#burn-context-status:not([hidden]) { display:flex; align-items:center; gap:6px; color:#e4c6a9; margin:8px 0; }
+#burn-context-status i { flex:0 0 14px; height:9px; border:1.5px dashed #cda986; background:#cda98618; }
 .legend-swatch {
   display: inline-block;
   width: 12px;

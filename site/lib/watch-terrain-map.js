@@ -52,8 +52,9 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-city-names',type:'symbol',source:'watch-cities',minzoom:9.5,
   layout:{'text-field':['concat',['get','name'],' (city)'],'text-size':11,...(fonts?{'text-font':fonts}:{})},
   paint:{'text-color':'#d7e5df','text-halo-color':'#172126','text-halo-width':2}},'watch-lines');
- map.addLayer({id:'watch-burn-fill',type:'fill',source:'watch-burn-scars',paint:{'fill-color':'#cda986','fill-opacity':.07}},'watch-lines');
- map.addLayer({id:'watch-burn-outlines',type:'line',source:'watch-burn-scars',paint:{'line-color':'#cda986','line-width':1.5,'line-dasharray':[2,2]}},'watch-lines');
+ // Reference perimeters sit beneath official alert polygons and their outlines.
+ map.addLayer({id:'watch-burn-fill',type:'fill',source:'watch-burn-scars',paint:{'fill-color':'#cda986','fill-opacity':.07}},'watch-polygons');
+ map.addLayer({id:'watch-burn-outlines',type:'line',source:'watch-burn-scars',paint:{'line-color':'#cda986','line-width':1.5,'line-dasharray':[2,2]}},'watch-polygons');
  let contextKey,countiesRef;
  map.addLayer({id:'watch-nws-corridor-labels',type:'symbol',source:'watch-records',minzoom:8,filter:['==',['get','kind'],'nws-corridor'],layout:{'text-field':['get','citation'],'symbol-placement':'line','text-size':12,...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#c9eef4','text-halo-color':'#172126','text-halo-width':2}});
  map.addSource('command-triggers',{type:'geojson',data:empty});

@@ -85,7 +85,7 @@ let showAll = false,
   weatherViews: any = {},
   forecastRequest: AbortController | undefined,
   gustTimer: any;
-let burnContextPreference: boolean | null = null;
+let burnContextPreference = true;
 let referenceMatches: any[] = [],
   referenceResults = new Map<string, Concern>(),
   searchGeneration = 0,
@@ -968,7 +968,8 @@ function updateMap() {
   features = [...new Map(features.map((f) => [JSON.stringify([f.id, f.properties?.id, f.geometry]), f])).values()];
   map.set({ type: "FeatureCollection", features });
   const gauges = features.filter(f => f.properties?.gaugeDisplay);
-  $("gauge-key").hidden = !gauges.length && !feeds.counties?.length;
+  const burnFeatures = feeds.reference.find(r=>r.id === "burn-scars")?.features || [];
+  $("gauge-key").hidden = !gauges.length && !feeds.counties?.length && !feeds.mapContext && !feeds.errors["Burn scars & city boundaries"];
   $("gauge-readings").replaceChildren(...gauges.map(f => {
     const d = f.properties.gaugeDisplay, row = el("details");
     row.append(el("summary", `${d.name} · ${d.mapLabel}`), el("p", d.readout));
@@ -981,10 +982,14 @@ function updateMap() {
     }
   }
   map.highlightTriggers(triggerFeatures);
-  const showBurns = c?.kind === "burn-scar" || (burnContextPreference ?? ["rain","radar"].includes(weatherMode));
+  const showBurns = c?.kind === "burn-scar" || burnContextPreference;
   $<HTMLInputElement>("show-burn-scars").checked = showBurns;
   $<HTMLInputElement>("show-burn-scars").disabled = c?.kind === "burn-scar";
-  const burnFeatures = feeds.reference.find(r=>r.id === "burn-scars")?.features || [];
+  const burnFailed = !!feeds.errors["Burn scars & city boundaries"];
+  const burnOld = feeds.mapContext && Date.now()-Date.parse(feeds.mapContext.generatedAt)>48*3600000;
+  $("burn-context-status").hidden = !showBurns || (!feeds.mapContext && !burnFailed);
+  $("burn-context-label").textContent = burnFailed || burnOld ? "Burn reference · check Coverage"
+    : !burnFeatures.length ? "No burn areas returned · coverage unassessed" : "Burn areas · reference";
   const selectedBurns = new Set(c?.features.filter(f=>f.properties?.kind === "burn-scar").map(f=>f.properties.id));
   map.context({key:[feeds.mapContext?.generatedAt,showBurns,c?.id].join("|"),counties:feeds.counties,
     cities:feeds.mapContext?.cities,
