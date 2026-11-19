@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-+KaC3uJ192QTdfXbpwKfF+Ff2LkJjsxtOrwF6GxGc2Y='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-ksosjsvB5tihL7YaBABVdGGoXgSvet4MvXUbqRKPYsY=' 'sha256-InsuB9oLyVCbWCvW/4NID7aD1HgmlbTZCquG6MW4ajc=' 'sha256-q5J210ocCC2QbZUTWX+KBtHXZ05+nKzVwJjvn6RrjuQ='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action https://*.arcgis.com;">
 <meta name="description" content="Fresno County GIS prototype for regional NWS alerts. Not an emergency notification service."><title>Fresno County · Storm Watch</title>
 <link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195"><link rel="icon" href="./assets/frog-logo.png" type="image/png"><link rel="apple-touch-icon" href="./assets/frog-logo.png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./power-network.css?v=d30e0e3af8"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69"><link rel="stylesheet" href="./calcite-layout.css?v=31d486d23c"><link rel="stylesheet" href="./mission.css?v=32d1ebbeb6"><link rel="stylesheet" href="./command.css?v=eba47caf7d"><link rel="stylesheet" href="./drainage.css?v=6dc8bee86e"><link rel="stylesheet" href="./care.css?v=0abe052473"><link rel="stylesheet" href="./dwr.css?v=6b7618dde1"><link rel="stylesheet" href="./population.css?v=1c117f6064">
 <script src="./theme.js?v=8a60674390"></script>
@@ -43,9 +43,10 @@
 "./lib/care-review-ui.js":"./lib/care-review-ui.js?v=3fa226efa7",
 "./lib/care-ui.js":"./lib/care-ui.js?v=462aab046f",
 "./lib/cloud-top-height-data.js":"./lib/cloud-top-height-data.js?v=efe76ea6fd",
-"./lib/cloud-top-inspection.js":"./lib/cloud-top-inspection.js?v=ec129b3118",
+"./lib/cloud-top-inspection.js":"./lib/cloud-top-inspection.js?v=3237ba8234",
 "./lib/cloud-top-layer.js":"./lib/cloud-top-layer.js?v=596b4c0d78",
 "./lib/cloud-top-style.js":"./lib/cloud-top-style.js?v=137c789c83",
+"./lib/command-gauge.js":"./lib/command-gauge.js?v=ebc0bbc5e9",
 "./lib/command-queue-model.js":"./lib/command-queue-model.js?v=bc0cecafe9",
 "./lib/county-sandbag-model.js":"./lib/county-sandbag-model.js?v=edda41f933",
 "./lib/county-sandbag-ui.js":"./lib/county-sandbag-ui.js?v=4aec4fbf4b",
@@ -181,7 +182,7 @@
 "./lib/reservoir-watch-ui.js":"./lib/reservoir-watch-ui.js?v=b9ea1daa59",
 "./lib/river-chart.js":"./lib/river-chart.js?v=84bae751aa",
 "./lib/river-exercise.js":"./lib/river-exercise.js?v=336a25d5ab",
-"./lib/river-model.js":"./lib/river-model.js?v=5df44b3607",
+"./lib/river-model.js":"./lib/river-model.js?v=d132278e23",
 "./lib/river-network-map.js":"./lib/river-network-map.js?v=1b97f90ff6",
 "./lib/river-network-model.js":"./lib/river-network-model.js?v=8613ab9a1c",
 "./lib/river-ui.js":"./lib/river-ui.js?v=dc10f5aafa",
@@ -208,7 +209,7 @@
 "./lib/watch-forecast-cloud-ui.js":"./lib/watch-forecast-cloud-ui.js?v=cafc2865d0",
 "./lib/watch-proximity.js":"./lib/watch-proximity.js?v=9c81ff8698",
 "./lib/watch-radar-ui.js":"./lib/watch-radar-ui.js?v=409a1d3dc3",
-"./lib/watch-terrain-map.js":"./lib/watch-terrain-map.js?v=fab18a3a3c",
+"./lib/watch-terrain-map.js":"./lib/watch-terrain-map.js?v=bf1bef173c",
 "./lib/watch-terrain-model.js":"./lib/watch-terrain-model.js?v=57b281d505",
 "./lib/watch-terrain-ready.js":"./lib/watch-terrain-ready.js?v=f7102473b2",
 "./lib/watch-terrain-session.js":"./lib/watch-terrain-session.js?v=38ff9cc7c4",

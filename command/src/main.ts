@@ -85,6 +85,7 @@ let showAll = false,
   weatherViews: any = {},
   forecastRequest: AbortController | undefined,
   gustTimer: any;
+let burnContextPreference: boolean | null = null;
 let referenceMatches: any[] = [],
   referenceResults = new Map<string, Concern>(),
   searchGeneration = 0,
@@ -377,7 +378,7 @@ function select(id: string) {
   }
   if (matchMedia("(max-width:700px)").matches) {
     const clicked = feeds.reference.find((c) => c.id === id) ?? referenceResults.get(id);
-    pane(clicked?.kind === "alert" && clicked?.features.length ? "map" : "details");
+    pane(["alert", "burn-scar"].includes(clicked?.kind || "") && clicked?.features.length ? "map" : "details");
   }
 }
 $("evidence-close").onclick = () => {
@@ -966,7 +967,30 @@ function updateMap() {
   }
   features = [...new Map(features.map((f) => [JSON.stringify([f.id, f.properties?.id, f.geometry]), f])).values()];
   map.set({ type: "FeatureCollection", features });
+  const gauges = features.filter(f => f.properties?.gaugeDisplay);
+  $("gauge-key").hidden = !gauges.length && !feeds.counties?.length;
+  $("gauge-readings").replaceChildren(...gauges.map(f => {
+    const d = f.properties.gaugeDisplay, row = el("details");
+    row.append(el("summary", `${d.name} · ${d.mapLabel}`), el("p", d.readout));
+    return row;
+  }));
+  if (!$("gauge-colors").childElementCount) {
+    for (const [label,color] of [["Below published threshold","#68bea5"],["Action","#f2d56f"],["Minor flood","#f0a25a"],["Moderate flood","#ed7478"],["Major flood","#cb96e8"],["Unknown / stale","#aab5bf"]]) {
+      const item=el("span",undefined,"legend-band"),swatch=el("i",undefined,"legend-swatch");swatch.style.backgroundColor=color;
+      item.append(swatch,document.createTextNode(label));$("gauge-colors").append(item);
+    }
+  }
   map.highlightTriggers(triggerFeatures);
+  const showBurns = c?.kind === "burn-scar" || (burnContextPreference ?? ["rain","radar"].includes(weatherMode));
+  $<HTMLInputElement>("show-burn-scars").checked = showBurns;
+  $<HTMLInputElement>("show-burn-scars").disabled = c?.kind === "burn-scar";
+  const burnFeatures = feeds.reference.find(r=>r.id === "burn-scars")?.features || [];
+  const selectedBurns = new Set(c?.features.filter(f=>f.properties?.kind === "burn-scar").map(f=>f.properties.id));
+  map.context({key:[feeds.mapContext?.generatedAt,showBurns,c?.id].join("|"),counties:feeds.counties,
+    cities:feeds.mapContext?.cities,
+    burnScars:showBurns?{type:"FeatureCollection",features:burnFeatures.filter(f=>!selectedBurns.has(f.properties.id))}:null});
+  $("context-note").textContent = feeds.mapContext ? `Recent mapped fires 2024–26 · reference checked ${date(Date.parse(feeds.mapContext.generatedAt))}. Coverage is incomplete. City boundaries: Census Jan. 1, 2026 reference.`
+    : "Burn-scar and city references have not loaded. County outlines remain available when returned.";
   const basin = c?.watershed
     ? feeds.watersheds?.features.find(
         (f: any) => f.properties.reservoir === c.watershed,
@@ -1152,7 +1176,7 @@ function syncAdvisoryRoads() {
 function syncAdvisoryWeather(reopen = false) {
   syncAdvisoryRoads();
   const c = state.value.view === "watch" ? current() : undefined;
-  const id = c?.kind === "alert" ? c.id : undefined;
+  const id = c && ["alert","burn-scar"].includes(c.kind) ? c.id : undefined;
   if (!reopen && id === checkedAdvisory) return;
   checkedAdvisory = id;
   advisoryRequest?.abort();
@@ -1166,6 +1190,12 @@ function syncAdvisoryWeather(reopen = false) {
   advisoryPlaybackIntent = undefined;
   advisoryRequest = request;
   void (async () => {
+    if (c.kind === "burn-scar") {
+      if (matchMedia("(max-width:700px)").matches) pane("map");
+      advisoryWeatherId = id;
+      await chooseWeather("rain");
+      return;
+    }
     const mode = model.advisoryForecastMode(c);
     let timing = c.alertTiming ?? { start: null, end: null };
     if (!mode) {
@@ -1477,17 +1507,19 @@ async function chooseWeather(mode: string, advisory?: AdvisoryTiming, autoplay =
   $<HTMLSelectElement>("weather").value = mode;
   if (advisory) $("weather-dock").dataset.advisory = mode;
   const epoch = weatherEpoch;
-  if (mode === "off") return;
+  if (mode === "off") { updateMap(); return; }
   await ensureMap();
   if (epoch !== weatherEpoch || !map) return;
+  updateMap();
   const controls = $("weather-controls"),
     info = $("weather-time"),
     items = $("weather-source");
   info.hidden = false;
   $("weather-details").hidden = false;
   info.textContent = "Loading dated weather evidence…";
-  $("weather-purpose").hidden = !advisory;
-  $("weather-purpose").textContent = mode === "radar" ? "Recent precipitation · observed scans, not a forecast"
+  $("weather-purpose").hidden = !advisory && current()?.kind !== "burn-scar";
+  $("weather-purpose").textContent = current()?.kind === "burn-scar" && mode === "rain" ? "Forecast rainfall · recent burn perimeter context"
+    : mode === "radar" ? "Recent precipitation · observed scans, not a forecast"
     : mode === "gust" ? "Expected gusts during this alert"
     : mode === "rain" ? "Expected rainfall during this alert" : "Expected new snowfall during this alert";
   if (mode.startsWith("snow-")) {
@@ -1584,6 +1616,11 @@ function selectWeather(mode: string) {
   });
 }
 $<HTMLSelectElement>("weather").onchange = () => selectWeather($<HTMLSelectElement>("weather").value);
+$("explore-burn-scars").onclick = () => {
+  if (feeds.reference.some(r=>r.id === "burn-scars")) {burnContextPreference=true;select("burn-scars");}
+  else notify("Burn-scar references have not loaded. Check Coverage & sources.");
+};
+$<HTMLInputElement>("show-burn-scars").onchange = () => {burnContextPreference=$<HTMLInputElement>("show-burn-scars").checked;updateMap();};
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) suspendWeather();
   else resumeWeather();

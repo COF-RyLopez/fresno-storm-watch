@@ -62,6 +62,9 @@ jobs:
       - name: Collect public county sandbag references
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:sandbags -- --published
+      - name: Refresh public burn-perimeter and city-boundary references when daily check is due
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npm run collect:command-context -- --published
       - name: Collect public PG&E and SCE power records
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:power -- --published

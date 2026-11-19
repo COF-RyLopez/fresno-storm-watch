@@ -57,4 +57,5 @@ export interface FeedState {
   watersheds?: any;
   timeline?: any;
   counties?: any[];
+  mapContext?: any;
 }

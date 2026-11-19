@@ -378,7 +378,25 @@ small {
   min-width: 44px;
   min-height: 44px;
 }
-.watch-cloud-readout .maplibregl-popup-content { padding-right: 48px; }
+.watch-cloud-readout, .watch-feature-hover { z-index: 3; }
+.watch-cloud-readout .maplibregl-popup-content {
+  padding-right: 48px;
+  white-space: pre-line;
+  font-size: 12px;
+  max-height: min(440px, 55dvh);
+  overflow-y: auto;
+}
+.watch-feature-hover .maplibregl-popup-content { white-space: pre-line; font-size: 12px; }
+@media (max-width: 700px) {
+  /* Long tap readouts use an inset card; an anchored popup can extend beyond a narrow map. */
+  .maplibregl-popup.watch-cloud-readout {
+    left: 12px; right: 12px; top: auto; bottom: 140px;
+    max-width: none !important;
+    transform: none !important;
+  }
+  .watch-cloud-readout .maplibregl-popup-tip { display: none; }
+  .watch-cloud-readout .maplibregl-popup-content { max-height: 40dvh; }
+}
 .concern .when {
   font-size: 12px;
   margin-top: 8px;
@@ -551,6 +569,8 @@ summary {
   overflow: auto;
   line-height: 1.5;
 }
+#gauge-colors { display:flex; flex-wrap:wrap; gap:6px 10px; margin:10px 0; }
+#gauge-readings p { white-space:pre-line; }
 .legend-swatch {
   display: inline-block;
   width: 12px;

@@ -29,6 +29,14 @@ test('tap inspects the rendered cloud, gives ground records priority, and clears
   surface.projectDepth=()=>.9;
   map.emit('click',{point:{x:30,y:30},lngLat:{lng:-119.4,lat:36.9}});
   assert.equal(popups[1].open,true,'Visible clouds in front of terrain remain selectable.');
+  record={name:'Gauge',hoverText:'Observed stage 11 ft\nRising · thresholds unknown',readout:'Gauge\nObserved stage 11 ft\nPublished thresholds unknown',key:'gauge'};
+  map.emit('mousemove',{point:{x:30,y:30},lngLat:{lng:-119.4,lat:36.9}});
+  assert.match(popups[0].text,/Observed stage 11 ft/);
+  map.emit('click',{point:{x:30,y:30},lngLat:{lng:-119.4,lat:36.9}});
+  assert.match(popups[1].text,/Published thresholds unknown/);
+  map.emit('mouseout',{originalEvent:{relatedTarget:{closest:selector=>selector==='.watch-cloud-readout'}}});
+  assert.equal(popups[1].open,true,'Moving into the inset tap card must not dismiss it.');
+  map.emit('movestart');assert.equal(popups[1].open,false,'Moving the map clears the old anchored reading.');
   record={name:'Gauge',key:'gauge'};map.emit('click',{point:{x:30,y:30},lngLat:{lng:-119.4,lat:36.9}});
   assert.deepEqual(selected,[record]);assert.equal(popups[1].open,false);
   record=null;surface=null;map.emit('click',{point:{x:30,y:30},lngLat:{lng:-119.4,lat:36.9}});

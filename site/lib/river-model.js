@@ -58,7 +58,7 @@ export function normalizeGauge(metadata, hydrograph, station, now = Date.now()) 
     sourceUrl:`https://water.noaa.gov/gauges/${station.id.toLowerCase()}` };
 }
 /** @param {object} gauge @param {string} name @param {string} units @returns {object[]} */
-function thresholdsFor(gauge, name, units) {
+export function thresholdsFor(gauge, name, units) {
   const field = name.toLowerCase() === 'stage' ? 'stage' : name.toLowerCase() === 'flow' ? 'flow' : null;
   if (!field) return [];
   const sourceUnits = field === 'stage' ? gauge.stageUnits : gauge.flowUnits;

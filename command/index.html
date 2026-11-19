@@ -112,6 +112,7 @@
             ><button data-place="river:kings-lower">
               Pine Flat <span>Kings River</span>
             </button>
+            <button id="explore-burn-scars">Burn scars &amp; rainfall</button>
           </div>
           <details class="coverage">
             <summary id="coverage-title">Coverage &amp; sources</summary>
@@ -157,6 +158,15 @@
             <p id="weather-purpose" hidden></p>
             <p id="weather-time" role="status" hidden></p>
             <div id="weather-legend" hidden></div>
+            <details id="gauge-key" hidden>
+              <summary>Map key &amp; gauge readings</summary>
+              <p>Dashed light outlines: county boundaries. Thin pale outlines: incorporated cities. Tan outlines: recent fire perimeters, not burn severity or debris-flow inundation.</p>
+              <label><input id="show-burn-scars" type="checkbox"> Recent fire perimeters</label>
+              <p id="context-note"></p>
+              <p>Solid mark: last observation. Hollow diamond: published forecast high. Arrow: observed trend. Clock: stale or unavailable reading. Dashed gray bar: thresholds unknown. Each station has its own display scale; this is not river capacity or water depth.</p>
+              <div id="gauge-colors"></div>
+              <div id="gauge-readings"></div>
+            </details>
             <details id="weather-details" hidden>
               <summary>Source &amp; coverage</summary>
               <div id="weather-source"></div>

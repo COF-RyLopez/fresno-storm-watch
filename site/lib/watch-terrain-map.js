@@ -5,6 +5,7 @@ import {createHanfordVolumeLayer} from './hanford-volume-layer.js';
 import {createCloudTopLayer} from './cloud-top-layer.js';
 import {installCloudTopInspection} from './cloud-top-inspection.js';
 import {createWatchWindTrails} from './watch-wind-trails.js';
+import {gaugeIcon} from './command-gauge.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 export async function createWatchTerrain({container,onSelect,onError,onCamera=()=>{}}){
@@ -41,6 +42,19 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'watch-road-blocks',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'road']],layout:{'icon-image':'road-block','icon-size':.75,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#15191a','icon-halo-width':1.5}});
  map.addLayer({id:'watch-facilities',type:'symbol',source:'watch-records',filter:['all',['==',['geometry-type'],'Point'],['==',['get','kind'],'facility']],layout:{'icon-image':'facility','icon-size':.6,'icon-allow-overlap':true},paint:{'icon-color':['get','color'],'icon-halo-color':'#e8f6fb','icon-halo-width':1}});
  const fonts=style.layers.find(l=>l.type==='symbol'&&l.layout?.['text-font']?.includes('Ubuntu Regular'))?.layout['text-font'];
+ for(const id of ['watch-counties','watch-cities','watch-burn-scars'])map.addSource(id,{type:'geojson',data:empty});
+ map.addLayer({id:'watch-county-boundaries',type:'line',source:'watch-counties',paint:{
+  'line-color':['case',['==',['get','GEOID'],'06019'],'#d7dfe0','#8b9da6'],
+  'line-width':['case',['==',['get','GEOID'],'06019'],2,1],'line-opacity':.7,'line-dasharray':[6,3]}},'watch-lines');
+ // Retain the quiet basemap's county-name placement instead of duplicating polygon labels.
+ map.addLayer({id:'watch-city-boundaries',type:'line',source:'watch-cities',minzoom:7.5,
+  paint:{'line-color':'#b0c3bb','line-width':1.1,'line-opacity':.7}},'watch-lines');
+ map.addLayer({id:'watch-city-names',type:'symbol',source:'watch-cities',minzoom:9.5,
+  layout:{'text-field':['concat',['get','name'],' (city)'],'text-size':11,...(fonts?{'text-font':fonts}:{})},
+  paint:{'text-color':'#d7e5df','text-halo-color':'#172126','text-halo-width':2}},'watch-lines');
+ map.addLayer({id:'watch-burn-fill',type:'fill',source:'watch-burn-scars',paint:{'fill-color':'#cda986','fill-opacity':.07}},'watch-lines');
+ map.addLayer({id:'watch-burn-outlines',type:'line',source:'watch-burn-scars',paint:{'line-color':'#cda986','line-width':1.5,'line-dasharray':[2,2]}},'watch-lines');
+ let contextKey,countiesRef;
  map.addLayer({id:'watch-nws-corridor-labels',type:'symbol',source:'watch-records',minzoom:8,filter:['==',['get','kind'],'nws-corridor'],layout:{'text-field':['get','citation'],'symbol-placement':'line','text-size':12,...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#c9eef4','text-halo-color':'#172126','text-halo-width':2}});
  map.addSource('command-triggers',{type:'geojson',data:empty});
  map.addLayer({id:'command-trigger-lines',type:'line',source:'command-triggers',
@@ -62,7 +76,15 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  map.addLayer({id:'command-gust-dots',type:'circle',source:'command-gust-points',paint:{'circle-radius':8,'circle-color':['get','color'],'circle-stroke-color':'#eef8ff','circle-stroke-width':2,'circle-pitch-alignment':'viewport'}});
  map.addLayer({id:'command-gust-labels',type:'symbol',source:'command-gust-points',layout:{'text-field':['get','label'],'text-size':13,'text-anchor':'bottom','text-offset':[0,-1],...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#eef8ff','text-halo-color':'#172126','text-halo-width':2}});
  map.addLayer({id:'watch-labels',type:'symbol',source:'watch-records',filter:['==',['geometry-type'],'Point'],minzoom:10,layout:{'text-field':['get','name'],'text-size':12,'text-offset':[0,1.3],'text-anchor':'top',...(fonts?{'text-font':fonts}:{})},paint:{'text-color':'#e6f5fa','text-halo-color':'#18252c','text-halo-width':2}});
- const records=['command-gust-dots','command-gust-labels','watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-nws-corridors','watch-nws-corridor-labels','watch-polygons'];
+ map.setFilter('watch-labels',['all',['==',['geometry-type'],'Point'],['!=',['get','kind'],'gauge']]);
+ const pointFilter=map.getFilter('watch-points');map.setFilter('watch-points',['all',pointFilter,['!',['has','gaugeIcon']]]);
+ map.addLayer({id:'watch-gauges',type:'symbol',source:'watch-records',filter:['has','gaugeIcon'],layout:{
+  'icon-image':['get','gaugeIcon'],'icon-size':.85,'icon-anchor':'bottom','icon-pitch-alignment':'viewport','icon-rotation-alignment':'viewport',
+  'text-field':['concat',['get','gaugeLabel'],'\n',['get','gaugeId']],'text-size':11,'text-anchor':'top','text-offset':[0,.3],
+  'text-max-width':12,'text-optional':true,...(fonts?{'text-font':fonts}:{})},
+  paint:{'text-color':'#eef8ff','text-halo-color':'#172126','text-halo-width':2}});
+ const gaugeImages=new Map();
+ const records=['watch-gauges','command-gust-dots','command-gust-labels','watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-nws-corridors','watch-nws-corridor-labels','watch-polygons','watch-burn-outlines','watch-burn-fill'];
  const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
  let destroyed=false,overhead=false,pendingBounds=null;
  const imageUrls=new Map();
@@ -152,9 +174,25 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
  map.on('moveend',()=>onCamera({center:map.getCenter().toArray(),zoom:map.getZoom(),pitch:map.getPitch(),bearing:map.getBearing()}));
- return {set(data){if(destroyed)return;inspection.clear();map.getSource('watch-records').setData(data);},focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
+ return {set(data){
+  if(destroyed)return;inspection.clear();
+  const features=data.features.map(feature=>{
+   const display=feature.properties?.gaugeDisplay;if(!display)return feature;
+   const id='gauge-'+display.id,signature=JSON.stringify(display);
+   if(gaugeImages.get(id)!==signature){const image=gaugeIcon(display);if(map.hasImage(id))map.updateImage(id,image);else map.addImage(id,image,{pixelRatio:2});gaugeImages.set(id,signature);}
+   return {...feature,properties:{...feature.properties,gaugeIcon:id}};
+  });
+  map.getSource('watch-records').setData({...data,features});
+ },focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
+  context({key,counties,cities,burnScars}){
+   if(destroyed||key===contextKey&&counties===countiesRef)return;
+   contextKey=key;countiesRef=counties;
+   map.getSource('watch-counties').setData(counties?.length?{type:'FeatureCollection',features:counties}:empty);
+   map.getSource('watch-cities').setData(cities||empty);
+   map.getSource('watch-burn-scars').setData(burnScars||empty);
+  },
   rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
   gust(image){setImage('command-gust',image,{'raster-opacity':.62,'raster-resampling':'nearest'});},
   snowCover(image){setImage('command-snow-cover',image,{'raster-opacity':['interpolate',['linear'],['zoom'],9,.7,11,.25,12,0],'raster-resampling':'nearest'});},
