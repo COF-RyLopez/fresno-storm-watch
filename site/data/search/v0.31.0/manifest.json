@@ -287,7 +287,7 @@
     "waterway": {
       "url": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/50",
       "publisher": "USGS 3D Hydrography Program",
-      "retrievedAt": "2026-11-15T00:44:29.181036+00:00"
+      "retrievedAt": "2026-11-22T19:57:13.565851+00:00"
     }
   },
   "geometryNote": "Public reference snapshot. County street search and 3DHP waterways covering Fresno and both reservoir watersheds. 5 m display simplification in EPSG:26944, returned as EPSG:4326. Grouped names do not establish connection, travel direction, road access, current conditions or routing."

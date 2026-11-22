@@ -4,7 +4,7 @@
   "source": {
     "url": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/60",
     "publisher": "USGS 3D Hydrography Program",
-    "retrievedAt": "2026-11-15T00:44:40.028214+00:00"
+    "retrievedAt": "2026-11-22T19:57:59.022918+00:00"
   },
   "sourceSha256": "2751f4b1f22bdbeb26d08f774d4f0e4f5ab1ce414f5e77066688a36bcb1db5bd",
   "accounting": {

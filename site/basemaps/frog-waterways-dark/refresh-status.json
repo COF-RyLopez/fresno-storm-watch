@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "state": "current",
-  "lastAttemptAt": "2026-11-15T00:46:10.001354+00:00",
-  "lastSuccessAt": "2026-11-15T00:46:10.001354+00:00",
+  "lastAttemptAt": "2026-11-22T19:58:54.980620+00:00",
+  "lastSuccessAt": "2026-11-22T19:58:54.980647+00:00",
   "schedule": "Weekly, Sunday 12:30 UTC",
   "coverage": "Fresno County and the Millerton and Pine Flat upstream drainage areas",
   "message": "Both USGS sources freshly retrieved, geometry and tiles validated. Retrieval is not a new survey date.",

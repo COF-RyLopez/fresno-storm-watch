@@ -2,8 +2,8 @@
   "source": "https://3dhp.nationalmap.gov/arcgis/rest/services/usgs_3dhp_all/MapServer/60",
   "publisher": "USGS 3D Hydrography Program",
   "countyGeoid": "06019",
-  "retrievalStartedAt": "2026-11-15T00:44:33.103113+00:00",
-  "retrievedAt": "2026-11-15T00:44:40.028214+00:00",
+  "retrievalStartedAt": "2026-11-22T19:57:16.636352+00:00",
+  "retrievedAt": "2026-11-22T19:57:59.022918+00:00",
   "retrievalPolicy": "Validated resumable batches for the same ID inventory, fields and county filter; not an atomic editing-service snapshot. Cached batch modification times retained as the beginning of the retrieval window.",
   "crs": "OGC:CRS84",
   "bounds": [
@@ -70,7 +70,7 @@
   "maxzoom": 12,
   "tileCount": 1120,
   "tileBytes": 4491940,
-  "tilesSha256": "1ab82e70500ad83981dec5db29f68dad119566b6a700d7e3b9b0b9d17dbfac72",
+  "tilesSha256": "653d2d658ee071f01745de8cabb239ba21f9506ef166f4dc1cc00eb5352591cf",
   "labelAnchors": 494,
   "labelNames": [
     "Adobe Flat",

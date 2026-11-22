@@ -3,7 +3,7 @@
   "name": "F.R.O.G. Waterways — Dark",
   "scheme": "xyz",
   "tiles": [
-    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/tiles-v0.29.0/{z}/{x}/{y}.pbf?v=2026-11-15T00%3A44%3A29.181036%2B00%3A00"
+    "https://cof-rylopez.github.io/fresno-storm-watch/basemaps/frog-waterways-dark/tiles-v0.29.0/{z}/{x}/{y}.pbf?v=2026-11-22T19%3A57%3A13.565851%2B00%3A00"
   ],
   "minzoom": 0,
   "maxzoom": 14,
