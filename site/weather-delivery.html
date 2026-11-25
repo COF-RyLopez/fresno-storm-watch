@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'sha256-KyIPoVfSDF6Z8bY+7KGSRWVPzzN7foCgJXVDn4Dvrww='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'sha256-rqSvpGsto98ANjG2GDZNSsutUHPZnSxjILhSygItQf0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'">
   <title>F.R.O.G. · Weather delivery test</title>
   <link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195">
   <link rel="stylesheet" href="./weather-delivery.css?v=7b196f98ef">
@@ -16,7 +16,7 @@
       <fieldset><legend>Delivery method</legend><label><input type="radio" name="method" value="prepared" checked> Prepared frames</label><label><input type="radio" name="method" value="direct"> Current service workflow</label></fieldset>
       <p id="load-status" role="status">Opening the recorded public forecast…</p>
       <section id="evidence" aria-label="Displayed weather evidence"><h2 id="period">No weather frame displayed</h2><p id="valid"></p><p id="issue"></p><div id="legend" aria-label="Forecast rainfall legend"></div><p id="frame-note"></p></section>
-      <details><summary>Source and test method</summary><p id="source"></p><p id="context-note"></p><ul id="map-errors" aria-label="Reference layer issues"></ul><p>Both methods use identical recorded WPC responses and image bytes. The prepared route loads a manifest and selected image instead of rebuilding the forecast through service queries. These are display images, not numerical depth grids or a new weather model.</p><p id="profile"></p><p>Measurements end when validated weather data is ready. They exclude terrain startup, GPU painting, interactive sign-in and production CDN performance. No private data or persistent browser cache is used.</p></details>
+      <details><summary>Source and test method</summary><p id="source"></p><p id="context-note"></p><ul id="map-errors" aria-label="Reference layer issues"></ul><p>Both methods use identical recorded WPC responses and image bytes. The prepared route loads a manifest and selected image instead of rebuilding the forecast through service queries. These are display images, not numerical depth grids or a new weather model. The published comparison replays static responses; it does not benchmark live NWS service latency.</p><p id="profile"></p><p>Measurements end when validated weather data is ready. They exclude terrain startup, GPU painting, interactive sign-in and production CDN performance. No private data or persistent browser cache is used.</p></details>
       <button id="benchmark" disabled>Run five paired trials</button>
       <p id="benchmark-status" role="status"></p>
       <table id="results" hidden><caption>Weather data ready · five paired trials per period</caption><thead><tr><th>Method</th><th>Time</th><th>Requests</th></tr></thead><tbody></tbody></table>
@@ -63,14 +63,14 @@
 "./lib/watch-wind-trails.js":"./lib/watch-wind-trails.js?v=ff1a994769",
 "./lib/watershed-timeline-model.js":"./lib/watershed-timeline-model.js?v=0c6a535a8a",
 "./lib/waterway-basemap.js":"./lib/waterway-basemap.js?v=a97fecb6c2",
-"./lib/weather-delivery-lab.js":"./lib/weather-delivery-lab.js?v=da367ef8f5",
+"./lib/weather-delivery-lab.js":"./lib/weather-delivery-lab.js?v=7db31ef73b",
 "./lib/weather-delivery-measure.js":"./lib/weather-delivery-measure.js?v=f4e8143ea1",
 "./lib/weather-frame-cache.js":"./lib/weather-frame-cache.js?v=f564e5d1f6",
-"./lib/weather-frame-package.js":"./lib/weather-frame-package.js?v=b14912b5fd",
+"./lib/weather-frame-package.js":"./lib/weather-frame-package.js?v=7cd3dfc358",
 "./lib/weather-model.js":"./lib/weather-model.js?v=1bd1a127dc",
 "./lib/with-timeout.js":"./lib/with-timeout.js?v=1ddcc38435"
 }}
 </script>
-<script type="module" src="./lib/weather-delivery-lab.js?v=da367ef8f5"></script>
+<script type="module" src="./lib/weather-delivery-lab.js?v=7db31ef73b"></script>
 </body>
 </html>

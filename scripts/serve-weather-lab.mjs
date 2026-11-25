@@ -17,11 +17,14 @@ const server=http.createServer(async(req,res)=>{
   try{
     if(!['GET','HEAD'].includes(req.method)){res.writeHead(405).end();return;}
     const url=new URL(req.url,'http://localhost'),pathname=decodeURIComponent(url.pathname);
-    if(pathname==='/__weather-replay/profile.json'){
+    const prefix='/data/weather-delivery-experiment/';
+    if(pathname===prefix+'index.json'){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'}).end(JSON.stringify({schemaVersion:1,recording:'records/'+'0'.repeat(64)+'/',capturedAt:pointer.capturedAt}));return;}
+    if(pathname.startsWith(prefix)&&pathname.endsWith('/profile.json')||pathname==='/__weather-replay/profile.json'){
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'}).end(JSON.stringify({latencyMs:latency,kind:'same-host-recorded-response-replay'}));return;
     }
-    const recorded=pathname.startsWith('/__weather-replay/'),root=recorded?replay:site;
-    let suffix=recorded?pathname.slice('/__weather-replay/'.length):pathname.slice(1);
+    const recorded=pathname.startsWith(prefix)||pathname.startsWith('/__weather-replay/'),root=recorded?replay:site;
+    let suffix=recorded?pathname.slice(pathname.startsWith(prefix)?prefix.length:'/__weather-replay/'.length):pathname.slice(1);
+    if(recorded&&suffix.startsWith('records/')){if(!/^records\/0{64}\//.test(suffix)){res.writeHead(404).end();return;}suffix=suffix.replace(/^records\/0{64}\//,'');}
     if(suffix==='')suffix='weather-delivery.html';
     const path=resolve(root,suffix);
     if(!path.startsWith(resolve(root)+sep)){res.writeHead(403).end();return;}

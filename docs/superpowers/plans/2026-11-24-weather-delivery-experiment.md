@@ -36,3 +36,10 @@
 - Measurements: five paired trials per period, three periods, three profiles (135 measurements), all evidence identities matched. Corrected final validation timing after one independent review finding; 1,073 tests pass. See docs/weather-delivery-experiment-results.md for actual metrics and limitations.
 - Ruling: do not add a lower-resolution rainfall preview yet: the measured source images are only 45–126 KB. The request chain, not oversized images, is the initial optimization target.
 - Delivery: local experiment branch only. Published Command and existing private workflows are unchanged. Prepared display packages are recorded replay, not a scheduled live feed.
+
+## November 25 publication authorization
+
+- User requested a PR, merge and Pages publication for testing.
+- Added project-relative recording paths, allowlisted public seed assets, immutable recording directories and an atomic recording pointer. The optional refresh cannot block the main deployment; the seed is separately validated before refresh.
+- Fixed reference deduplication to use independent gauge IDs; public context contains 10 gauges and 2 reservoir locations, with original observation freshness labels.
+- Private data, trial logs and local acquisition files remain outside the deployed artifact. The comparison stays explicitly recorded and outside operator navigation.

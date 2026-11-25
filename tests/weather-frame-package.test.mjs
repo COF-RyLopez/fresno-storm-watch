@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {validateWeatherReplay,createPreparedWeather,frameFingerprint} from '../site/lib/weather-frame-package.js';
+import {validateWeatherReplay,createPreparedWeather,frameFingerprint,weatherReferenceFeatures} from '../site/lib/weather-frame-package.js';
 
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aGfoAAAAASUVORK5CYII=','base64');
 const hash=createHash('sha256').update(png).digest('hex');
@@ -12,6 +12,13 @@ const fixture=()=>({schemaVersion:1,kind:'recorded-wpc-display-replay',capturedA
     coordinates:[[-131,47],[-107.5,47],[-107.5,28],[-131,28]],legend:[{value:0.25,color:'rgb(1,2,3)'}],
     image:{file:`images/${hash}.png`,sha256:hash,bytes:png.length,width:1,height:1},
   }]});
+
+test('public replay retains separate gauges sharing a river parent and excludes unrelated utility areas',()=>{
+  const point=(id,kind)=>({type:'Feature',id,geometry:{type:'Point',coordinates:[-119.5,37]},properties:{id:'river:kings-lower',kind,name:id}});
+  const result=weatherReferenceFeatures([point('gauge:a','gauge'),point('gauge:b','gauge'),point('reservoir:PNF','reservoir'),point('outage','power')]);
+  assert.deepEqual(result.map(f=>f.id),['gauge:a','gauge:b','reservoir:PNF']);
+  assert.throws(()=>weatherReferenceFeatures([{...point('private','gauge'),private:true}]),/private/i);
+});
 
 test('recorded frame contract keeps dates, legend, units, CRS and geometry together',()=>{
   assert.equal(validateWeatherReplay(fixture()).frames.length,1);

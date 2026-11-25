@@ -37,7 +37,7 @@ The 390×844 profile is the **same browser with a mobile viewport override**, no
 
 ## Artifacts and reproduction
 
-All captures, raw responses, trial JSON and screenshots stay under ignored `work/weather-delivery/`. They contain public forecast/reference data only and are excluded from GitHub Pages. The comparison route is not linked from operator navigation. No AGOL/private data or permissions change.
+The original captures, trial JSON and screenshots stay under ignored `work/weather-delivery/`. Publication was subsequently authorized on November 25: release 0.101.0 includes an allowlisted public replay on Pages. Trial logs, screenshots, acquisition logs and other work files remain excluded. See `docs/weather-delivery-publishing.md`. The comparison route is not linked from operator navigation. No AGOL/private data or permissions change.
 
 On Windows PowerShell, from the repository root:
 

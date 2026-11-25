@@ -5,7 +5,7 @@ import {performance} from 'node:perf_hooks';
 import {loadWatershedRain,regionalForecastBounds} from '../site/lib/watch-watershed-data.js';
 import {fetchQpfCycle} from '../site/lib/environment-data.js';
 import {QPF_URL} from '../site/lib/environment-model.js';
-import {validateWeatherReplay} from '../site/lib/weather-frame-package.js';
+import {validateWeatherReplay,weatherReferenceFeatures} from '../site/lib/weather-frame-package.js';
 import {riverConcerns} from '../site/lib/command-data.js';
 
 const root=new URL('../',import.meta.url),base=new URL('work/weather-delivery/',root);
@@ -60,8 +60,7 @@ let features=[],contextNote='Gauge/reservoir context unavailable';
 try{
   const bundle=JSON.parse(await readFile(new URL('site/data/map-pilot-latest.json',root),'utf8'));
   const assessment=riverConcerns(bundle,clock);
-  const all=[...assessment.features,...assessment.rows.flatMap(row=>row.features)];
-  features=[...new Map(all.map(f=>[f.properties?.id||JSON.stringify(f.geometry),f])).values()];
+  features=weatherReferenceFeatures(assessment.features);
   contextNote='Recorded public gauges/reservoirs; each reading retains its observation time. Missing/old readings are unassessed.';
 }catch(error){contextNote+=': '+error.message;}
 await writeFile(new URL('context.json',output),JSON.stringify({watersheds,features,contextNote}));

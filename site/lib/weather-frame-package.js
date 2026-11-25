@@ -6,6 +6,19 @@ const fail=message=>{throw Error('Weather replay '+message);};
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
 const freeze=value=>{if(value&&typeof value==='object'){for(const v of Object.values(value))freeze(v);Object.freeze(value);}return value;};
 
+/** Keep point identities independent of their shared parent river-concern ID. */
+export function weatherReferenceFeatures(features){
+  const result=new Map();
+  for(const f of features){
+    if(f.private||f.properties?.private)fail('private reference is not publishable');
+    if(!['gauge','reservoir'].includes(f.properties?.kind))continue;
+    const p=f.geometry?.coordinates,id=f.id||f.properties.gaugeId;
+    if(!id||f.geometry?.type!=='Point'||!Array.isArray(p)||p.length!==2||!p.every(finite)||Math.abs(p[0])>180||Math.abs(p[1])>90)fail('reference point is invalid');
+    result.set(id,structuredClone(f));
+  }
+  return [...result.values()];
+}
+
 /** Validate a recorded display product; never infer zero rainfall from absent data. */
 export function validateWeatherReplay(p){
   if(p?.schemaVersion!==1||p.kind!=='recorded-wpc-display-replay'||p.publisher!=='NOAA WPC'||p.source!==QPF_URL||

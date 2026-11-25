@@ -3,13 +3,14 @@ import {createWatchTerrain} from './watch-terrain-map.js';
 import {loadWatershedRain} from './watch-watershed-data.js';
 import {validateWeatherReplay,createPreparedWeather,frameFingerprint} from './weather-frame-package.js';
 
-const $=id=>document.getElementById(id),base=new URL('/__weather-replay/',location.href);
+const $=id=>document.getElementById(id);
+let base=new URL('../data/weather-delivery-experiment/',import.meta.url);
 const format=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const sha=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');
 let map,manifest,routes,context,prepared,epoch=0,closed=false;
 const method=()=>document.querySelector('input[name="method"]:checked').value;
-const json=async file=>{const r=await fetch(new URL(file,base),{cache:'no-store',credentials:'omit'});if(!r.ok)throw Error('Replay is unavailable; run the capture and local laboratory server.');return r.json();};
+const json=async file=>{const r=await fetch(new URL(file,base),{cache:'no-store',credentials:'omit'});if(!r.ok)throw Error('Recorded comparison data is unavailable; the main Command workspace is unchanged.');return r.json();};
 
 function observedFetch(stats){
   return async(input,init)=>{
@@ -107,8 +108,12 @@ async function benchmark(){
 }
 async function start(){
   try{
+    const pointer=await json('index.json');
+    if(pointer.schemaVersion!==1||!/^records\/[a-f0-9]{64}\/$/.test(pointer.recording))throw Error('Invalid recording pointer');
+    base=new URL(pointer.recording,base);
     [manifest,routes,context]=await Promise.all([json('manifest.json'),json('routes.json'),json('context.json')]);
     validateWeatherReplay(manifest);
+    if(manifest.capturedAt!==pointer.capturedAt)throw Error('Recording time mismatch');
     prepared=createPreparedWeather(manifest,base);
     const profile=await json('profile.json');
     $('source').textContent=`NOAA WPC. Recorded ${format.format(manifest.clock)}. Forecast images: ${manifest.rasterCrs}; corner coordinates: ${manifest.coordinateCrs}.`;
