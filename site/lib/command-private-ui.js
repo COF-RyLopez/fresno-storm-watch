@@ -410,6 +410,7 @@ function recordHistory(record, collection, label = "Record version") {
   return details;
 }
 
+/** @param {{work: HTMLElement, briefing: HTMLElement, controller: ReturnType<typeof import("./command-private.js").createCommandPrivate>, onFocus?: (selection: any) => void, onNavigate?: (view: string) => void, onNotices?: () => void, team?: string}} options */
 export function mountCommandPrivate({
   work,
   briefing,

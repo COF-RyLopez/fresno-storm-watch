@@ -89,6 +89,7 @@ function pumpConcern(id, pump, inventory, problem) {
   );
 }
 
+/** @param {{onChange?: (state: ReturnType<typeof cleared>) => void, loadSdk?: typeof loadCoreSdk}} [options] */
 export function createCommandAssets({
   onChange = () => {},
   loadSdk = loadCoreSdk,

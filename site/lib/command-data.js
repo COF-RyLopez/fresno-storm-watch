@@ -334,6 +334,7 @@ export function alertConcerns(alerts) {
 }
 
 /** Progressive independent source refresh. Failed updates retain their source times and carry explicit failures. */
+/** @param {import("../../command/src/module-contracts.ts").FeedOptions} [options] */
 export function createCommandFeeds({
   baseUrl = new URL("../", import.meta.url),
   onChange = () => {},

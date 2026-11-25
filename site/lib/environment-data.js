@@ -14,7 +14,7 @@ export async function fetchRadarFrames(fetchImpl=fetch,now=Date.now()){
   return radarFrames(await environmentalJson(url,fetchImpl),now);
 }
 
-/** @param {object} period @param {Function} fetchImpl @param {number} now @returns {Promise<object>} Do not derive source timing from local rain/no-rain polygons. */
+/** @param {object} period @param {Function} fetchImpl @param {number} now @returns {Promise<ReturnType<typeof qpfCycle>>} Do not derive source timing from local rain/no-rain polygons. */
 export async function fetchQpfCycle(period,fetchImpl=fetch,now=Date.now()){
   const url=new URL(`${QPF_URL}/${period.id}/query`);
   // The publisher advertises DISTINCT but returned HTTP-200 service errors for

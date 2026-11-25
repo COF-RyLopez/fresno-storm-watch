@@ -8,6 +8,7 @@ const storage=(area,fn)=>{try{return fn(window[area]);}catch{return null;}};
 /** @returns {boolean} Whether this tab should try the portal on load: flag set and no attempt in the last 2 minutes (a cancel never loops). */
 export function shouldAutoSignIn(flag,tried,now=Date.now()){return flag==='1'&&!(now-Number(tried)<120000);}
 /** Shared PKCE sign-in. Private controllers clear memory before sign-out or expiry. */
+/** @param {any} config @param {boolean} exercise @param {(session: import("../../command/src/module-contracts.ts").CountySession | null) => void} [onChange] @param {{loadSdk?: typeof loadSdk}} [options] */
 export async function setupAuth(config,exercise,onChange=()=>{},{loadSdk:openSdk=loadSdk}={}) {
   const button=document.querySelector('#sign-in'),status=document.querySelector('#identity-status');
   const label=text=>button.setAttribute('text',text),help=()=>{const h=document.querySelector('#signin-help');h?.setAttribute(h.localName==='calcite-block'?'expanded':'open','');};

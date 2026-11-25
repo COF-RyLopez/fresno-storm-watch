@@ -3,6 +3,7 @@ import {countyGeometry} from "./model.js";
 import {METERS_PER_MILE} from "./nearby-search.js";
 /** Presentation state is memory-only. Refresh never replaces the selected place or camera. */
 export function createCommandState() {
+  /** @type {import("../../command/src/module-contracts.ts").CommandState} */
   let value = {
     view: "watch",
     selected: null,
@@ -18,6 +19,7 @@ export function createCommandState() {
     get value() {
       return value;
     },
+    /** @param {Partial<import("../../command/src/module-contracts.ts").CommandState>} next */
     patch(next) {
       value = { ...value, ...next };
       for (const f of listeners) f(value);

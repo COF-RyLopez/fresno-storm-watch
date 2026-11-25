@@ -8,6 +8,7 @@ import {createWatchWindTrails} from './watch-wind-trails.js';
 import {gaugeIcon} from './command-gauge.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
+/** @param {import("../../command/src/module-contracts.ts").TerrainOptions} options */
 export async function createWatchTerrain({container,onSelect,onError,onCamera=()=>{}}){
  const ml=await import('../vendor/maplibre-6.15.0/maplibre-gl.mjs');
  if(!protocol){const {Protocol}=await import('../vendor/pmtiles-4.5.0/pmtiles.js');protocol=new Protocol();ml.addProtocol('pmtiles',protocol.tile);}
@@ -185,7 +186,9 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
    return {...feature,properties:{...feature.properties,gaugeIcon:id}};
   });
   map.getSource('watch-records').setData({...data,features});
- },focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
+ },
+ /** @param {import("../../command/src/module-contracts.ts").Bounds} bounds @param {boolean} [animate] @param {number | {top:number,bottom:number,left:number,right:number}} [padding] */
+ focus(bounds,animate=true,padding){if(destroyed)return;map.resize();fit(bounds,animate,padding);},overhead(value){overhead=value;map.easeTo({pitch:overhead?0:50,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400});},
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   viewBounds(){const b=map.getBounds();return [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];},

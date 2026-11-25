@@ -25,6 +25,7 @@ export async function loadWatershed(reservoir,{signal,fetchImpl=fetch}={}){
 export const mercator=(lon,lat)=>[lon*Math.PI/180*6378137,Math.asinh(Math.tan(lat*Math.PI/180))*6378137];
 
 /** Fetch a compact map image tied to one verified WPC forecast cycle. */
+/** @param {readonly number[]} bounds @param {{window?: {start:number,end:number,layer:number} | null, signal?: AbortSignal, fetchImpl?: typeof fetch, clock?: () => number}} [options] */
 export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,clock=Date.now}={}){
  if(window&&!WPC_INTERVALS.includes(window.layer))throw Error('Unsupported six-hour forecast layer');
  const period=window?{id:window.layer,hours:6}:{id:9,hours:72};
