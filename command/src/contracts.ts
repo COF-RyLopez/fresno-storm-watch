@@ -42,7 +42,7 @@ export interface Concern {
   trigger?: { lines: string[]; features?: any[]; relatedIds?: string[]; firstCharts?: string[]; question: string };
   utilityUpdate?: {
     publisher: string; text: string; customers: number | null;
-    restoration: { key: string; label: string; passed: boolean };
+    restoration: { key: string; label: string; passed: boolean; time?: number | null };
     estimateChange?: { type: string; previous: string; current: string; detected: number };
   };
 }

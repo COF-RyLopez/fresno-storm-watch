@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {countyGeometry,formatPacific as checkedText} from './model.js';
 import {reportHealth} from './source-health.js';
 import {fresnoDefinition,inspectionDate,inventoryQuantity,assertScopedInventory} from './dwr-flood-fight-model.js';

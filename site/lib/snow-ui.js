@@ -1,5 +1,5 @@
 import {lazyDisplay} from './lazy-display.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {reportHealth} from './source-health.js';
 import {labelPolygons,createLabelLayer} from './map-labels.js';
 import {SNOW_POINTS,SNOW_ROUTES_URL,ROUTE_PRIORITIES,snowLevels,snowLevelAt,snowRange,feet,snowLines,chainPaths,profileSamples,profileStats,km,FT_PER_M,GNIS_URL,LANDMARK_LAYERS,placeOnProfile,labelRows} from './snow-model.js';

@@ -3,7 +3,7 @@ import {pioZoneLink} from './pio-zone-context.js';
 import {calculateAcsZonePopulation,cached} from './zone-acs-data.js';
 import {populationGeometryTools} from './population-snapshot-data.js';
 import {ZONE_ACS_METHOD,ZONE_ACS_LIMIT,ZONE_ACS_ERROR,ZONE_ACS_MOE_SOURCE,ZONE_ACS_BOUNDARIES,formatAllocationWeight} from './zone-acs-model.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {createAcsContext} from './acs-ui.js';
 import {afnContext} from './afn-ui.js';
 import {readCareCollection} from './care-data.js';

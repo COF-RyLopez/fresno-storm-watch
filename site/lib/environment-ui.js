@@ -1,7 +1,7 @@
 import {poolBackup} from './pine-flat-telemetry.js';
 import {reportHealth} from './source-health.js';
 import {createLabelLayer} from './map-labels.js';
-import { loadSdk } from './map.js';
+import { loadSdk } from './sdk.js';
 import { formatTime } from './model.js';
 import { RADAR_URL,QPF_URL,QPF_PERIODS,QPF_BANDS,qpfPlanningTime,reservoirMetricState,validateReservoirSnapshot,upstreamStorage } from './environment-model.js';
 import { environmentalJson,fetchRadarFrames,fetchQpfCycle } from './environment-data.js';

@@ -24,7 +24,7 @@ import {
 } from "./command-model.js";
 import { readCareCollection } from "./care-data.js";
 import { nwsGuidance } from "./command-alert-guidance.js";
-import { gaugeDisplay, refreshGaugeFeatures } from "./command-gauge.js";
+import { gaugeDisplay } from "./command-gauge.js";
 import { contextRecords } from "./command-context.js";
 import { CARE_SOURCES, ZONE_STATUS, zonesAt } from "./care-model.js";
 
@@ -50,8 +50,8 @@ const base = (id, kind, name) => ({
   details: [],
   links: [],
 });
-export function riverConcerns(bundle, now = Date.now()) {
-  const assessment = pilotAssessment(validatePilot(bundle, now), now),
+export function riverConcerns(bundle, now = Date.now(), checkError = null) {
+  const assessment = pilotAssessment(validatePilot(bundle, now), now, [], checkError),
     input = bundle.input;
   const rows = assessment.areas.map((row) => {
     const s = concernSummary(row),
@@ -370,11 +370,25 @@ export function createCommandFeeds({
   };
   function publish() {
     if (!alive) return;
+    const now = Date.now(), checkError = errors["River & reservoir evidence"];
+    if (bundle) {
+      assessment = riverConcerns(bundle, now, checkError);
+      assessment.rows = estimateTracker.apply(assessment.rows, now);
+      // Qualify retained evidence after tracking: presentation failures must not
+      // become cached utility revisions or overwrite estimate-change history.
+      if (checkError) assessment.rows = assessment.rows.map(row => ({
+        ...row,
+        quality: row.quality + " · Source check failed; retained evidence",
+        evidence: row.evidence.map(item => ({...item,
+          quality: item.quality + " · Source check failed; retained evidence",
+        })),
+      }));
+    }
     const all = [...assessment.rows, ...Object.values(sources).flat()];
     onChange({
       concerns: orderedConcerns(all.filter((c) => c.review)),
       reference: all,
-      features: refreshGaugeFeatures(assessment.features,bundle,CONFIG.rivers,Date.now(),errors["River & reservoir evidence"]),
+      features: assessment.features,
       errors: { ...errors },
       checked: { ...checked },
       loading: busy,
@@ -408,8 +422,6 @@ export function createCommandFeeds({
         validatePilot(next);
         if (!alive) return;
         bundle = next;
-        assessment = riverConcerns(next);
-        assessment.rows = estimateTracker.apply(assessment.rows);
         if (Date.now() - Date.parse(next.generatedAt) > 45 * 60000)
           errors["Published source bundle"] = "Scheduled collection overdue";
         else delete errors["Published source bundle"];
@@ -417,8 +429,6 @@ export function createCommandFeeds({
         const refreshed = await refreshPilotSnapshot(next, { fetchImpl });
         if (alive) {
           bundle = refreshed;
-          assessment = riverConcerns(refreshed);
-          assessment.rows = estimateTracker.apply(assessment.rows);
         }
       }),
       job("County roads", async () => {

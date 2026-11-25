@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {el} from './dom.js';
 import {badgeSymbol,badgeUrl} from './badge-symbols.js';
 import {createLabelLayer} from './map-labels.js';

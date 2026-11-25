@@ -2,7 +2,7 @@
 // Footprints come from a published scene layer (index.json "scene_buildings", scripts/build-flood-scene-buildings.py) or, until
 // then, from scripts/build-flood-footprints.py (footprints.geojson); scenarios without either fall back to points only.
 // Desktop prototype: the phone-tuned 2D page is flood-scenario.html.
-import { loadSdk } from './lib/map.js';
+import { loadSdk } from './lib/sdk.js';
 import { blend, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
 import { createTrafficCanvas } from './lib/evacuation-traffic.js';
 import { createFrameWindow } from './lib/frame-window.js';
