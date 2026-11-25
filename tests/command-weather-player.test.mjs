@@ -49,3 +49,19 @@ test('an already queued old timer cannot pause a newly started replay',async()=>
   await oldTimer();assert.equal(h.player.playing,true);assert.equal(h.timers.size,1);
   h.player.destroy();
 });
+
+test('every cached presentation is revalidated; a changed source cannot be replayed',async()=>{
+  let current=true,checks=0;
+  const h=harness({validate:async()=>{checks++;if(!current)throw Error('revision changed');}});
+  await h.player.select(0);current=false;
+  assert.equal(await h.player.select(0),false);
+  assert.equal(checks,2);assert.deepEqual(h.loads,[10]);assert.equal(h.draws.length,1);
+  assert.equal(h.states.at(-1).status,'error');h.player.destroy();
+});
+
+test('superseded async validation cannot paint over a newer selection',async()=>{
+  let release;
+  const h=harness({validate:async(_value,frame)=>{if(frame===10)await new Promise(done=>release=done);}});
+  const old=h.player.select(0);await tick();await h.player.select(1);release();await old;
+  assert.deepEqual(h.draws,[[40,20]]);h.player.destroy();
+});

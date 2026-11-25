@@ -7,6 +7,7 @@ const exportsByModule = {
   "command-data": ["createCommandFeeds", "riverConcerns", "roadConcerns", "alertConcerns"],
   "command-gust": ["loadGustForecast", "gustPointFeatures", "loadGustImage"],
   "command-model": ["createCommandState", "routeState", "advisoryForecastMode", "geometryBounds"],
+  "command-rain": ["createCommandRainDelivery"],
   "command-private": ["createCommandPrivate", "taskRows", "buildCommandBriefing"],
   "command-private-ui": ["mountCommandPrivate"],
   "command-search": ["createCommandSearch"],

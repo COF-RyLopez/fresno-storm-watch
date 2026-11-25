@@ -6,7 +6,7 @@ import {createWeatherFrameCache} from './weather-frame-cache.js';
  * @param {import("../../command/src/module-contracts.ts").PlaybackOptions<Frame, Value>} options
  * @returns {import("../../command/src/module-contracts.ts").ForecastPlayback}
  */
-export function createForecastPlayback({frames,load,render,changed=()=>{},available=()=>true,
+export function createForecastPlayback({frames,load,render,validate=async()=>{},changed=()=>{},available=()=>true,
   reducedMotion=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   dwell=1800,schedule=setTimeout,cancel=clearTimeout}) {
   const cache=createWeatherFrameCache(3);
@@ -19,6 +19,8 @@ export function createForecastPlayback({frames,load,render,changed=()=>{},availa
     if(at<0||at>=frames.length||!valid(run))return false;
     try {
       const value=await read(at);
+      if(!valid(run))return false;
+      await validate(value,frames[at]);
       if(!valid(run))return false;
       index=at;render(value,frames[at],at);return true;
     } catch(error) {
