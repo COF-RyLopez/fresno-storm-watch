@@ -54,6 +54,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
   let weatherMode: WeatherMode = "off";
   const weatherViews: Partial<Record<WeatherMode, ReturnType<Modules["watch-regional-radar-ui"]["installRegionalRadar"]>>> = {};
   let forecastPlayer: ForecastPlayback | undefined;
+  let resumeFrame: (() => boolean) | null = null;
   let forecastRequest: AbortController | undefined, snowRequest: AbortController | undefined;
   let advisoryRequest: AbortController | undefined;
   let gustTimer: ReturnType<typeof setTimeout> | undefined, snowTimer: ReturnType<typeof setTimeout> | undefined;
@@ -181,6 +182,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
               if(w.grid&&!image) throw Error("Snowfall frame unavailable");
             },
           });
+          if (!active()) return;
           shouldAutoplay=false;
           snowDraw=()=>void player.select(Number(picker.value));
           if(!frames.length){
@@ -228,6 +230,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       return;
     weatherSuspended = false;
     weatherViews[weatherMode]?.resume();
+    if (resumeFrame?.()) return;
     snowDraw?.();
     gustDraw?.();
     if (weatherMode === "rain" && lastRain) {
@@ -240,6 +243,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
   function pauseWeather() {
     forecastPlayer?.destroy();
     forecastPlayer = undefined;
+    resumeFrame = null;
     snowRequest?.abort();
     snowDraw = null;
     snowSummaries.clear();
@@ -280,8 +284,14 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     }
   }
 
-  async function mountForecastPlayer({frames,picker,key,load,render,epoch,autoplay=false,onError}: any) {
+  async function mountForecastPlayer<Frame, Value>({frames,picker,key,load,render,epoch,autoplay=false,onError}: {
+    frames: Frame[]; picker: HTMLInputElement | HTMLSelectElement; key(frame: Frame): string;
+    load(frame: Frame, signal: AbortSignal): Promise<Value>;
+    render(value: Value, frame: Frame, index: number): void;
+    epoch: number; autoplay?: boolean; onError?: () => void;
+  }) {
     forecastPlayer?.destroy();
+    let requestedIndex = frames.findIndex(frame => key(frame) === picker.value), renderedIndex = -1;
     const play = button("Play", () => {
       if (player.playing) player.pause();
       else void player.play();
@@ -304,18 +314,27 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           : index >= 0 ? `${index + 1} of ${frames.length}` : "Choose a forecast time";
         if (phase === "error") onError?.();
       },
-      render: (value: any, frame: any, index: number) => {
+      render: (value, frame, index) => {
         if (epoch !== weatherEpoch) return;
+        renderedIndex = index; requestedIndex = index;
         picker.value = key(frame);
         render(value,frame,index);
       },
     });
     forecastPlayer = player;
+    resumeFrame = () => {
+      if (epoch !== weatherEpoch || forecastPlayer !== player || requestedIndex < 0 || requestedIndex === renderedIndex) return false;
+      void player.select(requestedIndex);
+      return true;
+    };
     $("weather-controls").prepend(play);
     $("weather-controls").append(status);
-    const selectFrame=()=>void player.select(frames.findIndex((frame:any)=>key(frame)===picker.value));
+    const selectFrame = () => {
+      requestedIndex = frames.findIndex(frame => key(frame) === picker.value);
+      void player.select(requestedIndex);
+    };
     if(picker.type==='range')picker.oninput=selectFrame;else picker.onchange=selectFrame;
-    const selected = frames.findIndex((frame: any) => key(frame) === picker.value);
+    const selected = requestedIndex;
     if (selected >= 0 && await player.select(selected) && autoplay) await player.play({automatic:true});
     return player;
   }

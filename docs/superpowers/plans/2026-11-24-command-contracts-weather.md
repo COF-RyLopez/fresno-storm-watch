@@ -37,12 +37,12 @@ Late module/data rejection after another selection; hidden-map initialization; a
 - [x] Expose selection/advisory synchronization, suspend/resume, scope invalidation, viewport change, read-only evidence state and destruction.
 - [x] Connect the thin shell to that owner; preserve one map and existing renderer adapters.
 - [x] Verify rapid switching, late success/error, hidden-map requests, navigation, scope invalidation, missing frame and cleanup.
-- [ ] Run regression/type/build/site checks and desktop/phone smoke checks; commit the step.
+- [x] Run regression/type/build/site checks and desktop/phone smoke checks; commit the step.
 
 ## Task 3 — Review and handoff
 
-- [ ] Perform one independent review of the whole branch, correct material findings and rerun relevant checks.
-- [ ] Document ownership, verification, known limits and code-only rollback.
+- [x] Perform one independent review of the whole branch, correct material findings and rerun relevant checks.
+- [x] Document ownership, verification, known limits and code-only rollback.
 - [ ] Prepare an unmerged PR; no private record mutation or production cutover.
 
 ## Execution ledger
@@ -56,3 +56,8 @@ Late module/data rejection after another selection; hidden-map initialization; a
 - Task 2: nine lifecycle tests exercise actual forecast playback and controlled imports/data; no DOM/map updates from obsolete scopes. Browser verified snow point fallback, paused playback on Work/Watch, and rapid gust/rain selection. Media-query regression failed before the visibility listener and passes afterward.
 - Ruling: map selection callbacks carry feature properties (not a bare ID); corrected the contract to the actual renderer callback and removed the shell's callback any.
 - Ruling: release package 0.100.0 marks the ownership/contract change. No production deployment or private schema change.
+
+- Independent review: two P2 lifecycle gaps reproduced in three failing real-player regressions, then fixed together. Returning retries an undrawn selected rain/gust frame without resuming playback; an obsolete snow continuation can no longer replace the active redraw callback. All 12 lifecycle tests pass after fixes.
+- Browser: default desktop and 390×844 phone; Pine Flat selection and dated rain display survive Work/Watch. Snow grid unavailable stays labeled point guidance; NWS gust fallback has 9/9 named samples; radar/GOES observation times and dBZ legend visible. No browser errors observed. Local screenshots stay in ignored work/. No private records saved or account permissions tested.
+
+- Final local verification after review fixes: 1,066 tests passed; strict Command compiler, Vite build, generated import-map check, source/data/link checks and git diff --check passed. No dependency or lock resolution changes; package version only.

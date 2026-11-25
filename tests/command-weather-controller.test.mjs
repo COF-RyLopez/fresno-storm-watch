@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createCommandWeather} from '../command/src/weather-controller.ts';
 import {createForecastPlayback} from '../site/lib/command-weather-player.js';
 import * as model from '../site/lib/command-model.js';
+import {createForecastTimeline} from '../site/lib/forecast-timeline.js';
 import {FakeElement,stubGlobals} from './helpers/dom.mjs';
 
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
@@ -161,4 +162,39 @@ test('radar has one adapter, closes when switching and does not resume after des
   h.document.hidden=true;h.document.dispatchEvent(new Event('visibilitychange'));
   h.owner.viewportChanged();await h.owner.select('radar');
   assert.equal(events.length,count);
+});
+
+for(const product of ['rain','gust'])test(`${product} retries the selected initial frame when visibility interrupts its load`,async t=>{
+  const pending=deferred();let reads=0;
+  const image=product==='rain'?{cycle:{hours:72,start:1,end:Date.now()+60000,issue:1},legend:[],blob:null}:{blob:'gust'};
+  const load=async()=>++reads===1?pending.promise:image;
+  const h=setup(t,async name=>{
+    if(name==='watershed-timeline-model')return {precipitationTimeline:()=>({windows:[]})};
+    if(name==='watch-watershed-data')return {regionalForecastBounds:[],loadWatershedRain:load};
+    return {loadGustForecast:async()=>({provider:'hrrr',manifest:{attribution:'NOAA',run:new Date().toISOString()},
+      windows:[{start:Date.now()+60000,end:Date.now()+60000}]}),loadGustImage:load,gustLegend:[]};
+  });
+  const selected=h.owner.select(product);await flush();
+  h.document.hidden=true;h.document.dispatchEvent(new Event('visibilitychange'));
+  h.document.hidden=false;h.document.dispatchEvent(new Event('visibilitychange'));await flush();
+  assert.equal(reads,2);
+  assert.ok(h.calls.some(([method,value])=>method===product&&value));
+  const rendered=h.calls.length;
+  pending.resolve(image);await selected;
+  assert.equal(h.calls.length,rendered,'aborted first request cannot repaint after the retry');
+});
+
+test('a late snow forecast cannot replace the active snow-cover redraw callback',async t=>{
+  const pending=deferred();
+  const first=Math.floor(Date.now()/(6*3600000))*6*3600000;
+  const source={...snowNow,loadSnowForecast:async()=>[],
+    loadSnowGrid:async()=>({coordinates:[[0,1],[1,1],[1,0],[0,0]],legend:[],frames:[{start:first,end:first+6*3600000,issued:first}]}),
+    loadSnowGridImage:()=>pending.promise};
+  const h=setup(t,async name=>name==='forecast-timeline'?{createForecastTimeline}:source);
+  const selected=h.owner.select('snow-forecast');await flush();
+  await h.owner.select('snow-now');pending.resolve({blob:'old-snow'});await selected;
+  h.document.hidden=true;h.document.dispatchEvent(new Event('visibilitychange'));
+  const count=h.calls.length;
+  h.document.hidden=false;h.document.dispatchEvent(new Event('visibilitychange'));await flush();
+  assert.ok(h.calls.slice(count).some(([method,value])=>method==='snowCover'&&value?.fileTime===1));
 });

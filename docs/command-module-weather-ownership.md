@@ -25,7 +25,7 @@ npm run check
 git diff --check
 ```
 
-Focused regressions are in `tests/command-module-contracts.test.mjs` and `tests/command-weather-controller.test.mjs`. The lifecycle tests use the real published-frame player with controlled module/data responses. They cover obsolete errors, late successes after scope changes/destruction, hidden-map drawing, advisory navigation, missing frames, early-alert request cancellation, phone resizing and radar adapter reuse/cleanup.
+Focused regressions are in `tests/command-module-contracts.test.mjs` and `tests/command-weather-controller.test.mjs`. The lifecycle tests use the real published-frame player with controlled module/data responses. They cover obsolete errors, late successes after scope changes/destruction, hidden-map drawing, advisory navigation, missing frames, early-alert request cancellation, phone resizing and radar adapter reuse/cleanup. Review added regressions for pending initial rain/gust frames interrupted by visibility and an obsolete snow continuation replacing the current redraw callback; all three failed before their fixes. Returning retries an undrawn selected frame without restarting playback.
 
 Browser checks use the local preview, without saving private records. Public source failures must remain explicit; an unavailable snowfall grid can show named point guidance, and does not establish a snow-free area. This refactor does not certify live feed availability, hydraulic modeling, private account permissions or production operational readiness. It does not claim a measured speed increase.
 
