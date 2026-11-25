@@ -2,6 +2,7 @@ import type { Concern, FeedState } from "./contracts.ts";
 import type { ModuleLoader, Modules, TerrainMap, ForecastPlayback } from "./module-contracts.ts";
 export type WeatherMode = "off" | "rain" | "gust" | "radar" | "snow-now" | "snow-forecast";
 export type AdvisoryTiming = {start: number | null; end: number | null};
+export const COMPACT_VIEW_QUERY='(max-width:700px), (max-height:520px)';
 export const isWeatherMode = (value: string): value is WeatherMode =>
   ["off","rain","gust","radar","snow-now","snow-forecast"].includes(value);
 interface WeatherDependencies {
@@ -12,6 +13,7 @@ interface WeatherDependencies {
   getTimeline(): FeedState["timeline"];
   updateMap(): void; renderEvidence(): void; pane(value: string): void;
   requestFit(): void; notify(message: string): void; date(value: unknown): string;
+  onProductChange?(): void;
 }
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
@@ -49,7 +51,7 @@ const link = (text: string, href: string) => {
  * The map and operational scope remain owned by the shell. No browser persistence.
  */
 export function createCommandWeather({root,moduleAt,model,createForecastPlayback,getMap,ensureMap,
-  getState,getSelection,getTimeline,updateMap,renderEvidence,pane,requestFit,notify,date}: WeatherDependencies) {
+  getState,getSelection,getTimeline,updateMap,renderEvidence,pane,requestFit,notify,date,onProductChange=()=>{}}: WeatherDependencies) {
   let destroyed = false, weatherEpoch = 0;
   let weatherMode: WeatherMode = "off";
   const weatherViews: Partial<Record<WeatherMode, ReturnType<Modules["watch-regional-radar-ui"]["installRegionalRadar"]>>> = {};
@@ -65,7 +67,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
   const snowSummaries = new Map<string,string>();
   let currentRainWindow: {layer: number; start: number; end: number; issue?: number} | null = null;
   let lastRain: Awaited<ReturnType<Modules["watch-watershed-data"]["loadWatershedRain"]>> | null = null;
-  const phone = matchMedia("(max-width:700px)");
+  const phone = matchMedia(COMPACT_VIEW_QUERY);
   const visible = () => !document.hidden && getState().view === "watch" &&
     (!phone.matches || getState().mobile === "map");
   let weatherSuspended = !visible();
@@ -88,7 +90,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     let selectedEpoch = epoch;
     void (async () => {
       if (c.kind === "burn-scar") {
-        if (matchMedia("(max-width:700px)").matches) pane("map");
+        if (matchMedia(COMPACT_VIEW_QUERY).matches) pane("map");
         advisoryWeatherId = id;
         const pending = chooseWeather("rain"); selectedEpoch = weatherEpoch; await pending;
         return;
@@ -101,7 +103,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
         timing = await source.loadSnowAdvisory(c, request.signal);
       }
       if (!timing || request.signal.aborted || epoch !== weatherEpoch) return;
-      if (matchMedia("(max-width:700px)").matches && getState().mobile === "attention") pane("map");
+      if (matchMedia(COMPACT_VIEW_QUERY).matches && getState().mobile === "attention") pane("map");
       advisoryWeatherId = id;
       const pending = chooseWeather(mode || "snow-forecast", timing, autoplay);
       selectedEpoch = weatherEpoch; await pending;
@@ -155,8 +157,11 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           const fit = button(advisory ? "Fit advisory" : "Fit snow",()=>{
             if (advisory) {requestFit();updateMap();}
             else if(grid?.coordinates){const c=grid.coordinates;getMap()?.focus([c[0][0],c[2][1],c[2][0],c[0][1]],true);}
+            pane('map');
           });
-          controls.replaceChildren(timeline.element,...(advisory ? getSelection()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
+          controls.replaceChildren(timeline.element);
+          const showFit=advisory?getSelection()?.features.length:grid?.frames.length;
+          $("weather-extra").replaceChildren(...(showFit?[fit]:[]));
           const player = await mountForecastPlayer({frames,picker,key:(w: any)=>String(frames.indexOf(w)),epoch,autoplay:shouldAutoplay,
             load: async (w: any,signal: AbortSignal) => w.grid
               ? source.loadSnowGridImage(w.grid,grid!.coordinates,signal).catch(()=>null) : null,
@@ -172,7 +177,8 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
               });
               if(!weatherSuspended){getMap()?.snowPoints(points);getMap()?.snowfall(image);}
               if(image){
-                info.textContent="NWS new snowfall · "+timeLabel+" · issued "+localForecastTime.format(w.grid.issued)+(w.grid.snowCells===0 ? " · No accumulation in valid cells" : "");
+                info.textContent="Forecast new snow · "+timeLabel+(w.grid.snowCells===0 ? " · No accumulation in valid cells" : "");
+                $("weather-issued").textContent="NWS snowfall issued "+localForecastTime.format(w.grid.issued);
                 colors([{label:"0",color:"#365f75"},...grid!.legend]);
                 $("weather-legend").prepend(el("strong","New snow · inches "));
                 $("weather-legend").append(el("small","Clear outside grid or where data is missing"));
@@ -184,7 +190,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
               if(w.grid&&!image) throw Error("Snowfall frame unavailable");
             },
           });
-          if (!active()) return;
+          if (!active() || !player) return;
           shouldAutoplay=false;
           snowDraw=()=>void player.select(Number(picker.value));
           if(!frames.length){
@@ -227,7 +233,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       !weatherSuspended ||
       document.hidden ||
       getState().view !== "watch" ||
-      (matchMedia("(max-width:700px)").matches && getState().mobile !== "map")
+      (matchMedia(COMPACT_VIEW_QUERY).matches && getState().mobile !== "map")
     )
       return;
     weatherSuspended = false;
@@ -243,6 +249,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     }
   }
   function pauseWeather() {
+    onProductChange();
     forecastPlayer?.destroy();
     forecastPlayer = undefined;
     resumeFrame = null;
@@ -273,6 +280,8 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     delete $("weather-dock").dataset.advisory;
     $("weather-legend").hidden = true;
     $("weather-details").hidden = true;
+    $("weather-issued").textContent = '';
+    $("weather-extra").replaceChildren();
     renderEvidence();
   }
   function colors(bands: any[]) {
@@ -297,32 +306,51 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
   }) {
     forecastPlayer?.destroy();
     let requestedIndex = frames.findIndex(frame => key(frame) === picker.value), renderedIndex = -1;
+    let timeline: ReturnType<Modules['forecast-timeline']['createForecastTimeline']> | undefined;
+    const indexed=picker.type!=='range';
+    if(indexed){
+      const {createForecastTimeline}=await moduleAt('forecast-timeline');
+      if(epoch!==weatherEpoch)return undefined;
+      timeline=createForecastTimeline({frames,selectedStart:(frames[requestedIndex] as any)?.start,
+        label:weatherMode==='gust'?'Gust forecast timeline':'Rain forecast timeline',emptyLabel:'No matching forecast windows',
+        format:(start:number,end:number,frame:any)=>frame.layer===''?'72-hour overview':start===end?localForecastTime.format(start):localForecastTime.formatRange(start,end)});
+      picker=timeline.input;
+      $("weather-controls").replaceChildren(timeline.element);
+    }
     const play = button("Play", () => {
       if (player.playing) player.pause();
       else void player.play();
     });
     play.setAttribute("aria-label", "Play forecast animation");
     play.disabled = frames.length < 2;
+    const stepButton=(label:string,icon:string,offset:number)=>{
+      const b=button('',()=>{requestedIndex=Math.max(0,Math.min(frames.length-1,requestedIndex+offset));void player.select(requestedIndex);});
+      b.setAttribute('aria-label',label);const glyph=el('calcite-icon');glyph.setAttribute('icon',icon);glyph.setAttribute('scale','s');b.append(glyph);return b;
+    };
+    const previous=stepButton('Previous forecast frame','chevron-left',-1),next=stepButton('Next forecast frame','chevron-right',1);
     const status = el("span", undefined, "forecast-playback-status");
     status.setAttribute("role", "status");
     const player = createForecastPlayback({frames,load,validate,
       available: () => epoch === weatherEpoch && !weatherSuspended && visible(),
       changed: ({playing,status: phase,index}: any) => {
         if (epoch !== weatherEpoch) return;
+        previous.disabled=index<=0;next.disabled=index>=frames.length-1||!frames.length;
         play.textContent = playing ? "Pause" : "Play";
         play.setAttribute("aria-label", playing ? "Pause forecast animation" : "Play forecast animation");
         play.setAttribute("aria-pressed", String(playing));
-        status.textContent = phase === "buffering" ? "Buffering next frame…"
+        status.textContent = !frames.length ? "No playable forecast frames" : phase === "buffering" ? "Buffering next frame…"
           : phase === "loading" ? "Loading forecast frame…"
           : phase === "error" ? "Frame unavailable · playback stopped"
-          : frames.length < 2 ? (frames.length ? "One forecast frame available" : "No playable forecast frames")
+          : frames.length < 2 ? "One forecast frame available"
           : index >= 0 ? `${index + 1} of ${frames.length}` : "Choose a forecast time";
+        status.hidden=['paused','playing'].includes(phase)&&frames.length>1;
         if (phase === "error") onError?.();
       },
       render: (value, frame, index) => {
         if (epoch !== weatherEpoch) return;
         renderedIndex = index; requestedIndex = index;
-        picker.value = key(frame);
+        if(timeline)timeline.setIndex(index);
+        else picker.value = key(frame);
         render(value,frame,index);
       },
     });
@@ -332,10 +360,10 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       void player.select(requestedIndex);
       return true;
     };
-    $("weather-controls").prepend(play);
-    $("weather-controls").append(status);
+    const controls=$("weather-controls"),existing=[...controls.children];
+    controls.replaceChildren(play,previous,...existing.slice(0,1),next,...existing.slice(1),status);
     const selectFrame = () => {
-      requestedIndex = frames.findIndex(frame => key(frame) === picker.value);
+      requestedIndex = indexed?Number(picker.value):frames.findIndex(frame => key(frame) === picker.value);
       void player.select(requestedIndex);
     };
     if(picker.type==='range')picker.oninput=selectFrame;else picker.onchange=selectFrame;
@@ -350,7 +378,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     forecastPlayer?.destroy();
     forecastPlayer = undefined;
     const info = $("weather-time"), items = $("weather-source"), controls = $("weather-controls");
-    const previousTime = Number(controls.querySelector<HTMLSelectElement>("select")?.value);
+    const previousTime = Number(controls.querySelector<HTMLInputElement>('input[type="range"]')?.dataset.forecastStart);
     forecastRequest?.abort();
     const request = new AbortController();
     forecastRequest = request;
@@ -393,7 +421,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           return {features};
         },
         render: (value: any,step: any) => {
-          const valid = localForecastTime.format(step.start) + (forecast.provider === 'nws' ? ` → ${localForecastTime.format(step.end)}` : "");
+          const valid = forecast.provider==='nws'?localForecastTime.formatRange(step.start,step.end):localForecastTime.format(step.start);
           gustDraw = () => {
             if (weatherSuspended) return;
             getMap()?.gust(null);getMap()?.gustPoints([]);
@@ -403,15 +431,17 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           gustDraw();
           if (forecast.provider === 'nws') {
             const issued = Math.min(...value.features.map((feature: any) => feature.properties.issued));
-            info.textContent = `NWS gust samples · valid ${valid} · ${value.features.length}/9 locations · earliest issue ${localForecastTime.format(issued)}`;
+            info.textContent = `Forecast gust samples · ${valid} · ${value.features.length}/9 locations`;
+            $("weather-issued").textContent=`NWS samples · earliest issue ${localForecastTime.format(issued)}`;
           } else {
-            info.textContent = `HRRR gusts · valid ${valid} · model run ${localForecastTime.format(Date.parse(manifest.run))}`;
+            info.textContent = `Forecast gusts · ${valid}`;
+            $("weather-issued").textContent=`HRRR model run ${localForecastTime.format(Date.parse(manifest.run))}`;
           }
           colors(source.gustLegend);
           $("weather-legend").prepend(el("strong", forecast.provider === 'nws' ? "Sample gusts · mph " : "Surface gusts · mph "));
-          if (forecast.provider === 'nws') $("weather-legend").append(el("small", "Dots show named samples. Tap a dot for its forecast period and issue time."));
         },
       });
+      if (destroyed || epoch!==weatherEpoch || request.signal.aborted) return;
       if (!frames.length) info.textContent = "No gust forecast time available during this alert";
     } catch {
       if (epoch === weatherEpoch && !request.signal.aborted)
@@ -475,7 +505,8 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
             currentRainWindow = w.layer===""?null:w;
             lastRain=rain;
             if (!weatherSuspended) getMap()?.rain(rain);
-            info.textContent=`${rain.cycle.hours}-hour WPC rain · ${localForecastTime.formatRange(rain.cycle.start,rain.cycle.end)} · issued ${localForecastTime.format(rain.cycle.issue)}${rain.legend.length?'':' · No contours ≥0.01 in shown'}`;
+            info.textContent=`${rain.cycle.hours}-hour rain · ${localForecastTime.formatRange(rain.cycle.start,rain.cycle.end)}${rain.legend.length?'':' · No contours ≥0.01 in shown'}`;
+            $("weather-issued").textContent=`WPC issued ${localForecastTime.format(rain.cycle.issue)}`;
             colors(rain.legend); $("weather-legend").prepend(el("strong","Forecast rain · inches "));
             if (advisory) $("weather-legend").append(el("small","Gauge dots are current observations, not forecasts."));
             items.replaceChildren(el("p","Published rainfall accumulation. Gauges, roads and power records remain current context, not future predictions."),
@@ -483,6 +514,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
               link("WPC forecast source","https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
           },
         });
+        if (!active()) return;
         if (!frames.length) {clearRain();info.textContent="No rainfall forecast window overlaps this alert";}
       } catch {
         if (active()) clearRain();
@@ -534,13 +566,14 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
         if (epoch !== weatherEpoch) return;
         const options = {
           allowVolume: false,
+          stepControls:true,
           session: getMap()!,
           info,
           items,
           source: link,
           visible: () =>
             getState().view === "watch" &&
-            (!matchMedia("(max-width:700px)").matches ||
+            (!matchMedia(COMPACT_VIEW_QUERY).matches ||
               getState().mobile === "map"),
           renderColors: (title: string, bands: any[]) => {
             colors(bands);
@@ -552,8 +585,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       const view = weatherViews[mode];
       controls.append(view.controls);
       if (mode === "radar") {
-        controls.append(view.cloudButton);
-        controls.append(view.cloudStatus, view.cloudLegend);
+        $("weather-extra").append(view.cloudButton,view.cloudStatus,view.cloudLegend);
       }
       view.open({autoplay: autoplay && !matchMedia("(prefers-reduced-motion: reduce)").matches});
       if (weatherSuspended) view.suspend();

@@ -14,7 +14,7 @@ class Element extends FakeElement {
   append(...nodes){const empty=this.children.length===0;super.append(...nodes);if(this.tag==='select'&&empty)this.value=nodes[0]?.value??'';}
   querySelector(){return null;}
 }
-function setup(t,loadModule,{playback=createForecastPlayback,rainFactory}={}){
+function setup(t,loadModule,{playback=createForecastPlayback,rainFactory,timelineModule=async()=>({createForecastTimeline})}={}){
   const nodes=new Map();
   const document=Object.assign(new EventTarget(),{hidden:false,
     getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Element('div'));return nodes.get(id);},
@@ -27,7 +27,7 @@ function setup(t,loadModule,{playback=createForecastPlayback,rainFactory}={}){
   const map=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args])});
   const state={view:'watch',mobile:'map'};
   let selection;
-  const moduleAt=async name=>name==='command-rain'?{rainForecastWindows:rainFactory?rainForecastWindows:(prepared,windows)=>prepared??windows,RAIN_REFRESH_INTERVAL:15*60000,createCommandRainDelivery:rainFactory??(async()=>{
+  const moduleAt=async name=>name==='forecast-timeline'?timelineModule():name==='command-rain'?{rainForecastWindows:rainFactory?rainForecastWindows:(prepared,windows)=>prepared??windows,RAIN_REFRESH_INTERVAL:15*60000,createCommandRainDelivery:rainFactory??(async()=>{
     const source=await loadModule('watch-watershed-data');
     return {windows:null,load:(window,signal)=>source.loadWatershedRain(source.regionalForecastBounds,{window,signal}),validate:async()=>{},destroy(){}};
   })}:loadModule(name);
@@ -40,6 +40,22 @@ function setup(t,loadModule,{playback=createForecastPlayback,rainFactory}={}){
   return {owner,nodes,calls,notices,state,document,phone,setSelection:value=>selection=value};
 }
 const snowNow={IMS:'https://example.test/snow',loadSnowCover:async()=>({fileTime:1,url:'snow'})};
+
+for(const product of ['gust','rain'])test(`late empty ${product} timeline cannot overwrite a newly selected snow product`,async t=>{
+ const pending=deferred();
+ const h=setup(t,async name=>name==='command-snow'?snowNow:name==='watershed-timeline-model'?{precipitationTimeline:()=>({windows:[]})}:
+   {loadGustForecast:async()=>({provider:'nws',manifest:{},windows:[],snapshot:{sites:[]}})},
+   {timelineModule:()=>pending.promise,rainFactory:async()=>({windows:[],load:async()=>null,validate:async()=>{},destroy(){}})});
+ const restore=stubGlobals({fetch:async()=>Response.json({})});
+ try{
+  let task;
+  if(product==='rain'){h.setSelection({id:'flood',kind:'alert',name:'Flood Advisory',alertTiming:{start:Date.now(),end:Date.now()+60000}});h.owner.syncAdvisory();}
+  else task=h.owner.select('gust');
+  await flush();await h.owner.select('snow-now');pending.resolve({createForecastTimeline});if(task)await task;await flush();
+  assert.equal(h.nodes.get('weather-time').textContent,'Snow cover · source file 1');
+  assert.equal(h.owner.snapshot.mode,'snow-now');
+ }finally{restore();}
+});
 
 test('a late rejected import cannot clear the newer selected weather',async t=>{
   const old=deferred();let count=0;
@@ -133,8 +149,8 @@ test('Command uses prepared windows and retains the selected actual time when la
       load:async(w)=>{calls.push(w);return {cycle:{...window,hours:w?6:72},legend:[],delivery:{method:'prepared',preparedAt:new Date(now).toISOString()}};}};
   }});
   await h.owner.select('rain');
-  const select=h.nodes.get('weather-controls').children.find(n=>n.tag==='select');
-  select.value='14';select.onchange();await flush();
+  const slider=h.nodes.get('weather-controls').children.find(n=>n.className==='forecast-timeline').children.find(n=>n.tag==='input');
+  slider.value='1';slider.oninput();await flush();
   assert.equal(calls.at(-1).start,now);
   t.mock.timers.tick(15*60000);await flush();
   assert.equal(generation,2);assert.equal(destroys,1);

@@ -16,6 +16,7 @@ export interface TerrainOptions {
   onSelect: (record: {id?: string; [key: string]: unknown}) => void;
   onError: (error: unknown) => void;
   onCamera?: (camera: Camera) => void;
+  onInspect?: (value: {name?:string;readout:string}) => void;
 }
 export interface PlaybackStatus {
   status: string; error?: unknown; playing: boolean; index: number; count: number;
