@@ -160,6 +160,14 @@ jobs:
         timeout-minutes: 3
         continue-on-error: true
         run: node --use-system-ca scripts/collect-radar-volume.mjs
+      - name: Prepare current public WPC rainfall for Command
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          if ! node --use-system-ca scripts/collect-prepared-weather.mjs; then
+            echo "::warning::Prepared rainfall unavailable; Command will use current publisher services."
+          fi
       - name: Configure Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

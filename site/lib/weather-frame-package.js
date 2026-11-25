@@ -1,5 +1,6 @@
 import {QPF_URL} from './environment-model.js';
 import {createWeatherFrameCache} from './weather-frame-cache.js';
+import {rainRasterGeometry} from './watch-watershed-data.js';
 
 const HOUR=3600000, MAX_IMAGE_BYTES=12*1024*1024;
 const fail=message=>{throw Error('Weather replay '+message);};
@@ -20,8 +21,8 @@ export function weatherReferenceFeatures(features){
 }
 
 /** Validate a recorded display product; never infer zero rainfall from absent data. */
-export function validateWeatherReplay(p){
-  if(p?.schemaVersion!==1||p.kind!=='recorded-wpc-display-replay'||p.publisher!=='NOAA WPC'||p.source!==QPF_URL||
+function validateFrames(p,kind){
+  if(p?.schemaVersion!==1||p.kind!==kind||p.publisher!=='NOAA WPC'||p.source!==QPF_URL||
     p.rasterCrs!=='EPSG:3857'||p.coordinateCrs!=='EPSG:4326'||!finite(p.clock)||Date.parse(p.capturedAt)!==p.clock||
     !Array.isArray(p.bounds)||p.bounds.length!==4||!p.bounds.every(finite)||
     p.bounds[0]>=p.bounds[2]||p.bounds[1]>=p.bounds[3]||p.bounds[0]<-180||p.bounds[2]>180||p.bounds[1]<-85||p.bounds[3]>85||
@@ -53,6 +54,14 @@ export function validateWeatherReplay(p){
   return p;
 }
 
+export const validateWeatherReplay=p=>validateFrames(p,'recorded-wpc-display-replay');
+export function validateCurrentWeather(p){
+  validateFrames(p,'prepared-wpc-display');
+  const expected=rainRasterGeometry(p.bounds).coordinates;
+  if(p.frames.some(f=>f.coordinates.some((v,i)=>v.some((n,j)=>Math.abs(n-expected[i][j])>1e-8))))fail('image coverage does not match the prepared extent');
+  return p;
+}
+
 /** Fingerprint only the rendered evidence, independent of capture/transport timings. */
 export async function frameFingerprint(frame){
   const text=JSON.stringify([frame.cycle,frame.coordinates,frame.legend,frame.image?.sha256??null]);
@@ -62,7 +71,8 @@ export async function frameFingerprint(frame){
 
 /** Selected frames first, at most three image promises, no persistent/private cache. */
 export function createPreparedWeather(manifest,baseUrl,{fetchImpl=fetch}={}){
-  const p=freeze(structuredClone(validateWeatherReplay(manifest))),cache=createWeatherFrameCache(3);
+  const validate=manifest?.kind==='prepared-wpc-display'?validateCurrentWeather:validateWeatherReplay;
+  const p=freeze(structuredClone(validate(manifest))),cache=createWeatherFrameCache(3);
   let closed=false;
   return {
     manifest:p,

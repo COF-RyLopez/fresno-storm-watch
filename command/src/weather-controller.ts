@@ -54,10 +54,12 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
   let weatherMode: WeatherMode = "off";
   const weatherViews: Partial<Record<WeatherMode, ReturnType<Modules["watch-regional-radar-ui"]["installRegionalRadar"]>>> = {};
   let forecastPlayer: ForecastPlayback | undefined;
-  let resumeFrame: (() => boolean) | null = null;
+  let resumeFrame: ((force?: boolean) => boolean) | null = null;
   let forecastRequest: AbortController | undefined, snowRequest: AbortController | undefined;
   let advisoryRequest: AbortController | undefined;
   let gustTimer: ReturnType<typeof setTimeout> | undefined, snowTimer: ReturnType<typeof setTimeout> | undefined;
+  let rainTimer: ReturnType<typeof setTimeout> | undefined;
+  let rainDelivery: Awaited<ReturnType<Modules["command-rain"]["createCommandRainDelivery"]>> | undefined;
   let snowDraw: (()=>void) | null = null, gustDraw: (()=>void) | null = null;
   let checkedAdvisory: string | undefined, advisoryWeatherId: string | undefined, advisoryPlaybackIntent: string | undefined;
   const snowSummaries = new Map<string,string>();
@@ -230,7 +232,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       return;
     weatherSuspended = false;
     weatherViews[weatherMode]?.resume();
-    if (resumeFrame?.()) return;
+    if (resumeFrame?.(weatherMode === "rain")) return;
     snowDraw?.();
     gustDraw?.();
     if (weatherMode === "rain" && lastRain) {
@@ -254,6 +256,8 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     getMap()?.gust(null);
     getMap()?.gustPoints([]);
     clearTimeout(gustTimer);
+    clearTimeout(rainTimer);
+    rainDelivery?.destroy(); rainDelivery = undefined;
     weatherSuspended = !visible();
     lastRain = null;
     gustDraw = null;
@@ -284,10 +288,11 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     }
   }
 
-  async function mountForecastPlayer<Frame, Value>({frames,picker,key,load,render,epoch,autoplay=false,onError}: {
+  async function mountForecastPlayer<Frame, Value>({frames,picker,key,load,render,validate,epoch,autoplay=false,onError}: {
     frames: Frame[]; picker: HTMLInputElement | HTMLSelectElement; key(frame: Frame): string;
     load(frame: Frame, signal: AbortSignal): Promise<Value>;
     render(value: Value, frame: Frame, index: number): void;
+    validate?(value: Value, frame: Frame): Promise<void>;
     epoch: number; autoplay?: boolean; onError?: () => void;
   }) {
     forecastPlayer?.destroy();
@@ -300,7 +305,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     play.disabled = frames.length < 2;
     const status = el("span", undefined, "forecast-playback-status");
     status.setAttribute("role", "status");
-    const player = createForecastPlayback({frames,load,
+    const player = createForecastPlayback({frames,load,validate,
       available: () => epoch === weatherEpoch && !weatherSuspended && visible(),
       changed: ({playing,status: phase,index}: any) => {
         if (epoch !== weatherEpoch) return;
@@ -322,8 +327,8 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       },
     });
     forecastPlayer = player;
-    resumeFrame = () => {
-      if (epoch !== weatherEpoch || forecastPlayer !== player || requestedIndex < 0 || requestedIndex === renderedIndex) return false;
+    resumeFrame = (force = false) => {
+      if (epoch !== weatherEpoch || forecastPlayer !== player || requestedIndex < 0 || !force && requestedIndex === renderedIndex) return false;
       void player.select(requestedIndex);
       return true;
     };
@@ -420,6 +425,74 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     }
   }
 
+  async function showRain(epoch: number, advisory?: AdvisoryTiming, autoplay = false) {
+    const source = await moduleAt("command-rain");
+    if (destroyed || epoch !== weatherEpoch) return;
+    const { precipitationTimeline } = await moduleAt("watershed-timeline-model");
+    if (destroyed || epoch !== weatherEpoch) return;
+    const controls = $("weather-controls"), info = $("weather-time"), items = $("weather-source");
+    const active = () => !destroyed && epoch === weatherEpoch;
+    const clearRain = () => {
+      lastRain = null; getMap()?.rain(null); $("weather-legend").hidden = true;
+      info.textContent = "Current rainfall frame unavailable · source may have updated. Choose Rain again to retry.";
+    };
+    async function update(autoplay = false) {
+      const previousStart = currentRainWindow?.start;
+      forecastPlayer?.destroy(); forecastPlayer = undefined; resumeFrame = null;
+      rainDelivery?.destroy(); rainDelivery = undefined;
+      forecastRequest?.abort();
+      const request = new AbortController(); forecastRequest = request;
+      try {
+        const delivery = await source.createCommandRainDelivery({baseUrl:new URL("data/prepared-weather/",root),signal:request.signal});
+        if (!active()) { delivery.destroy(); return; }
+        rainDelivery = delivery;
+        let timeline = getTimeline();
+        if (advisory && !timeline) {
+          try {
+            const response = await fetch(new URL("data/watershed-timeline.json",root), {
+              signal:AbortSignal.any([request.signal,AbortSignal.timeout(6000)]),credentials:"omit",cache:"no-store",
+            });
+            if (response.ok) timeline = await response.json();
+          } catch { /* Direct overview stays available outside an advisory. */ }
+        }
+        if (!active()) return;
+        const allWindows = source.rainForecastWindows(delivery.windows,precipitationTimeline(timeline,Date.now()).windows,Date.now());
+        const windows = advisory ? allWindows.filter((w: any)=>model.advisoryForecastWindow([w],advisory)) : allWindows;
+        const choose = el("select") as HTMLSelectElement;
+        choose.setAttribute("aria-label","Rain forecast window");
+        if (!advisory) choose.append(new Option("72-hour overview",""));
+        else if (!windows.length) choose.append(new Option("No matching forecast windows",""));
+        for (const w of windows) choose.append(new Option(date(w.start)+" · 6 h",String(w.layer)));
+        const retained = windows.find((w: any)=>w.start===previousStart);
+        if (retained || advisory && windows.length) choose.value=String((retained??windows[0]).layer);
+        controls.replaceChildren(choose);
+        const frames = [...(!advisory?[{layer:"",start:0,end:0}]:[]),...windows];
+        await mountForecastPlayer({frames,picker:choose,key:(w: any)=>String(w.layer),epoch,autoplay,
+          load:(w: any,signal: AbortSignal)=>delivery.load(w.layer===""?null:w,signal),
+          validate:(rain: any,w: any)=>delivery.validate(rain,w.layer===""?null:w,request.signal),
+          onError:clearRain,
+          render:(rain: any,w: any)=>{
+            currentRainWindow = w.layer===""?null:w;
+            lastRain=rain;
+            if (!weatherSuspended) getMap()?.rain(rain);
+            info.textContent=`${rain.cycle.hours}-hour WPC rain · ${localForecastTime.formatRange(rain.cycle.start,rain.cycle.end)} · issued ${localForecastTime.format(rain.cycle.issue)}${rain.legend.length?'':' · No contours ≥0.01 in shown'}`;
+            colors(rain.legend); $("weather-legend").prepend(el("strong","Forecast rain · inches "));
+            if (advisory) $("weather-legend").append(el("small","Gauge dots are current observations, not forecasts."));
+            items.replaceChildren(el("p","Published rainfall accumulation. Gauges, roads and power records remain current context, not future predictions."),
+              el("p",rain.delivery?.method==='prepared' ? "Prepared from WPC · "+date(rain.delivery.preparedAt)+" · source revision checked" : "Direct WPC delivery · prepared data unavailable or superseded"),
+              link("WPC forecast source","https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
+          },
+        });
+        if (!frames.length) {clearRain();info.textContent="No rainfall forecast window overlaps this alert";}
+      } catch {
+        if (active()) clearRain();
+      } finally {
+        if (active()) rainTimer=setTimeout(()=>void update(),source.RAIN_REFRESH_INTERVAL);
+      }
+    }
+    await update(autoplay);
+  }
+
   async function chooseWeather(mode: WeatherMode, advisory?: AdvisoryTiming, autoplay = false) {
     const rainWindow = currentRainWindow;
     pauseWeather();
@@ -454,47 +527,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       return;
     }
     if (mode === "rain") {
-      const { loadWatershedRain, regionalForecastBounds } = await moduleAt(
-        "watch-watershed-data",
-      );
-      if (epoch !== weatherEpoch) return;
-      const { precipitationTimeline } = await moduleAt("watershed-timeline-model");
-      if (epoch !== weatherEpoch) return;
-      let timeline = getTimeline();
-      // The alert can arrive before the independent timeline collector finishes.
-      if (advisory && !timeline) {
-        try {
-          const response = await fetch(new URL("data/watershed-timeline.json", root), {
-            signal: AbortSignal.any([request.signal, AbortSignal.timeout(6000)]), credentials: "omit", cache: "no-store",
-          });
-          if (response.ok) timeline = await response.json();
-        } catch { /* The independently verified 72-hour product remains available. */ }
-      }
-      if (epoch !== weatherEpoch) return;
-      const { windows: allWindows } = precipitationTimeline(timeline, Date.now());
-      const windows = advisory ? allWindows.filter((w: any) => model.advisoryForecastWindow([w], advisory)) : allWindows;
-      const choose = el("select") as HTMLSelectElement;
-      choose.setAttribute("aria-label", "Rain forecast window");
-      if (!advisory) choose.append(new Option("72-hour overview", ""));
-      else if (!windows.length) choose.append(new Option("No matching forecast windows", ""));
-      for (const w of windows) choose.append(new Option(date(w.start) + " · 6 h", String(w.layer)));
-      if (advisory && windows.length) choose.value = String(windows[0].layer);
-      controls.append(choose);
-      const frames = [...(!advisory ? [{layer:"",start:0,end:0}] : []), ...windows];
-      await mountForecastPlayer({frames,picker:choose,key:(w: any)=>String(w.layer),epoch,autoplay,
-        load: (w: any,signal: AbortSignal) => loadWatershedRain(regionalForecastBounds, {window:w.layer === "" ? null : w,signal}),
-        render: (rain: any,w: any) => {
-          currentRainWindow = w.layer === "" ? null : w;
-          lastRain = rain;
-          if (!weatherSuspended) getMap()!.rain(rain);
-          info.textContent = `${rain.cycle.hours}-hour WPC rain · ${localForecastTime.formatRange(rain.cycle.start, rain.cycle.end)} · issued ${localForecastTime.format(rain.cycle.issue)}${rain.legend.length ? '' : ' · No contours ≥0.01 in shown'}`;
-          colors(rain.legend);$("weather-legend").prepend(el("strong", "Forecast rain · inches "));
-          if (advisory) $("weather-legend").append(el("small", "Gauge dots are current observations, not forecasts."));
-          items.replaceChildren(el("p", "Published rainfall accumulation. Gauges, roads and power records remain current context, not future predictions."),
-            link("WPC forecast source", "https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
-        },
-      });
-      if (!frames.length) info.textContent = "No rainfall forecast window overlaps this alert";
+      await showRain(epoch, advisory, autoplay);
     } else {
       if (!weatherViews[mode]) {
         const mod = await moduleAt("watch-regional-radar-ui");

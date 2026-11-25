@@ -4,6 +4,7 @@ import {createCommandWeather} from '../command/src/weather-controller.ts';
 import {createForecastPlayback} from '../site/lib/command-weather-player.js';
 import * as model from '../site/lib/command-model.js';
 import {createForecastTimeline} from '../site/lib/forecast-timeline.js';
+import {rainForecastWindows} from '../site/lib/command-rain.js';
 import {FakeElement,stubGlobals} from './helpers/dom.mjs';
 
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
@@ -13,7 +14,7 @@ class Element extends FakeElement {
   append(...nodes){const empty=this.children.length===0;super.append(...nodes);if(this.tag==='select'&&empty)this.value=nodes[0]?.value??'';}
   querySelector(){return null;}
 }
-function setup(t,loadModule,{playback=createForecastPlayback}={}){
+function setup(t,loadModule,{playback=createForecastPlayback,rainFactory}={}){
   const nodes=new Map();
   const document=Object.assign(new EventTarget(),{hidden:false,
     getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Element('div'));return nodes.get(id);},
@@ -26,7 +27,11 @@ function setup(t,loadModule,{playback=createForecastPlayback}={}){
   const map=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args])});
   const state={view:'watch',mobile:'map'};
   let selection;
-  const owner=createCommandWeather({root:new URL('https://example.test/'),moduleAt:loadModule,model,
+  const moduleAt=async name=>name==='command-rain'?{rainForecastWindows:rainFactory?rainForecastWindows:(prepared,windows)=>prepared??windows,RAIN_REFRESH_INTERVAL:15*60000,createCommandRainDelivery:rainFactory??(async()=>{
+    const source=await loadModule('watch-watershed-data');
+    return {windows:null,load:(window,signal)=>source.loadWatershedRain(source.regionalForecastBounds,{window,signal}),validate:async()=>{},destroy(){}};
+  })}:loadModule(name);
+  const owner=createCommandWeather({root:new URL('https://example.test/'),moduleAt,model,
     createForecastPlayback:playback,getMap:()=>map,ensureMap:async()=>{},getState:()=>state,getSelection:()=>selection,
     getTimeline:()=>null,updateMap:()=>{},renderEvidence:()=>{},pane:v=>state.mobile=v,
     requestFit:()=>{},notify:text=>notices.push(text),date:value=>String(value),
@@ -113,8 +118,56 @@ test('rain uses actual published frames; missing next frame stops playback, reta
   h.state.view='work';h.owner.suspend();
   assert.equal(h.calls.at(-1)[1],null);
   h.state.view='watch';h.owner.resume();
+  await flush();
   assert.equal(h.calls.at(-1)[1],retained);
   assert.equal(play.textContent,'Play');
+});
+
+test('Command uses prepared windows and retains the selected actual time when layer IDs roll at refresh',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const now=Date.now(),calls=[];let generation=0,destroys=0;
+  const window={layer:14,issue:now-60000,start:now,end:now+6*3600000};
+  const h=setup(t,async()=>({precipitationTimeline:()=>({windows:[]})}),{rainFactory:async()=>{
+    const n=++generation;
+    return {windows:[{...window,layer:n===1?14:13}],destroy(){destroys++;},validate:async()=>{},
+      load:async(w)=>{calls.push(w);return {cycle:{...window,hours:w?6:72},legend:[],delivery:{method:'prepared',preparedAt:new Date(now).toISOString()}};}};
+  }});
+  await h.owner.select('rain');
+  const select=h.nodes.get('weather-controls').children.find(n=>n.tag==='select');
+  select.value='14';select.onchange();await flush();
+  assert.equal(calls.at(-1).start,now);
+  t.mock.timers.tick(15*60000);await flush();
+  assert.equal(generation,2);assert.equal(destroys,1);
+  assert.equal(calls.at(-1).layer,13);assert.equal(calls.at(-1).start,now);
+  assert.match(h.nodes.get('weather-source').children.map(n=>n.textContent).join(' '),/Prepared/);
+  h.owner.select('off');t.mock.timers.tick(15*60000);await flush();assert.equal(generation,2);
+});
+
+test('rain source validation failure clears the previous image and legend without clearing the official alert',async t=>{
+  let valid=true;
+  const h=setup(t,async()=>({precipitationTimeline:()=>({windows:[]})}),{rainFactory:async()=>({windows:[],destroy(){},
+    load:async()=>({cycle:{hours:72,start:1,end:Date.now()+60000,issue:1},legend:[]}),
+    validate:async()=>{if(!valid)throw Error('source revised');}})});
+  await h.owner.select('rain');valid=false;
+  h.owner.suspend();h.owner.resume();await flush();
+  assert.equal(h.calls.filter(([m])=>m==='rain').at(-1)[1],null);
+  assert.equal(h.nodes.get('weather-legend').hidden,true);
+  assert.match(h.nodes.get('weather-time').textContent,/unavailable|updated|current/i);
+  assert.equal(h.owner.snapshot.mode,'rain');
+});
+
+test('an early flood alert fills partial prepared coverage from the independent published timeline',async t=>{
+  const now=Date.now(),window={layer:14,issue:now-60000,start:now,end:now+6*3600000};
+  let requested=false,loaded;
+  const h=setup(t,async()=>({precipitationTimeline:snapshot=>({windows:snapshot?.windows??[]})}),{rainFactory:async()=>({
+    windows:[],destroy(){},validate:async()=>{},load:async(w)=>{loaded=w;return {cycle:{...window,hours:6},legend:[]};},
+  })});
+  const restore=stubGlobals({fetch:async()=>{requested=true;return Response.json({windows:[window]});}});
+  try {
+    h.setSelection({id:'flood',kind:'alert',name:'Flood Advisory',alertTiming:{start:now,end:window.end}});
+    h.owner.syncAdvisory();await flush();
+    assert.equal(requested,true);assert.equal(loaded?.layer,14);
+  }finally{restore();}
 });
 
 test('scope invalidation aborts the early-alert timeline fallback request',async t=>{

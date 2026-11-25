@@ -24,6 +24,7 @@ export interface PlaybackOptions<Frame = unknown, Value = unknown> {
   frames: Frame[];
   load: (frame: Frame, signal: AbortSignal) => Promise<Value>;
   render: (value: Value, frame: Frame, index: number) => void;
+  validate?: (value: Value, frame: Frame) => Promise<void>;
   changed?: (state: PlaybackStatus) => void;
   available?: () => boolean;
   reducedMotion?: () => boolean;
@@ -47,6 +48,7 @@ export interface Modules {
   "command-data": typeof import("../../site/lib/command-data.js");
   "command-gust": typeof import("../../site/lib/command-gust.js");
   "command-model": typeof import("../../site/lib/command-model.js");
+  "command-rain": typeof import("../../site/lib/command-rain.js");
   "command-private": typeof import("../../site/lib/command-private.js");
   "command-private-ui": typeof import("../../site/lib/command-private-ui.js");
   "command-search": typeof import("../../site/lib/command-search.js");
