@@ -1,7 +1,11 @@
 // Compiler fixtures: unused expect-error directives fail the build if a
 // boundary becomes permissive. This function is never executed or imported.
 import type { ModuleLoader, PlaybackOptions, TerrainOptions } from "./module-contracts.ts";
-export async function checkContracts(load: ModuleLoader) {
+export async function checkContracts(load: ModuleLoader, weather: ReturnType<typeof import("./weather-controller.ts").createCommandWeather>) {
+  // @ts-expect-error Unsupported products do not enter the weather lifecycle.
+  weather.select("forecast-cubes");
+  // @ts-expect-error Evidence state is read-only.
+  weather.snapshot.mode = "off";
   // @ts-expect-error Unknown modules cannot become arbitrary deployment paths.
   await load("../../private");
   const data = await load("command-data");
@@ -12,7 +16,7 @@ export async function checkContracts(load: ModuleLoader) {
   // @ts-expect-error Base URL must be a URL.
   data.createCommandFeeds({baseUrl: 42});
   const terrain = await load("watch-terrain-map");
-  // @ts-expect-error Map selection supplies a stable string ID.
+  // @ts-expect-error Map selection supplies feature properties, not a numeric index.
   terrain.createWatchTerrain({container: "map", onSelect: (id: number) => id, onError: () => {}});
   const map = await terrain.createWatchTerrain({container: "map", onSelect: () => {}, onError: () => {}} satisfies TerrainOptions);
   // @ts-expect-error Camera bounds require exactly four numeric ordinates.

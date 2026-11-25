@@ -1,5 +1,6 @@
 import type { Modules, ModuleLoader } from "./module-contracts.ts";
 
+type FunctionExports<T> = {[K in keyof T]: T[K] extends (...args: never[]) => unknown ? K : never}[keyof T];
 const exportsByModule = {
   "auth": ["setupAuth"],
   "command-assets": ["createCommandAssets"],
@@ -18,7 +19,7 @@ const exportsByModule = {
   "watch-terrain-map": ["createWatchTerrain"],
   "watch-watershed-data": ["loadWatershedRain"],
   "watershed-timeline-model": ["precipitationTimeline"],
-} as const satisfies Record<keyof Modules, readonly string[]>;
+} as const satisfies {[K in keyof Modules]: readonly FunctionExports<Modules[K]>[]};
 
 export function validateModule<K extends keyof Modules>(name: K, value: unknown): Modules[K] {
   if (!Object.hasOwn(exportsByModule, name)) throw Error("Unknown Command module: " + name);

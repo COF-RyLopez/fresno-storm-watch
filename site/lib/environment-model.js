@@ -47,7 +47,7 @@ export function radarFrames(payload,now=Date.now()) {
   return result;
 }
 
-/** @param {object} payload @param {number} hours @param {number} now @returns {object} Require a single coherent issue/window across the national product. */
+/** @param {object} payload @param {number} hours @param {number} now @returns {{issue:number,start:number,end:number,issueText:string,startText:string,endText:string,hours:number,units:string,product:string}} Require a single coherent issue/window across the national product. */
 export function qpfCycle(payload,hours,now=Date.now()) {
   if(payload?.error||payload?.exceededTransferLimit||!Array.isArray(payload?.features)||!payload.features.length)throw new Error('Rainfall forecast cycle is missing, mixed or incomplete.');
   const cycles=new Set(payload.features.map(f=>JSON.stringify(['product','issue_time','start_time','end_time','units'].map(k=>f.attributes?.[k]))));

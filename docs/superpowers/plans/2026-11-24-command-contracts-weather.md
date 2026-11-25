@@ -32,11 +32,11 @@ Late module/data rejection after another selection; hidden-map initialization; a
 
 ## Task 2 — Weather lifecycle owner
 
-- [ ] Add lifecycle regression tests using actual forecast playback and controlled module/network boundaries.
-- [ ] Extract weather state, request epochs, aborts, timers, visibility listener, advisory playback intent, snowfall summaries and rain-window state to `command/src/weather-controller.ts`.
-- [ ] Expose selection/advisory synchronization, suspend/resume, scope invalidation, viewport change, read-only evidence state and destruction.
-- [ ] Connect the thin shell to that owner; preserve one map and existing renderer adapters.
-- [ ] Verify rapid switching, late success/error, hidden-map requests, navigation, scope invalidation, missing frame and cleanup.
+- [x] Add lifecycle regression tests using actual forecast playback and controlled module/network boundaries.
+- [x] Extract weather state, request epochs, aborts, timers, visibility listener, advisory playback intent, snowfall summaries and rain-window state to `command/src/weather-controller.ts`.
+- [x] Expose selection/advisory synchronization, suspend/resume, scope invalidation, viewport change, read-only evidence state and destruction.
+- [x] Connect the thin shell to that owner; preserve one map and existing renderer adapters.
+- [x] Verify rapid switching, late success/error, hidden-map requests, navigation, scope invalidation, missing frame and cleanup.
 - [ ] Run regression/type/build/site checks and desktop/phone smoke checks; commit the step.
 
 ## Task 3 — Review and handoff
@@ -52,3 +52,7 @@ Late module/data rejection after another selection; hidden-map initialization; a
 - Baseline: merged PR #149, `1f114a9f387e8f51e15cb8267c6c984eb56ecf49`; working source starts clean apart from unrelated untracked files.
 
 - Task 1 verification: negative compiler fixtures initially failed on unchecked JS imports/callbacks; keyed imports now check actual implementation namespaces. 20 focused tests, compiler and Vite build pass. No runtime dependencies added.
+
+- Task 2: nine lifecycle tests exercise actual forecast playback and controlled imports/data; no DOM/map updates from obsolete scopes. Browser verified snow point fallback, paused playback on Work/Watch, and rapid gust/rain selection. Media-query regression failed before the visibility listener and passes afterward.
+- Ruling: map selection callbacks carry feature properties (not a bare ID); corrected the contract to the actual renderer callback and removed the shell's callback any.
+- Ruling: release package 0.100.0 marks the ownership/contract change. No production deployment or private schema change.

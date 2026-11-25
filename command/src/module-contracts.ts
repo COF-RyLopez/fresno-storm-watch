@@ -13,7 +13,7 @@ export interface FeedOptions {
 }
 export interface TerrainOptions {
   container: string | HTMLElement;
-  onSelect: (id: string) => void;
+  onSelect: (record: {id?: string; [key: string]: unknown}) => void;
   onError: (error: unknown) => void;
   onCamera?: (camera: Camera) => void;
 }
