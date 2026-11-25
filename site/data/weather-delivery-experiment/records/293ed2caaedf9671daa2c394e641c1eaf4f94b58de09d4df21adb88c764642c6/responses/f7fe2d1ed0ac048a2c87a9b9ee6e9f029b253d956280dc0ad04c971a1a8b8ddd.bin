@@ -1,0 +1,1 @@
+{"displayFieldName":"product","fieldAliases":{"qpf":"QPF"},"fields":[{"name":"qpf","type":"esriFieldTypeDouble","alias":"QPF"}],"features":[{"attributes":{"qpf":0.01}},{"attributes":{"qpf":0.1}},{"attributes":{"qpf":0.25}}]}

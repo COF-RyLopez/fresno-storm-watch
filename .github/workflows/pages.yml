@@ -27,6 +27,8 @@ jobs:
       - run: npm run build:command
       - run: npm test
       - run: npm run check
+      - name: Verify bundled public weather comparison replay
+        run: node scripts/publish-weather-replay.mjs --verify
       - name: Pack and verify public waterway archives
         run: npm run build:waterway-archives
       - name: Check private publisher contract without connecting to ArcGIS
@@ -109,6 +111,16 @@ jobs:
       - name: Collect shared public MapLibre and ArcGIS pilot inputs
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: npm run collect:map-pilot
+      - name: Prepare public recorded weather-delivery comparison
+        continue-on-error: true
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        timeout-minutes: 3
+        run: |
+          if node --use-system-ca scripts/capture-weather-replay.mjs && node scripts/publish-weather-replay.mjs; then
+            echo "Published a verified public recording."
+          else
+            echo "::warning::Public WPC recording unavailable; retaining the dated public replay bundled with this release."
+          fi
       - name: Collect six-hour NWS snowfall grids
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         continue-on-error: true
