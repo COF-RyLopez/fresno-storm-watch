@@ -5,11 +5,16 @@ import {installWatchClouds} from './watch-cloud-ui.js';
 const stamp=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(t);
 /** Dated NWS mosaic images; one bounded three-frame cache, no volumetric reconstruction. */
 export function installRegionalRadar({session,info,items,renderColors,visible,source,
- loadCatalog=loadMosaicCatalog,loadImage=loadMosaicImage,cloudFactory=installWatchClouds}){
+ loadCatalog=loadMosaicCatalog,loadImage=loadMosaicImage,cloudFactory=installWatchClouds,stepControls=false}){
  const controls=document.createElement('div');controls.className='watershed-player-controls';
  const play=document.createElement('button'),latest=document.createElement('button'),slider=document.createElement('input');
  play.textContent='Play';play.setAttribute('aria-label','Play recent radar observations');latest.textContent='Latest';
- slider.type='range';slider.min='0';slider.step='1';slider.setAttribute('aria-label','NWS radar observation');controls.append(play,slider,latest);
+ const step=(label,icon,offset)=>{const b=document.createElement('button');b.setAttribute('aria-label',label);b.disabled=true;
+  const glyph=document.createElement('calcite-icon');glyph.setAttribute('icon',icon);glyph.setAttribute('scale','s');b.append(glyph);
+  b.onclick=()=>{if(!player||!frames.length)return;stopFollow();void player.select(Math.max(0,Math.min(frames.length-1,index+offset)));};return b;};
+ const previous=step('Previous radar scan','chevron-left',-1),next=step('Next radar scan','chevron-right',1);
+ slider.type='range';slider.min='0';slider.step='1';slider.setAttribute('aria-label','NWS radar observation');
+ controls.append(...(stepControls?[play,previous,slider,next,latest]:[play,slider,latest]));
  play.disabled=true;slider.disabled=true;
  const clouds=cloudFactory(session,{allowSurface:false});
  let active=false,suspended=false,following=true,request,timer,expiry,player,frames=[],displayed=null,index=-1,epoch=0;
@@ -25,6 +30,7 @@ export function installRegionalRadar({session,info,items,renderColors,visible,so
   return true;
  }
  function report(phase='paused'){
+  previous.disabled=index<=0;next.disabled=index>=frames.length-1||!frames.length;
   play.textContent=player?.playing?'Pause':'Play';play.setAttribute('aria-pressed',String(!!player?.playing));play.disabled=frames.length<2;
   slider.disabled=!frames.length;slider.max=String(Math.max(0,frames.length-1));slider.value=String(Math.max(0,index));
   slider.setAttribute('aria-valuetext',displayed?stamp(displayed.time):'No radar observation');

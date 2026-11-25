@@ -9,7 +9,7 @@ import {gaugeIcon} from './command-gauge.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 /** @param {import("../../command/src/module-contracts.ts").TerrainOptions} options */
-export async function createWatchTerrain({container,onSelect,onError,onCamera=()=>{}}){
+export async function createWatchTerrain({container,onSelect,onError,onCamera=()=>{},onInspect}){
  const ml=await import('../vendor/maplibre-6.15.0/maplibre-gl.mjs');
  if(!protocol){const {Protocol}=await import('../vendor/pmtiles-4.5.0/pmtiles.js');protocol=new Protocol();ml.addProtocol('pmtiles',protocol.tile);}
  const style=libreStyle(await pilotStyle('watch','pmtiles'));
@@ -98,7 +98,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   if(field&&!windTrails)windTrails=createWatchWindTrails(map);
   windTrails?.set(field,options);
  }
- const inspection=installCloudTopInspection({map,Popup:ml.Popup,recordAt,onSelect,getSurface:()=>cloudTopLayer,getMetadata:()=>cloudMetadata});
+ const inspection=installCloudTopInspection({map,Popup:ml.Popup,recordAt,onSelect,onInspect,getSurface:()=>cloudTopLayer,getMetadata:()=>cloudMetadata});
  function radar(samples,minDbz,options){
   if(!samples?.length){
    if(map.getLayer('watch-hanford-radar'))map.removeLayer('watch-hanford-radar');

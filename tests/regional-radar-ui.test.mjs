@@ -4,10 +4,10 @@ import {installRegionalRadar} from '../site/lib/watch-regional-radar-ui.js';
 import {FakeElement,stubGlobals} from './helpers/dom.mjs';
 const settle=()=>new Promise(r=>setImmediate(r));
 
-function harness(t,{loadCatalog,loadImage}={}){
+function harness(t,{loadCatalog,loadImage,stepControls=false}={}){
  const restore=stubGlobals({document:{createElement:tag=>new FakeElement(tag),createTextNode:t=>t,hidden:false},matchMedia:()=>({matches:true})});
  const frames=[{time:Date.now()-10*60000},{time:Date.now()-60000}],state={draws:[],loads:[],observed:[],cloud:false,bounds:[-120,35,-118,38]},info=new FakeElement();
- const view=installRegionalRadar({session:{regionalRadar:image=>state.draws.push(image),viewBounds:()=>state.bounds},info,items:new FakeElement(),visible:()=>true,source:()=>new FakeElement(),renderColors(){},
+ const view=installRegionalRadar({stepControls,session:{regionalRadar:image=>state.draws.push(image),viewBounds:()=>state.bounds},info,items:new FakeElement(),visible:()=>true,source:()=>new FakeElement(),renderColors(){},
   loadCatalog:signal=>loadCatalog?loadCatalog(signal,frames):Promise.resolve({frames,legend:[],gaps:false}),
   loadImage:async(frame,signal,options)=>{state.loads.push({...options,frame});return loadImage?loadImage(frame,signal,options):{time:frame.time};},
   cloudFactory:()=>({button:new FakeElement(),status:new FakeElement(),legend:new FakeElement(),open(){state.cloud=true;},close(){state.cloud=false;},observe:async time=>{state.observed.push(time);},cancelPending(){}})
@@ -19,6 +19,16 @@ test('a camera move during the first radar image load extends coverage without c
  const h=harness(t,{loadImage:async frame=>{if(++calls===1)await first;return {time:frame.time};}});
  h.view.open();await settle();h.state.bounds=[-140,33,-134,41];h.view.viewportChanged();release();await settle();await settle();
  assert(h.state.loads.length>=2);assert(h.state.loads.at(-1).bounds[0]<=-140);assert.equal(h.state.draws.at(-1).time,h.frames.at(-1).time);
+});
+
+test('Command radar steps through actual scan times with disabled edge controls',async t=>{
+ const h=harness(t,{stepControls:true});h.view.open();await settle();await settle();
+ const [play,previous,slider,next,latest]=h.view.controls.children;
+ assert.equal(previous.attributes.get('aria-label'),'Previous radar scan');assert.equal(next.disabled,true);
+ previous.onclick();await settle();assert.equal(h.state.draws.at(-1).time,h.frames[0].time);
+ assert.equal(previous.disabled,true);assert.equal(next.disabled,false);assert.equal(slider.value,'0');
+ next.onclick();await settle();assert.equal(h.state.draws.at(-1).time,h.frames[1].time);assert.equal(next.disabled,true);
+ assert.equal(play.textContent,'Play');assert.equal(latest.textContent,'Latest');
 });
 
 test('playback controls cannot cancel the only catalog before a player exists',async t=>{

@@ -18,6 +18,14 @@ test('empty and single-window timelines have clear non-playable states',t=>{
  const empty=make(t,{frames:[]});assert.equal(empty.input.disabled,true);assert.match(empty.label.textContent,/No matching/);
  const single=make(t,{frames:frames.slice(0,1)});assert.equal(single.input.disabled,true);assert.equal(single.label.textContent,'0 to 6');
 });
+
+test('shared weather timelines name their product and retain overview labels and explicit gaps',t=>{
+ const ui=make(t,{label:'Rain forecast timeline',emptyLabel:'No rainfall windows',format:(_a,_b,frame)=>frame.start===0?'72-hour overview':`${frame.start} to ${frame.end}`});
+ assert.equal(ui.input.attributes.get('aria-label'),'Rain forecast timeline');
+ ui.setIndex(0);assert.equal(ui.label.textContent,'72-hour overview');
+ const empty=make(t,{frames:[],label:'Gust forecast timeline',emptyLabel:'No gust forecasts'});
+ assert.equal(empty.label.textContent,'No gust forecasts');
+});
 test('playback and manual keyboard-style scrubbing update the same timeline and frame',async t=>{
  const ui=make(t),seen=[];
  const player=createForecastPlayback({frames,load:async f=>f,render:(_v,_f,index)=>{ui.setIndex(index);seen.push(index);}});t.after(()=>player.destroy());

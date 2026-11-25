@@ -260,7 +260,21 @@ small {
 .evidence {
   border-right: 0;
   border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
+.evidence .panel-heading { flex-shrink:0; margin-bottom:8px; }
+.inspector-sections { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; flex-shrink:0; }
+.inspector-sections button { min-height:44px; font-size:13px; background:none; }
+.inspector-sections button[aria-pressed="true"] { background:var(--raised); color:var(--accent); }
+.inspector-body { flex:1; min-height:0; overflow:auto; padding-top:12px; overflow-wrap:anywhere; }
+.inspector-body h2 { font-size:18px; margin:4px 0 16px; }
+.inspector-body h3 { font-size:14px; margin:20px 0 8px; }
+#reading-content { white-space:pre-line; line-height:1.6; }
+#inspector-map { flex-shrink:0; min-height:44px; text-align:left; }
+#weather-issued { font-size:12px; color:var(--muted); }
 .panel-heading {
   display: flex;
   align-items: center;
@@ -387,7 +401,8 @@ small {
   overflow-y: auto;
 }
 .watch-feature-hover .maplibregl-popup-content { white-space: pre-line; font-size: 12px; }
-@media (max-width: 700px) {
+.watch-map-preview { position:absolute; z-index:5; pointer-events:none; padding:10px 12px; background:var(--raised); color:#e9eeef; box-shadow:0 4px 14px #0005; border-radius:6px; font:12px/1.45 Inter,Arial,sans-serif; white-space:pre-line; overflow:hidden; overflow-wrap:anywhere; }
+@media (max-width: 700px), (max-height: 520px) {
   /* Long tap readouts use an inset card; an anchored popup can extend beyond a narrow map. */
   .maplibregl-popup.watch-cloud-readout {
     left: 12px; right: 12px; top: auto; bottom: 140px;
@@ -471,7 +486,11 @@ summary {
   min-width: 0;
   overflow: hidden;
   background: #1d2b32;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  min-height:0;
 }
+.map-viewport { position:relative; min-height:0; overflow:hidden; }
 #command-map {
   width: 100%;
   height: 100%;
@@ -505,41 +524,45 @@ summary {
 }
 .map-tools button {
   background: #1b282eed;
+  min-height:44px;
+  min-width:44px;
 }
+.maplibregl-ctrl-group button { min-width:44px; min-height:44px; }
 .weather-dock {
-  position: absolute;
-  bottom: 35px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(100% - 24px);
-  min-width: 260px;
-  background: #1a272ff5;
-  border: 1px solid #536268;
-  border-radius: 8px;
-  padding: 10px 14px;
-  box-shadow: 0 8px 24px #0005;
+  min-width:0;
+  background:var(--surface);
+  border-top:1px solid var(--line);
+  padding:8px 12px;
   font-size: 12px;
+  display:grid;
+  gap:4px;
 }
 .weather-mode {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   justify-content: space-between;
 }
 .weather-mode select {
-  padding: 6px;
-  background: #1a272f;
-  border: 0;
+  padding: 6px 8px;
+  background:var(--raised);
+  min-width:0;
+  flex:1;
+  min-height:44px;
 }
+.weather-mode button { min-height:44px; font-size:12px; }
 .weather-mode label {
   color: var(--muted);
 }
 #weather-controls {
-  display: flex;
-  gap: 7px;
+  display:grid;
+  grid-template-columns:44px 44px minmax(0,1fr) 44px;
+  gap:6px;
   align-items: center;
-  flex-wrap: wrap;
 }
+#weather-controls:empty { display:none; }
+#weather-controls > button { min-height:44px; min-width:44px; padding:6px; display:flex; align-items:center; justify-content:center; }
+#weather-controls > button:nth-child(n+5),#weather-controls > .forecast-playback-status,#weather-controls > .watershed-player-controls { grid-column:1/-1; }
 .forecast-playback-status {
   color: var(--muted);
   font-size: 12px;
@@ -549,10 +572,16 @@ summary {
   min-width: 0;
   display: grid;
   gap: 4px;
+  position:relative;
 }
 .forecast-timeline output {
-  font-size: 12px;
-  line-height: 1.4;
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap;
 }
 .forecast-timeline input[type="range"] {
   width: 100%;
@@ -569,24 +598,24 @@ summary {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  margin:0;
 }
 .watershed-player-controls input[type="range"] {
-  width: 130px;
+  flex:1;
+  min-width:0;
+  height:44px;
   padding: 0;
   accent-color: #96d9e1;
 }
+.watershed-player-controls button { min-height:44px; min-width:44px; padding:6px; }
 .weather-dock p {
-  margin: 8px 0 0;
+  margin:0;
+  line-height:1.45;
 }
-.weather-dock details {
-  max-width: 350px;
-}
-.weather-dock details div {
-  max-height: 180px;
-  overflow: auto;
-  line-height: 1.5;
-}
+#weather-legend { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; line-height:1.5; }
+#weather-time { font-variant-numeric:tabular-nums; }
+#weather-legend .legend-band { white-space:nowrap; }
+#weather-controls button calcite-icon { pointer-events:none; }
 #gauge-colors { display:flex; flex-wrap:wrap; gap:6px 10px; margin:10px 0; }
 #gauge-readings p { white-space:pre-line; }
 #burn-context-status:not([hidden]) { display:flex; align-items:center; gap:6px; color:#e4c6a9; margin:8px 0; }
@@ -843,7 +872,7 @@ summary {
     display: none;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-height: 520px) {
   body {
     font-size: 14px;
   }
@@ -917,12 +946,12 @@ summary {
     display: none;
   }
   body[data-pane="map"] .watch-view .map-panel {
-    display: block;
+    display: grid;
     width: 100%;
     height: 100%;
   }
   body[data-pane="details"] .watch-view .evidence:not([hidden]) {
-    display: block;
+    display: flex;
   }
   body[data-pane="details"] .watch-view:not(.has-selection) .attention {
     display: block;
@@ -963,26 +992,16 @@ summary {
     max-width: 200px;
   }
   .map-tools {
-    top: 75px;
+    top: 66px;
     right: 12px;
     flex-direction: column;
   }
   .map-tools button {
     min-height: 44px;
   }
-  .weather-dock {
-    left: 58px;
-    transform: none;
-    width: calc(100% - 76px);
-    max-width: 360px;
-    min-width: 0;
-  }
-  .weather-dock select {
-    max-width: 230px;
-  }
-  .weather-dock details {
-    max-width: 100%;
-  }
+  .weather-dock { padding:6px 10px; }
+  .weather-mode label { display:none; }
+  .inspector-sections button { font-size:13px; }
   .watershed-player-controls {
     flex-wrap: wrap;
   }
@@ -1003,6 +1022,22 @@ summary {
     min-height: 44px;
     min-width: 44px;
   }
+}
+@media (max-height:520px) {
+  .command-header { height:48px; padding:2px 10px; }
+  .command-header nav button { min-height:44px; padding:6px; }
+  .incident-strip { min-height:24px; padding:3px 10px; }
+  .important { padding:4px 10px; }
+  .mobile-panes { padding:4px 8px; }
+  .map-tools { top:8px; right:8px; flex-direction:row; }
+  .map-caption { top:8px; right:230px; }
+  .map-caption small { display:none; }
+  .weather-dock { padding:4px 10px; gap:2px 10px; }
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group { display:flex; }
+}
+@media (max-height:520px) and (min-width:560px) {
+  .weather-dock { grid-template-columns:minmax(240px,.8fr) minmax(300px,1.2fr); }
+  #weather-time,#weather-legend { grid-column:1/-1; }
 }
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -1060,19 +1095,6 @@ summary {
 }
 .command-header summary {
   min-height: 44px;
-}
-.weather-dock {
-  bottom: 88px;
-}
-.weather-dock[data-advisory] {
-  bottom: 30px;
-  width: min(410px, calc(100% - 112px));
-  min-width: 0;
-}
-@media (max-width: 700px) {
-  .weather-dock[data-advisory] {
-    width: calc(100% - 76px);
-  }
 }
 .maplibregl-ctrl-attrib-inner {
   max-width: 280px;

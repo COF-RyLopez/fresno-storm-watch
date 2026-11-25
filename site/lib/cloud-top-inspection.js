@@ -1,4 +1,5 @@
 import {cloudTopHeightBand} from './cloud-top-style.js';
+import {createMapPreview} from './map-preview.js';
 const observedTime=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
 
 /** An approximate altitude on the triangulated NOAA retrieval, never a cloud-base/AGL reading. */
@@ -9,13 +10,14 @@ export function cloudTopReadout(height,stamp){
 }
 
 /** Screen-surface picking for mouse and touch; ground records retain interaction priority. */
-export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurface,getMetadata}){
+export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurface,getMetadata,onInspect}){
  const hover=new Popup({className:'watch-feature-hover',closeButton:false,closeOnClick:false,focusAfterOpen:false,offset:12});
  const cloud=new Popup({className:'watch-cloud-readout',maxWidth:'min(340px, calc(100vw - 32px))',closeButton:true,closeOnClick:false,focusAfterOpen:false,offset:12});
  const canvas=map.getCanvas();let scheduled=null;
+ const preview=onInspect?createMapPreview(map):null;
  function clear(){
   if(scheduled!==null)cancelAnimationFrame(scheduled);
-  scheduled=null;hover.remove();cloud.remove();canvas.style.cursor='';
+  scheduled=null;hover.remove();cloud.remove();preview?.remove();canvas.style.cursor='';
  }
  function cloudAt(event){
   const surface=getSurface(),stamp=getMetadata()?.observedAt;
@@ -32,6 +34,7 @@ export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurfac
   return hit?cloudTopReadout(hit.height,stamp):null;
  }
  function showCloud(text,event){
+  if(preview){preview.show(text,event.point);canvas.style.cursor='pointer';return;}
   hover.remove();cloud.setText(text).setLngLat(event.lngLat);
   if(!cloud.isOpen())cloud.addTo(map);
   canvas.style.cursor='pointer';
@@ -42,15 +45,15 @@ export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurfac
   scheduled=requestAnimationFrame(()=>{
    scheduled=null;
    const record=recordAt(event.point);
-   if(record?.name){cloud.remove();canvas.style.cursor='pointer';hover.setText(record.hoverText||record.name).setLngLat(event.lngLat);if(!hover.isOpen())hover.addTo(map);return;}
+   if(record?.name){cloud.remove();canvas.style.cursor='pointer';if(preview)preview.show(record.readout||record.hoverText||record.name,event.point);else{hover.setText(record.hoverText||record.name).setLngLat(event.lngLat);if(!hover.isOpen())hover.addTo(map);}return;}
    const text=cloudAt(event);if(text)showCloud(text,event);else clear();
   });
  };
  const click=event=>{
   clear();const record=recordAt(event.point);
-  if(record?.readout){showCloud(record.readout,event);return;}
+  if(record?.readout){if(onInspect)onInspect(record);else showCloud(record.readout,event);return;}
   if(record){onSelect(record);return;}
-  const text=cloudAt(event);if(text)showCloud(text,event);
+  const text=cloudAt(event);if(text){if(onInspect)onInspect({name:'GOES cloud top',readout:text});else showCloud(text,event);}
  };
  const moving=()=>{getSurface()?.invalidatePick?.();clear();};
  const leave=event=>{
@@ -60,5 +63,5 @@ export function installCloudTopInspection({map,Popup,recordAt,onSelect,getSurfac
  const key=event=>{if(event.key==='Escape')clear();};
  map.on('mousemove',move);map.on('mouseout',leave);map.on('movestart',moving);map.on('click',click);
  canvas.addEventListener('keydown',key);
- return {clear,destroy(){clear();map.off('mousemove',move);map.off('mouseout',leave);map.off('movestart',moving);map.off('click',click);canvas.removeEventListener('keydown',key);}};
+ return {clear,destroy(){clear();preview?.destroy();map.off('mousemove',move);map.off('mouseout',leave);map.off('movestart',moving);map.off('click',click);canvas.removeEventListener('keydown',key);}};
 }

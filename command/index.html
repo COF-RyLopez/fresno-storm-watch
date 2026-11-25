@@ -127,7 +127,8 @@
           </details>
         </aside>
         <section class="map-panel" aria-label="Operational map">
-          <div id="command-map"></div>
+          <div class="map-viewport">
+          <div id="command-map" tabindex="-1"></div>
           <div id="map-failure" hidden role="status"></div>
           <div class="map-caption">
             <span id="map-place">Fresno County &amp; upstream watersheds</span
@@ -140,37 +141,25 @@
                 scale="s"
               ></calcite-icon></button
             ><button id="map-overhead" aria-pressed="false">Overhead</button>
+            <button id="map-key-open" aria-controls="evidence" aria-label="Open map key and layers"><calcite-icon icon="legend" scale="s"></calcite-icon><span>Map key</span></button>
+          </div>
           </div>
           <div class="weather-dock" id="weather-dock">
             <div class="weather-mode">
               <label for="weather">Weather</label
-              ><select id="weather">
+              ><select id="weather" aria-label="Weather">
                 <option value="off">Off</option>
                 <option value="rain">Rain forecast</option>
                 <option value="gust">Gust forecast</option>
-                <option value="radar">NWS radar</option>
-                <option value="snow-now">Snow now</option>
+                <option value="radar">Observed radar</option>
+                <option value="snow-now">Observed snow cover</option>
                 <option value="snow-forecast">Snow forecast</option>
               </select>
+              <button id="weather-details-open" aria-controls="evidence">Weather details</button>
             </div>
             <div id="weather-controls"></div>
-            <p id="weather-purpose" hidden></p>
             <p id="weather-time" role="status" hidden></p>
             <div id="weather-legend" hidden></div>
-            <p id="burn-context-status" class="burn-context-status" hidden><i aria-hidden="true"></i><span id="burn-context-label">Burn areas · reference</span></p>
-            <details id="gauge-key" hidden>
-              <summary>Map key &amp; gauge readings</summary>
-              <p>Dashed light outlines: county boundaries. Thin pale outlines: incorporated cities. Tan outlines: recent fire perimeters, not burn severity or debris-flow inundation.</p>
-              <label><input id="show-burn-scars" type="checkbox"> Recent fire perimeters</label>
-              <p id="context-note"></p>
-              <p>Filled column and solid line: last observation against published levels. Colored ticks: published thresholds. Hollow diamond: forecast high. Arrow: observed trend. Clock: stale or unavailable reading. Dashed column with ?: no threshold scale. Each station has its own display scale; this is not river capacity or water depth.</p>
-              <div id="gauge-colors"></div>
-              <div id="gauge-readings"></div>
-            </details>
-            <details id="weather-details" hidden>
-              <summary>Source &amp; coverage</summary>
-              <div id="weather-source"></div>
-            </details>
           </div>
         </section>
         <aside
@@ -180,7 +169,7 @@
           hidden
         >
           <div class="panel-heading">
-            <h2 id="evidence-name">Selected place</h2>
+            <h2 id="inspector-title" tabindex="-1">Details</h2>
             <button
               id="evidence-close"
               aria-label="Close details"
@@ -189,7 +178,48 @@
               <calcite-icon icon="x" scale="s"></calcite-icon>
             </button>
           </div>
-          <div id="evidence-content"></div>
+          <nav class="inspector-sections" aria-label="Details sections">
+            <button id="inspector-place" aria-pressed="true">Place</button>
+            <button id="inspector-weather" aria-pressed="false">Weather</button>
+            <button id="inspector-key" aria-pressed="false">Map key</button>
+          </nav>
+          <button id="inspector-map" class="text-button">Return to map</button>
+          <div class="inspector-body">
+          <section id="place-inspector">
+            <h2 id="evidence-name">Selected place</h2>
+            <div id="evidence-content"></div>
+          </section>
+          <section id="weather-inspector" hidden>
+            <p id="weather-purpose" hidden></p>
+            <p>Choose a weather product in the strip below the map. Its valid time and legend stay with the map; gauges and roads remain current context.</p>
+            <p id="weather-issued"></p>
+            <div id="weather-extra"></div>
+            <details id="weather-details" hidden open>
+              <summary>Source &amp; coverage</summary>
+              <div id="weather-source"></div>
+            </details>
+          </section>
+          <section id="map-key-inspector" hidden>
+            <p id="burn-context-status" class="burn-context-status" hidden><i aria-hidden="true"></i><span id="burn-context-label">Burn areas · reference</span></p>
+            <details id="gauge-key" hidden open>
+              <summary>Visible map symbols</summary>
+              <label><input id="show-burn-scars" type="checkbox"> Recent fire perimeters</label>
+              <div id="gauge-colors"></div>
+              <details><summary>How to read the map</summary>
+                <p>Dashed light outlines: county boundaries. Thin pale outlines: incorporated cities. Tan outlines: recent fire perimeters, not burn severity or debris-flow inundation.</p>
+                <p id="context-note"></p>
+                <p>Filled column and solid line: last observation against published levels. Colored ticks: published thresholds. Hollow diamond: forecast high. Arrow: observed trend. Clock: stale or unavailable reading. Dashed column with ?: no threshold scale. Each station has its own display scale; this is not river capacity or water depth.</p>
+              </details>
+              <h3>Gauges on this map</h3>
+              <div id="gauge-readings"></div>
+            </details>
+          </section>
+          <section id="reading-inspector" hidden>
+            <h2 id="reading-title">Map reading</h2>
+            <p id="reading-content"></p>
+            <button id="reading-back">Back to selected place</button>
+          </section>
+          </div>
         </aside>
       </section>
       <section id="work-view" class="work-view" hidden aria-label="Work">

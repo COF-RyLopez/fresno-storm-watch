@@ -2,7 +2,8 @@ import "./style.css";
 import type { Concern, FeedState } from "./contracts";
 import type { TerrainMap } from "./module-contracts";
 import { createModuleLoader } from "./module-loader";
-import { createCommandWeather } from "./weather-controller";
+import { createCommandWeather, COMPACT_VIEW_QUERY } from "./weather-controller";
+import { createCommandInspector } from "./inspector";
 
 // Existing verified collectors stay separate from this build and its rendering engine.
 const root = new URL("../", document.baseURI);
@@ -93,17 +94,20 @@ let privateSelection: Concern | undefined;
 let authorizedSites: Concern[] = [];
 let privateScope = "";
 let privateCamera = false;
+const inspector = createCommandInspector({pane,resize:()=>map?.resize()});
 const weather = createCommandWeather({
   root, moduleAt, model, createForecastPlayback,
   getMap: () => map, ensureMap, getState: () => state.value,
   getSelection: () => current(), getTimeline: () => feeds.timeline,
   updateMap, renderEvidence, pane, requestFit: () => {pendingFit = true;}, notify, date,
+  onProductChange:()=>inspector.clearReading(),
 });
 function invalidateSearch() {
   searchGeneration++;
   searchLoading = false;
 }
 function clearPrivateContext() {
+  inspector.clear();
   weather.invalidateScope();
   const wasPrivate = !!privateSelection || privateCamera;
   privateCamera = false;
@@ -285,7 +289,7 @@ function pane(value: string) {
   if (value === "map") {
     void ensureMap();
     weather.resume();
-  } else if (matchMedia("(max-width:700px)").matches) weather.suspend();
+  } else if (matchMedia(COMPACT_VIEW_QUERY).matches) weather.suspend();
   map?.resize();
 }
 function route() {
@@ -317,7 +321,7 @@ function route() {
     weather.resume();
     map?.resize();
     if (
-      !matchMedia("(max-width:700px)").matches ||
+      !matchMedia(COMPACT_VIEW_QUERY).matches ||
       state.value.mobile === "map"
     )
       void ensureMap();
@@ -333,11 +337,15 @@ document
   .forEach((b) => (b.onclick = () => navigate(b.dataset.view!)));
 document
   .querySelectorAll<HTMLButtonElement>("[data-pane]")
-  .forEach((b) => (b.onclick = () => pane(b.dataset.pane!)));
+  .forEach((b) => (b.onclick = () => {
+    if(b.dataset.pane==='details'&&!inspector.panel)inspector.show(current()?'place':'weather',false);
+    pane(b.dataset.pane!);
+  }));
 document
   .querySelectorAll<HTMLButtonElement>("[data-place]")
   .forEach((b) => (b.onclick = () => select(b.dataset.place!)));
 function select(id: string) {
+  inspector.show('place',false);
   weather.requestAutoplay(id);
   invalidateSearch();
   const site = [...authorizedSites, ...privateTasks()].find((c) => c.id === id);
@@ -362,18 +370,11 @@ function select(id: string) {
     updateMap();
     syncAdvisoryWeather(true);
   }
-  if (matchMedia("(max-width:700px)").matches) {
+  if (matchMedia(COMPACT_VIEW_QUERY).matches) {
     const clicked = feeds.reference.find((c) => c.id === id) ?? referenceResults.get(id);
     pane(["alert", "burn-scar"].includes(clicked?.kind || "") && clicked?.features.length ? "map" : "details");
   }
 }
-$("evidence-close").onclick = () => {
-  privateSelection = undefined;
-  navigate("watch", null);
-  renderEvidence();
-  updateMap();
-  pane("attention");
-};
 $("search").onsubmit = (e) => {
   e.preventDefault();
   state.patch({ query: $<HTMLInputElement>("find-place").value.trim() });
@@ -648,12 +649,11 @@ function chart(e: any) {
 }
 function renderEvidence() {
   const c = current();
-  $("watch-view").classList.toggle("has-selection", !!c);
-  $("evidence").hidden = !c;
+  inspector.selection(c?.id??null);
   if (!c) {
     lastEvidence = "";
-    $("evidence-name").textContent = "";
-    $("evidence-content").replaceChildren();
+    $("evidence-name").textContent = "Choose a place";
+    $("evidence-content").replaceChildren(el('p','Select a concern, map feature or search result to inspect it.'));
     return;
   }
   const signature = JSON.stringify([
@@ -1003,7 +1003,7 @@ function updateMap() {
     const b = model.geometryBounds(triggerFeatures.length
       ? [...triggerFeatures, ...(c.kind === "care" ? c.features : [])]
       : [...c.features, ...floodGauges, ...(basin ? [basin] : [])]);
-    if (b) map.focus(b, true, { top: 75, bottom: c.kind === "alert" ? 205 : 170, left: 50, right: 50 });
+    if (b) map.focus(b, true, { top: 75, bottom: 45, left: 45, right: 45 });
     else if (c.mapGap) map.focus([-120.94, 35.89, -118.34, 37.61], false);
     pendingFit = false;
   }
@@ -1016,6 +1016,7 @@ async function ensureMap() {
       const { createWatchTerrain } = await moduleAt("watch-terrain-map");
       map = await createWatchTerrain({
         container: $("command-map"),
+        onInspect: value=>inspector.reading(value),
         onSelect: (p) => {
           if (!p.id) return;
           if (
@@ -1200,7 +1201,7 @@ $("load-assets").onclick = () => {
     feeds.counties?.find((c: any) => c.properties.GEOID === "06019"),
   );
 };
-pane("attention");
+pane(state.value.mobile || "attention");
 route();
 void collector.refresh();
 try {

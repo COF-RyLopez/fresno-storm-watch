@@ -44,3 +44,18 @@ test('tap inspects the rendered cloud, gives ground records priority, and clears
   view.destroy();assert.equal(map.listenerCount('click'),0);
  }finally{restore();}
 });
+
+test('Command routes full tapped readings to Details instead of opening a map popup',()=>{
+ const map=new EventEmitter(),canvas=new EventTarget();canvas.style={};canvas.clientWidth=390;canvas.clientHeight=400;
+ const element={style:{},setAttribute(){},remove(){}};
+ map.getCanvas=()=>canvas;map.isMoving=()=>false;map.getContainer=()=>({append(){}});
+ let opened=0,reading;
+ class Popup{remove(){}isOpen(){return false;}addTo(){opened++;return this;}}
+ const restore=stubGlobals({document:{createElement:()=>element}});
+ try{
+  const record={name:'Kings gauge',readout:'3.1 ft\nThreshold unknown\nObserved Nov 25'};
+  const view=installCloudTopInspection({map,Popup,recordAt:()=>record,onSelect(){throw Error('must inspect the reading');},onInspect:r=>reading=r,getSurface:()=>null,getMetadata:()=>null});
+  map.emit('click',{point:{x:2,y:2},lngLat:{lng:-119,lat:37}});
+  assert.equal(reading,record);assert.equal(opened,0);view.destroy();
+ }finally{restore();}
+});
