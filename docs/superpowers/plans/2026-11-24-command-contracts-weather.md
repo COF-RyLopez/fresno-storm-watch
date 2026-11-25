@@ -43,7 +43,7 @@ Late module/data rejection after another selection; hidden-map initialization; a
 
 - [x] Perform one independent review of the whole branch, correct material findings and rerun relevant checks.
 - [x] Document ownership, verification, known limits and code-only rollback.
-- [ ] Prepare an unmerged PR; no private record mutation or production cutover.
+- [x] Prepare an unmerged PR; no private record mutation or production cutover.
 
 ## Execution ledger
 
@@ -61,3 +61,5 @@ Late module/data rejection after another selection; hidden-map initialization; a
 - Browser: default desktop and 390×844 phone; Pine Flat selection and dated rain display survive Work/Watch. Snow grid unavailable stays labeled point guidance; NWS gust fallback has 9/9 named samples; radar/GOES observation times and dBZ legend visible. No browser errors observed. Local screenshots stay in ignored work/. No private records saved or account permissions tested.
 
 - Final local verification after review fixes: 1,066 tests passed; strict Command compiler, Vite build, generated import-map check, source/data/link checks and git diff --check passed. No dependency or lock resolution changes; package version only.
+
+- Handoff: PR #150 (https://github.com/COF-RyLopez/fresno-storm-watch/pull/150), feature branch refactor/command-contracts-weather. Keep unmerged; no Pages deployment requested.
