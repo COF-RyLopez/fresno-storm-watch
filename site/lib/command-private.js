@@ -118,6 +118,7 @@ export async function buildCommandBriefing({
   return freezeJson(validatePayload("briefings", payload));
 }
 
+/** @returns {import("../../command/src/module-contracts.ts").PrivateState} */
 const initial = () => ({
   allowed: new Set(),
   username: null,
@@ -133,6 +134,7 @@ const initial = () => ({
 const isCurrentPeriod = (records, id) =>
   heads(records.periods).some((h) => !h.conflict && h.record.id === id);
 
+/** @param {{config: object, onChange?: (state: import("../../command/src/module-contracts.ts").PrivateState) => void, createStore?: typeof createPrivateStore}} options */
 export function createCommandPrivate({
   config,
   onChange = () => {},
@@ -156,6 +158,7 @@ export function createCommandPrivate({
     update({ ...initial(), ...patch });
   }
 
+  /** @param {import("../../command/src/module-contracts.ts").CountySession | null} session */
   async function connect(session) {
     if (destroyed) return;
     reset({ loading: !!session });

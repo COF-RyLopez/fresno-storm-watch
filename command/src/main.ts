@@ -1,10 +1,10 @@
 import "./style.css";
 import type { Concern, FeedState } from "./contracts";
+import { createModuleLoader } from "./module-loader";
 
 // Existing verified collectors stay separate from this build and its rendering engine.
 const root = new URL("../", document.baseURI);
-const moduleAt = (name: string): Promise<any> =>
-  import(/* @vite-ignore */ new URL(`lib/${name}.js`, root).href);
+const moduleAt = createModuleLoader(root);
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const el = (tag: string, text?: string, className?: string) => {
@@ -271,7 +271,7 @@ function privateTasks(): Concern[] {
 const current = (): Concern | undefined =>
   privateSelection ||
   feeds.reference.find((c) => c.id === state.value.selected) ||
-  referenceResults.get(state.value.selected);
+  referenceResults.get(state.value.selected || "");
 function notify(text: string) {
   $("save-message").textContent = text;
   $("save-message").hidden = false;
@@ -311,7 +311,7 @@ function route() {
   if (next.selected) privateSelection = undefined;
   state.patch(next);
   if (changed) {
-    const saved = cameras.get(next.selected);
+    const saved = cameras.get(next.selected || "");
     if (saved && !(pendingFit && current()?.kind === "alert")) {
       state.patch({ camera: saved });
       map?.restore(saved);
@@ -1202,7 +1202,7 @@ function syncAdvisoryWeather(reopen = false) {
       return;
     }
     const mode = model.advisoryForecastMode(c);
-    let timing = c.alertTiming ?? { start: null, end: null };
+    let timing: AdvisoryTiming | null = c.alertTiming ?? { start: null, end: null };
     if (!mode) {
       const source = await moduleAt("command-snow");
       if (request.signal.aborted || epoch !== weatherEpoch || !source.snowAdvisoryCandidate(c)) return;
@@ -1266,7 +1266,7 @@ async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?:
         controls.replaceChildren(timeline.element,...(advisory ? current()?.features.length ? [fit] : [] : grid?.frames.length ? [fit] : []));
         const player = await mountForecastPlayer({frames,picker,key:(w: any)=>String(frames.indexOf(w)),epoch,autoplay:shouldAutoplay,
           load: async (w: any,signal: AbortSignal) => w.grid
-            ? source.loadSnowGridImage(w.grid,grid.coordinates,signal).catch(()=>null) : null,
+            ? source.loadSnowGridImage(w.grid,grid!.coordinates,signal).catch(()=>null) : null,
           render: (image: any,w: any,index:number) => {
             timeline.setIndex(index);
             const timeLabel=localForecastTime.formatRange(w.start,w.end);
@@ -1280,7 +1280,7 @@ async function showSnow(mode: string, epoch: number, rainWindow: any, advisory?:
             if(!weatherSuspended){map?.snowPoints(points);map?.snowfall(image);}
             if(image){
               info.textContent="NWS new snowfall · "+timeLabel+" · issued "+localForecastTime.format(w.grid.issued)+(w.grid.snowCells===0 ? " · No accumulation in valid cells" : "");
-              colors([{label:"0",color:"#365f75"},...grid.legend]);
+              colors([{label:"0",color:"#365f75"},...grid!.legend]);
               $("weather-legend").prepend(el("strong","New snow · inches "));
               $("weather-legend").append(el("small","Clear outside grid or where data is missing"));
             } else {
@@ -1457,7 +1457,7 @@ async function showGust(epoch: number, advisory?: AdvisoryTiming, preferNws = fa
     items.replaceChildren(...(forecast.provider === 'nws' ? [
       el("p", "NWS gust forecasts at nine named sample locations. Values apply to those samples; coverage between them is unassessed."),
       el("p", "Regional HRRR unavailable. Showing current NWS samples."),
-      ...snapshot.sites.filter((site: any) => site.error).map((site: any) => el("p", `${site.name} · source check failed`)),
+      ...(snapshot as {sites:any[]}).sites.filter((site: any) => site.error).map((site: any) => el("p", `${site.name} · source check failed`)),
       link("NWS Hanford", "https://www.weather.gov/hnx/"),
     ] : [el("p", manifest.attribution), link("NOAA HRRR model", "https://rapidrefresh.noaa.gov/hrrr/")]));
     const picker = el("select") as HTMLSelectElement;

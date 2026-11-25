@@ -1,6 +1,11 @@
 import {createWeatherFrameCache} from './weather-frame-cache.js';
 
 /** Serial published-frame playback. Keep at most three frames, never synthesize gaps or loop time. */
+/**
+ * @template Frame, Value
+ * @param {import("../../command/src/module-contracts.ts").PlaybackOptions<Frame, Value>} options
+ * @returns {import("../../command/src/module-contracts.ts").ForecastPlayback}
+ */
 export function createForecastPlayback({frames,load,render,changed=()=>{},available=()=>true,
   reducedMotion=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   dwell=1800,schedule=setTimeout,cancel=clearTimeout}) {
