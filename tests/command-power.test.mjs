@@ -30,6 +30,14 @@ test('equal-time conflicts and elapsed estimates remain review cues, never resto
  const removed=track.apply([row(t+1,restorationEstimate(null,'PG&E',t),{change:'Reported outage'})],t+2)[0];
  assert.equal(removed.utilityUpdate.estimateChange.type,'changed');assert.equal(removed.change,'Reported outage');
 });
+
+test('retaining a newer utility update still ages its restoration deadline without changing estimate history',()=>{
+ const track=createEstimateTracker(),a=restorationEstimate({time:t+100},'PG&E',t),b=restorationEstimate({time:t+200},'PG&E',t);
+ track.apply([row(t,a)],t);const changed=track.apply([row(t+1,b)],t+1);
+ const retained=track.apply([row(t,a)],t+1000)[0];
+ assert.equal(retained.utilityUpdate.restoration.key,b.key);assert.equal(retained.utilityUpdate.restoration.passed,true);
+ assert.deepEqual(retained.utilityUpdate.estimateChange,changed[0].utilityUpdate.estimateChange);assert.equal(retained.time,t+1);
+});
 test('briefing capture freezes the displayed estimate and count with its review history',()=>{
  const c=row(t,restorationEstimate({time:t+1000},'PG&E',t));
  c.utilityUpdate.customers=0;

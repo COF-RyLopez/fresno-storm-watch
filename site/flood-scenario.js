@@ -1,4 +1,4 @@
-import { loadSdk } from './lib/map.js';
+import { loadSdk } from './lib/sdk.js';
 import { blend, clockLabel, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
 import { createTrafficCanvas } from './lib/evacuation-traffic.js';
 import { createFrameWindow } from './lib/frame-window.js';

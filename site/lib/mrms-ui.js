@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {reportHealth} from './source-health.js';
 import {validateMrmsManifest,validateMrmsGrid,mrmsReason,mrmsPixels,RAIN_STOPS,TOTAL_STOPS} from './mrms-model.js';
 

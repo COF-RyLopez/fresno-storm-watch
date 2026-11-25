@@ -6,7 +6,7 @@ import {CARE_SOURCES,careBox,comparePlaces,compareBuildings,zonesAt,normalizeTex
 import {readCareCollection,readCarePlaces} from './care-data.js';
 import {loadPowerBuildings} from './power-buildings-data.js';
 import {createCareMap} from './care-map.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {classLink as link,elClass as el,disclosure} from './dom.js';
 
 const $=id=>document.getElementById(id);

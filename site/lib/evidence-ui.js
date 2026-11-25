@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {withTimeout} from './with-timeout.js';
 const $=id=>document.getElementById(id);
 /** One nonmodal evidence surface. Existing open attributes remain the domain controllers' visibility contract. */

@@ -1,5 +1,5 @@
 import {lazyDisplay} from './lazy-display.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {reportHealth} from './source-health.js';
 import {validateHrrrManifest,validateHrrrFrame,hrrrAt,hrrrPoint,hrrrPixels,GUST_STOPS,RAIN_STOPS} from './hrrr-model.js';
 

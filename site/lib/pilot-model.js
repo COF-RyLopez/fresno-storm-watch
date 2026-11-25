@@ -17,15 +17,16 @@ export function validatePilot(s,now=Date.now()){
  if(s?.schemaVersion!==1||!/^[a-f0-9]{64}$/.test(s.dataId)||!Number.isFinite(Date.parse(s.generatedAt))||Date.parse(s.generatedAt)>now+120000||i?.areas?.areas?.length!==7||i.gauges?.stations?.length!==10||i.entries?.length!==10||new Set(i.entries.map(e=>e.id)).size!==10||i.entries.some(e=>!i.gauges.stations.some(p=>p.id===e.id))||!Array.isArray(i.utilityFeatures))throw Error('Public pilot bundle is incomplete or changed.');
  return s;
 }
-/** Share current operational logic; no map engine or display filter enters evaluation. */
-export function pilotAssessment(s,now=Date.now(),previous=[]){
+/** Share current operational logic; aggregate check failure qualifies retained data without modifying source times. No display filter enters evaluation. */
+export function pilotAssessment(s,now=Date.now(),previous=[],checkError=null){
  const i=s.input,checked=Date.parse(s.generatedAt),old=now-checked>45*60000;
- const entries=new Map(i.entries.map(e=>[e.id,old?{...e,error:'Pilot collection overdue'}:e]));
- const reservoirs={selection:i.reservoirSettings,snapshot:i.reservoirs,checked,error:old?'Pilot collection overdue':null};
- const rain=old?{...i.rain,error:'Pilot collection overdue'}:i.rain;
+ const error=checkError||(old?'Pilot collection overdue':null);
+ const entries=new Map(i.entries.map(e=>[e.id,error?{...e,error}:e]));
+ const reservoirs={selection:i.reservoirSettings,snapshot:i.reservoirs,checked,error};
+ const rain=error?{...i.rain,error}:i.rain;
  const rows=evaluateAreas({areas:i.areas.areas,points:i.points,gaugeEntries:entries,riverConfig:CONFIG.rivers,reservoirs,rain,environmentConfig:CONFIG.environment},now);
  const powerRows=i.power.feeds.flatMap(f=>f.rows.map(r=>({...r,health:powerHealth(f,now),issues:powerRowIssues(r,now)})));
- const combined=combineAreaConcerns({rows,associations:i.associations,windSites:i.windSettings.sites,points:i.points,wind:{snapshot:i.wind,checked,error:old?'Pilot collection overdue':null},power:{rows:powerRows,feeds:i.power.feeds,checked,error:old?'Pilot collection overdue':null},previous},now);
+ const combined=combineAreaConcerns({rows,associations:i.associations,windSites:i.windSettings.sites,points:i.points,wind:{snapshot:i.wind,checked,error},power:{rows:powerRows,feeds:i.power.feeds,checked,error},previous},now);
  const comparisons=comparisonAreas(i.areas.areas,i.associations.areas,i.windSettings.sites,i.gauges.stations);
  return {old,checked,areas:mergeForecastReviews(combined,areaDifferences(comparisons,i.comparisons,now)),gauges:i.gauges.stations.map(station=>{const e=entries.get(station.id);return {station,gauge:e?.gauge,assessment:assessGauge(e?.gauge,CONFIG.rivers,72,now,e?.error)};}),reservoirs,powerRows};
 }

@@ -5,6 +5,7 @@ export function restorationEstimate(value, utility, now = Date.now()) {
   const ambiguous = utility === 'SCE' && text && !hasZone;
   const time = !ambiguous && Number.isFinite(value?.time) ? value.time : null;
   return {
+    time,
     key: time !== null ? `time:${time}` : `text:${text.replace(/\s+/g,' ').toLowerCase()}`,
     label: time !== null ? new Date(time).toLocaleString('en-US', {
       timeZone:'America/Los_Angeles', month:'short', day:'numeric', year:'numeric',
@@ -28,7 +29,11 @@ export function createEstimateTracker() {
         if (!comparable) return row;
         if (previous && row.time < previous.row.time) {
           previous.seen = now;
-          return {...previous.row, quality:`${row.quality} · newer utility update retained`};
+          const restoration=previous.row.utilityUpdate.restoration;
+          return {...previous.row, quality:`${row.quality} · newer utility update retained`,
+            utilityUpdate:{...previous.row.utilityUpdate,restoration:{...restoration,
+              passed:Number.isFinite(restoration.time)&&restoration.time<now,
+            }}};
         }
         const old = previous?.row.utilityUpdate;
         let estimateChange = old?.estimateChange;

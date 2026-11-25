@@ -1,7 +1,7 @@
 import {assessFacilities,facilityExercise,facilityFields,FACILITY_COLORS,FACILITY_MAX_AGE} from './facility-model.js';
 import {POWER_STATES} from './power-model.js';
 import {openFacilitySource,queryFacilities} from './facility-data.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {formatTime} from './model.js';
 import {FACILITY_PRESETS,COUNTY_ASSET_REFERENCES} from './facility-presets.js';
 import {classButton as button,elClass as el,classLink} from './dom.js';

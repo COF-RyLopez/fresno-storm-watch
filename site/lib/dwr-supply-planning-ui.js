@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {correlateDwrSupplies,SUPPLY_CONTEXT_KM} from './dwr-supply-planning-model.js';
 import {inspectionDate,inventoryQuantity} from './dwr-flood-fight-model.js';
 import {node,nodeButton as button,nodeLink as external,elAttrs,disclosure,onExpand} from './dom.js';

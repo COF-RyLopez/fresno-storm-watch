@@ -1,4 +1,4 @@
-import {loadSdk} from './lib/map.js';
+import {loadSdk} from './lib/sdk.js';
 import {readZoneProduct,estimatedResidents,zoneLabel,zoneRows,boundaryFingerprint} from './lib/zone-population-product.js';
 import {readCareCollection} from './lib/care-data.js';
 import {pioZoneLink} from './lib/pio-zone-context.js';

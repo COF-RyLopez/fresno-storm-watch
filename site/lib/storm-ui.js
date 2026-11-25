@@ -5,7 +5,7 @@ import {el,elAttrs,link} from './dom.js';
 import {indexNetwork,surgeSources,surgeFrames,timelineRange,speedNote,SURGE_CONFIG} from './river-network-model.js';
 import {wazeReports,wazeTraffic,WAZE_NOTE,WAZE_MAX_AGE} from './waze-model.js';
 import {CAMERA_FEED,nearbyCameras} from './camera-model.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {LAYER_LABELS} from './workspace-model.js';
 
 const $=id=>document.getElementById(id);

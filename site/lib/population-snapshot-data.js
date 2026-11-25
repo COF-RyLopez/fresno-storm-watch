@@ -1,4 +1,4 @@
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {calculateAcsZonePopulation} from './zone-acs-data.js';
 import {readPopulationBlocks,calculateZonePopulation} from './population-data.js';
 import {freezePopulationEvidence} from './population-snapshot-model.js';

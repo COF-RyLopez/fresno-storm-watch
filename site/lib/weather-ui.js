@@ -4,7 +4,7 @@ import {createHrrrWeather} from './hrrr-ui.js';
 import {createMrmsRainfall} from './mrms-ui.js';
 import {createSnowLevel} from './snow-ui.js';
 import {createSnowFleet} from './snow-fleet-ui.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {fetchSatelliteCatalog,fetchCurrentWind} from './weather-data.js';
 import {GOES_URL,GOES_PRODUCTS,HOUR,weatherStops,observationAt,windAt,windCompass} from './weather-model.js';
 import {elClass as el,classLink} from './dom.js';

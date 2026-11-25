@@ -1,6 +1,6 @@
 import {sha256Hex} from './zone-population-product.js';
 import {BRIEFING_LAYERS,BRIEFING_LAYER_CHECK_MS,briefingLayerCycle,briefingLayerLegend} from './briefing-layer-model.js';
-import {loadSdk} from './map.js';
+import {loadSdk} from './sdk.js';
 import {formatTime} from './model.js';
 import {reportHealth} from './source-health.js';
 import {probabilityRecord,PROBABILITY_MAX_CHECK_AGE} from './precip-probability-model.js';

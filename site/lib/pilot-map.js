@@ -51,7 +51,7 @@ export async function createPilotMap({engine,container,view,features,county,onSe
   return {settledError,setFeatures(data){map.getSource('records').setData(data);},highlight(data){map.getSource('selection').setData(data);},async fit(bounds,duration=0){map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:25,maxZoom:14,duration,pitch:mode==='3d'?50:0});await idle();},resize:()=>map.resize(),destroy:()=>map.remove()};
  }
  // The comparison mode uses the main app's pinned unified SDK loader.
- const {loadSdk}=await import('./map.js');const sdk=await loadSdk();
+ const {loadSdk}=await import('./sdk.js');const sdk=await loadSdk();
  const [Map,MapView,Basemap,VectorTileLayer,GraphicsLayer,Graphic,Extent,reactive]=await sdk.import(['@arcgis/core/Map.js','@arcgis/core/views/MapView.js','@arcgis/core/Basemap.js','@arcgis/core/layers/VectorTileLayer.js','@arcgis/core/layers/GraphicsLayer.js','@arcgis/core/Graphic.js','@arcgis/core/geometry/Extent.js','@arcgis/core/core/reactiveUtils.js']);
  const css=document.createElement('link');css.rel='stylesheet';css.href='https://js.arcgis.com/5.1/esri/themes/dark/main.css';document.head.append(css);
  const basemap=new Basemap({baseLayers:[new VectorTileLayer({style})]});
