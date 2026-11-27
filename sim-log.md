@@ -266,6 +266,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A7 outcome
+
+- prediction_commit: bfd33654 (full hash recoverable from Git)
+- observed_fixed: Release0.105.0 passed1132/1132 Node tests, TypeScript, Command build, import-map generation, repository checks and git diff --check.
+- missed: Remote CI and deployed-page checks not run yet; those claims remain unverified and are covered prospectively by A8.
+- regressions: None observed locally. Existing Vite warning for runtime vendor CSS path remains; built app loaded the stylesheet in browser checks.
+- score:1132/1132 before and after release build; local validation gates5/5.
+- verdict: kept locally; remote release pending.
+
+### A8 — remote CI and published-page validation
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Push reviewed branch, create PR for0.105.0, require green CI, preserve SIM prediction commits with a normal merge, and verify the deployed Command page. Append the actual remote outcome in a separate commit.
+- rationale: Windows checks do not cover Linux CI, Pages packaging or current public-data collection.
+- predicted_fixed: Verify CI passes, Pages publishes the exact merged source, six fixed rainfall bands appear with current forecast timing, and SIM log/private data remain outside the Pages artifact. Existing exercise label and access controls remain.
+- confidence: 0.88
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: retained-feed-freshness
 
 - domain: fresno-storm-watch
