@@ -18,6 +18,8 @@
   </head>
   <body>
     <a class="skip" href="#attention">Skip to attention list</a>
+    <calcite-shell id="command-shell">
+    <div slot="header" class="shell-header">
     <header class="command-header">
       <a class="brand" href="#/watch" aria-label="F.R.O.G. County Watch"
         ><img src="../assets/frog-logo.png" alt="" /><span
@@ -59,19 +61,20 @@
       ><span id="period-context"></span>
     </div>
     <div id="important" class="important" role="status" hidden></div>
+    </div>
     <main id="command-main">
-      <section id="watch-view" class="watch-view" aria-label="County Watch">
-        <aside id="attention" class="attention" tabindex="-1">
-          <div class="panel-heading">
-            <h1>County Watch</h1>
+      <calcite-shell id="watch-view" class="watch-view" aria-label="County Watch">
+        <calcite-shell-panel id="attention-shell" slot="panel-start" display-mode="dock" width="m">
+        <calcite-panel id="attention" class="attention" heading="County Watch" heading-level="1" tabindex="-1">
             <button
               id="refresh"
+              slot="header-actions-end"
               class="icon-button"
               aria-label="Refresh public evidence"
             >
               <calcite-icon icon="refresh" scale="s"></calcite-icon>
             </button>
-          </div>
+          <div class="panel-content">
           <form id="search" role="search">
             <label for="find-place" class="sr-only"
               >Find a place or concern</label
@@ -114,8 +117,8 @@
             </button>
             <button id="explore-burn-scars">Burn scars &amp; rainfall</button>
           </div>
-          <details class="coverage">
-            <summary id="coverage-title">Coverage &amp; sources</summary>
+          <calcite-block class="coverage" collapsible heading="Coverage &amp; sources">
+            <p id="coverage-title">Coverage &amp; sources</p>
             <div id="coverage-list"></div>
             <button id="load-places">
               Load care facilities &amp; evacuation zones</button
@@ -124,9 +127,11 @@
             </button>
             <p id="asset-status">Private inventory not assessed.</p>
             <a href="../zone-population.html">Population read-only map</a>
-          </details>
-        </aside>
-        <section class="map-panel" aria-label="Operational map">
+          </calcite-block>
+          </div>
+        </calcite-panel>
+        </calcite-shell-panel>
+        <section id="map-panel" class="map-panel" aria-label="Operational map">
           <div class="map-viewport">
           <div id="command-map" tabindex="-1"></div>
           <div id="map-failure" hidden role="status"></div>
@@ -134,15 +139,12 @@
             <span id="map-place">Fresno County &amp; upstream watersheds</span
             ><small id="map-scope">Terrain and reference waterways</small>
           </div>
-          <div class="map-tools">
-            <button id="map-fit" aria-label="Fit selected place">
-              <calcite-icon
-                icon="zoom-to-object"
-                scale="s"
-              ></calcite-icon></button
-            ><button id="map-overhead" aria-pressed="false">Overhead</button>
-            <button id="map-key-open" aria-controls="evidence" aria-label="Open map key and layers"><calcite-icon icon="legend" scale="s"></calcite-icon><span>Map key</span></button>
-          </div>
+          <calcite-action-bar id="map-action-bar" class="map-tools" layout="vertical" expand-disabled expanded aria-label="Map tools">
+            <calcite-action id="attention-toggle" icon="list" text="Attention" text-enabled aria-controls="attention-shell"></calcite-action>
+            <calcite-action id="map-fit" icon="zoom-to-object" text="Fit place" text-enabled aria-label="Fit selected place"></calcite-action>
+            <calcite-action id="map-overhead" icon="map" text="Overhead" text-enabled aria-pressed="false"></calcite-action>
+            <calcite-action id="map-key-open" icon="legend" text="Map key" text-enabled aria-controls="evidence" aria-label="Open map key and layers"></calcite-action>
+          </calcite-action-bar>
           </div>
           <div class="weather-dock" id="weather-dock">
             <div class="weather-mode">
@@ -162,13 +164,18 @@
             <div id="weather-legend" hidden></div>
           </div>
         </section>
-        <aside
+        <calcite-shell-panel
           id="evidence"
           class="evidence"
+          slot="panel-end"
+          display-mode="dock"
+          width="m"
           aria-label="Selected concern details"
           hidden
         >
-          <div class="panel-heading">
+          <calcite-flow id="inspector-flow">
+          <calcite-flow-item id="inspector-root" selected>
+          <div slot="header-content" class="panel-heading">
             <h2 id="inspector-title" tabindex="-1">Details</h2>
             <button
               id="evidence-close"
@@ -178,12 +185,14 @@
               <calcite-icon icon="x" scale="s"></calcite-icon>
             </button>
           </div>
+          <div slot="content-top" class="inspector-navigation">
           <nav class="inspector-sections" aria-label="Details sections">
             <button id="inspector-place" aria-pressed="true">Place</button>
             <button id="inspector-weather" aria-pressed="false">Weather</button>
             <button id="inspector-key" aria-pressed="false">Map key</button>
           </nav>
           <button id="inspector-map" class="text-button">Return to map</button>
+          </div>
           <div class="inspector-body">
           <section id="place-inspector">
             <h2 id="evidence-name">Selected place</h2>
@@ -194,34 +203,37 @@
             <p>Choose a weather product in the strip below the map. Its valid time and legend stay with the map; gauges and roads remain current context.</p>
             <p id="weather-issued"></p>
             <div id="weather-extra"></div>
-            <details id="weather-details" hidden open>
-              <summary>Source &amp; coverage</summary>
+            <calcite-block id="weather-details" hidden collapsible expanded heading="Source &amp; coverage">
               <div id="weather-source"></div>
-            </details>
+            </calcite-block>
           </section>
           <section id="map-key-inspector" hidden>
             <p id="burn-context-status" class="burn-context-status" hidden><i aria-hidden="true"></i><span id="burn-context-label">Burn areas · reference</span></p>
-            <details id="gauge-key" hidden open>
-              <summary>Visible map symbols</summary>
+            <calcite-block id="gauge-key" hidden heading="Visible map symbols" expanded>
               <label><input id="show-burn-scars" type="checkbox"> Recent fire perimeters</label>
               <div id="gauge-colors"></div>
-              <details><summary>How to read the map</summary>
+              <calcite-block collapsible heading="How to read the map">
                 <p>Dashed light outlines: county boundaries. Thin pale outlines: incorporated cities. Tan outlines: recent fire perimeters, not burn severity or debris-flow inundation.</p>
                 <p id="context-note"></p>
                 <p>Filled column and solid line: last observation against published levels. Colored ticks: published thresholds. Hollow diamond: forecast high. Arrow: observed trend. Clock: stale or unavailable reading. Dashed column with ?: no threshold scale. Each station has its own display scale; this is not river capacity or water depth.</p>
-              </details>
+              </calcite-block>
               <h3>Gauges on this map</h3>
               <div id="gauge-readings"></div>
-            </details>
+            </calcite-block>
           </section>
-          <section id="reading-inspector" hidden>
-            <h2 id="reading-title">Map reading</h2>
+          </div>
+          </calcite-flow-item>
+          <calcite-flow-item id="reading-flow-item" heading="Map reading">
+            <button id="reading-close" slot="header-actions-end" class="icon-button" aria-label="Close details"><calcite-icon icon="x" scale="s"></calcite-icon></button>
+          <section id="reading-inspector" class="panel-content" hidden>
+            <h2 id="reading-title" tabindex="-1">Map reading</h2>
             <p id="reading-content"></p>
             <button id="reading-back">Back to selected place</button>
           </section>
-          </div>
-        </aside>
-      </section>
+          </calcite-flow-item>
+          </calcite-flow>
+        </calcite-shell-panel>
+      </calcite-shell>
       <section id="work-view" class="work-view" hidden aria-label="Work">
         <h1>Work</h1>
         <p>Sign in to choose an incident and track follow-ups.</p>
@@ -236,7 +248,7 @@
         <p>Sign in to prepare a private exercise handoff.</p>
       </section>
     </main>
-    <nav class="mobile-panes" aria-label="Watch panels">
+    <nav slot="footer" class="mobile-panes" aria-label="Watch panels">
       <button data-pane="attention" aria-pressed="true">
         <calcite-icon icon="list" scale="s"></calcite-icon>Attention</button
       ><button data-pane="map" aria-pressed="false">
@@ -245,6 +257,7 @@
         <calcite-icon icon="information" scale="s"></calcite-icon>Details
       </button>
     </nav>
+    </calcite-shell>
     <div class="save-message" id="save-message" role="status" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -36,3 +36,16 @@ test('temporary map readings use the inspector; source tabs and back retain sele
  h.get('inspector-place').onclick();assert.equal(h.inspector.panel,'place');
  h.inspector.clear();assert.equal(h.get('reading-content').textContent,'');assert.equal(h.inspector.panel,null);
 });
+
+test('Flow Back returns to the originating weather section; clear deselects private readings',t=>{
+ const h=setup(t);h.inspector.show('weather');h.inspector.reading({name:'Gauge',readout:'Private test reading'});
+ assert.equal(h.get('reading-flow-item').hasAttribute('selected'),true);
+ assert.equal(h.get('inspector-root').hasAttribute('selected'),false);
+ const back=new Event('calciteFlowItemBack',{cancelable:true});h.get('reading-flow-item').dispatchEvent(back);
+ assert.equal(back.defaultPrevented,true);assert.equal(h.inspector.panel,'weather');
+ assert.equal(h.get('inspector-root').hasAttribute('selected'),true);
+ h.inspector.reading({readout:'Private test reading'});h.inspector.clear();
+ assert.equal(h.get('reading-content').textContent,'');
+ assert.equal(h.get('reading-flow-item').hasAttribute('selected'),false);
+ assert.equal(h.get('evidence').hidden,true);
+});
