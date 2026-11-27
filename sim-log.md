@@ -42,6 +42,15 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A2 outcome
+
+- prediction_commit: eddf16805101cc97a2913ed3e0789dd046cae2f1
+- observed_fixed: Focused readiness, cancellation, reduced-motion and failed-preload tests all passed. Failed preparation cancels the dwell timer.
+- missed: Actual map/weather integration, rainfall style and UI stability remain for the next attempt.
+- regressions: None in this focused run; full suite not run in A2.
+- score: 13/13 focused (before:12/13).
+- verdict: kept in this branch; not deployed.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch

@@ -22,7 +22,9 @@ export function createForecastPlayback({frames,load,render,validate=async()=>{},
       if(!valid(run))return false;
       await validate(value,frames[at]);
       if(!valid(run))return false;
-      index=at;render(value,frames[at],at);return true;
+      await render(value,frames[at],at);
+      if(!valid(run))return false;
+      index=at;return true;
     } catch(error) {
       if(valid(run)){playing=false;cancel(timer);report('error',error);}
       return false;
@@ -32,15 +34,18 @@ export function createForecastPlayback({frames,load,render,validate=async()=>{},
     if(!valid(run)||!playing)return false;
     if(!available()){pause();return false;}
     if(index>=frames.length-1){playing=false;report('paused');return false;}
+    // Start the dwell clock while prefetching, instead of adding fetch time to every frame.
+    timer=schedule(()=>advance(run),dwell);
     try {await read(index+1);}
-    catch(error){if(valid(run)){playing=false;report('error',error);}return false;}
+    catch(error){if(valid(run)){playing=false;cancel(timer);report('error',error);}return false;}
     if(!valid(run)||!playing)return false;
     if(!available()){pause();return false;}
-    report('playing');timer=schedule(()=>advance(run),dwell);return true;
+    report('playing');return true;
   }
   async function advance(run) {
-    if(!valid(run))return;
+    if(!valid(run)||!playing)return;
     if(!available()){pause();return;}
+    report('buffering');
     if(await show(index+1,run))await prepare(run);
   }
   return {

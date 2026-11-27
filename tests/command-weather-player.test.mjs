@@ -65,3 +65,17 @@ test('superseded async validation cannot paint over a newer selection',async()=>
   const old=h.player.select(0);await tick();await h.player.select(1);release();await old;
   assert.deepEqual(h.draws,[[40,20]]);h.player.destroy();
 });
+
+test('frame timing waits for map presentation before reporting the displayed index',async()=>{
+ let release;const h=harness({render:()=>new Promise(done=>release=done)});
+ const showing=h.player.select(0);await tick();
+ assert.equal(h.states.at(-1).index,-1);release();assert.equal(await showing,true);
+ assert.equal(h.states.at(-1).index,0);h.player.destroy();
+});
+
+test('next-frame preparation and the dwell clock run together',async()=>{
+ let release;const h=harness({load:frame=>frame===20?new Promise(done=>release=done):Promise.resolve(frame)});
+ await h.player.select(0);const starting=h.player.play();await tick();
+ assert.equal(h.timers.size,1,'dwell starts without waiting for the next download');
+ release(20);await starting;h.player.destroy();
+});

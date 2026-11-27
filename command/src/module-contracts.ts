@@ -24,7 +24,7 @@ export interface PlaybackStatus {
 export interface PlaybackOptions<Frame = unknown, Value = unknown> {
   frames: Frame[];
   load: (frame: Frame, signal: AbortSignal) => Promise<Value>;
-  render: (value: Value, frame: Frame, index: number) => void;
+  render: (value: Value, frame: Frame, index: number) => void | Promise<void>;
   validate?: (value: Value, frame: Frame) => Promise<void>;
   changed?: (state: PlaybackStatus) => void;
   available?: () => boolean;
