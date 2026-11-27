@@ -102,6 +102,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A5 outcome
+
+- prediction_commit: d0db88f8332a4426d556baad3fce942749fa6bb6
+- observed_fixed: Local current preparation produced13 frames (12 six-hour plus overview), no failed layers, one elapsed layer skipped;65 requests,203227 response bytes.
+- missed: Alpha/content and timed browser dimensions not yet evaluated.
+- regressions: Independent review found pause during presentation could leave internal index behind the displayed frame; GOES/radar slot ordering could change.
+- score: Preparation13/13 selected current products; no all-feed success score. Previous Node1129/1129 did not cover those review cases.
+- verdict: keep branch, fix review findings before release.
+
+### A6 — settle paused presentation and retain fixed radar/cloud order
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Track presentation separately from selection cancellation; settle the in-flight visual frame and index consistently on Pause, while newer selections supersede it. Starting Play waits for that settlement. Insert both GOES slots below both radar slots, below reference/operational linework.
+- rationale: Physical presentation and metadata must share a commit boundary; product layering must not depend on fetch order.
+- predicted_fixed: New delayed-render pause/resume and superseded-selection tests pass, fixed stack selection tests pass, entire Node suite/type/build checks remain green. Current-frame playback and desktop/phone dimensions can then be measured.
+- confidence: 0.85
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch
