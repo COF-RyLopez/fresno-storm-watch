@@ -3,6 +3,8 @@ import {loadWatershedRain,regionalForecastBounds} from './watch-watershed-data.j
 import {fetchQpfCycle} from './environment-data.js';
 import {qpfPlanningTime} from './environment-model.js';
 import {WPC_INTERVALS} from './watershed-timeline-model.js';
+import {RAIN_PRESENTATION} from './rain-presentation.js';
+export {RAIN_BANDS as rainLegend} from './rain-presentation.js';
 
 export const PREPARED_RAIN_MAX_AGE=30*60000;
 export const RAIN_REFRESH_INTERVAL=15*60000;
@@ -46,6 +48,7 @@ export async function createCommandRainDelivery({baseUrl=new URL('../data/prepar
       if(size>MAX_MANIFEST_BYTES)throw Error('Rain manifest exceeds size limit');chunks.push(value);}}
     catch(error){await reader.cancel().catch(()=>{});throw error;}
     const manifest=validateCurrentWeather(JSON.parse(await new Blob(chunks).text()));
+    if(manifest.presentation!==RAIN_PRESENTATION)throw Error('Prepared rain presentation is incompatible');
     currentPreparation(manifest,clock());
     if(manifest.bounds.some((v,i)=>v!==regionalForecastBounds[i]))throw Error('Prepared rainfall coverage changed');
     prepared=createPreparedWeather(manifest,baseUrl,{fetchImpl:(url,options)=>request(url,{...options,signal:AbortSignal.any([options.signal,AbortSignal.timeout(8000)])})});
@@ -89,7 +92,7 @@ export async function createCommandRainDelivery({baseUrl=new URL('../data/prepar
         return {...frame,delivery};
       }catch(error){
         assertOpen(extra); // Cancellation must not start another network path.
-        const rain=await direct(regionalForecastBounds,{window,signal:combined(extra),fetchImpl,clock});
+        const rain=await direct(regionalForecastBounds,{window,signal:combined(extra),fetchImpl,clock,presentation:RAIN_PRESENTATION});
         assertOpen(extra);
         revisions.set(window?.layer??9,{cycle:rain.cycle,checked:clock()});
         return {...rain,delivery:{method:'publisher'}};

@@ -567,6 +567,8 @@ summary {
 .forecast-playback-status {
   color: var(--muted);
   font-size: 12px;
+  min-block-size:1.45em;
+  font-variant-numeric:tabular-nums;
 }
 .forecast-timeline {
   flex: 1 1 220px;
@@ -614,7 +616,16 @@ summary {
   line-height:1.45;
 }
 #weather-legend { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; line-height:1.5; }
-#weather-time { font-variant-numeric:tabular-nums; }
+#weather-time { font-variant-numeric:tabular-nums; min-block-size:2.9em; }
+#weather-legend strong { flex-basis:100%; }
+#weather-legend .legend-band { margin:0; }
+.map-key-symbols { display:grid; grid-template-columns:18px 1fr; gap:10px; align-items:center; margin:0 0 16px; }
+.map-key-symbols dt { margin:0; width:14px; }
+.map-key-symbols dd { margin:0; }
+.key-road { border-top:3px solid #f4a261; }
+.key-detour { border-top:3px dashed #67b7b0; }
+.key-facility { width:9px!important; height:9px; background:#cfe6ee; transform:rotate(45deg); margin:0 2px!important; }
+.key-gauge { height:14px; width:8px!important; border:1px solid #d4e5ec; background:linear-gradient(to top,#69afa9 50%,transparent 50%); }
 #weather-legend .legend-band { white-space:nowrap; }
 #weather-controls button calcite-icon { pointer-events:none; }
 #gauge-colors { display:flex; flex-wrap:wrap; gap:6px 10px; margin:10px 0; }

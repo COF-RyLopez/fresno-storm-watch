@@ -79,3 +79,9 @@ test('next-frame preparation and the dwell clock run together',async()=>{
  assert.equal(h.timers.size,1,'dwell starts without waiting for the next download');
  release(20);await starting;h.player.destroy();
 });
+
+test('overview can be inspected but is excluded from comparable-period playback',async()=>{
+ const h=harness({firstPlayable:1});await h.player.select(0);await h.player.play();
+ assert.deepEqual(h.draws,[[20,10],[40,20]]);await h.next();assert.deepEqual(h.draws.at(-1),[60,30]);
+ assert.equal(h.player.playing,false);h.player.destroy();
+});

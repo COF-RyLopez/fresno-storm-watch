@@ -7,7 +7,7 @@ import {regionalForecastBounds,rainRasterGeometry} from '../site/lib/watch-water
 const HOUR=3600000, now=Date.parse('2026-11-25T12:00:00Z');
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aGfoAAAAASUVORK5CYII=','base64');
 const sha256=createHash('sha256').update(png).digest('hex');
-export const fixture=()=>({schemaVersion:1,kind:'prepared-wpc-display',capturedAt:new Date(now).toISOString(),clock:now,
+export const fixture=()=>({schemaVersion:1,kind:'prepared-wpc-display',presentation:'frog-rain-1',capturedAt:new Date(now).toISOString(),clock:now,
   publisher:'NOAA WPC',source:'https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer',
   rasterCrs:'EPSG:3857',coordinateCrs:'EPSG:4326',bounds:[...regionalForecastBounds],frames:[{
     id:'qpf-9',window:null,cycle:{issue:now-HOUR,start:now,end:now+72*HOUR,hours:72,units:'in',product:'72-hour QPF'},
@@ -41,6 +41,7 @@ test('current prepared rain retains the exact source image, dates and legend; re
 
 for(const [name,options] of [
   ['missing manifest',{failManifest:true}],
+  ['old presentation',{edit:p=>delete p.presentation}],
   ['recorded experiment',{edit:p=>p.kind='recorded-wpc-display-replay'}],
   ['old preparation',{edit:p=>{p.clock-=31*60000;p.capturedAt=new Date(p.clock).toISOString();}}],
   ['future preparation',{edit:p=>{p.clock+=3*60000;p.capturedAt=new Date(p.clock).toISOString();}}],

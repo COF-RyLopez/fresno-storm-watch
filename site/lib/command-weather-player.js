@@ -8,7 +8,7 @@ import {createWeatherFrameCache} from './weather-frame-cache.js';
  */
 export function createForecastPlayback({frames,load,render,validate=async()=>{},changed=()=>{},available=()=>true,
   reducedMotion=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
-  dwell=1800,schedule=setTimeout,cancel=clearTimeout}) {
+  dwell=1800,firstPlayable=0,schedule=setTimeout,cancel=clearTimeout}) {
   const cache=createWeatherFrameCache(3);
   let generation=0,index=-1,playing=false,destroyed=false,timer;
   const report=(status,error)=>changed({status,error,playing,index,count:frames.length});
@@ -52,9 +52,9 @@ export function createForecastPlayback({frames,load,render,validate=async()=>{},
     get playing(){return playing;},
     async select(at){pause();const run=generation;report('loading');const ok=await show(at,run);if(ok)report('paused');return ok;},
     async play({automatic=false}={}) {
-      if(destroyed||playing||frames.length<2||!available()||automatic&&reducedMotion())return false;
+      if(destroyed||playing||frames.length-firstPlayable<2||!available()||automatic&&reducedMotion())return false;
       pause();const run=generation;playing=true;report('buffering');
-      if(index<0||index>=frames.length-1){if(!await show(0,run)){if(valid(run)){playing=false;report('paused');}return false;}}
+      if(index<firstPlayable||index>=frames.length-1){if(!await show(firstPlayable,run)){if(valid(run)){playing=false;report('paused');}return false;}}
       return prepare(run);
     },
     pause,

@@ -35,14 +35,16 @@ export function installRegionalRadar({session,info,items,renderColors,visible,so
   slider.disabled=!frames.length;slider.max=String(Math.max(0,frames.length-1));slider.value=String(Math.max(0,index));
   slider.setAttribute('aria-valuetext',displayed?stamp(displayed.time):'No radar observation');
   if(phase==='error'){clear();info.textContent='NWS radar image unavailable · playback stopped';return;}
-  if(fresh())info.textContent=`${following?'Observed':'Replay '+(index+1)+'/'+frames.length} · ${stamp(displayed.time)} · NWS radar mosaic${Date.now()-displayed.time>20*60000?' · delayed observation':''}${gaps?' · gaps in observations':''}${phase==='buffering'?' · buffering next scan':''}`;
+  if(fresh())info.textContent=`${following?'Observed':'Replay'} radar · ${stamp(displayed.time)}${Date.now()-displayed.time>20*60000?' · delayed':''}${gaps?' · observation gaps':''}`;
  }
  async function mount(at,autoplay=false){
   player?.destroy();const run=++epoch;extendCoverage();const footprint=[...coverage];
   player=createForecastPlayback({frames,dwell:1200,available:()=>active&&!suspended&&visible()&&!document.hidden,
    load:(frame,signal)=>loadImage(frame,signal,{bounds:footprint}),
    changed:({status})=>{if(run===epoch)report(status);},
-   render:(image,frame,i)=>{if(run!==epoch||!active||suspended)return;session.regionalRadar(image);displayed=frame;index=i;
+   render:async(image,frame,i)=>{if(run!==epoch||!active||suspended)return;
+    if(await session.regionalRadar(image)===false)throw Error('Radar frame could not be displayed');
+    if(run!==epoch||!active||suspended)return;displayed=frame;index=i;
     clearTimeout(expiry);expiry=setTimeout(()=>{clear();info.textContent='NWS radar observation expired';},Math.max(1,frame.time+120*60000-Date.now()));
     pairClouds(frame.time);report();}
   });

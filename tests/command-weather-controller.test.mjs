@@ -14,7 +14,7 @@ class Element extends FakeElement {
   append(...nodes){const empty=this.children.length===0;super.append(...nodes);if(this.tag==='select'&&empty)this.value=nodes[0]?.value??'';}
   querySelector(){return null;}
 }
-function setup(t,loadModule,{playback=createForecastPlayback,rainFactory,timelineModule=async()=>({createForecastTimeline})}={}){
+function setup(t,loadModule,{playback=createForecastPlayback,rainFactory,timelineModule=async()=>({createForecastTimeline}),mapMethods={}}={}){
   const nodes=new Map();
   const document=Object.assign(new EventTarget(),{hidden:false,
     getElementById:id=>{if(!nodes.has(id))nodes.set(id,new Element('div'));return nodes.get(id);},
@@ -24,7 +24,7 @@ function setup(t,loadModule,{playback=createForecastPlayback,rainFactory,timelin
   const restore=stubGlobals({document,location:{href:'https://example.test/command/'},
     matchMedia:query=>query.includes('max-width')?phone:{matches:false},Option:class extends Element{constructor(text,value){super('option');this.textContent=text;this.value=value;}}});
   const calls=[],notices=[];
-  const map=new Proxy({}, {get:(_,method)=>(...args)=>calls.push([method,...args])});
+  const map=new Proxy({}, {get:(_,method)=>(...args)=>{calls.push([method,...args]);return mapMethods[method]?.(...args);}});
   const state={view:'watch',mobile:'map'};
   let selection;
   const moduleAt=async name=>name==='forecast-timeline'?timelineModule():name==='command-rain'?{rainForecastWindows:rainFactory?rainForecastWindows:(prepared,windows)=>prepared??windows,RAIN_REFRESH_INTERVAL:15*60000,createCommandRainDelivery:rainFactory??(async()=>{
@@ -40,6 +40,26 @@ function setup(t,loadModule,{playback=createForecastPlayback,rainFactory,timelin
   return {owner,nodes,calls,notices,state,document,phone,setSelection:value=>selection=value};
 }
 const snowNow={IMS:'https://example.test/snow',loadSnowCover:async()=>({fileTime:1,url:'snow'})};
+
+test('rain waits for the map before changing time and reuses its unchanged legend DOM',async t=>{
+ const gate=deferred();let delayed=true;
+ const now=Date.now(),window={layer:14,issue:now-60000,start:now,end:now+6*3600000};
+ const h=setup(t,async()=>({precipitationTimeline:()=>({windows:[]})}),{
+  mapMethods:{rain:value=>value&&delayed?gate.promise:undefined},
+  rainFactory:async()=>({windows:[window],validate:async()=>{},destroy(){},load:async w=>({
+   cycle:{...window,hours:w?6:72},legend:[{value:.25,color:'rgb(1,2,3)'}],blob:null})})});
+ const selected=h.owner.select('rain');await flush();
+ assert.doesNotMatch(h.nodes.get('weather-time').textContent,/72-hour rain/);
+ delayed=false;gate.resolve(true);await selected;
+ const legend=h.nodes.get('weather-legend').children[1];
+ const slider=h.nodes.get('weather-controls').children.find(n=>n.className==='forecast-timeline').children.find(n=>n.tag==='input');
+ slider.value='1';slider.oninput();await flush();
+ assert.match(h.nodes.get('weather-time').textContent,/6-hour rain/);
+ // Different duration changes the title; selecting the same six-hour frame again does not rebuild the key.
+ const sixHourLegend=h.nodes.get('weather-legend').children[1];
+ slider.oninput();await flush();assert.equal(h.nodes.get('weather-legend').children[1],sixHourLegend);
+ assert(legend);assert.equal(h.nodes.get('weather-controls').children.at(-1).hidden,false);
+});
 
 for(const product of ['gust','rain'])test(`late empty ${product} timeline cannot overwrite a newly selected snow product`,async t=>{
  const pending=deferred();
@@ -116,7 +136,7 @@ test('rain uses actual published frames; missing next frame stops playback, reta
     schedule:fn=>{const id=++sequence;timers.set(id,fn);return id;},cancel:id=>timers.delete(id)});
   let reads=0;
   const h=setup(t,async name=>{
-    if(name==='watershed-timeline-model')return {precipitationTimeline:()=>({windows:[{layer:1,start:10,end:20}]})};
+    if(name==='watershed-timeline-model')return {precipitationTimeline:()=>({windows:[{layer:1,start:10,end:20},{layer:2,start:20,end:30}]})};
     if(name==='watch-watershed-data')return {regionalForecastBounds:[-131,28,-107,47],loadWatershedRain:async()=>{
       if(++reads>1)throw Error('missing frame');
       return {cycle:{hours:72,start:1,end:Date.now()+60000,issue:1},legend:[],blob:null};

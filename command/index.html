@@ -210,15 +210,22 @@
           <section id="map-key-inspector" hidden>
             <p id="burn-context-status" class="burn-context-status" hidden><i aria-hidden="true"></i><span id="burn-context-label">Burn areas · reference</span></p>
             <calcite-block id="gauge-key" hidden heading="Visible map symbols" expanded>
+              <dl class="map-key-symbols">
+                <dt class="key-road" aria-hidden="true"></dt><dd>Road closure or block</dd>
+                <dt class="key-detour" aria-hidden="true"></dt><dd>Published detour</dd>
+                <dt class="key-facility" aria-hidden="true"></dt><dd>Authorized county facility</dd>
+                <dt class="key-gauge" aria-hidden="true"></dt><dd>Gauge level &amp; trend — tap for readings</dd>
+              </dl>
               <label><input id="show-burn-scars" type="checkbox"> Recent fire perimeters</label>
-              <div id="gauge-colors"></div>
-              <calcite-block collapsible heading="How to read the map">
+              <calcite-block collapsible heading="Gauge thresholds &amp; reference outlines">
+                <div id="gauge-colors"></div>
                 <p>Dashed light outlines: county boundaries. Thin pale outlines: incorporated cities. Tan outlines: recent fire perimeters, not burn severity or debris-flow inundation.</p>
                 <p id="context-note"></p>
                 <p>Filled column and solid line: last observation against published levels. Colored ticks: published thresholds. Hollow diamond: forecast high. Arrow: observed trend. Clock: stale or unavailable reading. Dashed column with ?: no threshold scale. Each station has its own display scale; this is not river capacity or water depth.</p>
               </calcite-block>
-              <h3>Gauges on this map</h3>
+              <calcite-block collapsible heading="Station readings">
               <div id="gauge-readings"></div>
+              </calcite-block>
             </calcite-block>
           </section>
           </div>

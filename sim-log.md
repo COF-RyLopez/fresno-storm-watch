@@ -62,6 +62,15 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A3 outcome
+
+- prediction_commit: 5aafd8fa0545ece8498dfe0cbd40944c62091f25
+- observed_fixed: Delayed map/date synchronization, comparable-period sequence and slot tests passed in the combined focused suite.
+- missed: Failed first six-hour frame emitted an error then overwrote it with paused status (`1 of 3`).
+- regressions: Existing missing-rain-frame status assertion failed; TypeScript also rejected readonly palette passed into mutable colors parameter.
+- score: 64/65 focused; TypeScript failed (before:A2 focused13/13 on a smaller suite).
+- verdict: kept on branch for correction, not deployed; full regression and browser evaluation not yet run.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch
@@ -96,6 +105,15 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - confidence: 0.80
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
+#### A2 outcome
+
+- prediction_commit: 5aafd8fa0545ece8498dfe0cbd40944c62091f25
+- observed_fixed: Amount-class/export and incompatible-prepared-style tests passed. Existing freshness tests passed in the combined suite.
+- missed: TypeScript requires the legend helper to accept readonly bands. Browser stability/visibility prediction is not evaluated yet.
+- regressions: Shared run has one rain-player error-status failure (weather-raster-playback A3).
+- score: 64/65 focused; TypeScript failed (before:main1120/1120, different coverage).
+- verdict: kept on branch for correction, not deployed.
 
 ## Problem: retained-feed-freshness
 

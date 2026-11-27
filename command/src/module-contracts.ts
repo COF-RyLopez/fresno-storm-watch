@@ -30,6 +30,7 @@ export interface PlaybackOptions<Frame = unknown, Value = unknown> {
   available?: () => boolean;
   reducedMotion?: () => boolean;
   dwell?: number;
+  firstPlayable?: number;
   schedule?: typeof setTimeout;
   cancel?: typeof clearTimeout;
 }

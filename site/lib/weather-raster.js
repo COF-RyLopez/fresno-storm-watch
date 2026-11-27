@@ -7,6 +7,7 @@ export function createWeatherRaster(map,id,{before,duration=240,reducedMotion=()
   if(urls.has(slot)){revokeUrl(urls.get(slot));urls.delete(slot);}}
  function clear(){pending?.();pending=null;for(const slot of [0,1])remove(slot);front=-1;}
  return {
+  /** @returns {Promise<boolean>} */
   set(image,paint={}){
    if(closed)return Promise.resolve(false);
    pending?.();pending=null;

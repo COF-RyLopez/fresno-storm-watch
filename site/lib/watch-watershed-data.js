@@ -3,6 +3,7 @@ import {terrainBounds} from './watch-terrain-model.js';
 import {environmentalJson,fetchQpfCycle} from './environment-data.js';
 import {QPF_URL,qpfPlanningTime,realNumber} from './environment-model.js';
 import {WPC_INTERVALS} from './watershed-timeline-model.js';
+import {RAIN_PRESENTATION,RAIN_BANDS,rainRenderer} from './rain-presentation.js';
 
 const areaReservoirs=new Map([
  ['san-joaquin-lower','MIL'],['san-joaquin-upper','MIL'],
@@ -36,8 +37,9 @@ export function rainRasterGeometry(bounds){
 }
 
 /** Fetch a compact map image tied to one verified WPC forecast cycle. */
-/** @param {readonly number[]} bounds @param {{window?: {start:number,end:number,layer:number} | null, signal?: AbortSignal, fetchImpl?: typeof fetch, clock?: () => number}} [options] */
-export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,clock=Date.now}={}){
+/** @param {readonly number[]} bounds @param {{window?: {start:number,end:number,layer:number} | null, signal?: AbortSignal, fetchImpl?: typeof fetch, clock?: () => number, presentation?: string}} [options] */
+export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,clock=Date.now,presentation}={}){
+ if(presentation&&presentation!==RAIN_PRESENTATION)throw Error('Unsupported rain presentation');
  if(window&&!WPC_INTERVALS.includes(window.layer))throw Error('Unsupported six-hour forecast layer');
  const period=window?{id:window.layer,hours:6}:{id:9,hours:72};
  const request=(url,options={})=>fetchImpl(url,{...options,signal:signal&&options.signal?AbortSignal.any([signal,options.signal]):signal??options.signal});
@@ -56,13 +58,14 @@ export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,cl
  const local=await environmentalJson(query,request);
  if(local.exceededTransferLimit||!Array.isArray(local.features))throw Error('WPC forecast coverage unavailable');
  const levels=[...new Set(local.features.map(f=>realNumber(f.attributes?.qpf)))].sort((a,b)=>a-b);
+ if(presentation)url.searchParams.set('dynamicLayers',JSON.stringify([{id:period.id,source:{type:'mapLayer',mapLayerId:period.id},definitionExpression,drawingInfo:{renderer:rainRenderer(levels)}}]));
  // A verified empty extent has nothing to export. Preserve this distinction during playback.
  const [response,metadata]=levels.length?await Promise.all([
-  request(url,options()),environmentalJson(`${QPF_URL}/${period.id}?f=json`,request)
+  request(url,options()),presentation?Promise.resolve(null):environmentalJson(`${QPF_URL}/${period.id}?f=json`,request)
  ]):[null,null];
  if(response&&(!response.ok||!response.headers.get('content-type')?.startsWith('image/png')))throw Error('WPC forecast map unavailable');
  const symbols=metadata?.drawingInfo?.renderer?.uniqueValueInfos;
- const legend=levels.map(value=>{
+ const legend=presentation?(levels.length?RAIN_BANDS.map(({value,label,color})=>({value,label,color})):[]):levels.map(value=>{
   const color=symbols?.find(entry=>Number(entry.value)===value)?.symbol?.color;
   if(value===null||value<0.01||!Array.isArray(color)||color.length!==4||color.some(n=>!Number.isInteger(n)||n<0||n>255))throw Error('WPC legend unavailable');
   return {value,color:`rgb(${color.slice(0,3).join(',')})`};
@@ -71,5 +74,5 @@ export async function loadWatershedRain(bounds,{window,signal,fetchImpl=fetch,cl
  const confirmed=await fetchQpfCycle(period,request,clock());
  if(!sameRevision(cycle,confirmed)||cycle.product!==confirmed.product)throw Error('WPC forecast is updating');
  if(cycle.end<=clock())throw Error('Forecast window ended while loading');
- return {cycle,legend,blob:response?await response.blob():null,coordinates};
+ return {cycle,legend,blob:response?await response.blob():null,coordinates,...(presentation?{presentation}:{})};
 }
