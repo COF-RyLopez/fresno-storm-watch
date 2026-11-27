@@ -1,3 +1,10 @@
+/** Keep GOES imagery below both radar slots regardless of arrival order. */
+export function weatherLayerBefore(map,id,reference){
+ return id==='watch-goes-clouds'
+  ?map.getStyle().layers.find(l=>/^watch-regional-radar-[01]$/.test(l.id))?.id??reference
+  :reference;
+}
+
 /** Two bounded image slots. Never remove the visible source to load its replacement. */
 export function createWeatherRaster(map,id,{before,duration=240,reducedMotion=()=>globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
  createUrl=blob=>URL.createObjectURL(blob),revokeUrl=url=>URL.revokeObjectURL(url)}={}){

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createWeatherRaster} from '../site/lib/weather-raster.js';
+import {createWeatherRaster,weatherLayerBefore} from '../site/lib/weather-raster.js';
 const tick=()=>new Promise(r=>setImmediate(r));
 function harness(){
  const sources=new Map(),layers=new Map(),events=new Map(),revoked=[];
@@ -29,4 +29,12 @@ test('next image loads behind the current frame; superseded requests cannot clea
 test('clear during loading releases both slots and never promotes the late frame',async()=>{
  const h=harness(),task=h.raster.set(h.image,{});assert.equal(await h.raster.set(null),true);h.ready();
  assert.equal(await task,false);assert.equal(h.layers.size,0);assert.equal(h.sources.size,0);h.raster.destroy();await tick();
+});
+
+test('cloud slots stay below the first radar slot regardless of slot order',()=>{
+ for(const ids of [['watch-regional-radar-0','watch-regional-radar-1','roads'],['watch-regional-radar-1','roads'],['roads']]){
+  const map={getStyle:()=>({layers:ids.map(id=>({id}))})};
+  assert.equal(weatherLayerBefore(map,'watch-goes-clouds','roads'),ids[0]);
+  assert.equal(weatherLayerBefore(map,'watch-regional-radar','roads'),'roads');
+ }
 });

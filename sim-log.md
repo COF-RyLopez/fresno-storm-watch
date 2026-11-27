@@ -122,6 +122,15 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A6 outcome
+
+- prediction_commit: 99f576ad634a07c2b8be2846aeaaf398d55c7836
+- observed_fixed: Pause/committed-index, superseded selection and fixed cloud/radar order regressions pass; all1132 Node tests plus compiler/build/site checks pass.
+- missed: Live image audit found the custom WPC PNG entirely transparent, despite a valid PNG header and legend. Timed browser acceptance remains pending.
+- regressions: No Node failures; zero visible rain pixels is a release-blocking cartographic failure tracked in weather-layout-obscures-context.
+- score: 1132/1132 Node (before1129/1129). PNG audit0 nontransparent pixels of2017400.
+- verdict: keep pause/stack repair; do not release until imagery is repaired. Standalone Python audit was blocked by Windows Application Control; approved Node audit produced the pixel evidence instead.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch
@@ -194,6 +203,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - rationale: Need current comparable frames to measure text/legend layout rather than infer smoothness from static screenshots.
 - predicted_fixed: Six stable legend classes and retained operational context; map/strip bounds vary<=1px while stepping/playing; no horizontal overflow on390px phone; source window remains explicit.
 - confidence: 0.82
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
+#### A4 outcome
+
+- prediction_commit: d0db88f8332a4426d556baad3fce942749fa6bb6
+- observed_fixed: Prepared current twelve six-hour frames and overview; fixed six-band key available.
+- missed: Custom exported image has0 nontransparent pixels. Visual rainfall and playback stability are not accepted; a quiet image alone was insufficient evidence.
+- regressions: Invisible rain overlay is release-blocking. Unit tests used PNG stubs and did not detect this live-render failure.
+- score: PNG coverage0/2017400 nontransparent;1132/1132 unit tests do not substitute for this check. Previous live PNG content score unknown.
+- verdict: do not deploy; preserve failure and fix exporter.
+
+### A5 — diagnose empty custom WPC rendering against publisher output
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Inspect actual qpf field type, publisher renderer value codes, queried numeric values and custom export definition. Compare the same-cycle publisher/custom image, then fix exact value matching or dynamic definition as evidence requires.
+- rationale: A legend and PNG signature cannot prove the service drew the selected data. Exact publisher value codes and renderer field definitions may differ from normalized numeric display values.
+- predicted_fixed: Same-cycle publisher image has visible pixels; preserving the actual renderer value/field contract yields>0 nontransparent custom pixels when publisher has coverage, with unchanged forecast dates/amounts and six fixed classes. Add a regression for the actual mismatch; full suite passes.
+- confidence: 0.78
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 

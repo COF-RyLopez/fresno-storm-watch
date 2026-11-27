@@ -85,3 +85,18 @@ test('overview can be inspected but is excluded from comparable-period playback'
  assert.deepEqual(h.draws,[[20,10],[40,20]]);await h.next();assert.deepEqual(h.draws.at(-1),[60,30]);
  assert.equal(h.player.playing,false);h.player.destroy();
 });
+
+test('pause settles an in-flight visual frame and resumes from that committed index',async()=>{
+ let release;const drawn=[];
+ const h=harness({render:async(_value,frame)=>{if(frame===20)await new Promise(done=>release=done);drawn.push(frame);}});
+ await h.player.select(0);await h.player.play();const advancing=h.next();await tick();
+ h.player.pause();release();await advancing;
+ assert.equal(h.player.playing,false);assert.equal(h.states.at(-1).index,1);
+ await h.player.play();await h.next();assert.deepEqual(drawn,[10,20,30]);h.player.destroy();
+});
+
+test('a newer selection owns its index even if an older presentation finishes later',async()=>{
+ let release;const h=harness({render:async(_value,frame)=>{if(frame===10)await new Promise(done=>release=done);}});
+ const old=h.player.select(0);await tick();await h.player.select(1);release();await old;
+ assert.equal(h.states.at(-1).index,1);h.player.destroy();
+});

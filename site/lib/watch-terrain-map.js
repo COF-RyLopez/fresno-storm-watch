@@ -6,7 +6,7 @@ import {createCloudTopLayer} from './cloud-top-layer.js';
 import {installCloudTopInspection} from './cloud-top-inspection.js';
 import {createWatchWindTrails} from './watch-wind-trails.js';
 import {gaugeIcon} from './command-gauge.js';
-import {createWeatherRaster} from './weather-raster.js';
+import {createWeatherRaster,weatherLayerBefore} from './weather-raster.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 /** @param {import("../../command/src/module-contracts.ts").TerrainOptions} options */
@@ -167,7 +167,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  }
  function setImage(id,image,paint){
   if(destroyed)return Promise.resolve(false);
-  if(!images.has(id))images.set(id,createWeatherRaster(map,id,{before:weatherBefore}));
+  if(!images.has(id))images.set(id,createWeatherRaster(map,id,{before:()=>weatherLayerBefore(map,id,weatherBefore)}));
   return images.get(id).set(image,paint);
  }
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
