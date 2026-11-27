@@ -309,3 +309,21 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - regressions: None attributed in this session; historical per-PR totals unknown.
 - score: Main1120/1120 at408f206f; before per-attempt score unknown.
 - verdict: kept; regression sentinel, not a claim all feeds are healthy.
+
+## Problem: flood-scenario-realism
+
+- domain: fresno-storm-watch
+- root_cause: The 3D flood page renders through the ArcGIS SceneView: depth is a draped colour image, footprints are flat-coloured extrusions recoloured by renderer swaps or edits, and cars are a 2D canvas on a plane. There is no water surface, lighting, imagery or vehicle geometry to make the scenario read as a real place.
+- symptoms: Ryan asked (2026-11-27) to recreate the flood scenarios as playable three.js scenes "for better rendering and realism".
+
+### A1 — three.js scenario page (terrain, water surface, GPU-classed buildings, instanced cars)
+
+- date: 2026-11-27
+- agent: Claude Code desktop (Opus 5.5)
+- edit: New site/flood-scenario-3js.html + flood-scenario-3js.js with vendored three 0.187.0: Terrarium terrain draped with Esri World Imagery, a water surface displaced to terrain + depth decoded from the existing depth PNGs (legend inverted), fresnel/sun/turbidity shading with animated normals, Overture footprints as one merged mesh coloured in the shader from the clock (per-building class hours in a data texture), evacuation cars as an InstancedMesh on the terrain. Compact gzip footprint binaries per scenario (scripts/build-flood-footprints-3js.py) because footprints.geojson is not committed.
+- files: site/flood-scenario-3js.{html,js}, site/lib/flood-three-model.js, site/vendor/three-0.187.0/, site/data/flood-scenarios/*/footprints-3js.bin, scripts/build-flood-footprints-3js.py, tests/flood-three-model.test.mjs, scripts/check.mjs
+- rationale: A shader-driven scene removes per-tick renderer rebuilds (classes come from a uniform) and adds the physical cues (water level against walls, reflections, terrain, imagery) the SceneView page lacks.
+- predicted_fixed: npm test passes 1132+new/1132+new; npm run check passes; the page loads Big Dry Creek and Redbank with no console errors, shows water rising against buildings and moving cars, and plays at >= 30 fps on Ryan's MacBook Air at the opening view (perf readout).
+- confidence: 0.6
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
