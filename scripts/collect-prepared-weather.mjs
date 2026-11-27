@@ -9,6 +9,7 @@ import {validateCurrentWeather,createPreparedWeather} from '../site/lib/weather-
 import {WPC_INTERVALS} from '../site/lib/watershed-timeline-model.js';
 import {bounded,writeAtomic} from './lib/snapshot-io.mjs';
 import {RAIN_PRESENTATION} from '../site/lib/rain-presentation.js';
+import {prepareRainImage} from './lib/rain-image.mjs';
 
 /** @param {{output?:URL,fetchImpl?:typeof fetch,clock?:()=>number,getCycle?:typeof fetchQpfCycle,loadRain?:typeof loadWatershedRain}} [options] */
 export async function collectPreparedWeather({output=new URL('../site/data/prepared-weather/',import.meta.url),
@@ -31,7 +32,7 @@ export async function collectPreparedWeather({output=new URL('../site/data/prepa
       const cycle=layer===9?null:await getCycle({id:layer,hours:6},publicRequest,clock());
       if(cycle&&(cycle.end<=clock()||clock()-cycle.issue>24*3600000)){skipped.push(layer);return;}
       const window=cycle?{layer,...cycle}:null;
-      const rain=await loadRain(regionalForecastBounds,{window,fetchImpl:publicRequest,clock,presentation:RAIN_PRESENTATION});
+      const rain=await prepareRainImage(await loadRain(regionalForecastBounds,{window,fetchImpl:publicRequest,clock}));
       let image=null;
       if(rain.blob){
         const data=Buffer.from(await rain.blob.arrayBuffer()),sha256=createHash('sha256').update(data).digest('hex');

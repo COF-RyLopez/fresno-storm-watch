@@ -246,6 +246,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A6 outcome
+
+- prediction_commit: c009542d60eeaeaad754f02c7d5cb7c34d8fff01
+- observed_fixed: Shared publisher-PNG recoloring produces six muted amount bands; prepared collection produced13 current images including12 six-hour frames. Desktop1280x720 and phone390x844 playback retained fixed map, strip, time and legend rectangles across multiple frames; measured movement0px and no horizontal overflow. Pause settled to the displayed frame. Static reviewer found no release-blocking defect.
+- missed: Pixel coverage differs from original because unsupported/antialiased colors outside the documented tolerance remain transparent; live sample813681/2017400 nontransparent versus publisher control845986. No claim that clear pixels mean zero rain. Actual phone hardware, full-day monitoring and operator acceptance remain untested.
+- regressions: None observed in1132 Node tests, TypeScript, Command build, import-map generation or repository checks. No private records or permission changes.
+- score: Unit1132/1132 before and after conversion; live output0->813681 nontransparent pixels with alpha0..200; desktop7 samples and phone6 samples each0px layout movement. Prepared collection13/13 requested supported frames,0 failures; unsupported slot13 skipped explicitly.
+- verdict: kept; ready for release validation, not a certification of all feed uptime or production usability.
+
+### A7 — release validation of weather clarity package
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Set package release0.105.0, document actual PNG conversion and evidence, rebuild Command/import map and run final regression/deployment checks. Preserve all prediction commits in Git history.
+- rationale: Release artifacts must match the tested source and the display repair must not compromise source freshness or private exercise restrictions.
+- predicted_fixed: Node1132/1132, TypeScript/build/repository checks and GitHub CI pass; published Command shows six fixed amount bands, stable timeline and bounded two-slot rendering with current forecast dates. SIM log remains outside Pages.
+- confidence: 0.9
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: retained-feed-freshness
 
 - domain: fresno-storm-watch

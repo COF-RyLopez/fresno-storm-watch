@@ -13,8 +13,26 @@ export function rainBand(value){
  if(typeof value!=='number'||!Number.isFinite(value)||value<.01)return null;
  return RAIN_BANDS.findLast(b=>value>=b.value);
 }
-export function rainRenderer(levels){
- return {type:'uniqueValue',field1:'qpf',defaultSymbol:{type:'esriSFS',style:'esriSFSSolid',color:[0,0,0,0],outline:null},
-  uniqueValueInfos:levels.map(value=>{const band=rainBand(value);if(!band)throw Error('Invalid rainfall amount');
-   return {value:String(value),label:band.label,symbol:{type:'esriSFS',style:'esriSFSSolid',color:[...band.rgba],outline:null}};})};
+/** Recolor display pixels only; never infer numerical rainfall from an arbitrary image. */
+export function remapRainPixels(pixels,sourceLegend){
+ const entries=sourceLegend.map(entry=>{
+  const rgb=entry.color?.match(/^rgb\((\d+),(\d+),(\d+)\)$/),band=rainBand(entry.value);
+  if(!rgb||!band)throw Error('Invalid publisher rain legend');
+  return {rgb:rgb.slice(1).map(Number),band};
+ });
+ const memo=new Map();
+ for(let i=0;i<pixels.length;i+=4){
+  if(!pixels[i+3])continue;
+  const key=(pixels[i]<<16)|(pixels[i+1]<<8)|pixels[i+2];
+  if(!memo.has(key)){
+   let best=null,distance=24**2;
+   for(const e of entries){const d=e.rgb.reduce((s,v,j)=>s+(v-pixels[i+j])**2,0);if(d<distance){distance=d;best=e.band;}}
+   memo.set(key,best);
+  }
+  const band=memo.get(key);
+  if(!band){pixels[i+3]=0;continue;}
+  pixels[i]=band.rgba[0];pixels[i+1]=band.rgba[1];pixels[i+2]=band.rgba[2];
+  pixels[i+3]=Math.round(pixels[i+3]*band.rgba[3]/255);
+ }
+ return pixels;
 }

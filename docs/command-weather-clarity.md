@@ -16,4 +16,12 @@ The old raster renderer removed its layer/source and revoked the image URL befor
 
 ## References
 
-Checked November 27, 2026: [WPC service](https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer) supports dynamic layer rendering. [MapLibre ImageSource](https://maplibre.org/maplibre-gl-js/docs/API/classes/ImageSource/) supports persistent sources; [raster style](https://maplibre.org/maplibre-style-spec/layers/#raster) supports opacity transitions. Crossfades are display transitions only. Operator acceptance on actual devices remains required.
+Checked November 27, 2026: the [WPC service](https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer) advertises dynamic layer rendering, but three custom-render export variants returned entirely transparent PNGs while its normal renderer contained rain. This failed approach was not released. Preparation now recolors the normal publisher PNG using its legend and pinned pngjs7.0.0; browser canvas applies the same transform for direct fallback. Unsupported pixels remain transparent. Prepared imagery is versioned and retains the existing revision/freshness guards.
+
+[MapLibre ImageSource](https://maplibre.org/maplibre-gl-js/docs/API/classes/ImageSource/) supports persistent sources; [raster style](https://maplibre.org/maplibre-style-spec/layers/#raster) supports opacity transitions. Crossfades are display transitions only.
+
+## Verification
+
+Node1132/1132, TypeScript, Command build, import-map generation and repository checks passed. A current public collection produced13 images (overview plus12 six-hour frames),0 failures. The recolored overview contained813681 visible pixels; transparent/unsupported pixels remain outside any numerical interpretation.
+
+Browser checks at1280x720 and390x844 measured0px movement of the map, strip, time and legend rectangles during several advancing frames, with no horizontal overflow. Play excludes the72-hour overview; pause settles to the presented index. Static review confirmed bounded raster slots, pause/resume settlement and GOES-below-radar ordering. Actual phone hardware, eight-hour operation and staff acceptance remain required. See root sim-log.md for prospective predictions, failures and commit provenance.

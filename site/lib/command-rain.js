@@ -4,6 +4,7 @@ import {fetchQpfCycle} from './environment-data.js';
 import {qpfPlanningTime} from './environment-model.js';
 import {WPC_INTERVALS} from './watershed-timeline-model.js';
 import {RAIN_PRESENTATION} from './rain-presentation.js';
+import {presentRainImage} from './rain-image.js';
 export {RAIN_BANDS as rainLegend} from './rain-presentation.js';
 
 export const PREPARED_RAIN_MAX_AGE=30*60000;
@@ -92,7 +93,7 @@ export async function createCommandRainDelivery({baseUrl=new URL('../data/prepar
         return {...frame,delivery};
       }catch(error){
         assertOpen(extra); // Cancellation must not start another network path.
-        const rain=await direct(regionalForecastBounds,{window,signal:combined(extra),fetchImpl,clock,presentation:RAIN_PRESENTATION});
+        const rain=await presentRainImage(await direct(regionalForecastBounds,{window,signal:combined(extra),fetchImpl,clock}));
         assertOpen(extra);
         revisions.set(window?.layer??9,{cycle:rain.cycle,checked:clock()});
         return {...rain,delivery:{method:'publisher'}};
