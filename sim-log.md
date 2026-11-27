@@ -286,6 +286,17 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A8 outcome
+
+- prediction_commit: e6b2443add72441619c764fe00025631706a25e7
+- observed_fixed: PR155 verify run46038418678 passed. Normal merge5885b0b93acb2b98af35a663cc1cfcba0d26cbd4 preserves earlier prediction commits. Main verify/deploy run46038662720 succeeded and published0.105.0. Live Command showed13 frames, the six fixed rainfall bands, Nov27-Nov30 forecast dates, and six-hour autoplay advancing to frame8 with consistent pause. Exercise designation remained visible.
+- missed: Actual-device/operator acceptance and long-duration monitoring remain untested. This was not a comprehensive audit of every historical public artifact or live source.
+- regressions: None observed. Current public-data preparation completed13 supported images,0 failures, with unsupported slot13 skipped. No operational-record writes or permission changes were made.
+- score: Node1132/1132 both locally and Linux CI; PR verify1/1, main verify/deploy1/1; current rainfall preparation13/13 supported frames. Browser release checks passed; SIM log is outside the site's upload path.
+- verdict: kept and published. This separate outcome commit is retained on fix/command-weather-clarity after the application merge, without triggering another application deployment solely to publish an audit receipt.
+
+Access follow-up2026-11-27: whoami is still not callable, so profile and exact allowed_operations remain unknown. A later gbrain remember response explicitly reported grant_blocked_operations:18 operations eligible by scope are blocked by this connection's old operation snapshot; only the brain owner can change it. No reconnect or rescope was attempted. Transfer of this log remains pending usable page/take tools or Ryan's request.
+
 ## Problem: retained-feed-freshness
 
 - domain: fresno-storm-watch
