@@ -51,6 +51,17 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - score: 13/13 focused (before:12/13).
 - verdict: kept in this branch; not deployed.
 
+### A3 — synchronize actual weather products with ready images
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Await map presentation for rain/gust/snow/radar before moving the displayed timestamp; remove per-frame gust clears and keep overview out of comparable six-hour playback.
+- rationale: A player cannot guarantee readiness if product callbacks discard the map's Promise or clear the old frame first.
+- predicted_fixed: New delayed-render/controller and mixed-duration playback regressions pass; existing forecast/radar/player tests remain green. Full npm suite, TypeScript/build/site checks pass before release.
+- confidence: 0.82
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch
@@ -74,6 +85,17 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - regressions: Resize/footer mismatch found and repaired before PR154 merge.
 - score: 1120/1120 Node tests at408f206f (before:1115/1115 on prior release; changed test coverage, not a measured usability gain).
 - verdict: kept, merged/deployed0.104.0; mitigation only.
+
+### A2 — fixed rain classes and stable weather furniture
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Version the subdued six-band rainfall presentation for prepared/direct delivery; draw weather below reference/operational lines; deduplicate legend updates and reserve consistent time/status space; simplify Map key.
+- rationale: Fewer fixed amount classes, restrained fill and stationary controls let users compare timing while retaining terrain and infrastructure context.
+- predicted_fixed: Fixed-class boundary/renderer/style-compatibility and stable-legend regressions pass. No mixed publisher/custom palette. Existing freshness tests remain green. Desktop and phone frame stepping retain map/strip bounds within1px; one map; units/window/coverage warnings remain accessible.
+- confidence: 0.80
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
 ## Problem: retained-feed-freshness
 
