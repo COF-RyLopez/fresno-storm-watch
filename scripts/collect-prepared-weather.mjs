@@ -8,6 +8,8 @@ import {QPF_URL} from '../site/lib/environment-model.js';
 import {validateCurrentWeather,createPreparedWeather} from '../site/lib/weather-frame-package.js';
 import {WPC_INTERVALS} from '../site/lib/watershed-timeline-model.js';
 import {bounded,writeAtomic} from './lib/snapshot-io.mjs';
+import {RAIN_PRESENTATION} from '../site/lib/rain-presentation.js';
+import {prepareRainImage} from './lib/rain-image.mjs';
 
 /** @param {{output?:URL,fetchImpl?:typeof fetch,clock?:()=>number,getCycle?:typeof fetchQpfCycle,loadRain?:typeof loadWatershedRain}} [options] */
 export async function collectPreparedWeather({output=new URL('../site/data/prepared-weather/',import.meta.url),
@@ -30,7 +32,7 @@ export async function collectPreparedWeather({output=new URL('../site/data/prepa
       const cycle=layer===9?null:await getCycle({id:layer,hours:6},publicRequest,clock());
       if(cycle&&(cycle.end<=clock()||clock()-cycle.issue>24*3600000)){skipped.push(layer);return;}
       const window=cycle?{layer,...cycle}:null;
-      const rain=await loadRain(regionalForecastBounds,{window,fetchImpl:publicRequest,clock});
+      const rain=await prepareRainImage(await loadRain(regionalForecastBounds,{window,fetchImpl:publicRequest,clock}));
       let image=null;
       if(rain.blob){
         const data=Buffer.from(await rain.blob.arrayBuffer()),sha256=createHash('sha256').update(data).digest('hex');
@@ -42,7 +44,7 @@ export async function collectPreparedWeather({output=new URL('../site/data/prepa
       const frame={id:`qpf-${layer}`,window:cycle?{layer,issue:rain.cycle.issue,start:rain.cycle.start,end:rain.cycle.end}:null,
         cycle:rain.cycle,coordinates:rain.coordinates,legend:rain.legend,image};
       const p=validateCurrentWeather({schemaVersion:1,kind:'prepared-wpc-display',capturedAt:new Date(started).toISOString(),clock:started,
-        publisher:'NOAA WPC',source:QPF_URL,rasterCrs:'EPSG:3857',coordinateCrs:'EPSG:4326',bounds:[...regionalForecastBounds],frames:[frame]});
+        publisher:'NOAA WPC',source:QPF_URL,presentation:RAIN_PRESENTATION,rasterCrs:'EPSG:3857',coordinateCrs:'EPSG:4326',bounds:[...regionalForecastBounds],frames:[frame]});
       const store=createPreparedWeather(p,output,{fetchImpl:async url=>new Response(await readFile(url),{headers:{'content-type':'image/png'}})});
       try{await store.load(frame.id);}finally{store.destroy();}
       frames.push(frame);
@@ -53,7 +55,7 @@ export async function collectPreparedWeather({output=new URL('../site/data/prepa
   if(!frames.length)throw Error('No current WPC frames prepared; prior manifest was not changed');
   frames.sort((a,b)=>Number(a.id.slice(4))-Number(b.id.slice(4)));
   const manifest=validateCurrentWeather({schemaVersion:1,kind:'prepared-wpc-display',capturedAt:new Date(started).toISOString(),clock:started,
-    publisher:'NOAA WPC',source:QPF_URL,rasterCrs:'EPSG:3857',coordinateCrs:'EPSG:4326',bounds:[...regionalForecastBounds],frames});
+    publisher:'NOAA WPC',source:QPF_URL,presentation:RAIN_PRESENTATION,rasterCrs:'EPSG:3857',coordinateCrs:'EPSG:4326',bounds:[...regionalForecastBounds],frames});
   await writeAtomic(new URL('manifest.json',output),JSON.stringify(manifest));
   return {status:'prepared-public-weather',prepared:frames.length,failed:failed.sort((a,b)=>a-b),skipped:skipped.sort((a,b)=>a-b),
     requests,bytes,durationMs:clock()-started,preparedAt:manifest.capturedAt};

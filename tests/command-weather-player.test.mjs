@@ -65,3 +65,38 @@ test('superseded async validation cannot paint over a newer selection',async()=>
   const old=h.player.select(0);await tick();await h.player.select(1);release();await old;
   assert.deepEqual(h.draws,[[40,20]]);h.player.destroy();
 });
+
+test('frame timing waits for map presentation before reporting the displayed index',async()=>{
+ let release;const h=harness({render:()=>new Promise(done=>release=done)});
+ const showing=h.player.select(0);await tick();
+ assert.equal(h.states.at(-1).index,-1);release();assert.equal(await showing,true);
+ assert.equal(h.states.at(-1).index,0);h.player.destroy();
+});
+
+test('next-frame preparation and the dwell clock run together',async()=>{
+ let release;const h=harness({load:frame=>frame===20?new Promise(done=>release=done):Promise.resolve(frame)});
+ await h.player.select(0);const starting=h.player.play();await tick();
+ assert.equal(h.timers.size,1,'dwell starts without waiting for the next download');
+ release(20);await starting;h.player.destroy();
+});
+
+test('overview can be inspected but is excluded from comparable-period playback',async()=>{
+ const h=harness({firstPlayable:1});await h.player.select(0);await h.player.play();
+ assert.deepEqual(h.draws,[[20,10],[40,20]]);await h.next();assert.deepEqual(h.draws.at(-1),[60,30]);
+ assert.equal(h.player.playing,false);h.player.destroy();
+});
+
+test('pause settles an in-flight visual frame and resumes from that committed index',async()=>{
+ let release;const drawn=[];
+ const h=harness({render:async(_value,frame)=>{if(frame===20)await new Promise(done=>release=done);drawn.push(frame);}});
+ await h.player.select(0);await h.player.play();const advancing=h.next();await tick();
+ h.player.pause();release();await advancing;
+ assert.equal(h.player.playing,false);assert.equal(h.states.at(-1).index,1);
+ await h.player.play();await h.next();assert.deepEqual(drawn,[10,20,30]);h.player.destroy();
+});
+
+test('a newer selection owns its index even if an older presentation finishes later',async()=>{
+ let release;const h=harness({render:async(_value,frame)=>{if(frame===10)await new Promise(done=>release=done);}});
+ const old=h.player.select(0);await tick();await h.player.select(1);release();await old;
+ assert.equal(h.states.at(-1).index,1);h.player.destroy();
+});

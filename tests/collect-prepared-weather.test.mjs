@@ -7,9 +7,10 @@ import {pathToFileURL} from 'node:url';
 import {collectPreparedWeather} from '../scripts/collect-prepared-weather.mjs';
 import {createPreparedWeather,validateCurrentWeather} from '../site/lib/weather-frame-package.js';
 import {rainRasterGeometry,regionalForecastBounds} from '../site/lib/watch-watershed-data.js';
+import {PNG} from 'pngjs';
 
 const now=Date.parse('2026-11-25T12:00:00Z'),HOUR=3600000;
-const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aGfoAAAAASUVORK5CYII=','base64');
+const raw=new PNG({width:1,height:1});raw.data.set([1,2,3,255]);const png=PNG.sync.write(raw);
 const cycle=({id})=>({issue:now-HOUR,start:now+(id===9?0:(id-13)*6*HOUR),
   end:now+(id===9?72:(id-12)*6)*HOUR,hours:id===9?72:6,units:'in',product:id===9?'72-hour QPF':'6-hour QPF'});
 async function setup(t){const dir=await mkdtemp(join(tmpdir(),'frog-weather-'));t.after(()=>rm(dir,{recursive:true,force:true}));return pathToFileURL(dir+'/');}
@@ -22,7 +23,7 @@ test('prepares the overview and all thirteen supported six-hour windows, with in
   const p=validateCurrentWeather(JSON.parse(await readFile(new URL('manifest.json',output),'utf8')));
   assert.equal(p.frames.length,14);
   const store=createPreparedWeather(p,output,{fetchImpl:async url=>new Response(await readFile(url),{headers:{'content-type':'image/png'}})});
-  for(const f of p.frames)assert.deepEqual(Buffer.from(await (await store.load(f.id)).blob.arrayBuffer()),png);
+  for(const f of p.frames){const image=PNG.sync.read(Buffer.from(await (await store.load(f.id)).blob.arrayBuffer()));assert.deepEqual([...image.data],[99,143,194,120]);}
   store.destroy();
 });
 

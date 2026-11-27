@@ -6,6 +6,7 @@ import {createCloudTopLayer} from './cloud-top-layer.js';
 import {installCloudTopInspection} from './cloud-top-inspection.js';
 import {createWatchWindTrails} from './watch-wind-trails.js';
 import {gaugeIcon} from './command-gauge.js';
+import {createWeatherRaster,weatherLayerBefore} from './weather-raster.js';
 let protocol;
 /** Lazy focused map. Only in-memory authorized display features enter this renderer. */
 /** @param {import("../../command/src/module-contracts.ts").TerrainOptions} options */
@@ -89,7 +90,8 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
  const records=['watch-gauges','command-gust-dots','command-gust-labels','watch-points','watch-facilities','watch-road-blocks','watch-lines','watch-detours','watch-nws-corridors','watch-nws-corridor-labels','watch-polygons','watch-burn-outlines','watch-burn-fill'];
  const recordAt=point=>map.queryRenderedFeatures(point,{layers:records})[0]?.properties;
  let destroyed=false,overhead=false,pendingBounds=null;
- const imageUrls=new Map();
+ const images=new Map();
+ const weatherBefore=style.layers.find(l=>l.type==='line'||l.type==='symbol')?.id;
  let radarLayer;
  let cloudTopLayer;
  let cloudMetadata;
@@ -164,15 +166,9 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   return cloudTopLayer.setSurface(vertices,options);
  }
  function setImage(id,image,paint){
-  if(map.getLayer(id))map.removeLayer(id);
-  if(map.getSource(id))map.removeSource(id);
-  const previous=imageUrls.get(id);
-  if(previous){URL.revokeObjectURL(previous);imageUrls.delete(id);}
-  if(!image?.blob)return;
-  const url=URL.createObjectURL(image.blob);imageUrls.set(id,url);
-  map.addSource(id,{type:'image',url,coordinates:image.coordinates});
-  const before=id==='watch-goes-clouds'&&map.getLayer('watch-regional-radar')?'watch-regional-radar':'frog-overview-rivers';
-  map.addLayer({id,type:'raster',source:id,paint:{'raster-fade-duration':0,...paint}},before);
+  if(destroyed)return Promise.resolve(false);
+  if(!images.has(id))images.set(id,createWeatherRaster(map,id,{before:()=>weatherLayerBefore(map,id,weatherBefore)}));
+  return images.get(id).set(image,paint);
  }
  const fit=(bounds,animate,padding)=>{if(!container.getBoundingClientRect().width||!container.getBoundingClientRect().height){pendingBounds={bounds,padding};return;}pendingBounds=null;map.fitBounds([[bounds[0],bounds[1]],[bounds[2],bounds[3]]],{padding:padding&&container.clientHeight>480?padding:55,maxZoom:14,pitch:overhead?0:50,duration:animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches?850:0});};
  const observer=new ResizeObserver(()=>{map.resize();if(pendingBounds)fit(pendingBounds.bounds,false,pendingBounds.padding);});observer.observe(container);
@@ -192,7 +188,7 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
   restore(view){if(!destroyed&&view){map.resize();map.jumpTo(view);}},resize(){if(!destroyed)map.resize();},
   watershed(feature){map.getSource('watch-basin').setData(feature||empty);},radar,radarVolume,forecastClouds,forecastWind,cloudTops,
   viewBounds(){const b=map.getBounds();return [b.getWest(),b.getSouth(),b.getEast(),b.getNorth()];},
-  regionalRadar(image){setImage('watch-regional-radar',image,{'raster-opacity':.72});},
+  regionalRadar(image){return setImage('watch-regional-radar',image,{'raster-opacity':.65});},
   context({key,counties,cities,burnScars}){
    if(destroyed||key===contextKey&&counties===countiesRef)return;
    contextKey=key;countiesRef=counties;
@@ -200,13 +196,13 @@ export async function createWatchTerrain({container,onSelect,onError,onCamera=()
    map.getSource('watch-cities').setData(cities||empty);
    map.getSource('watch-burn-scars').setData(burnScars||empty);
   },
-  rain(image){setImage('watch-basin-rain',image,{'raster-opacity':.34});},
-  gust(image){setImage('command-gust',image,{'raster-opacity':.62,'raster-resampling':'nearest'});},
+  rain(image){return setImage('watch-basin-rain',image,{'raster-opacity':.55});},
+  gust(image){return setImage('command-gust',image,{'raster-opacity':.42,'raster-resampling':'nearest'});},
   snowCover(image){setImage('command-snow-cover',image,{'raster-opacity':['interpolate',['linear'],['zoom'],9,.7,11,.25,12,0],'raster-resampling':'nearest'});},
-  snowfall(image){setImage('command-snowfall',image,{'raster-resampling':'nearest'});},
+  snowfall(image){return setImage('command-snowfall',image,{'raster-opacity':.65,'raster-resampling':'nearest'});},
   highlightTriggers(features){map.getSource('command-triggers').setData({type:'FeatureCollection',features});},
   snowPoints(features){map.getSource('command-snow-points').setData({type:'FeatureCollection',features});},
   gustPoints(features){map.getSource('command-gust-points').setData({type:'FeatureCollection',features});},
   cloud(image){setImage('watch-goes-clouds',image,{'raster-opacity':.63,'raster-contrast':.48});},
-  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();windTrails?.destroy();map.remove();for(const url of imageUrls.values())URL.revokeObjectURL(url);}};
+  destroy(){if(destroyed)return;destroyed=true;observer.disconnect();inspection.destroy();windTrails?.destroy();for(const image of images.values())image.destroy();map.remove();}};
 }

@@ -62,7 +62,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
   let gustTimer: ReturnType<typeof setTimeout> | undefined, snowTimer: ReturnType<typeof setTimeout> | undefined;
   let rainTimer: ReturnType<typeof setTimeout> | undefined;
   let rainDelivery: Awaited<ReturnType<Modules["command-rain"]["createCommandRainDelivery"]>> | undefined;
-  let snowDraw: (()=>void) | null = null, gustDraw: (()=>void) | null = null;
+  let snowDraw: (()=>void) | null = null, gustDraw: (()=>void | Promise<boolean | undefined>) | null = null;
   let checkedAdvisory: string | undefined, advisoryWeatherId: string | undefined, advisoryPlaybackIntent: string | undefined;
   const snowSummaries = new Map<string,string>();
   let currentRainWindow: {layer: number; start: number; end: number; issue?: number} | null = null;
@@ -165,7 +165,9 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           const player = await mountForecastPlayer({frames,picker,key:(w: any)=>String(frames.indexOf(w)),epoch,autoplay:shouldAutoplay,
             load: async (w: any,signal: AbortSignal) => w.grid
               ? source.loadSnowGridImage(w.grid,grid!.coordinates,signal).catch(()=>null) : null,
-            render: (image: any,w: any,index:number) => {
+            render: async (image: any,w: any,index:number) => {
+              if(!weatherSuspended&&await getMap()?.snowfall(image)===false)throw Error('Snow frame could not be displayed');
+              if(epoch!==weatherEpoch)return;
               timeline.setIndex(index);
               const timeLabel=localForecastTime.formatRange(w.start,w.end);
               const points=sites.map((site: any)=>{
@@ -175,13 +177,11 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
                 snowSummaries.set(site.basin,`${date(w.start)} to ${date(w.end)} · ${site.name} sample. Snow level ${level}. New snow: ${depth}. ${site.issued ? 'NWS grid updated '+date(site.issued) : 'NWS forecast unavailable.'}`);
                 return {type:"Feature",geometry:{type:"Point",coordinates:site.coordinates},properties:{label:site.name+"\n"+depth+(values.inches===null ? "" : " new snow")}};
               });
-              if(!weatherSuspended){getMap()?.snowPoints(points);getMap()?.snowfall(image);}
+              if(!weatherSuspended)getMap()?.snowPoints(points);
               if(image){
                 info.textContent="Forecast new snow · "+timeLabel+(w.grid.snowCells===0 ? " · No accumulation in valid cells" : "");
                 $("weather-issued").textContent="NWS snowfall issued "+localForecastTime.format(w.grid.issued);
-                colors([{label:"0",color:"#365f75"},...grid!.legend]);
-                $("weather-legend").prepend(el("strong","New snow · inches "));
-                $("weather-legend").append(el("small","Clear outside grid or where data is missing"));
+                colors([{label:"0",color:"#365f75"},...grid!.legend],"New snow · inches","Clear outside grid or where data is missing");
               } else {
                 $("weather-legend").hidden=true;
                 info.textContent="Snowfall grid unavailable · point guidance · "+timeLabel;
@@ -284,10 +284,15 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     $("weather-extra").replaceChildren();
     renderEvidence();
   }
-  function colors(bands: any[]) {
+  let legendSignature='';
+  function colors(bands: readonly any[],title='',note='') {
     const box = $("weather-legend");
-    box.replaceChildren();
     box.hidden = false;
+    const signature=JSON.stringify([bands,title,note]);
+    if(signature===legendSignature)return;
+    legendSignature=signature;
+    box.replaceChildren();
+    if(title)box.append(el('strong',title));
     for (const b of bands) {
       const span = el("span", undefined, "legend-band"),
         swatch = el("i", undefined, "legend-swatch");
@@ -295,14 +300,16 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       span.append(swatch, document.createTextNode(String(b.label ?? b.value)));
       box.append(span);
     }
+    if(note)box.append(el('small',note));
   }
 
-  async function mountForecastPlayer<Frame, Value>({frames,picker,key,load,render,validate,epoch,autoplay=false,onError}: {
+  async function mountForecastPlayer<Frame, Value>({frames,picker,key,load,render,validate,epoch,autoplay=false,onError,firstPlayable=0}: {
     frames: Frame[]; picker: HTMLInputElement | HTMLSelectElement; key(frame: Frame): string;
     load(frame: Frame, signal: AbortSignal): Promise<Value>;
-    render(value: Value, frame: Frame, index: number): void;
+    render(value: Value, frame: Frame, index: number): void | Promise<void>;
     validate?(value: Value, frame: Frame): Promise<void>;
     epoch: number; autoplay?: boolean; onError?: () => void;
+    firstPlayable?: number;
   }) {
     forecastPlayer?.destroy();
     let requestedIndex = frames.findIndex(frame => key(frame) === picker.value), renderedIndex = -1;
@@ -322,7 +329,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
       else void player.play();
     });
     play.setAttribute("aria-label", "Play forecast animation");
-    play.disabled = frames.length < 2;
+    play.disabled = frames.length-firstPlayable < 2;
     const stepButton=(label:string,icon:string,offset:number)=>{
       const b=button('',()=>{requestedIndex=Math.max(0,Math.min(frames.length-1,requestedIndex+offset));void player.select(requestedIndex);});
       b.setAttribute('aria-label',label);const glyph=el('calcite-icon');glyph.setAttribute('icon',icon);glyph.setAttribute('scale','s');b.append(glyph);return b;
@@ -330,7 +337,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     const previous=stepButton('Previous forecast frame','chevron-left',-1),next=stepButton('Next forecast frame','chevron-right',1);
     const status = el("span", undefined, "forecast-playback-status");
     status.setAttribute("role", "status");
-    const player = createForecastPlayback({frames,load,validate,
+    const player = createForecastPlayback({frames,load,validate,firstPlayable,
       available: () => epoch === weatherEpoch && !weatherSuspended && visible(),
       changed: ({playing,status: phase,index}: any) => {
         if (epoch !== weatherEpoch) return;
@@ -343,15 +350,16 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           : phase === "error" ? "Frame unavailable · playback stopped"
           : frames.length < 2 ? "One forecast frame available"
           : index >= 0 ? `${index + 1} of ${frames.length}` : "Choose a forecast time";
-        status.hidden=['paused','playing'].includes(phase)&&frames.length>1;
+        status.hidden=false;
         if (phase === "error") onError?.();
       },
-      render: (value, frame, index) => {
+      render: async (value, frame, index) => {
+        if (epoch !== weatherEpoch) return;
+        await render(value,frame,index);
         if (epoch !== weatherEpoch) return;
         renderedIndex = index; requestedIndex = index;
         if(timeline)timeline.setIndex(index);
         else picker.value = key(frame);
-        render(value,frame,index);
       },
     });
     forecastPlayer = player;
@@ -420,15 +428,15 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
           if (!features.length) throw Error("Selected NWS forecast time is unavailable");
           return {features};
         },
-        render: (value: any,step: any) => {
+        render: async (value: any,step: any) => {
           const valid = forecast.provider==='nws'?localForecastTime.formatRange(step.start,step.end):localForecastTime.format(step.start);
           gustDraw = () => {
             if (weatherSuspended) return;
-            getMap()?.gust(null);getMap()?.gustPoints([]);
-            if (forecast.provider === "nws") getMap()?.gustPoints(value.features);
-            else getMap()?.gust(value.image);
+            if (forecast.provider === "nws") {getMap()?.gust(null);getMap()?.gustPoints(value.features);}
+            else {getMap()?.gustPoints([]);return getMap()?.gust(value.image);}
           };
-          gustDraw();
+          if(await gustDraw()===false)throw Error('Gust frame could not be displayed');
+          if(epoch!==weatherEpoch)return;
           if (forecast.provider === 'nws') {
             const issued = Math.min(...value.features.map((feature: any) => feature.properties.issued));
             info.textContent = `Forecast gust samples · ${valid} · ${value.features.length}/9 locations`;
@@ -437,8 +445,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
             info.textContent = `Forecast gusts · ${valid}`;
             $("weather-issued").textContent=`HRRR model run ${localForecastTime.format(Date.parse(manifest.run))}`;
           }
-          colors(source.gustLegend);
-          $("weather-legend").prepend(el("strong", forecast.provider === 'nws' ? "Sample gusts · mph " : "Surface gusts · mph "));
+          colors(source.gustLegend,forecast.provider === 'nws' ? "Sample gusts · mph" : "Surface gusts · mph");
         },
       });
       if (destroyed || epoch!==weatherEpoch || request.signal.aborted) return;
@@ -497,19 +504,19 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
         if (retained || advisory && windows.length) choose.value=String((retained??windows[0]).layer);
         controls.replaceChildren(choose);
         const frames = [...(!advisory?[{layer:"",start:0,end:0}]:[]),...windows];
-        await mountForecastPlayer({frames,picker:choose,key:(w: any)=>String(w.layer),epoch,autoplay,
+        await mountForecastPlayer({frames,picker:choose,key:(w: any)=>String(w.layer),epoch,autoplay,firstPlayable:advisory?0:1,
           load:(w: any,signal: AbortSignal)=>delivery.load(w.layer===""?null:w,signal),
           validate:(rain: any,w: any)=>delivery.validate(rain,w.layer===""?null:w,request.signal),
           onError:clearRain,
-          render:(rain: any,w: any)=>{
+          render:async(rain: any,w: any)=>{
             currentRainWindow = w.layer===""?null:w;
             lastRain=rain;
-            if (!weatherSuspended) getMap()?.rain(rain);
+            if (!weatherSuspended&&await getMap()?.rain(rain)===false)throw Error('Rain frame could not be displayed');
+            if(epoch!==weatherEpoch)return;
             info.textContent=`${rain.cycle.hours}-hour rain · ${localForecastTime.formatRange(rain.cycle.start,rain.cycle.end)}${rain.legend.length?'':' · No contours ≥0.01 in shown'}`;
             $("weather-issued").textContent=`WPC issued ${localForecastTime.format(rain.cycle.issue)}`;
-            colors(rain.legend); $("weather-legend").prepend(el("strong","Forecast rain · inches "));
-            if (advisory) $("weather-legend").append(el("small","Gauge dots are current observations, not forecasts."));
-            items.replaceChildren(el("p","Published rainfall accumulation. Gauges, roads and power records remain current context, not future predictions."),
+            colors(source.rainLegend??rain.legend,`Rain total · inches · ${rain.cycle.hours} h`,advisory?'Gauges show current observations.':'');
+            items.replaceChildren(el("p","Published rainfall accumulation, shown with the F.R.O.G. amount scale. Clear areas may be below 0.01 inch, outside coverage or missing. Roads, gauges and facilities show current context."),
               el("p",rain.delivery?.method==='prepared' ? "Prepared from WPC · "+date(rain.delivery.preparedAt)+" · source revision checked" : "Direct WPC delivery · prepared data unavailable or superseded"),
               link("WPC forecast source","https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml"));
           },
@@ -576,8 +583,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
             (!matchMedia(COMPACT_VIEW_QUERY).matches ||
               getState().mobile === "map"),
           renderColors: (title: string, bands: any[]) => {
-            colors(bands);
-            $("weather-legend").prepend(el("strong", title + " "));
+            colors(bands,title);
           },
         };
         weatherViews[mode] = mod.installRegionalRadar(options);
