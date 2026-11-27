@@ -71,6 +71,17 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - score: 64/65 focused; TypeScript failed (before:A2 focused13/13 on a smaller suite).
 - verdict: kept on branch for correction, not deployed; full regression and browser evaluation not yet run.
 
+### A4 — preserve first-playable failure status
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Do not overwrite show()'s failure report with a paused report when starting playback at the first six-hour frame.
+- rationale: show() already owns load/render error reporting; duplicate completion reporting hides the actual failure.
+- predicted_fixed: Focused65/65, complete Node suite and compiler/build/site gates pass after the paired readonly fix. Missing frame remains conspicuous and no stale timer survives.
+- confidence: 0.92
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch
@@ -114,6 +125,17 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - regressions: Shared run has one rain-player error-status failure (weather-raster-playback A3).
 - score: 64/65 focused; TypeScript failed (before:main1120/1120, different coverage).
 - verdict: kept on branch for correction, not deployed.
+
+### A3 — accept immutable legend contract and verify delivered frames
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Make legend helper accept readonly data, then run compiler/build/full regression checks and a live custom WPC export probe. Inspect desktop/phone stepping, key, labels and dimensions.
+- rationale: The palette is intentionally immutable; consumers should not require mutable arrays. Readiness and UI stability need actual renderer evidence in addition to unit tests.
+- predicted_fixed: Compiler passes; focused65/65 and full suite pass; live WPC custom export returns a PNG with the six-band legend and verified dates. Desktop/phone stepping changes map and strip bounds by<=1px after initialization. No second map, unknown/missing data remains qualified.
+- confidence: 0.86
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
 ## Problem: retained-feed-freshness
 
