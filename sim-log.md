@@ -327,3 +327,12 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - confidence: 0.6
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
+#### A1 outcome
+
+- prediction_commit: aafabdd4
+- observed_fixed: site/flood-scenario-3js.html loads Big Dry Creek (3.7 s on localhost) and Redbank with no new console errors; T+4 h counters match the scenario (9,677 acres, 12,915 buildings with water). Water rises against footprints, impact colours follow the clock in the shader, cars move along roads as instanced vehicles. npm test 1135/1135 (before 1132/1132 on 5885b0b9); npm run check passed.
+- missed: The >= 30 fps prediction was not measured: the browser pane was hidden (rAF throttled to ~11 Hz) and Ryan was not watching. Proxy: GPU-synced render 9.3 ms median at 1568x1212 with 2.91 M triangles, plus 3.0 ms per clock tick, on Ryan's Mac. Decoding a new depth frame costs ~45 ms on the main thread (one hitch per 15 model minutes). Flood front lines, velocity, water shadows and NSI points without footprints are not drawn.
+- regressions: none observed. Mid-session slip: deleting a scratch .claude/ in the worktree removed tracked .claude/skills/calcite; restored before committing, never committed.
+- score: 1135/1135 tests; fps unmeasured (prediction not confirmed).
+- verdict: kept on feat/flood-threejs (701e8aba) for review; fps check pending a visible-pane run.
