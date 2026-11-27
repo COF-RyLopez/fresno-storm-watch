@@ -226,6 +226,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A5 outcome
+
+- prediction_commit: 6a6f94d7052715872c64f96ce7d7ab353f50106d
+- observed_fixed: Same-cycle control demonstrated845986 visible publisher pixels; field is numeric qpf and renderer values match normalized codes.
+- missed: Adding the publisher delimiter or using a simple uniform dynamic renderer still produced0 visible pixels. Value-code hypothesis did not fix the response; server/proxy cause remains unknown.
+- regressions: None additionally deployed; custom-render path remains blocked.
+- score: Publisher845986/2017400 nontransparent pixels; all three custom export variants0/2017400. This disproves the matching-only prediction.
+- verdict: supersede custom export approach; retain source-image contract and recolor verified publisher PNG instead.
+
+### A6 — recolor verified publisher PNG in preparation and direct fallback
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Use pinned pngjs for Node preparation and browser canvas for direct fallback, sharing a numeric-value-to-color transform. Preserve source geometry/dates/revision validation, transparent/missing pixels and fixed six-band legend. Keep recorded experiments unchanged.
+- rationale: Publisher rendering works; applying a documented display palette to that image avoids unreliable dynamicLayers while retaining authoritative contour boundaries. Prepared delivery avoids repeated client conversion.
+- predicted_fixed: Source palette pixels map to their exact amount classes; unsupported pixels stay transparent. Live output contains visible pixels comparable to publisher coverage, no green wash, valid dates and12 current six-hour frames. Tests/type/build pass, browser map/strip moves<=1px during playback and operational symbols stay visible.
+- confidence: 0.87
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: retained-feed-freshness
 
 - domain: fresno-storm-watch
