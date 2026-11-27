@@ -4,6 +4,7 @@ import type { TerrainMap } from "./module-contracts";
 import { createModuleLoader } from "./module-loader";
 import { createCommandWeather, COMPACT_VIEW_QUERY } from "./weather-controller";
 import { createCommandInspector } from "./inspector";
+import { createCommandLayout } from "./layout";
 
 // Existing verified collectors stay separate from this build and its rendering engine.
 const root = new URL("../", document.baseURI);
@@ -94,13 +95,22 @@ let privateSelection: Concern | undefined;
 let authorizedSites: Concern[] = [];
 let privateScope = "";
 let privateCamera = false;
-const inspector = createCommandInspector({pane,resize:()=>map?.resize()});
+const layout = createCommandLayout({resize:()=>requestAnimationFrame(()=>map?.resize()),onPane:value=>pane(value)});
+$("attention-toggle").onclick=()=>layout.toggleAttention();
+const inspector = createCommandInspector({pane,resize:()=>map?.resize(),changed:panel=>layout.inspector(panel!==null)});
 const weather = createCommandWeather({
   root, moduleAt, model, createForecastPlayback,
   getMap: () => map, ensureMap, getState: () => state.value,
   getSelection: () => current(), getTimeline: () => feeds.timeline,
   updateMap, renderEvidence, pane, requestFit: () => {pendingFit = true;}, notify, date,
   onProductChange:()=>inspector.clearReading(),
+});
+window.addEventListener('resize',()=>{
+  layout.refresh();
+  if(state.value.view!=='watch')return;
+  if(!matchMedia(COMPACT_VIEW_QUERY).matches||state.value.mobile==='map'){
+    void ensureMap();weather.resume();
+  }else weather.suspend();
 });
 function invalidateSearch() {
   searchGeneration++;
@@ -279,6 +289,7 @@ function navigate(
   location.hash = `/${view}${params.size ? "?" + params : ""}`;
 }
 function pane(value: string) {
+  layout.pane(value);
   state.patch({ mobile: value });
   document.body.dataset.pane = value;
   document
@@ -286,10 +297,10 @@ function pane(value: string) {
     .forEach((b) =>
       b.setAttribute("aria-pressed", String(b.dataset.pane === value)),
     );
-  if (value === "map") {
+  if (value === "map" && state.value.view === 'watch') {
     void ensureMap();
     weather.resume();
-  } else if (matchMedia(COMPACT_VIEW_QUERY).matches) weather.suspend();
+  } else if (state.value.view !== 'watch' || matchMedia(COMPACT_VIEW_QUERY).matches) weather.suspend();
   map?.resize();
 }
 function route() {
@@ -314,6 +325,7 @@ function route() {
   });
   for (const view of ["watch", "work", "briefing"])
     $(view + "-view").hidden = next.view !== view;
+  layout.refresh();
   document.querySelector<HTMLElement>(".mobile-panes")!.hidden =
     next.view !== "watch";
   if (next.view !== "watch") weather.suspend();
@@ -346,6 +358,7 @@ document
   .forEach((b) => (b.onclick = () => select(b.dataset.place!)));
 function select(id: string) {
   inspector.show('place',false);
+  if(!matchMedia(COMPACT_VIEW_QUERY).matches)pane('details');
   weather.requestAutoplay(id);
   invalidateSearch();
   const site = [...authorizedSites, ...privateTasks()].find((c) => c.id === id);
@@ -897,7 +910,7 @@ function renderCoverage() {
       button("Coverage", () => {
         navigate("watch");
         pane("attention");
-        (document.querySelector(".coverage") as HTMLDetailsElement).open = true;
+        document.querySelector(".coverage")!.setAttribute('expanded','');
         document
           .querySelector(".coverage")
           ?.scrollIntoView({ block: "nearest" });
@@ -1079,6 +1092,7 @@ $("map-overhead").onclick = () => {
   const b = $("map-overhead"),
     pressed = b.getAttribute("aria-pressed") !== "true";
   b.setAttribute("aria-pressed", String(pressed));
+  b.toggleAttribute('active',pressed);
   map?.overhead(pressed);
 };
 async function initializeAuth() {
