@@ -58,6 +58,10 @@ const player=await readFile(new URL('site/vendor/hls-1.7.3.light.js',root));
 const pilotRuntime=JSON.parse(await readFile(new URL('docs/map-pilot-runtime.json',root),'utf8'));
 for(const entry of pilotRuntime.files)assert.equal(createHash('sha256').update(await readFile(new URL(entry.file,root))).digest('hex'),entry.sha256,'Pinned MapLibre runtime changed: '+entry.file);
 assert.equal(createHash('sha256').update(player).digest('hex'),'0c4f60fc126ef62dc18e8e5e7b1984cf77628aa2a230688dcf5bea7f3966e052','Pinned HLS library changed');
+// three.js 0.187.0 from the npm tarball (sha512-Qiu7R+Cmh8Cs...); the two addons have 'three' rewritten to '../three.module.js'.
+for(const [file,sha] of Object.entries({'three.module.js':'104f56145899722094556490d787aae0617cc2fc3382f31df02d724ea1aee341','three.core.js':'613e370f76638fdef83926642bf256dc9615684922de1ce1f63a8583e5d78578',
+  'addons/OrbitControls.js':'55875ffbc8b86ba31badcb83e0d0fc5395c13b092c710185d9143ddbc0294fe8','addons/Sky.js':'2323f0c9e87781f08226052db60f31b3c1bb76c78589fe056dbbb67cb1c5c424'}))
+  assert.equal(createHash('sha256').update(await readFile(new URL('site/vendor/three-0.187.0/'+file,root))).digest('hex'),sha,'Pinned three.js changed: '+file);
 console.log('Syntax, county geometry, ten river watchpoints, eight cameras, two reservoir contracts/snapshot, pinned player integrity, page links and public config checks passed.');
 
 const comparisonSites=uniqueComparisonPoints(comparisonAreas(areaSettings.areas,areaConcerns.areas,windSettings.sites,watch.stations));

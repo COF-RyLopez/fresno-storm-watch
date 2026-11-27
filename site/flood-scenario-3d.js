@@ -15,6 +15,7 @@ const params = new URLSearchParams(location.search);
 
 const { index, id, entry, DATA } = await pickScenario(ROOT);
 $('link-2d').href = `./flood-scenario.html?scenario=${encodeURIComponent(id)}`;
+$('link-3js').href = `./flood-scenario-3js.html?scenario=${encodeURIComponent(id)}`;
 const [scenario, buildingsJson, unmatched, sdk] = await Promise.all([
   fetch(DATA + 'scenario.json').then(r => r.json()),
   fetch(DATA + 'buildings.json').then(r => r.json()),

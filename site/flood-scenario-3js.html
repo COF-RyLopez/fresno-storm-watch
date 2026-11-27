@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-LiT9smGglAbjnmrxQm15/yNW8kKvrNE/375Puyte4b4='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta name="description" content="Realistic 3D flood scenario playback (three.js): terrain, imagery, a modeled water surface, building impacts and evacuation traffic. Demonstration data, not a forecast.">
+<title>Storm Watch · Flood scenario playback (realistic 3D)</title>
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69">
+<script src="./theme.js?v=8a60674390"></script>
+<script type="importmap">
+{"imports":{
+"./flood-scenario-3js.js":"./flood-scenario-3js.js?v=58c1448d7e",
+"./lib/evacuation-traffic.js":"./lib/evacuation-traffic.js?v=3af79ab5b4",
+"./lib/flood-scenario-model.js":"./lib/flood-scenario-model.js?v=b23ebd16cc",
+"./lib/flood-scenario-page.js":"./lib/flood-scenario-page.js?v=09c142f82b",
+"./lib/flood-three-model.js":"./lib/flood-three-model.js?v=57e94e3984"
+}}
+</script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./flood-scenario-3js.js?v=58c1448d7e"></script>
+<link rel="stylesheet" href="./flood-scenario.css?v=7d26f48832">
+<style>.loading { position: absolute; left: 16px; top: 16px; padding: 6px 10px; border-radius: 4px; background: var(--app-surface); border: 1px solid var(--app-border); font-size: .8rem; }
+  .pick { font-size: .78rem; border-collapse: collapse; } .pick th { text-align: left; font-weight: 400; color: var(--app-muted); padding: 2px 8px 2px 0; } .pick td { font-variant-numeric: tabular-nums; }</style>
+</head><body>
+<calcite-shell>
+  <header slot="header">
+    <div class="fs-header"><div class="brand"><img src="./assets/frog-logo.png" width="40" height="40" alt="F.R.O.G. — Flood Response Operations Group"><div><div class="eyebrow">STORM WATCH · SCENARIO PLAYBACK · REALISTIC 3D (THREE.JS)</div><h1 id="scenario-title">Flood scenario playback</h1></div></div>
+      <nav><calcite-select id="scenario-pick" scale="s" label="Scenario"></calcite-select><a id="link-2d" href="./flood-scenario.html">2D page</a><a id="link-3d" href="./flood-scenario-3d.html">ArcGIS 3D page</a><a href="./planning.html#flood-scenarios">How this works</a><a href="./">Return to map</a><calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action></nav></div>
+    <p class="demo-flag" id="notice"></p>
+  </header>
+  <calcite-shell-panel slot="panel-end" width="m" id="side-panel">
+    <calcite-panel heading="Scenario status">
+      <div class="panel">
+        <div><div class="clock" id="clock" role="status" aria-live="off">T+0 h 00 min</div><div class="note" id="clock-note">Hours after simulation start</div></div>
+        <div class="stats">
+          <div><b id="s-acres">0</b><span>acres flooded</span></div>
+          <div><b id="s-wet">0</b><span>buildings with water</span></div>
+          <div><b id="s-inside">0</b><span>water above first floor</span></div>
+          <div><b id="s-people">0</b><span>residents (night) in wet buildings</span></div>
+          <div style="grid-column: span 2"><b id="s-loss">$0</b><span>Hazus direct loss at buildings that have peaked</span></div>
+        </div>
+        <div class="traffic" id="traffic" hidden>
+          <strong>Evacuation traffic</strong>
+          <calcite-segmented-control id="traffic-mode" scale="s" width="full" label="Departures">
+            <calcite-segmented-control-item value="base" checked>Realistic departures</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="fast">Stress test, 4&times;</calcite-segmented-control-item>
+          </calcite-segmented-control>
+          <calcite-label layout="inline" scale="s"><calcite-switch id="traffic-show" checked scale="s"></calcite-switch>Show cars and exit points</calcite-label>
+          <div class="stats">
+            <div><b id="t-road">0</b><span>cars on the road</span></div>
+            <div><b id="t-safe">0</b><span>people past an exit</span></div>
+            <div><b id="t-trap">0</b><span>people who never left</span></div>
+            <div><b id="t-exits">0</b><span>exit points</span></div>
+          </div>
+          <div class="key"><span><i class="trail" style="background:#ffb547"></i>Car (one household), last minute of travel</span>
+            <span><i class="trail" style="background:#ff5d73"></i>Car stopped by water on the road</span>
+            <span><i style="background:#7ef0c4"></i>Exit point</span></div>
+          <p class="note" id="traffic-note"></p>
+        </div>
+        <div class="traffic"><strong>Display</strong>
+          <calcite-label layout="inline" scale="s"><calcite-switch id="impact" checked scale="s"></calcite-switch>Colour buildings by water vs first floor</calcite-label>
+          <calcite-label layout="inline" scale="s"><calcite-switch id="depth-colours" scale="s"></calcite-switch>Show water in depth colours</calcite-label>
+          <p class="note">Drag to pan, right-drag to rotate and tilt, scroll to zoom; arrow keys pan. Click a building for its details.</p>
+        </div>
+        <div class="traffic" id="pick" hidden><strong id="pick-title">Building</strong><table class="pick"><tbody id="pick-rows"></tbody></table></div>
+        <div><strong>Depth (ft)</strong><div class="ramp" id="ramp"></div><div class="ramp-labels" id="ramp-labels"></div></div>
+        <div class="key"><strong>Buildings · water vs first floor</strong><span class="note">Overture footprints (GERS ID join to NSI), extruded to Overture height or NSI stories &times; 10 ft. A footprint with several NSI points takes the worst-affected one. NSI points without a footprint are counted in the totals but not drawn.</span>
+          <span><i style="background:#8b949e"></i>Dry</span><span><i style="background:#f2cc60"></i>Wet, below first floor</span>
+          <span><i style="background:#f0883e"></i>0–2 ft inside</span><span><i style="background:#da3633"></i>2–6 ft inside</span><span><i style="background:#8e1519"></i>Over 6 ft inside</span>
+          </div>
+        <p class="note" id="source"></p>
+        <div class="traffic"><strong>Rendering</strong>
+          <p class="note" id="perf" role="status" aria-live="off">Measuring&hellip;</p></div>
+        <p class="note">Terrain: Mapzen/AWS Terrarium elevation tiles (about 38 m). Imagery: Esri World Imagery (Esri, Maxar, Earthstar Geographics and the GIS user community). The water surface is ground plus modeled depth decoded from the depth images (about 30 m cells, quarter-foot steps); ripples, colour and reflections are illustrative, not modeled velocity.</p>
+      </div>
+    </calcite-panel>
+  </calcite-shell-panel>
+  <div class="stage"><div id="view"></div><div class="loading" id="loading" role="status">Loading&hellip;</div>
+  <div class="player" aria-label="Scenario playback">
+    <calcite-button id="play" icon-start="play" scale="s" appearance="solid" label="Play">Play</calcite-button>
+    <calcite-slider id="time" min="0" max="24" step="0.05" value="0" label-handles min-label="Scenario hour"></calcite-slider>
+    <calcite-select id="speed" scale="s" label="Playback speed"><calcite-option value="0.016667">1 min/s</calcite-option><calcite-option value="0.083333">5 min/s</calcite-option><calcite-option value="0.25">15 min/s</calcite-option><calcite-option value="0.5">0.5 h/s</calcite-option><calcite-option value="1" selected>1 h/s</calcite-option><calcite-option value="2">2 h/s</calcite-option><calcite-option value="4">4 h/s</calcite-option></calcite-select>
+  </div></div>
+</calcite-shell>
+</body></html>
