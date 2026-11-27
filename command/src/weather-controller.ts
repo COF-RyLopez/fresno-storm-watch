@@ -285,7 +285,7 @@ export function createCommandWeather({root,moduleAt,model,createForecastPlayback
     renderEvidence();
   }
   let legendSignature='';
-  function colors(bands: any[],title='',note='') {
+  function colors(bands: readonly any[],title='',note='') {
     const box = $("weather-legend");
     box.hidden = false;
     const signature=JSON.stringify([bands,title,note]);

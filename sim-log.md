@@ -82,6 +82,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 
+#### A4 outcome
+
+- prediction_commit: b848ec0d8ebe12a334d766d1bf923eed4e662da3
+- observed_fixed: Failed first-playable frame retains its error status. Complete Node suite and compiler/build/import-map/site checks passed.
+- missed: Browser playback cannot be evaluated yet: local data offers only the overview, not current six-hour windows.
+- regressions: None in1129 Node cases.
+- score: 1129/1129 full suite (before:1120/1120 main; prior focused64/65). Coverage increased, not a measured speed score.
+- verdict: kept; not deployed.
+
+### A5 — evaluate current prepared frames and actual map playback
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: No new behavior planned; prepare current public WPC frames locally, inspect PNG alpha and compare frame dimensions/time/legend in desktop/phone browsers. Review outstanding code findings before release.
+- rationale: Old local snapshots cannot evaluate current animation; a valid PNG signature alone does not prove visible nontransparent forecast pixels.
+- predicted_fixed: Current prepared manifest supplies>=2 six-hour frames, custom PNG has nontransparent pixels, playback advances through actual six-hour dates without map/strip movement>1px. Stop/switch/reduced-motion and resource bounds remain intact.
+- confidence: 0.80
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
 ## Problem: weather-layout-obscures-context
 
 - domain: fresno-storm-watch
@@ -134,6 +154,26 @@ Access check2026-11-27: no ToolSearch tool is exposed in Codex. Tool inventory s
 - rationale: The palette is intentionally immutable; consumers should not require mutable arrays. Readiness and UI stability need actual renderer evidence in addition to unit tests.
 - predicted_fixed: Compiler passes; focused65/65 and full suite pass; live WPC custom export returns a PNG with the six-band legend and verified dates. Desktop/phone stepping changes map and strip bounds by<=1px after initialization. No second map, unknown/missing data remains qualified.
 - confidence: 0.86
+- status: pending
+- prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
+
+#### A3 outcome
+
+- prediction_commit: b848ec0d8ebe12a334d766d1bf923eed4e662da3
+- observed_fixed: Immutable palette contract compiles;1129/1129 tests and build/site checks pass. Live WPC export returned PNG signature89504e470d0a1a0a,11228 bytes, six bands and verified72-hour dates.
+- missed: Local browser has only an overview; timed playback stability and nontransparent pixel content were not established by this run.
+- regressions: None in the full Node suite.
+- score: 1129/1129 full suite; compiler passed (before:focused64/65 and compiler failed).
+- verdict: kept; browser prediction remains unverified rather than claimed successful.
+
+### A4 — verify fixed controls with current imagery
+
+- date: 2026-11-27
+- agent: Codex Windows
+- edit: Evaluate actual prepared six-hour frames and map key at desktop/phone widths; no additional design change unless defects are found and logged.
+- rationale: Need current comparable frames to measure text/legend layout rather than infer smoothness from static screenshots.
+- predicted_fixed: Six stable legend classes and retained operational context; map/strip bounds vary<=1px while stepping/playing; no horizontal overflow on390px phone; source window remains explicit.
+- confidence: 0.82
 - status: pending
 - prediction_commit: Commit containing this block; exact hash will be appended with the outcome.
 

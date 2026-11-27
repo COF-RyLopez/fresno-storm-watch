@@ -54,7 +54,7 @@ export function createForecastPlayback({frames,load,render,validate=async()=>{},
     async play({automatic=false}={}) {
       if(destroyed||playing||frames.length-firstPlayable<2||!available()||automatic&&reducedMotion())return false;
       pause();const run=generation;playing=true;report('buffering');
-      if(index<firstPlayable||index>=frames.length-1){if(!await show(firstPlayable,run)){if(valid(run)){playing=false;report('paused');}return false;}}
+      if(index<firstPlayable||index>=frames.length-1){if(!await show(firstPlayable,run)){if(valid(run))playing=false;return false;}}
       return prepare(run);
     },
     pause,
