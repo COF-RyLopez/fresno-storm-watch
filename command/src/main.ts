@@ -186,6 +186,17 @@ privateView = privateUI.mountCommandPrivate({
   team: eoc.EOC_CONFIG.teamLabel,
   onNavigate: (view: string) => navigate(view),
   onNotices: () => { renderList(); renderCoverage(); },
+  onShowEvidence: (evidence: any) => {
+    const id = evidence?.id, camera = evidence?.rendering?.camera;
+    if (typeof id !== "string" || !feeds.reference.some((c) => c.id === id)) {
+      notify("That place is not in the current watch list. Its captured details remain in this briefing.");
+      return;
+    }
+    // The captured camera; the weather frame shown at capture is not replayed (it may no longer be current).
+    if (camera) cameras.set(id, camera);
+    if (state.value.selected === id && camera) map?.restore(camera);
+    select(id);
+  },
   onFocus: (id: any) => {
     if (typeof id === "string" && feeds.reference.some((c) => c.id === id))
       select(id);
