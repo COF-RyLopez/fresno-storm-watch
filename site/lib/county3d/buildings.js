@@ -3,8 +3,12 @@
  *  hipRoof) and flat roofs elsewhere. Heights are Overture's where known, otherwise one storey (5 m). Reference context:
  *  footprints and heights are not verified against county records. */
 import * as THREE from '../../vendor/three-0.187.0/three.module.js';
+import { fetchWithRetry } from './fetch-retry.js';
 
 const Z = 13, R = 6378137, HALF = Math.PI * R, DEFAULT_HEIGHT = 5, SHOW_WITHIN = 14_000; // ground metres camera-to-target
+// r2.dev rate-limits bursts (HTTP 429): at most MAX_INFLIGHT tile requests at once, a pause for every tile after any retry,
+// and a tile that still failed is tried again after RETRY_FAILED_MS, up to MAX_TILE_ROUNDS times.
+const MAX_INFLIGHT = 4, RETRY_FAILED_MS = 30_000, MAX_TILE_ROUNDS = 3;
 
 /** BLD1 tile (gunzipped) -> {n, nv, origin, start, xy, height}. */
 export function parseBuildings(buffer) {
@@ -31,8 +35,9 @@ export function createBuildings({ county, baseUrl }) {
   // compile the building shader up front: its first draw otherwise stalls a frame for ~180 ms
   county.renderer.compileAsync?.(new THREE.Mesh(new THREE.BoxGeometry(), material), camera, scene).catch(() => {});
   const tiles = new Map(); // 'x/y' -> {state, mesh, used}
-  let available = null, inflight = 0;
-  const manifest = fetch(new URL('manifest.json', base), { cache: 'no-cache' }).then(r => (r.ok ? r.json() : Promise.reject(Error(r.status))))
+  let available = null, inflight = 0, pausedUntil = 0;
+  const pause = ({ delay }) => { pausedUntil = Math.max(pausedUntil, performance.now() + delay); };
+  const manifest = fetchWithRetry(new URL('manifest.json', base), { cache: 'no-cache' }, { retries: 6, onRetry: pause }).then(r => r.json())
     .then(m => { available = new Set(m.tiles.map(([x, y]) => `${x}/${y}`)); return m; }).catch(error => { console.warn('County buildings unavailable:', error.message); return null; });
 
   // Geometry is built in a worker (triangulation and roofs for ~13k buildings took hundreds of ms on the main thread); the
@@ -97,14 +102,17 @@ export function createBuildings({ county, baseUrl }) {
   }
 
   async function load(key) {
-    const t = { state: 'loading', mesh: null, used: performance.now(), built: 0 };
+    const t = tiles.get(key) ?? { mesh: null, rounds: 0, built: 0 };
+    Object.assign(t, { state: 'loading', used: performance.now() }); t.rounds++;
     tiles.set(key, t); inflight++;
     try {
-      const response = await fetch(new URL(`${Z}/${key}.bin.gz`, base));
-      if (!response.ok) throw Error(response.status);
+      const response = await fetchWithRetry(new URL(`${Z}/${key}.bin.gz`, base), undefined, { onRetry: pause });
       const built = meshFrom(await buildInWorker(await inflate(response)));
       Object.assign(t, built); seat(t); t.built = performance.now(); group.add(t.mesh); t.state = 'ready';
-    } catch (error) { t.state = 'failed'; console.warn('Building tile', key, error.message); }
+    } catch (error) {
+      t.state = 'failed'; t.retryAt = performance.now() + RETRY_FAILED_MS;
+      console.warn('Building tile', key, error.message, t.rounds < MAX_TILE_ROUNDS ? '(will retry)' : '(giving up)');
+    }
     finally { inflight--; }
   }
 
@@ -122,11 +130,14 @@ export function createBuildings({ county, baseUrl }) {
       const key = `${x}/${y}`;
       if (!available.has(key)) continue;
       const t = tiles.get(key);
-      if (t) { t.used = now; if (t.mesh) t.mesh.visible = true; }
-      else wanted.push([Math.hypot(-HALF + (x + 0.5) * size - cx, HALF - (y + 0.5) * size - cy), key]);
+      if (t) {
+        t.used = now; if (t.mesh) t.mesh.visible = true;
+        if (t.state !== 'failed' || t.rounds >= MAX_TILE_ROUNDS || now < t.retryAt) continue;
+      }
+      wanted.push([Math.hypot(-HALF + (x + 0.5) * size - cx, HALF - (y + 0.5) * size - cy), key]);
     }
     wanted.sort((a, b) => a[0] - b[0]);
-    for (const [, key] of wanted) { if (inflight >= 4) break; load(key); }
+    if (now >= pausedUntil) for (const [, key] of wanted) { if (inflight >= MAX_INFLIGHT) break; load(key); }
     // re-seat once on finer terrain, and drop tiles unused for a while
     for (const [key, t] of tiles) {
       if (t.state === 'ready' && t.built && now - t.built > 4000 && !t.reseated) { seat(t); t.reseated = true; } // finer terrain has arrived
