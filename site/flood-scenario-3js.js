@@ -9,7 +9,7 @@ import { Sky } from './vendor/three-0.187.0/addons/Sky.js';
 import { positionsAt } from './lib/evacuation-traffic.js';
 import { blend, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
 import { CLASSES, createPlayer, fieldInfos, pickScenario, showScenario, showStatus, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
-import { DEPTH_STEPS_PER_FT, parseFootprints, sampleGrid, terrarium, tileRange } from './lib/flood-three-model.js';
+import { DEPTH_STEPS_PER_FT, hipRoof, parseFootprints, sampleGrid, terrarium, tileRange } from './lib/flood-three-model.js';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
@@ -197,14 +197,34 @@ const slotFrame = [-1, -1];
 const DEPTH_SCALE = (255 / DEPTH_STEPS_PER_FT).toFixed(4); // R8 texel -> ft
 const WET_BAND = 14; // m of darkened, wet ground beyond the water's edge
 const depthU = { uD0: { value: slots[0] }, uD1: { value: slots[1] }, uW: { value: 0 } }; // shared by the water and the terrain
-// Ground elevation (m) on the depth frames' grid, for the water-surface slope that sets the flow direction and speed.
+// Ground elevation (m) at the water mesh's vertices, one texel each: with linear filtering a lookup through SURFACE_GLSL's
+// meshUv() reproduces the mesh's own ground, so the flow slope and the wall water lines match the drawn water surface.
 const groundTex = (() => {
-  const gw = 2048, gh = Math.round((gw * H) / W), data = new Float32Array(gw * gh);
-  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) data[j * gw + i] = groundAt(-W / 2 + ((i + 0.5) / gw) * W, -H / 2 + ((j + 0.5) / gh) * H) / k;
+  const gw = GX + 1, gh = GZ + 1, data = new Float32Array(gw * gh);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) data[j * gw + i] = groundAt(-W / 2 + (i / GX) * W, -H / 2 + (j / GZ) * H) / k;
   const t = new THREE.DataTexture(data, gw, gh, THREE.RedFormat, THREE.FloatType);
   const filter = renderer.extensions.has('OES_texture_float_linear') ? THREE.LinearFilter : THREE.NearestFilter;
   return Object.assign(t, { magFilter: filter, minFilter: filter, needsUpdate: true });
 })();
+// GLSL: the water mesh's surface height (m) at a depth-frame uv, as drawn: ground + depth taken at the mesh vertices and
+// interpolated between them (the vertex shader lifts the mesh by depth sampled per vertex), plus its 0.12 m lift.
+const SURFACE_GLSL = `
+  uniform sampler2D uGround; const vec2 GRID = vec2(${GX}.0, ${GZ}.0);
+  vec2 meshUv(vec2 uv) { return (uv * GRID + 0.5) / (GRID + 1.0); }
+  float depthFt(vec2 uv) { return mix(texture2D(uD0, uv).r, texture2D(uD1, uv).r, uW) * ${DEPTH_SCALE}; }
+  // PlaneGeometry splits each cell (corners a = (0,0), b = (0,1), c = (1,1), d = (1,0)) into triangles abd and bcd
+  float meshLerp(float a, float b, float c, float d, vec2 f) {
+    return f.x + f.y <= 1.0 ? a + f.x * (d - a) + f.y * (b - a) : c + (1.0 - f.x) * (b - c) + (1.0 - f.y) * (d - c);
+  }
+  float nodeHeight(vec2 n) { return texture2D(uGround, (n + 0.5) / (GRID + 1.0)).r + depthFt(n / GRID) * ${FT}; }
+  float meshDepthFt(vec2 uv) { // depth as the mesh carries it: per vertex, interpolated (buildings often sit in dry raster cells)
+    vec2 g = uv * GRID, n = floor(g);
+    return meshLerp(depthFt(n / GRID), depthFt((n + vec2(0.0, 1.0)) / GRID), depthFt((n + 1.0) / GRID), depthFt((n + vec2(1.0, 0.0)) / GRID), g - n);
+  }
+  float surfaceM(vec2 uv) { // the drawn water surface, m
+    vec2 g = uv * GRID, n = floor(g);
+    return meshLerp(nodeHeight(n), nodeHeight(n + vec2(0.0, 1.0)), nodeHeight(n + 1.0), nodeHeight(n + vec2(1.0, 0.0)), g - n) + 0.12;
+  }`;
 const FLOW_STEP = 40; // m between slope samples (and three times that for a smoother second estimate)
 function waveNormals(N = 256) { // tileable ripple normal map: a sum of waves with integer frequencies
   const h = new Float32Array(N * N), waves = [];
@@ -253,11 +273,12 @@ const water = new THREE.Mesh(grid, new THREE.ShaderMaterial({
     #include <common>
     #include <fog_pars_fragment>
     #include <logdepthbuf_pars_fragment>
-    uniform sampler2D uD0, uD1, uNormals, uRamp, uGround; uniform samplerCube uSky; uniform float uW, uTime, uK, uRampTop, uDepthColours; uniform vec3 uSun; uniform vec2 uFlowStep;
+    uniform sampler2D uD0, uD1, uNormals, uRamp; uniform samplerCube uSky; uniform float uW, uTime, uK, uRampTop, uDepthColours; uniform vec3 uSun; uniform vec2 uFlowStep;
     varying vec2 vUv; varying vec3 vWorld; varying float vLift;
     vec3 ripple(vec2 p, float s, vec2 v) { return texture2D(uNormals, p * s + v * uTime).rgb * 2.0 - 1.0; }
     vec3 chop(vec2 q) { return (texture2D(uNormals, q / 23.0).rgb * 2.0 - 1.0) + (texture2D(uNormals, q / 7.0 + 0.31).rgb * 2.0 - 1.0) * 0.6; }
-    float eta(vec2 uv) { return texture2D(uGround, uv).r + mix(texture2D(uD0, uv).r, texture2D(uD1, uv).r, uW) * ${DEPTH_SCALE} * ${FT}; } // water surface, m
+    ${SURFACE_GLSL}
+    float eta(vec2 uv) { return texture2D(uGround, meshUv(uv)).r + depthFt(uv) * ${FT}; } // water surface, m
     vec2 slope(vec2 s) { return vec2(eta(vUv + vec2(s.x, 0.0)) - eta(vUv - vec2(s.x, 0.0)), eta(vUv + vec2(0.0, s.y)) - eta(vUv - vec2(0.0, s.y))); }
     void main() {
       #include <logdepthbuf_fragment>
@@ -349,7 +370,7 @@ if (footprintsBuf) {
   step('Building footprints…');
   fp = parseFootprints(footprintsBuf);
   const [fx, fy] = [fp.origin[0] - ox, -(fp.origin[1] - oy)]; // the binary's origin is the extent centre: both 0
-  const nv = fp.nv, pos = new Float32Array(nv * 2 * 3), bld = new Float32Array(nv * 2), index = [];
+  const nv = fp.nv, pos = new Float32Array(nv * 2 * 3), bld = new Float32Array(nv * 2), index = [], roofPos = [], roofBld = [];
   for (let b = 0; b < fp.n; b++) {
     const s = fp.start[b], e = fp.start[b + 1], m = e - s;
     let lo = Infinity, hi = -Infinity;
@@ -366,12 +387,17 @@ if (footprintsBuf) {
       const a0 = 2 * (s + j), b0 = 2 * (s + ((j + 1) % m));
       index.push(a0, b0, a0 + 1, b0, b0 + 1, a0 + 1);
     }
-    for (const [a, b2, c] of THREE.ShapeUtils.triangulateShape(contour, [])) index.push(2 * (s + a) + 1, 2 * (s + b2) + 1, 2 * (s + c) + 1);
+    const roof = hipRoof(contour.map(v => [v.x, v.y]), { maxArea: 600 * k * k }); // houses: a hip roof; others stay flat
+    if (roof) for (let i = 0; i < roof.length; i += 3) { roofPos.push(roof[i], hi + height + roof[i + 1], roof[i + 2]); roofBld.push(b); }
+    else for (const [a, b2, c] of THREE.ShapeUtils.triangulateShape(contour, [])) index.push(2 * (s + a) + 1, 2 * (s + b2) + 1, 2 * (s + c) + 1);
   }
+  for (let i = 0; i < roofBld.length; i++) index.push(nv * 2 + i);
   const geom = new THREE.BufferGeometry();
-  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geom.setAttribute('aBld', new THREE.BufferAttribute(bld, 1));
-  geom.setIndex(nv * 2 > 65535 ? new THREE.Uint32BufferAttribute(index, 1) : new THREE.Uint16BufferAttribute(index, 1));
+  const join = (a, b) => { const out = new Float32Array(a.length + b.length); out.set(a); out.set(b, a.length); return out; };
+  geom.setAttribute('position', new THREE.BufferAttribute(join(pos, roofPos), 3));
+  geom.setAttribute('aBld', new THREE.BufferAttribute(join(bld, roofBld), 1));
+  geom.userData.roofs = roofBld.length / 18;
+  geom.setIndex(nv * 2 + roofBld.length > 65535 ? new THREE.Uint32BufferAttribute(index, 1) : new THREE.Uint16BufferAttribute(index, 1));
   geom.computeBoundingSphere();
   // per-building class hours (arrive_hr, t_in0, t_in2, t_in6; never = 1e6) in a float texture read by the vertex shader
   const TW = 2048, TH = Math.ceil(fp.n / TW), hoursTex = new Float32Array(TW * TH * 4).fill(1e6);
@@ -380,7 +406,7 @@ if (footprintsBuf) {
   classTex.needsUpdate = true;
   const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.82, metalness: 0, flatShading: true, side: THREE.DoubleSide });
   material.onBeforeCompile = shader => {
-    Object.assign(shader.uniforms, { uHours: { value: classTex }, uTime: timeU, uImpact: impactU });
+    Object.assign(shader.uniforms, { uHours: { value: classTex }, uTime: timeU, uImpact: impactU, ...depthU, uGround: { value: groundTex }, uExt: { value: new THREE.Vector2(W, H) }, uK: { value: k } });
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute float aBld; uniform highp sampler2D uHours; uniform float uTime; varying float vCls; varying float vHash; varying vec3 vW;`)
@@ -391,6 +417,8 @@ if (footprintsBuf) {
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
         uniform float uImpact; varying float vCls; varying float vHash; varying vec3 vW;
+        uniform sampler2D uD0, uD1; uniform float uW, uK; uniform vec2 uExt;
+        ${SURFACE_GLSL}
         const vec3 CLS[5] = vec3[5](${CLASSES.map(([, , hex]) => { const c = new THREE.Color(hex); return `vec3(${c.r.toFixed(3)}, ${c.g.toFixed(3)}, ${c.b.toFixed(3)})`; }).join(', ')});`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         bool roof = abs(normalize(cross(dFdx(vW), dFdy(vW))).y) > 0.7;
@@ -398,7 +426,17 @@ if (footprintsBuf) {
         vec3 top = mix(vec3(0.09, 0.09, 0.09), vec3(0.26, 0.15, 0.10), fract(vHash * 7.0)); // composition and tile roofs
         vec3 natural = roof ? top : wall;
         int ci = int(vCls + 0.5);
-        diffuseColor.rgb = mix(natural, CLS[ci], vCls > 0.5 ? uImpact * (roof ? 0.9 : 0.75) : 0.0);`);
+        diffuseColor.rgb = mix(natural, CLS[ci], vCls > 0.5 ? uImpact * (roof ? 0.9 : 0.75) : 0.0);
+        // Water line: walls darken below the water surface and in a band above it where water wicks and splashes, with a
+        // mud line at the level. Depth never recedes in these scenarios, so the current level is the high-water mark.
+        vec2 duv = vW.xz / uExt + 0.5;
+        float mdf = roof ? 0.0 : meshDepthFt(duv);
+        if (mdf > 0.04) {
+          float above = vW.y / uK - surfaceM(duv); // m above the drawn water surface
+          float soaked = 1.0 - smoothstep(0.25, 0.75, above); // wet and silt-stained, wicking up the wall (strong: sunlit walls sit
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.16, 0.13, 0.09), soaked); // near the tone-map shoulder)
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.055, 0.035), (1.0 - smoothstep(0.02, 0.09, abs(above - 0.04))) * 0.9); // mud line
+        }`);
   };
   buildings = new THREE.Mesh(geom, material);
   buildings.castShadow = buildings.receiveShadow = true;
