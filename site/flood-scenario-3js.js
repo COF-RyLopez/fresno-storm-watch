@@ -74,6 +74,7 @@ renderer.shadowMap.autoUpdate = false; // the sun and buildings are static: redr
 container.append(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, 1, 2, 4e5);
+let skyCube = null;
 const sunDir = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - 32), THREE.MathUtils.degToRad(215));
 {
   const sky = new Sky();
@@ -83,9 +84,9 @@ const sunDir = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.deg
   sky.material.uniforms.sunPosition.value.copy(sunDir);
   sky.material.uniforms.cloudCoverage.value = 0.35;
   const skyScene = new THREE.Scene().add(sky);
-  const cube = new THREE.WebGLCubeRenderTarget(512, { type: THREE.HalfFloatType });
+  const cube = new THREE.WebGLCubeRenderTarget(512, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
   new THREE.CubeCamera(1, 2e4, cube).update(renderer, skyScene);
-  scene.background = cube.texture;
+  scene.background = skyCube = cube.texture; // also what the water reflects (mipmapped: rippled water blurs it)
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(skyScene, 0.02).texture;
   scene.environmentIntensity = 0.6;
 }
@@ -119,14 +120,23 @@ scene.add(terrain);
 const DETAIL_Z = Number(params.get('detail')) || 16, DETAIL_HALF = 2400 * k;
 const detail = { tex: { value: new THREE.Texture() }, rect: { value: new THREE.Vector4(0, 0, 1e-6, 1e-6) }, at: new THREE.Vector3(Infinity, 0, 0), busy: false };
 terrain.material.onBeforeCompile = shader => {
-  Object.assign(shader.uniforms, { uDetail: detail.tex, uDetailRect: detail.rect });
-  shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ;')
-    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz;');
-  shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ; uniform sampler2D uDetail; uniform vec4 uDetailRect;')
+  Object.assign(shader.uniforms, { uDetail: detail.tex, uDetailRect: detail.rect, ...depthU, uWetR: { value: new THREE.Vector2(WET_BAND * k / W, WET_BAND * k / H) } });
+  shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ; varying vec2 vDUv;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz; vDUv = vec2(uv.x, 1.0 - uv.y);');
+  shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+      varying vec2 vXZ; varying vec2 vDUv; uniform sampler2D uDetail, uD0, uD1; uniform vec4 uDetailRect; uniform vec2 uWetR; uniform float uW;
+      float depthAt(vec2 uv) { return mix(texture2D(uD0, uv).r, texture2D(uD1, uv).r, uW) * ${DEPTH_SCALE}; }`)
     .replace('#include <map_fragment>', `#include <map_fragment>
       vec2 du = (vXZ - uDetailRect.xy) / uDetailRect.zw;
       float inside = smoothstep(0.0, 0.08, min(min(du.x, 1.0 - du.x), min(du.y, 1.0 - du.y)));
-      if (inside > 0.0) diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(uDetail, vec2(du.x, 1.0 - du.y)).rgb, inside);`);
+      if (inside > 0.0) diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(uDetail, vec2(du.x, 1.0 - du.y)).rgb, inside);
+      // wet soil: darker under the water and in a band just beyond its edge (8 taps at two radii)
+      float wet = step(0.04, depthAt(vDUv));
+      for (int j = 0; j < 8; j++) {
+        vec2 o = vec2(cos(float(j) * 0.7854), sin(float(j) * 0.7854)) * uWetR;
+        wet = max(wet, max(step(0.04, depthAt(vDUv + 0.4 * o)) * 0.85, step(0.04, depthAt(vDUv + o)) * 0.45));
+      }
+      diffuseColor.rgb *= mix(1.0, 0.55, wet);`);
 };
 async function loadDetail() {
   const c = controls.target;
@@ -184,6 +194,9 @@ const depthTexture = (data = new Uint8Array(1), w = 1, h = 1) => { // WebGL stor
 const pool = [depthTexture(), depthTexture()]; // two GPU textures, refilled in place
 const slots = [...pool];
 const slotFrame = [-1, -1];
+const DEPTH_SCALE = (255 / DEPTH_STEPS_PER_FT).toFixed(4); // R8 texel -> ft
+const WET_BAND = 14; // m of darkened, wet ground beyond the water's edge
+const depthU = { uD0: { value: slots[0] }, uD1: { value: slots[1] }, uW: { value: 0 } }; // shared by the water and the terrain
 function waveNormals(N = 256) { // tileable ripple normal map: a sum of waves with integer frequencies
   const h = new Float32Array(N * N), waves = [];
   for (let s = 1; s <= 28; s++) { const a = Math.random() * 2 * Math.PI, f = 2 + Math.random() * 14; waves.push([Math.round(Math.cos(a) * f), Math.round(Math.sin(a) * f), 1 / f, Math.random() * 6.3]); }
@@ -218,7 +231,7 @@ const water = new THREE.Mesh(grid, new THREE.ShaderMaterial({
     varying vec2 vUv; varying vec3 vWorld; varying float vLift;
     void main() {
       vUv = vec2(uv.x, 1.0 - uv.y);
-      float d = mix(texture2D(uD0, vUv).r, texture2D(uD1, vUv).r, uW) * ${(255 / DEPTH_STEPS_PER_FT).toFixed(4)};
+      float d = mix(texture2D(uD0, vUv).r, texture2D(uD1, vUv).r, uW) * ${DEPTH_SCALE};
       vLift = d;
       vec3 p = position + vec3(0.0, (d * ${FT} + 0.12) * uK, 0.0);
       vWorld = (modelMatrix * vec4(p, 1.0)).xyz;
@@ -231,35 +244,46 @@ const water = new THREE.Mesh(grid, new THREE.ShaderMaterial({
     #include <common>
     #include <fog_pars_fragment>
     #include <logdepthbuf_pars_fragment>
-    uniform sampler2D uD0, uD1, uNormals, uRamp; uniform float uW, uTime, uK, uRampTop, uDepthColours; uniform vec3 uSun;
+    uniform sampler2D uD0, uD1, uNormals, uRamp; uniform samplerCube uSky; uniform float uW, uTime, uK, uRampTop, uDepthColours; uniform vec3 uSun;
     varying vec2 vUv; varying vec3 vWorld; varying float vLift;
     vec3 ripple(vec2 p, float s, vec2 v) { return texture2D(uNormals, p * s + v * uTime).rgb * 2.0 - 1.0; }
     void main() {
       #include <logdepthbuf_fragment>
-      float d = mix(texture2D(uD0, vUv).r, texture2D(uD1, vUv).r, uW) * ${(255 / DEPTH_STEPS_PER_FT).toFixed(4)}; // ft, at the PNG's resolution
+      float d0 = texture2D(uD0, vUv).r * ${DEPTH_SCALE}, d1 = texture2D(uD1, vUv).r * ${DEPTH_SCALE};
+      float d = mix(d0, d1, uW); // ft, at the PNG's resolution
       if (d < 0.04) discard;
       vec2 p = vWorld.xz / uK;
       vec3 n1 = ripple(p, 1.0 / 23.0, vec2(0.011, 0.004)), n2 = ripple(p, 1.0 / 7.0, vec2(-0.006, 0.013)), n3 = ripple(p, 1.0 / 180.0, vec2(0.002, -0.001));
-      vec3 N = normalize(vec3(n1.x + n2.x * 0.6 + n3.x * 0.8, 5.0, n1.y + n2.y * 0.6 + n3.y * 0.8));
+      float far = smoothstep(300.0, 2500.0, distance(cameraPosition, vWorld) / uK); // calm the fine ripples with distance: they shimmer
+      vec3 N = normalize(vec3(n1.x * (1.0 - far) + n2.x * 0.6 * (1.0 - far) + n3.x * 0.8, 5.0 + 6.0 * far, n1.y * (1.0 - far) + n2.y * 0.6 * (1.0 - far) + n3.y * 0.8));
       vec3 V = normalize(cameraPosition - vWorld);
       float fres = 0.02 + 0.98 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
       vec3 R = reflect(-V, N);
-      vec3 sky = mix(vec3(0.78, 0.84, 0.88), vec3(0.32, 0.52, 0.78), smoothstep(0.0, 0.6, R.y));
+      R.y = abs(R.y); // ripples can tip a reflection below the horizon; the water reflects sky, not ground
+      vec3 sky = textureLod(uSky, R, 3.5).rgb * 0.8; // the scene's own sky, blurred by the chop; a muddy, debris-strewn surface reflects less than clear water
       float deep = 1.0 - exp(-d / 5.0);
-      vec3 body = mix(vec3(0.46, 0.39, 0.27), vec3(0.17, 0.16, 0.11), deep); // silty floodwater
+      vec3 body = mix(vec3(0.42, 0.35, 0.24), vec3(0.15, 0.13, 0.09), deep); // light scattered back by silty floodwater
       body = mix(body, texture2D(uRamp, vec2(clamp(d / uRampTop, 0.0, 1.0), 0.5)).rgb, uDepthColours);
-      body *= 0.55 + 0.45 * max(dot(N, uSun), 0.0);
-      vec3 col = mix(body, sky, fres * (1.0 - 0.6 * uDepthColours));
-      col += vec3(1.0, 0.93, 0.8) * pow(max(dot(R, uSun), 0.0), 420.0) * 6.0 * (1.0 - uDepthColours);
-      float edge = 1.0 - smoothstep(0.04, 0.9, d); // shallow margins: foam and debris along the advancing water
-      float foam = smoothstep(0.55, 0.9, texture2D(uNormals, p / 31.0 + uTime * vec2(0.01, 0.007)).b * edge + edge * 0.4);
-      col = mix(col, vec3(0.83, 0.79, 0.7), foam * 0.6 * (1.0 - uDepthColours));
-      gl_FragColor = vec4(col, mix(0.55, 0.94, smoothstep(0.04, 1.5, d)));
+      body *= 0.6 + 0.4 * max(dot(N, uSun), 0.0);
+      // Silt absorbs light with depth (Beer-Lambert): the ground shows through the first foot and is gone by about two feet.
+      float T = mix(exp(-d / 0.45), 1.0 - mix(0.55, 0.94, smoothstep(0.04, 1.5, d)), uDepthColours);
+      float F = fres * (1.0 - 0.6 * uDepthColours);
+      vec3 glint = vec3(1.0, 0.93, 0.8) * pow(max(dot(R, uSun), 0.0), 420.0) * 6.0 * (1.0 - uDepthColours);
+      // Patchy foam only where the water is rising fast (the advancing front) and in a thin line at the very edge.
+      float rising = smoothstep(0.08, 0.8, abs(d1 - d0)) * (1.0 - smoothstep(0.0, 3.0, d));
+      float patches = texture2D(uNormals, p / 61.0 + uTime * vec2(0.012, 0.008)).r * 0.65 + texture2D(uNormals, p / 23.0 - uTime * vec2(0.006, 0.01)).g * 0.35;
+      float foam = smoothstep(0.6, 0.78, patches) * clamp(rising + (1.0 - smoothstep(0.04, 0.2, d)) * 0.5, 0.0, 1.0) * (1.0 - uDepthColours);
+      // out = ground * T(1-F) + body (1-T)(1-F) + sky F, written as a colour over the ground with alpha a
+      float a = 1.0 - T * (1.0 - F);
+      vec3 col = (body * (1.0 - T) * (1.0 - F) + sky * F + glint) / max(a, 1e-3);
+      col = mix(col, vec3(0.8, 0.76, 0.68), foam * 0.7);
+      gl_FragColor = vec4(col, max(a, foam * 0.7));
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
       #include <fog_fragment>
     }`
 }));
+Object.assign(water.material.uniforms, depthU, { uSky: { value: skyCube } });
 water.renderOrder = 1;
 water.frustumCulled = false;
 scene.add(water);
