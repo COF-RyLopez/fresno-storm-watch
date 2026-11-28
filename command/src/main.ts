@@ -5,6 +5,7 @@ import { createModuleLoader } from "./module-loader";
 import { createCommandWeather, COMPACT_VIEW_QUERY } from "./weather-controller";
 import { createCommandInspector } from "./inspector";
 import { createCommandLayout } from "./layout";
+import { chooseRenderer, detectEnvironment, fallbackNote, switchHref, switchLabel, MODULE, type RendererId, type RendererReason } from "./renderer";
 
 // Existing verified collectors stay separate from this build and its rendering engine.
 const root = new URL("../", document.baseURI);
@@ -179,13 +180,17 @@ const privateController = privateModel.createCommandPrivate({
     renderCoverage();
   },
 });
-// Views menu: switch between the standard map and the 3D preview, keeping the place in the URL hash.
+// Which map to draw on (renderer.ts): the 3D county scene by default, the standard map on phones, without WebGL2,
+// on ?renderer=maplibre, or when the 3D scene fails to start. The Views menu switches, keeping the place in the hash.
+const rendererChoice: { id: RendererId; reason: RendererReason } = chooseRenderer(location.search, detectEnvironment());
+function renderRendererToggle() {
+  const toggle = $<HTMLAnchorElement>("renderer-toggle");
+  toggle.textContent = switchLabel(rendererChoice.id);
+  toggle.href = switchHref(location.pathname, location.search, location.hash, rendererChoice.id);
+}
 {
-  const params = new URLSearchParams(location.search), three = params.get("renderer") === "three", toggle = $<HTMLAnchorElement>("renderer-toggle");
-  if (three) params.delete("renderer"); else params.set("renderer", "three");
-  toggle.textContent = three ? "Use the standard map" : "Try the 3D map (preview)";
-  const refresh = () => { toggle.href = `${location.pathname}${params.size ? "?" + params : ""}${location.hash}`; };
-  refresh(); addEventListener("hashchange", refresh);
+  const toggle = $<HTMLAnchorElement>("renderer-toggle");
+  renderRendererToggle(); addEventListener("hashchange", renderRendererToggle);
   // a new page load is needed to switch renderers; a hash-only change would not reload
   toggle.addEventListener("click", (event) => { event.preventDefault(); location.assign(toggle.href); });
   document.querySelectorAll<HTMLAnchorElement>(".views-panel a").forEach((a) => a.addEventListener("click", () => $<HTMLDetailsElement>("views-menu").open = false));
@@ -1052,10 +1057,8 @@ async function ensureMap() {
   if (mapLoading) return mapLoading;
   mapLoading = (async () => {
     try {
-      // three.js county scene (docs/county-3d-plan.md, phase 2) on request; MapLibre stays the default during acceptance.
-      const renderer = new URLSearchParams(location.search).get("renderer") === "three" ? "county-scene-map" : "watch-terrain-map";
-      const { createWatchTerrain } = await moduleAt(renderer);
-      map = await createWatchTerrain({
+      const { createWatchTerrain } = await moduleAt(MODULE[rendererChoice.id]);
+      const options: Parameters<typeof createWatchTerrain>[0] = {
         container: $("command-map"),
         onInspect: value=>inspector.reading(value),
         onSelect: (p) => {
@@ -1077,7 +1080,21 @@ async function ensureMap() {
             "Some reference map tiles are unavailable. Evidence and Work remain accessible.";
           $("map-failure").hidden = false;
         },
-      });
+      };
+      try {
+        map = await createWatchTerrain(options);
+      } catch (error) {
+        // The 3D scene could not start (no GPU, context refused, driver error): fall back to the standard map unless
+        // the 3D map was asked for by name, so the person can still see what failed.
+        if (rendererChoice.id !== "three" || rendererChoice.reason === "requested") throw error;
+        console.warn("3D map failed to start; using the standard map", error);
+        $("command-map").replaceChildren();
+        rendererChoice.id = "maplibre"; rendererChoice.reason = "failed";
+        renderRendererToggle();
+        map = await (await moduleAt(MODULE.maplibre)).createWatchTerrain(options);
+      }
+      const note = fallbackNote(rendererChoice.reason);
+      if (note) { $("map-failure").textContent = note; $("map-failure").hidden = false; }
       const attribution = $("command-map").querySelector<HTMLDetailsElement>(
         ".maplibregl-ctrl-attrib",
       );
@@ -1097,7 +1114,7 @@ async function ensureMap() {
     } catch (e: any) {
       $("map-failure").hidden = false;
       $("map-failure").textContent =
-        "3D map unavailable. Use Attention and Details to inspect conditions and continue working.";
+        "Map unavailable. Use Attention and Details to inspect conditions and continue working.";
     } finally {
       mapLoading = undefined;
     }

@@ -19,7 +19,7 @@ Two reasons not to start deleting:
 
 | Page | Map today | 3D status | Recommendation | What has to be true first |
 |---|---|---|---|---|
-| Command (`command/`) | MapLibre default, three.js behind `?renderer=three` | Most of the map interface done (see checklist) | **Swap default** on desktop. Keep MapLibre for phones, for machines without WebGL, and at `?renderer=maplibre` | WebGL fallback, fps check during weather playback, staff acceptance on county desktops |
+| Command (`command/`) | three.js default on desktops; MapLibre on phones, without WebGL2, on 3D failure, and at `?renderer=maplibre` | Most of the map interface done (see checklist) | **Default swapped** (PR #165) | fps check during weather playback, staff acceptance on county desktops |
 | Classic Storm Watch (`index.html`, site root) | ArcGIS MapView/SceneView + MapLibre | Not ported (by design: its useful layers move into Command) | **Keep for now.** Later: make Command the site root and delete classic | Every item in "Classic-only tools" is in Command or deliberately dropped |
 | Flood scenarios, 3D (`flood-scenario-3js.html`) | three.js | Done | Keep, it is the 3D flood view | |
 | Flood scenarios, 2D (`flood-scenario.html`) | ArcGIS MapView | 2D by design | **Keep** as the phone / weak-GPU fallback | |
@@ -53,13 +53,15 @@ Checked against the TerrainMap interface Command calls and the open items in the
 - [x] Briefing evidence "Show on map" with the captured camera (c20fd60e)
 - [x] Views menu reaches every screen and switches 2D/3D (cd378060)
 
-### Before 3D can be Command's default
+### Making 3D Command's default
 
-- [ ] Fall back to MapLibre automatically when WebGL is missing or the scene fails to start (today a failure shows "3D map unavailable" and no map)
-- [ ] `?renderer=maplibre` to force the old map, and the default flipped in `command/src/main.ts`
-- [ ] Phones stay on MapLibre until the 3D view passes on actual devices (decide: by screen size or by a GPU check)
-- [ ] Visible-pane fps run during weather playback (plan, phase 2 open item)
-- [ ] Line labels at close range (phase 2 open item)
+Done in PR #165 for desktops. Still needed before calling it accepted:
+
+- [x] Fall back to MapLibre automatically when hardware WebGL2 is missing or the scene fails to start, with a note under the map saying why (`command/src/renderer.ts`)
+- [x] `?renderer=maplibre` / `?renderer=three` force either map; the default flipped to 3D on desktops
+- [x] Phones stay on MapLibre until the 3D view passes on actual devices (touch screen under 600 px on its short side; judged by the device screen, so a narrow desktop window keeps 3D)
+- [ ] Visible-pane fps run during weather playback (plan, phase 2 open item). Needs a real GPU in a visible window; the cloud container only has software WebGL and cannot reach the tile hosts
+- [x] Line labels at close range: named roads, closures and detours show their name at the middle of their longest part within about 25 km
 - [ ] Staff acceptance on county desktops
 
 ### Nice to have, not blocking the default
@@ -112,4 +114,5 @@ Found in the classic app's modules with no matching module in Command (code sear
 Record each page removed or redirected, with the PR and Ryan's okay.
 
 - 2026-11-28, PR #164: deleted `flood-scenario-3d.html` and `flood-scenario-3d.js` (ArcGIS SceneView flood page, superseded by `flood-scenario-3js.html`). No redirect. Ryan's okay in the project thread.
+- 2026-11-28, PR #165: Command defaults to the 3D county map on desktops, with automatic MapLibre fallback; MapLibre at `?renderer=maplibre`.
 - 2026-11-28, PR #164: weather delivery lab defaults to the 3D county map; MapLibre at `?renderer=maplibre`.
