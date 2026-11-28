@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" class="calcite-mode-dark" data-theme="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https://js.arcgis.com 'wasm-unsafe-eval' 'sha256-bFurSpWCsOajnlQuNpqxGon1G8Rd5O3xzqmmUok3l5Q='; worker-src 'self' blob: https://js.arcgis.com; style-src 'self' https://js.arcgis.com 'unsafe-inline'; object-src 'none'; base-uri 'self';">
+<meta name="description" content="Fresno County in 3D (three.js): the shared county scene with streamed terrain and imagery. A rendering test bed, no operational data.">
+<title>Storm Watch · Fresno County in 3D</title>
+<link rel="icon" href="./assets/frog-logo.png" type="image/png"><link id="esri-theme" rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/dark/main.css"><link rel="stylesheet" href="./theme.css?v=e2c3a15a69">
+<script src="./theme.js?v=8a60674390"></script>
+<script type="importmap">
+{"imports":{
+"./county-3d.js":"./county-3d.js?v=62ea56f9a1",
+"./lib/county3d/core.js":"./lib/county3d/core.js?v=7f5a00e77c",
+"./lib/county3d/frame.js":"./lib/county3d/frame.js?v=2ef769f5b0",
+"./lib/county3d/terrain.js":"./lib/county3d/terrain.js?v=55622317db"
+}}
+</script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script><script type="module" src="./county-3d.js?v=62ea56f9a1"></script>
+<link rel="stylesheet" href="./flood-scenario.css?v=7d26f48832">
+<style>.loading { position: absolute; left: 16px; top: 16px; padding: 6px 10px; border-radius: 4px; background: var(--app-surface); border: 1px solid var(--app-border); font-size: .8rem; }</style>
+</head><body>
+<calcite-shell>
+  <header slot="header">
+    <div class="fs-header"><div class="brand"><img src="./assets/frog-logo.png" width="40" height="40" alt="F.R.O.G. — Flood Response Operations Group"><div><div class="eyebrow">STORM WATCH · COUNTY SCENE · 3D TEST BED (THREE.JS)</div><h1>Fresno County in 3D</h1></div></div>
+      <nav><a href="./flood-scenario-3js.html">Flood scenarios in 3D</a><calcite-action id="theme-toggle" text="Light mode" icon="brightness" text-enabled></calcite-action></nav></div>
+    <p class="demo-flag">RENDERING TEST BED · NO OPERATIONAL DATA YET. Terrain and imagery are reference context, not lidar or current conditions.</p>
+  </header>
+  <calcite-shell-panel slot="panel-end" width="m" id="side-panel">
+    <calcite-panel heading="County scene">
+      <div class="panel">
+        <calcite-label scale="s">Place<calcite-select id="place" scale="s" label="Place"></calcite-select></calcite-label>
+        <div class="traffic"><strong>Time of day</strong>
+          <calcite-slider id="time" min="0" max="24" step="0.25" value="12" label="Hour of day, Pacific"></calcite-slider>
+          <p class="note" id="time-label" role="status" aria-live="off"></p>
+          <calcite-button id="now" scale="s" appearance="outline" width="auto">Now</calcite-button></div>
+        <p class="note">Drag to pan, right-drag to rotate and tilt, scroll to zoom toward the cursor; arrow keys pan.</p>
+        <div class="traffic"><strong>Rendering</strong>
+          <p class="note" id="perf" role="status" aria-live="off">Measuring&hellip;</p></div>
+        <p class="note">Elevation: Mapzen/AWS Terrarium tiles (about 38 m in the valley, finer where the source has it), streamed. Imagery: Esri World Imagery (Esri, Maxar, Earthstar Geographics and the GIS user community), streamed. The covered area is Fresno County and the upstream Millerton and Pine Flat watersheds; outside it the scene is coarser. Plan: docs/county-3d-plan.md.</p>
+      </div>
+    </calcite-panel>
+  </calcite-shell-panel>
+  <div class="stage"><div id="view"></div><div class="loading" id="loading" role="status">Loading&hellip;</div></div>
+</calcite-shell>
+</body></html>
