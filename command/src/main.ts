@@ -179,6 +179,17 @@ const privateController = privateModel.createCommandPrivate({
     renderCoverage();
   },
 });
+// Views menu: switch between the standard map and the 3D preview, keeping the place in the URL hash.
+{
+  const params = new URLSearchParams(location.search), three = params.get("renderer") === "three", toggle = $<HTMLAnchorElement>("renderer-toggle");
+  if (three) params.delete("renderer"); else params.set("renderer", "three");
+  toggle.textContent = three ? "Use the standard map" : "Try the 3D map (preview)";
+  const refresh = () => { toggle.href = `${location.pathname}${params.size ? "?" + params : ""}${location.hash}`; };
+  refresh(); addEventListener("hashchange", refresh);
+  // a new page load is needed to switch renderers; a hash-only change would not reload
+  toggle.addEventListener("click", (event) => { event.preventDefault(); location.assign(toggle.href); });
+  document.querySelectorAll<HTMLAnchorElement>(".views-panel a").forEach((a) => a.addEventListener("click", () => $<HTMLDetailsElement>("views-menu").open = false));
+}
 privateView = privateUI.mountCommandPrivate({
   work: $("work-view"),
   briefing: $("briefing-view"),
@@ -186,6 +197,17 @@ privateView = privateUI.mountCommandPrivate({
   team: eoc.EOC_CONFIG.teamLabel,
   onNavigate: (view: string) => navigate(view),
   onNotices: () => { renderList(); renderCoverage(); },
+  onShowEvidence: (evidence: any) => {
+    const id = evidence?.id, camera = evidence?.rendering?.camera;
+    if (typeof id !== "string" || !feeds.reference.some((c) => c.id === id)) {
+      notify("That place is not in the current watch list. Its captured details remain in this briefing.");
+      return;
+    }
+    // The captured camera; the weather frame shown at capture is not replayed (it may no longer be current).
+    if (camera) cameras.set(id, camera);
+    if (state.value.selected === id && camera) map?.restore(camera);
+    select(id);
+  },
   onFocus: (id: any) => {
     if (typeof id === "string" && feeds.reference.some((c) => c.id === id))
       select(id);
@@ -964,7 +986,11 @@ function updateMap() {
       }),
     ];
   }
-  features = [...new Map(features.map((f) => [JSON.stringify([f.id, f.properties?.id, f.geometry]), f])).values()];
+  const featureKey = (f: any) => JSON.stringify([f.id, f.properties?.id, f.geometry]);
+  features = [...new Map(features.map((f) => [featureKey(f), f])).values()];
+  // Mark the selected place so a renderer can emphasise it (MapLibre ignores the property).
+  const selectedKeys = new Set((c?.features || []).map(featureKey));
+  features = features.map((f) => selectedKeys.has(featureKey(f)) ? { ...f, properties: { ...f.properties, selected: true } } : f);
   map.set({ type: "FeatureCollection", features });
   const gauges = features.filter(f => f.properties?.gaugeDisplay);
   const burnFeatures = feeds.reference.find(r=>r.id === "burn-scars")?.features || [];
@@ -1010,7 +1036,7 @@ function updateMap() {
       : citedRoads.length ? "Dashed corridors named by NWS · verify current access"
       : `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
     : c
-    ? "Selected place · nearby context · current observations"
+    ? [c.change, "nearby records shown"].filter(Boolean).join(" · ")
     : "Reference terrain · major waterways");
   if (pendingFit && c) {
     const b = model.geometryBounds(triggerFeatures.length
@@ -1026,7 +1052,9 @@ async function ensureMap() {
   if (mapLoading) return mapLoading;
   mapLoading = (async () => {
     try {
-      const { createWatchTerrain } = await moduleAt("watch-terrain-map");
+      // three.js county scene (docs/county-3d-plan.md, phase 2) on request; MapLibre stays the default during acceptance.
+      const renderer = new URLSearchParams(location.search).get("renderer") === "three" ? "county-scene-map" : "watch-terrain-map";
+      const { createWatchTerrain } = await moduleAt(renderer);
       map = await createWatchTerrain({
         container: $("command-map"),
         onInspect: value=>inspector.reading(value),

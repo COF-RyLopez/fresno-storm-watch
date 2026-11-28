@@ -11,6 +11,7 @@ const PHONE = matchMedia('(max-width: 760px)').matches;
 const $ = id => document.getElementById(id);
 
 const { id, entry, DATA } = await pickScenario(ROOT);
+document.getElementById('link-3js').href = `./flood-scenario-3js.html?scenario=${encodeURIComponent(id)}`;
 // Data formats per scenario: depth from hourly PNG frames, or from a Zarr store (scenario.depth_zarr) with real
 // values; buildings from buildings.json, or from Parquet (scenario.buildings_parquet). Both written by stormwatch-flood.
 const [scenario, sdk] = await Promise.all([fetch(DATA + 'scenario.json').then(r => r.json()), loadSdk()]);

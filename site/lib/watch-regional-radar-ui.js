@@ -2,6 +2,7 @@ import {loadMosaicCatalog,loadMosaicImage,MOSAIC_URL} from './regional-radar-dat
 import {regionalForecastBounds} from './watch-watershed-data.js';
 import {createForecastPlayback} from './command-weather-player.js';
 import {installWatchClouds} from './watch-cloud-ui.js';
+import {loadRadarVolumeTimeline,loadRadarVolumeFrame} from './radar-volume-data.js';
 const stamp=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(t);
 /** Dated NWS mosaic images; one bounded three-frame cache, no volumetric reconstruction. */
 export function installRegionalRadar({session,info,items,renderColors,visible,source,
@@ -16,11 +17,27 @@ export function installRegionalRadar({session,info,items,renderColors,visible,so
  slider.type='range';slider.min='0';slider.step='1';slider.setAttribute('aria-label','NWS radar observation');
  controls.append(...(stepControls?[play,previous,slider,next,latest]:[play,slider,latest]));
  play.disabled=true;slider.disabled=true;
- const clouds=cloudFactory(session,{allowSurface:false});
+ // 3D renderers (session.volumetric) draw GOES cloud tops as a surface at their altitude; MapLibre Command keeps 2D infrared.
+ const clouds=cloudFactory(session,{allowSurface:session.volumetric===true});
  let active=false,suspended=false,following=true,request,timer,expiry,player,frames=[],displayed=null,index=-1,epoch=0;
  let coverage=[...regionalForecastBounds],gaps=false,cloudOpen=false;
  const fresh=()=>displayed&&Date.now()-displayed.time<=120*60000;
- function clear(){session.regionalRadar(null);displayed=null;clearTimeout(expiry);clouds.close();cloudOpen=false;}
+ // 3D renderers also show the Hanford (KHNX) reflectivity volume nearest the displayed mosaic time: completed scans within
+ // 10 minutes before it, nothing interpolated; otherwise no volume is shown.
+ const volumeOn=session.volumetric===true&&typeof session.radarVolume==='function';let volumeCatalog=null,volumeRun=0,volumeShown=null;
+ async function pairVolume(time){
+  if(!volumeOn)return;const run=++volumeRun;
+  try{
+   if(!volumeCatalog||Date.now()-volumeCatalog.at>60_000)volumeCatalog={at:Date.now(),task:loadRadarVolumeTimeline()};
+   const {frames:scans}=await volumeCatalog.task;if(run!==volumeRun)return;
+   const scan=scans.filter(f=>f.end<=time+60_000&&time-f.end<=10*60_000).at(-1);
+   if(!scan){session.radarVolume(null);volumeShown=null;return;}
+   if(volumeShown===scan.end)return;
+   const volume=await loadRadarVolumeFrame(scan.volumeRecord);if(run!==volumeRun)return;
+   session.radarVolume(volume,20);volumeShown=scan.end;
+  }catch{if(run===volumeRun){volumeCatalog=null;session.radarVolume(null);volumeShown=null;}}
+ }
+ function clear(){session.regionalRadar(null);displayed=null;clearTimeout(expiry);clouds.close();cloudOpen=false;if(volumeOn){volumeRun++;session.radarVolume(null);volumeShown=null;}}
  function pairClouds(time){if(!cloudOpen){clouds.open();cloudOpen=true;}void clouds.observe(time);}
  function stopFollow(){following=false;request?.abort();request=null;clearTimeout(timer);}
  function extendCoverage(){
@@ -46,7 +63,7 @@ export function installRegionalRadar({session,info,items,renderColors,visible,so
     if(await session.regionalRadar(image)===false)throw Error('Radar frame could not be displayed');
     if(run!==epoch||!active||suspended)return;displayed=frame;index=i;
     clearTimeout(expiry);expiry=setTimeout(()=>{clear();info.textContent='NWS radar observation expired';},Math.max(1,frame.time+120*60000-Date.now()));
-    pairClouds(frame.time);report();}
+    pairClouds(frame.time);void pairVolume(frame.time);report();}
   });
   const ok=await player.select(at);if(run!==epoch||!active||suspended)return;
   if(footprint.some((v,i)=>v!==coverage[i])){await mount(at,autoplay);return;}
