@@ -434,6 +434,126 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     return cloudTopReadout(hit.point.y / k, clouds.meta.observedAt);
   }
 
+  // ---------- HRRR 10 m wind trails for the selected gust forecast hour (forecast) ----------
+  // Direction and relative speed come from the forecast grid; the motion is sped up so it reads at the current view scale.
+  const WIND_N = 1800, TRAIL = 7;
+  // Trails are screen-space ribbons (each segment a quad widened in the vertex shader): WebGL lines are one device pixel,
+  // half a CSS pixel on a Retina screen, and disappear.
+  const SEGS = WIND_N * (TRAIL - 1), windGeom = new THREE.BufferGeometry();
+  windGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SEGS * 4 * 3), 3)); // unused, sizes the draw
+  windGeom.setAttribute('aA', new THREE.BufferAttribute(new Float32Array(SEGS * 4 * 3), 3));
+  windGeom.setAttribute('aB', new THREE.BufferAttribute(new Float32Array(SEGS * 4 * 3), 3));
+  windGeom.setAttribute('aColor', new THREE.BufferAttribute(new Float32Array(SEGS * 4 * 4), 4));
+  {
+    const end = new Float32Array(SEGS * 4), side = new Float32Array(SEGS * 4), index = new Uint32Array(SEGS * 6);
+    for (let q = 0; q < SEGS; q++) {
+      end.set([0, 0, 1, 1], 4 * q); side.set([-1, 1, -1, 1], 4 * q);
+      index.set([4 * q, 4 * q + 1, 4 * q + 2, 4 * q + 2, 4 * q + 1, 4 * q + 3], 6 * q);
+    }
+    windGeom.setAttribute('aEnd', new THREE.BufferAttribute(end, 1)); windGeom.setAttribute('aSide', new THREE.BufferAttribute(side, 1));
+    windGeom.setIndex(new THREE.BufferAttribute(index, 1));
+  }
+  const windMaterial = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, uniforms: { uView: { value: new THREE.Vector2(1, 1) }, uWidth: { value: 2 } },
+    vertexShader: `#include <common>
+      #include <logdepthbuf_pars_vertex>
+      attribute vec3 aA, aB; attribute float aEnd, aSide; attribute vec4 aColor; uniform vec2 uView; uniform float uWidth; varying vec4 vColor;
+      void main() {
+        vec4 a = projectionMatrix * modelViewMatrix * vec4(aA, 1.0), b = projectionMatrix * modelViewMatrix * vec4(aB, 1.0);
+        vec2 d = b.xy / b.w - a.xy / a.w; d *= uView; float l = length(d);
+        vec2 n = l > 1e-6 ? vec2(-d.y, d.x) / l : vec2(0.0);
+        vec4 p = mix(a, b, aEnd);
+        p.xy += n * aSide * uWidth / uView * p.w;
+        gl_Position = p; vColor = aColor;
+        #include <logdepthbuf_vertex>
+      }`,
+    fragmentShader: `#include <common>
+      #include <logdepthbuf_pars_fragment>
+      varying vec4 vColor;
+      void main() {
+        #include <logdepthbuf_fragment>
+        gl_FragColor = vColor;
+        #include <colorspace_fragment>
+      }`
+  });
+  const windLines = new THREE.Mesh(windGeom, windMaterial);
+  windLines.frustumCulled = false; windLines.visible = false; windLines.renderOrder = 6; scene.add(windLines);
+  const windNote = Object.assign(document.createElement('div'), { textContent: 'Lines: HRRR 10 m wind for this forecast hour · motion sped up to show direction' });
+  windNote.style.cssText = 'position:absolute;left:6px;bottom:4px;max-width:calc(100% - 12px);font:11px system-ui;color:#dfe7ea;background:rgba(23,33,38,.72);padding:2px 6px;border-radius:3px;pointer-events:none';
+  windNote.hidden = true; host.append(windNote);
+  const wind = { field: null, lon: new Float32Array(WIND_N), lat: new Float32Array(WIND_N), age: new Float32Array(WIND_N), life: new Float32Array(WIND_N),
+    hist: new Float32Array(WIND_N * TRAIL * 3), speed: new Float32Array(WIND_N) };
+  function windAt(lon, lat) {
+    const f = wind.field, { x0, y0, dx, dy, width, height } = f.grid;
+    const c = (lon - x0) / dx, r = (lat - y0) / dy;
+    if (c < 0 || r < 0 || c > width - 1 || r > height - 1) return null;
+    const i0 = Math.floor(c), j0 = Math.floor(r), i1 = Math.min(i0 + 1, width - 1), j1 = Math.min(j0 + 1, height - 1), fx = c - i0, fy = r - j0;
+    const at = (a, i, j) => a[j * width + i];
+    const corners = [[i0, j0], [i1, j0], [i0, j1], [i1, j1]];
+    if (corners.some(([i, j]) => at(f.u, i, j) === null || at(f.v, i, j) === null)) return null;
+    const lerp = a => (at(a, i0, j0) * (1 - fx) + at(a, i1, j0) * fx) * (1 - fy) + (at(a, i0, j1) * (1 - fx) + at(a, i1, j1) * fx) * fy;
+    return [lerp(f.u), lerp(f.v)];
+  }
+  function windSpawn(i, b) {
+    wind.lon[i] = b[0] + Math.random() * (b[2] - b[0]); wind.lat[i] = b[1] + Math.random() * (b[3] - b[1]);
+    wind.age[i] = 0; wind.life[i] = 50 + Math.random() * 70;
+    const [x, z] = frame.project(wind.lon[i], wind.lat[i]), y = (county.terrain.groundAt(x, z) ?? 0) + windLift();
+    for (let t = 0; t < TRAIL; t++) wind.hist.set([x, y, z], 3 * (i * TRAIL + t));
+  }
+  const windLift = () => Math.max(60 * k, camera.position.distanceTo(controls.target) * 0.002);
+  /** Spawn area: the ground around the view target, not the whole visible area out to the horizon. */
+  function windArea(viewWidth) {
+    const [lon, lat] = frame.unproject(controls.target.x, controls.target.z), r = viewWidth * 0.75;
+    const dLat = r / 110540, dLon = r / (111320 * Math.cos(lat * Math.PI / 180));
+    return [lon - dLon, lat - dLat, lon + dLon, lat + dLat];
+  }
+  const GUST_COLORS = [[0, '#f4f9fb'], [15, '#8fb7c7'], [30, '#9fd2ff'], [45, '#c7f0c0'], [60, '#ffe08a'], [75, '#ff9b6a']].map(([mph, c]) => [mph, new THREE.Color(c)]);
+  let windBounds = null, windFrame = 0;
+  county.onFrame((now, dt) => {
+    if (!wind.field || reduced()) { windLines.visible = false; return; }
+    windLines.visible = true;
+    const d = camera.position.distanceTo(controls.target) / k, aspect = (host.clientWidth || 1) / (host.clientHeight || 1);
+    const viewWidth = 2 * d * tan() * aspect, gain = viewWidth * 0.013; // a 5 m/s wind draws a trail about 3% of the view across
+    if (!windBounds || ++windFrame % 30 === 0) windBounds = windArea(viewWidth);
+    const record = windFrame % 4 === 0, lift = windLift(); // trail points every 4th frame so trails have visible length
+    const step = Math.min(dt, 50) / 1000, A = windGeom.attributes.aA.array, B = windGeom.attributes.aB.array, col = windGeom.attributes.aColor.array;
+    renderer.getDrawingBufferSize(windMaterial.uniforms.uView.value); windMaterial.uniforms.uWidth.value = 1.6 * renderer.getPixelRatio(); // half-width in device px
+    for (let i = 0; i < WIND_N; i++) {
+      const uv = windAt(wind.lon[i], wind.lat[i]);
+      if (!uv || wind.age[i] > wind.life[i] || wind.lon[i] < windBounds[0] || wind.lon[i] > windBounds[2] || wind.lat[i] < windBounds[1] || wind.lat[i] > windBounds[3]) { windSpawn(i, windBounds); continue; }
+      const cos = Math.cos(wind.lat[i] * Math.PI / 180);
+      wind.lon[i] += (uv[0] * gain * step) / (111320 * cos); wind.lat[i] += (uv[1] * gain * step) / 110540;
+      wind.age[i]++; wind.speed[i] = Math.hypot(uv[0], uv[1]) * 2.23694;
+      if (record) wind.hist.copyWithin(3 * i * TRAIL, 3 * i * TRAIL + 3, 3 * (i + 1) * TRAIL);
+      const [x, z] = frame.project(wind.lon[i], wind.lat[i]), head = 3 * (i * TRAIL + TRAIL - 1);
+      wind.hist[head] = x; wind.hist[head + 1] = (county.terrain.groundAt(x, z) ?? 0) + lift; wind.hist[head + 2] = z;
+    }
+    for (let i = 0; i < WIND_N; i++) {
+      const color = GUST_COLORS.findLast(([mph]) => wind.speed[i] >= mph)?.[1] ?? GUST_COLORS[0][1];
+      // fade in and out with age, and toward the edge of the spawn area so it has no visible border
+      const cx = (windBounds[0] + windBounds[2]) / 2, cy = (windBounds[1] + windBounds[3]) / 2;
+      const edge = Math.max(Math.abs(wind.lon[i] - cx) / ((windBounds[2] - windBounds[0]) / 2), Math.abs(wind.lat[i] - cy) / ((windBounds[3] - windBounds[1]) / 2));
+      const fade = Math.min(1, wind.age[i] / 8, (wind.life[i] - wind.age[i]) / 8) * (1 - THREE.MathUtils.smoothstep(edge, 0.55, 1));
+      const hist = wind.hist, r = color.r, g = color.g, b = color.b;
+      for (let t = 0; t < TRAIL - 1; t++) {
+        const q = i * (TRAIL - 1) + t, h = 3 * (i * TRAIL + t), a0 = (t / (TRAIL - 1)) * fade, a1 = ((t + 1) / (TRAIL - 1)) * fade;
+        for (let v = 0; v < 4; v++) {
+          const o = (4 * q + v) * 3, c = (4 * q + v) * 4; // plain writes: no subarray views or temporary arrays per frame
+          A[o] = hist[h]; A[o + 1] = hist[h + 1]; A[o + 2] = hist[h + 2];
+          B[o] = hist[h + 3]; B[o + 1] = hist[h + 4]; B[o + 2] = hist[h + 5];
+          col[c] = r; col[c + 1] = g; col[c + 2] = b; col[c + 3] = v < 2 ? a0 : a1;
+        }
+      }
+    }
+    windGeom.attributes.aA.needsUpdate = true; windGeom.attributes.aB.needsUpdate = true; windGeom.attributes.aColor.needsUpdate = true;
+  });
+  function setWind(field) {
+    const changed = !!field !== !!wind.field;
+    wind.field = field && field.u?.length === field.grid.width * field.grid.height ? field : null;
+    windNote.hidden = !wind.field || reduced();
+    if (changed && wind.field) { windBounds = windArea(2 * (camera.position.distanceTo(controls.target) / k) * tan() * ((host.clientWidth || 1) / (host.clientHeight || 1))); for (let i = 0; i < WIND_N; i++) { windSpawn(i, windBounds); wind.age[i] = Math.random() * wind.life[i]; } }
+  }
+
   const noop = () => {};
   const api = {
     /** Feature flag read by the shared weather UIs: this renderer can draw true-altitude 3D surfaces. */
@@ -479,7 +599,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       return [Math.max(-180, Math.min(...lons)), Math.max(-85, Math.min(...lats)), Math.min(180, Math.max(...lons)), Math.min(85, Math.max(...lats))];
     },
     rain(image) { return setRaster('rain', image, 0.55); },
-    gust(image) { return setRaster('gust', image, 0.42, true); },
+    gust(image) { setWind(image?.wind ?? null); return setRaster('gust', image, 0.42, true); },
     snowCover(image) { setRaster('snow-cover', image, 0.6, true); },
     snowfall(image) { return setRaster('snowfall', image, 0.65, true); },
     regionalRadar(image) { return setRaster('regional-radar', image, 0.65); },
@@ -491,7 +611,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       if (destroyed) return; destroyed = true;
       clearInterval(clock); clearTimeout(cameraTimer); preview.destroy(); credit.remove(); drape.dispose();
       for (const r of rasters.values()) r.bitmap.close?.();
-      cloudTops(null);
+      cloudTops(null); setWind(null); windGeom.dispose(); windLines.material.dispose(); windNote.remove();
       for (const t of textures.values()) t.dispose();
       county.destroy();
       delete host.county3dMap;
