@@ -9,6 +9,8 @@ import { createDrape } from './county3d/drape.js';
 import { COUNTY_BOUNDS, createFrame } from './county3d/frame.js';
 import { gaugeIcon } from './command-gauge.js';
 import { createMapPreview } from './map-preview.js';
+import { cloudTopHeightBand } from './cloud-top-style.js';
+import { cloudTopReadout } from './cloud-top-inspection.js';
 
 const ML_TILE = 512, EARTH = 40075016.686; // MapLibre zoom: 512 px tiles
 const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: Esri, Maxar, Earthstar Geographics · 3D renderer preview';
@@ -320,7 +322,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
     preview.remove();
     const record = recordAt(e);
-    if (!record) return;
+    if (!record) { const text = cloudAt(); if (text) onInspect?.({ name: 'GOES cloud top', readout: text }); return; }
     if (record.readout) onInspect ? onInspect(record) : null;
     else onSelect(record);
   });
@@ -329,7 +331,9 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     cancelAnimationFrame(hoverFrame);
     hoverFrame = requestAnimationFrame(() => {
       const record = recordAt(e), at = screenRay(e);
+      const text = record?.name ? null : cloudAt();
       if (record?.name) { canvas.style.cursor = 'pointer'; preview.show(record.readout || record.hoverText || record.name, at); }
+      else if (text) { canvas.style.cursor = 'pointer'; preview.show(text, at); }
       else { canvas.style.cursor = ''; preview.remove(); }
     });
   });
@@ -354,8 +358,86 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     } catch (error) { onError?.(error); return false; }
   }
 
+  // ---------- GOES-18 cloud-top surface at its retrieved altitude (observation) ----------
+  // vertices: Float32Array of lon, lat, geopotential height (m) per vertex, three vertices per triangle. Coloured by the
+  // legend's fixed altitude classes (not severity); lit by the scene sun so tops read as a surface; crossfades between scans.
+  const clouds = { current: null, previous: null, fade: null, meta: null };
+  // Unlit, one side, light baked into the vertex colours once per scan: the deck can cover the whole view, and per-pixel
+  // lighting cost about 5 ms at 3 Mpx (double-sided transparent PBR about 15 ms). Measured 2026-11-27.
+  const cloudMaterial = () => new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, side: THREE.FrontSide, depthWrite: false });
+  const CLOUD_OPACITY = 0.78;
+  function cloudMesh(vertices) {
+    const n = vertices.length / 3, pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const [x, z] = frame.project(vertices[3 * i], vertices[3 * i + 1]), h = vertices[3 * i + 2];
+      pos.set([x, h * k, z], 3 * i);
+      const rgb = cloudTopHeightBand(h)?.rgb ?? [200, 200, 200];
+      col.set(rgb.map(v => (v / 255) ** 2.2), 3 * i); // sRGB legend colours to linear
+    }
+    // wind every triangle counter-clockwise seen from above, so the front side is the cloud top
+    for (let t = 0; t + 2 < n; t += 3) {
+      const a = 3 * t, b = a + 3, c = a + 6;
+      const cross = (pos[b] - pos[a]) * (pos[c + 2] - pos[a + 2]) - (pos[b + 2] - pos[a + 2]) * (pos[c] - pos[a]);
+      if (cross > 0) for (let j = 0; j < 3; j++) { [pos[b + j], pos[c + j]] = [pos[c + j], pos[b + j]]; [col[b + j], col[c + j]] = [col[c + j], col[b + j]]; }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.computeVertexNormals(); g.computeBoundingSphere();
+    // bake the key light (sun, or the night light) into the colours: lit tops, shaded flanks
+    const light = county.sun.position.clone().normalize(), nor = g.attributes.normal.array, day = Math.min(1, county.sun.intensity / 2.2);
+    for (let i = 0; i < n; i++) {
+      const lambert = Math.max(0, nor[3 * i] * light.x + nor[3 * i + 1] * light.y + nor[3 * i + 2] * light.z);
+      const shade = 0.68 + 0.32 * (0.35 + 0.65 * day) * lambert;
+      for (let j = 0; j < 3; j++) col[3 * i + j] *= shade;
+    }
+    g.attributes.color.needsUpdate = true;
+    const mesh = new THREE.Mesh(g, cloudMaterial());
+    mesh.renderOrder = 5; mesh.userData.vertices = vertices;
+    return mesh;
+  }
+  const dropCloud = m => { if (!m) return; scene.remove(m); m.geometry.dispose(); m.material.dispose(); };
+  county.onFrame(now => {
+    const f = clouds.fade;
+    if (!f) { if (clouds.current) clouds.current.material.opacity = CLOUD_OPACITY; return; }
+    const u = Math.min(1, (now - f.start) / f.ms);
+    if (clouds.current) clouds.current.material.opacity = CLOUD_OPACITY * u;
+    if (clouds.previous) clouds.previous.material.opacity = CLOUD_OPACITY * (1 - u);
+    if (u === 1) { dropCloud(clouds.previous); clouds.previous = null; clouds.fade = null; f.resolve(); }
+  });
+  function cloudTops(vertices, options = {}) {
+    if (destroyed) return Promise.resolve();
+    if (!vertices?.length) {
+      clouds.fade?.resolve(); clouds.fade = null; dropCloud(clouds.previous); dropCloud(clouds.current);
+      clouds.previous = clouds.current = clouds.meta = null; return undefined;
+    }
+    if (clouds.current?.userData.vertices === vertices) { clouds.meta = options; return clouds.fade?.promise ?? Promise.resolve(); }
+    try {
+      const next = cloudMesh(vertices), ms = reduced() ? 0 : options.durationMs || 0;
+      clouds.fade?.resolve(); clouds.fade = null; dropCloud(clouds.previous); clouds.previous = null;
+      if (clouds.current && ms > 0) {
+        clouds.previous = clouds.current;
+        let resolve; const promise = new Promise(done => { resolve = done; });
+        clouds.fade = { start: performance.now(), ms, resolve, promise };
+      } else dropCloud(clouds.current);
+      clouds.current = next; clouds.meta = options; scene.add(next);
+      return clouds.fade?.promise ?? Promise.resolve();
+    } catch (error) { queueMicrotask(() => options.onFailure?.()); return Promise.reject(error); }
+  }
+  /** Cloud-top readout under a screen ray, unless terrain is in front or a transition is running. */
+  function cloudAt() {
+    if (!clouds.current || clouds.fade || !Number.isFinite(clouds.meta?.observedAt)) return null;
+    const hit = raycaster.intersectObject(clouds.current, false)[0];
+    if (!hit) return null;
+    const ground = raycaster.intersectObject(county.terrain.group, true)[0];
+    if (ground && ground.distance < hit.distance) return null;
+    return cloudTopReadout(hit.point.y / k, clouds.meta.observedAt);
+  }
+
   const noop = () => {};
-  return {
+  const api = {
+    /** Feature flag read by the shared weather UIs: this renderer can draw true-altitude 3D surfaces. */
+    volumetric: true,
     set(data) {
       if (destroyed) return;
       records = data || empty;
@@ -402,17 +484,21 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     snowfall(image) { return setRaster('snowfall', image, 0.65, true); },
     regionalRadar(image) { return setRaster('regional-radar', image, 0.65); },
     cloud(image) { setRaster('goes', image, 0.55); },
-    // Not yet ported to three.js (Command does not enable them): report "not displayed".
-    cloudTops(vertices) { return vertices?.length ? Promise.resolve(false) : undefined; },
+    cloudTops,
+    // Not yet ported to three.js (Command does not enable them).
     radar: noop, radarVolume: noop, forecastClouds: noop, forecastWind: noop,
     destroy() {
       if (destroyed) return; destroyed = true;
       clearInterval(clock); clearTimeout(cameraTimer); preview.destroy(); credit.remove(); drape.dispose();
       for (const r of rasters.values()) r.bitmap.close?.();
+      cloudTops(null);
       for (const t of textures.values()) t.dispose();
       county.destroy();
+      delete host.county3dMap;
     }
   };
+  host.county3dMap = api; // for checks from DevTools
+  return api;
 }
 
 function hexAlpha(color, alpha) {
