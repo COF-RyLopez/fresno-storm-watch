@@ -1,6 +1,6 @@
 /** Command's map in three.js: the same TerrainMap interface as watch-terrain-map.js (MapLibre), drawn on the shared
  *  county scene (lib/county3d). Polygons, lines and weather images are draped onto the terrain; points, gauges and labels
- *  are screen-sized markers standing on the ground. Selected with ?renderer=three while MapLibre stays the default.
+ *  are screen-sized markers standing on the ground. Command's default map on desktops; renderer choice and fallback live in command/src/renderer.ts.
  *  Plan: docs/county-3d-plan.md, phase 2. Not yet ported (no-ops here): GOES 3D cloud-top surface, Hanford radar points
  *  and volume, HRRR cloud volume and wind trails, which Command does not enable today. */
 import * as THREE from '../vendor/three-0.187.0/three.module.js';
@@ -17,7 +17,7 @@ import { cloudTopReadout } from './cloud-top-inspection.js';
 import { RADAR_BANDS } from './hanford-radar-data.js';
 
 const ML_TILE = 512, EARTH = 40075016.686; // MapLibre zoom: 512 px tiles
-const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: USGS The National Map (NAIP); Esri, Maxar where unavailable · Buildings: © OpenStreetMap contributors, Overture Maps Foundation · 3D renderer preview';
+const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: USGS The National Map (NAIP); Esri, Maxar where unavailable · Buildings: © OpenStreetMap contributors, Overture Maps Foundation';
 const empty = { type: 'FeatureCollection', features: [] };
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const rings = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
@@ -181,6 +181,12 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       }
       // Lines and polygons are draped; give lines a label anchor at their middle for close views
       if (p.kind === 'nws-corridor' && p.citation) { const path = paths(f.geometry)[0]; if (path) { const [lon, lat] = path[path.length >> 1]; marker(label(p.citation, '#bfe8f2', 11), lon, lat, { px: 20, maxDistance: 120_000 }); } }
+      // Named lines (roads, closures, detours) get their name at the middle of their longest part, only up close so
+      // county views stay clean; the selected line already carries its name on the beacon.
+      else if (p.name && !p.selected && !points(f.geometry).length) {
+        const path = paths(f.geometry).reduce((a, b) => (b.length > (a?.length ?? 0) ? b : a), null);
+        if (path?.length > 1) { const [lon, lat] = path[path.length >> 1]; marker(label(p.name, '#eef8ff', 12), lon, lat, { px: 20, anchor: [0.5, 1.2], record: p, maxDistance: 25_000 }); }
+      }
     }
     const chosen = records.features.filter(f => f.properties?.selected && f.geometry);
     pulses = [];
@@ -270,7 +276,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     if (now === size) return;
     size = now;
     if (lastFit && !userMoved && host.clientWidth && host.clientHeight) fit(lastFit.bounds, false, lastFit.padding, true);
-    credit.textContent = host.clientWidth < 600 ? 'USGS NAIP · Esri · Terrarium · 3D preview' : CREDIT;
+    credit.textContent = host.clientWidth < 600 ? 'USGS NAIP · Esri · Terrarium' : CREDIT;
   });
   function fit(bounds, animate = true, padding, refit = false) {
     if (!refit) { lastFit = { bounds, padding }; userMoved = false; }
