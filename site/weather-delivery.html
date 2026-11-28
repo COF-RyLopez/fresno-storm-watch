@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'sha256-Pykv223Fp0h4V34wPxXAv1yOe9Wm3ZFxdXdfdliekZU='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'sha256-m+ZM5NfJA1Yxylw5GnLgixM6SyJH1Gf1SrgLa3ZFTbI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'">
   <title>F.R.O.G. · Weather delivery test</title>
   <link rel="stylesheet" href="./vendor/maplibre-6.15.0/maplibre-gl.css?v=a90798a195">
-  <link rel="stylesheet" href="./weather-delivery.css?v=7b196f98ef">
+  <link rel="stylesheet" href="./weather-delivery.css?v=b1014a40c5">
 </head>
 <body>
-  <header><a href="command/"><img src="assets/frog-logo.png" width="36" height="36" alt="F.R.O.G."></a><h1>Weather delivery test</h1><span>Recorded forecast · not live planning data</span></header>
+  <header><a href="command/"><img src="assets/frog-logo.png" width="36" height="36" alt="F.R.O.G."></a><h1>Weather delivery test</h1><a id="renderer-toggle" href="?renderer=three">Try the 3D map (preview)</a><span>Recorded forecast · not live planning data</span></header>
   <main>
     <aside>
       <label for="basin">Focus area</label><select id="basin"><option value="MIL">Millerton · San Joaquin</option><option value="PNF">Pine Flat · Kings</option></select>
@@ -35,6 +35,13 @@
 "./lib/cloud-top-layer.js":"./lib/cloud-top-layer.js?v=596b4c0d78",
 "./lib/cloud-top-style.js":"./lib/cloud-top-style.js?v=137c789c83",
 "./lib/command-gauge.js":"./lib/command-gauge.js?v=8df7545925",
+"./lib/county-scene-map.js":"./lib/county-scene-map.js?v=2eb6e03063",
+"./lib/county3d/buildings.js":"./lib/county3d/buildings.js?v=a0221fb1c7",
+"./lib/county3d/core.js":"./lib/county3d/core.js?v=1bd081909f",
+"./lib/county3d/drape.js":"./lib/county3d/drape.js?v=84f8bc47d4",
+"./lib/county3d/fetch-retry.js":"./lib/county3d/fetch-retry.js?v=0dd76ffa38",
+"./lib/county3d/frame.js":"./lib/county3d/frame.js?v=2ef769f5b0",
+"./lib/county3d/terrain.js":"./lib/county3d/terrain.js?v=b42ee98e82",
 "./lib/environment-data.js":"./lib/environment-data.js?v=199b834c38",
 "./lib/environment-model.js":"./lib/environment-model.js?v=a317d45158",
 "./lib/forecast-comparison-model.js":"./lib/forecast-comparison-model.js?v=a9a5dfa30c",
@@ -64,8 +71,9 @@
 "./lib/watch-wind-trails.js":"./lib/watch-wind-trails.js?v=ff1a994769",
 "./lib/watershed-timeline-model.js":"./lib/watershed-timeline-model.js?v=0c6a535a8a",
 "./lib/waterway-basemap.js":"./lib/waterway-basemap.js?v=a97fecb6c2",
-"./lib/weather-delivery-lab.js":"./lib/weather-delivery-lab.js?v=7db31ef73b",
+"./lib/weather-delivery-lab.js":"./lib/weather-delivery-lab.js?v=b292774aac",
 "./lib/weather-delivery-measure.js":"./lib/weather-delivery-measure.js?v=f4e8143ea1",
+"./lib/weather-delivery-renderer.js":"./lib/weather-delivery-renderer.js?v=a90f026f57",
 "./lib/weather-frame-cache.js":"./lib/weather-frame-cache.js?v=f564e5d1f6",
 "./lib/weather-frame-package.js":"./lib/weather-frame-package.js?v=8857b64b90",
 "./lib/weather-model.js":"./lib/weather-model.js?v=1bd1a127dc",
@@ -73,6 +81,6 @@
 "./lib/with-timeout.js":"./lib/with-timeout.js?v=1ddcc38435"
 }}
 </script>
-<script type="module" src="./lib/weather-delivery-lab.js?v=7db31ef73b"></script>
+<script type="module" src="./lib/weather-delivery-lab.js?v=b292774aac"></script>
 </body>
 </html>

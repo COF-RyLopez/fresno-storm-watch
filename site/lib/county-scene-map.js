@@ -29,7 +29,7 @@ const points = g => !g ? [] : g.type === 'Point' ? [g.coordinates] : g.type === 
 export async function createWatchTerrain({ container, onSelect, onError, onCamera = () => {}, onInspect }) {
   const host = typeof container === 'string' ? document.getElementById(container) : container;
   if (!host) throw Error('Map container missing');
-  host.style.position ||= 'relative';
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative'; // keep a host the page already positions (absolute, fixed)
   const frame = createFrame(COUNTY_BOUNDS), k = frame.k;
 
   // ---------- state shown on the map ----------

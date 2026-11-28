@@ -1,5 +1,5 @@
 import {measureWeatherReady} from './weather-delivery-measure.js';
-import {createWatchTerrain} from './watch-terrain-map.js';
+import {labRenderer} from './weather-delivery-renderer.js';
 import {loadWatershedRain} from './watch-watershed-data.js';
 import {validateWeatherReplay,createPreparedWeather,frameFingerprint} from './weather-frame-package.js';
 
@@ -69,7 +69,7 @@ function focus(){
   const basin=context?.watersheds.features.find(f=>f.properties.reservoir===$('basin').value);
   if(!basin||!map)return;
   map.watershed(basin);map.focus(basin.properties.bounds,true);
-  $('map-status').textContent=`${$('basin').selectedOptions[0].textContent} · recorded reference context`;
+  $('map-status').textContent=`${$('basin').selectedOptions[0].textContent} · recorded reference context${$('lab-map').dataset.renderer==='three'?' · 3D preview':''}`;
 }
 const median=values=>{const rows=[...values].sort((a,b)=>a-b);return rows[Math.floor(rows.length/2)];};
 async function benchmark(){
@@ -124,6 +124,13 @@ async function start(){
     document.querySelectorAll('input[name="method"]').forEach(r=>r.addEventListener('change',()=>void show()));
     $('basin').addEventListener('change',focus);
     $('benchmark').onclick=()=>void benchmark();$('benchmark').disabled=false;
+    const renderer=labRenderer(location.search);
+    $('renderer-toggle').href=renderer.switchHref(location.pathname,location.hash);
+    $('renderer-toggle').textContent=renderer.switchLabel;
+    $('map-status').textContent=`Loading ${renderer.label}…`;
+    const {createWatchTerrain}=renderer.three?await import('./county-scene-map.js'):await import('./watch-terrain-map.js');
+    if(closed)return;
+    $('lab-map').dataset.renderer=renderer.id;
     map=await createWatchTerrain({container:$('lab-map'),onSelect:record=>{$('map-status').textContent='Recorded reference · '+(record.name||record.id||'location');},
       onError:error=>{$('map-status').textContent='Some reference tiles are unavailable; weather delivery measurements remain usable.';
         const text=String(error);if(!$('map-errors').textContent.includes(text)&&$('map-errors').children.length<5)$('map-errors').append(node('li',text));}});
