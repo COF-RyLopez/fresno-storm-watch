@@ -1,0 +1,49 @@
+name: Publish county 3D tiles to R2
+# Builds the prepared county 3D tiles (scripts/build-county3d-*.mjs) and syncs them to the Cloudflare R2 bucket fsw-county-3d,
+# which the three.js scenes read through CONFIG.county3dBaseUrl. Runs when the tile sources or builders change, or by hand.
+# Repository secrets (an R2 API token scoped to Object Read & Write on fsw-county-3d only):
+#   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build-county3d-*.mjs'
+      - 'site/data/power-buildings/**'
+      - '.github/workflows/county3d.yml'
+permissions:
+  contents: read
+concurrency:
+  group: county3d-r2
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.22.3'
+      - name: Build building tiles
+        run: node scripts/build-county3d-buildings.mjs
+      - name: Check R2 credentials
+        run: |
+          if [ -z "$R2_ACCOUNT_ID" ] || [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "::error::R2 secrets are not set (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)"; exit 1
+          fi
+      - name: Sync to R2
+        run: |
+          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          # tiles: stored gzipped and served as plain bytes (the client inflates; no Content-Encoding so proxies leave them alone)
+          aws s3 sync site/data/county3d/ s3://fsw-county-3d/ --endpoint-url "$endpoint" --delete --exclude '*/manifest.json' \
+            --content-type application/octet-stream --cache-control 'public, max-age=86400' --no-progress
+          # manifests last, so a client never sees a manifest that lists tiles not yet uploaded
+          for m in site/data/county3d/*/manifest.json; do
+            aws s3 cp "$m" "s3://fsw-county-3d/${m#site/data/county3d/}" --endpoint-url "$endpoint" \
+              --content-type application/json --cache-control 'no-cache' --no-progress
+          done

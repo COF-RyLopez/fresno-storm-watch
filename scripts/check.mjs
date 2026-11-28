@@ -16,7 +16,7 @@ import {siteJson} from './lib/snapshot-io.mjs';
 import {validateWazeSnapshot} from '../site/lib/waze-model.js';
 
 const root = new URL('../', import.meta.url);
-for (const folder of ['site/', 'site/lib/', 'site/lib/county3d/', 'scripts/', 'scripts/lib/', 'services/scenarios/']) {
+for (const folder of ['site/', 'site/lib/', 'site/lib/county3d/', 'scripts/', 'scripts/lib/', 'services/scenarios/', 'services/pages-dispatch/']) {
   for (const entry of await readdir(new URL(folder, root))) {
     if (!/\.(js|mjs)$/.test(entry)) continue;
     const result = spawnSync(process.execPath, ['--check', fileURLToPath(new URL(folder + entry, root))], { encoding: 'utf8' });

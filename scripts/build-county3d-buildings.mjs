@@ -1,7 +1,7 @@
 /**
  * Pack the county's Overture building footprints (site/data/power-buildings/<release>/, 0.05° JSON tiles) into XYZ zoom-13
  * binary tiles for the three.js county scene, written to site/data/county3d/buildings/ (git-ignored) for upload to the
- * R2 bucket fsw-county-3d (scripts/upload-county3d.mjs). Layout of each tile, little-endian, then gzip:
+ * R2 bucket fsw-county-3d (.github/workflows/county3d.yml). Layout of each tile, little-endian, then gzip:
  *   b'BLD1' uint32 version=1 uint32 n uint32 nv float64 ox float64 oy  (32-byte header; origin = tile's Web Mercator centre)
  *   uint32 ring_start[n+1] | float32 xy[2 nv] (Mercator metres from origin, outer ring, no repeated end point)
  *   float32 height_m[n] (Overture height; NaN = unknown)
@@ -9,6 +9,7 @@
  */
 import { readdir, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { gunzipSync, gzipSync } from 'node:zlib';
+import { fileURLToPath } from 'node:url';
 
 const ROOT = new URL('../site/data/', import.meta.url), Z = 13, R = 6378137, HALF = Math.PI * R;
 const mx = lon => (R * lon * Math.PI) / 180, my = lat => R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
@@ -64,4 +65,4 @@ async function main() {
   await writeFile(new URL('manifest.json', out), JSON.stringify(manifest));
   console.log(`${count} buildings (${withHeight} with height) in ${index.length} z${Z} tiles, ${(bytes / 1e6).toFixed(1)} MB gzipped`);
 }
-if (import.meta.main) await main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) await main(); // import.meta.main needs Node 24; CI runs 22

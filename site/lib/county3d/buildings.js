@@ -3,7 +3,6 @@
  *  hipRoof) and flat roofs elsewhere. Heights are Overture's where known, otherwise one storey (5 m). Reference context:
  *  footprints and heights are not verified against county records. */
 import * as THREE from '../../vendor/three-0.187.0/three.module.js';
-import { hipRoof } from '../flood-three-model.js';
 
 const Z = 13, R = 6378137, HALF = Math.PI * R, DEFAULT_HEIGHT = 5, SHOW_WITHIN = 14_000; // ground metres camera-to-target
 
@@ -29,43 +28,72 @@ export function createBuildings({ county, baseUrl }) {
   const { scene, camera, controls, frame } = county, k = frame.k, base = new URL(baseUrl, location.href);
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, flatShading: true });
   const group = new THREE.Group(); scene.add(group);
+  // compile the building shader up front: its first draw otherwise stalls a frame for ~180 ms
+  county.renderer.compileAsync?.(new THREE.Mesh(new THREE.BoxGeometry(), material), camera, scene).catch(() => {});
   const tiles = new Map(); // 'x/y' -> {state, mesh, used}
   let available = null, inflight = 0;
   const manifest = fetch(new URL('manifest.json', base), { cache: 'no-cache' }).then(r => (r.ok ? r.json() : Promise.reject(Error(r.status))))
     .then(m => { available = new Set(m.tiles.map(([x, y]) => `${x}/${y}`)); return m; }).catch(error => { console.warn('County buildings unavailable:', error.message); return null; });
 
-  function build(data) {
-    const pos = [], col = [], index = [];
-    const [ox, oy] = data.origin;
-    const wall = new THREE.Color(), roofColor = new THREE.Color();
-    for (let b = 0; b < data.n; b++) {
-      const s = data.start[b], e = data.start[b + 1], ring = [];
-      for (let v = s; v < e; v++) { const [x, z] = [data.xy[2 * v] + ox - frame.ox, -(data.xy[2 * v + 1] + oy - frame.oy)]; ring.push([x, z]); }
-      let lo = Infinity;
-      for (const [x, z] of ring) lo = Math.min(lo, county.terrain.groundAt(x, z) ?? 0);
-      const h = (Number.isFinite(data.height[b]) ? data.height[b] : DEFAULT_HEIGHT) * k, top = lo + h;
-      const hash = Math.abs(Math.sin(b * 12.9898 + ox) * 43758.5453) % 1;
-      wall.setRGB(0.42 + 0.18 * hash, 0.40 + 0.16 * hash, 0.36 + 0.14 * hash, THREE.SRGBColorSpace);
-      roofColor.setRGB(0.20 + 0.2 * ((hash * 7) % 1), 0.17 + 0.1 * ((hash * 7) % 1), 0.15, THREE.SRGBColorSpace);
-      const first = pos.length / 3;
-      for (const [x, z] of ring) { pos.push(x, lo - 1 * k, z, x, top, z); col.push(wall.r, wall.g, wall.b, wall.r, wall.g, wall.b); }
-      const m = ring.length;
-      for (let j = 0; j < m; j++) { const a = first + 2 * j, c = first + 2 * ((j + 1) % m); index.push(a, c, a + 1, c, c + 1, a + 1); }
-      const roof = hipRoof(ring, { maxArea: 600 * k * k });
-      if (roof) {
-        const r0 = pos.length / 3;
-        for (let i = 0; i < roof.length; i += 3) { pos.push(roof[i], top + roof[i + 1], roof[i + 2]); col.push(roofColor.r, roofColor.g, roofColor.b); index.push(r0 + i / 3); }
-      } else {
-        for (const [a, b2, c] of THREE.ShapeUtils.triangulateShape(ring.map(([x, z]) => new THREE.Vector2(x, z)), [])) index.push(first + 2 * a + 1, first + 2 * b2 + 1, first + 2 * c + 1);
-      }
+  // Geometry is built in a worker (triangulation and roofs for ~13k buildings took hundreds of ms on the main thread); the
+  // worker returns positions relative to each building's ground, and the main thread adds the terrain height per building.
+  // Workers ignore the page's import map, so resolve through it here: the worker then loads the same cache-keyed modules.
+  const resolve = path => new URL(import.meta.resolve?.(path) ?? path, import.meta.url).href;
+  const worker = new Worker(URL.createObjectURL(new Blob([`
+    import * as THREE from ${JSON.stringify(resolve('../../vendor/three-0.187.0/three.module.js'))};
+    import { hipRoof } from ${JSON.stringify(resolve('../flood-three-model.js'))};
+    onmessage = ({ data: { id, buffer, fox, foy, k, defaultHeight } }) => {
+      try {
+        const view = new DataView(buffer), n = view.getUint32(8, true), nv = view.getUint32(12, true), ox = view.getFloat64(16, true), oy = view.getFloat64(24, true);
+        const start = new Uint32Array(buffer, 32, n + 1), xy = new Float32Array(buffer, 32 + 4 * (n + 1), 2 * nv), height = new Float32Array(buffer, 32 + 4 * (n + 1) + 8 * nv, n);
+        const pos = [], col = [], owner = [], index = [], centre = new Float32Array(2 * n);
+        for (let b = 0; b < n; b++) {
+          const ring = [];
+          for (let v = start[b]; v < start[b + 1]; v++) ring.push([xy[2 * v] + ox - fox, -(xy[2 * v + 1] + oy - foy)]);
+          centre[2 * b] = ring.reduce((s, p) => s + p[0], 0) / ring.length; centre[2 * b + 1] = ring.reduce((s, p) => s + p[1], 0) / ring.length;
+          const h = (Number.isFinite(height[b]) ? height[b] : defaultHeight) * k, hash = Math.abs(Math.sin(b * 12.9898 + ox) * 43758.5453) % 1;
+          const wall = [0.42 + 0.18 * hash, 0.40 + 0.16 * hash, 0.36 + 0.14 * hash].map(c => c ** 2.2), roof = [0.20 + 0.2 * ((hash * 7) % 1), 0.17 + 0.1 * ((hash * 7) % 1), 0.15].map(c => c ** 2.2);
+          const first = pos.length / 3, m = ring.length;
+          for (const [x, z] of ring) { pos.push(x, -3 * k, z, x, h, z); col.push(...wall, ...wall); owner.push(b, b); }
+          for (let j = 0; j < m; j++) { const a = first + 2 * j, c = first + 2 * ((j + 1) % m); index.push(a, c, a + 1, c, c + 1, a + 1); }
+          const hip = hipRoof(ring, { maxArea: 600 * k * k });
+          if (hip) { const r0 = pos.length / 3; for (let i = 0; i < hip.length; i += 3) { pos.push(hip[i], h + hip[i + 1], hip[i + 2]); col.push(...roof); owner.push(b); index.push(r0 + i / 3); } }
+          else for (const [a, b2, c] of THREE.ShapeUtils.triangulateShape(ring.map(([x, z]) => new THREE.Vector2(x, z)), [])) index.push(first + 2 * a + 1, first + 2 * b2 + 1, first + 2 * c + 1);
+        }
+        const out = { id, n, position: new Float32Array(pos), color: new Float32Array(col), owner: new Uint32Array(owner), index: new Uint32Array(index), centre };
+        postMessage(out, [out.position.buffer, out.color.buffer, out.owner.buffer, out.index.buffer, out.centre.buffer]);
+      } catch (error) { postMessage({ id, error: String(error) }); }
+    };`], { type: 'text/javascript' })), { type: 'module' });
+  const jobs = new Map(); let jobId = 0;
+  worker.onmessage = ({ data }) => { const j = jobs.get(data.id); jobs.delete(data.id); data.error ? j.reject(Error(data.error)) : j.resolve(data); };
+  const buildInWorker = buffer => new Promise((resolve, reject) => { const id = ++jobId; jobs.set(id, { resolve, reject }); worker.postMessage({ id, buffer, fox: frame.ox, foy: frame.oy, k, defaultHeight: DEFAULT_HEIGHT }, [buffer]); });
+
+  /** Seat each building on the terrain: relative heights from the worker plus the ground under its centre. */
+  function seat(t) {
+    const { relative, owner, centre, n } = t.parts, base = new Float32Array(n), pos = t.mesh.geometry.attributes.position.array;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let b = 0; b < n; b++) {
+      const x = centre[2 * b], z = centre[2 * b + 1], y = (base[b] = county.terrain.groundAt(x, z) ?? 0);
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
+    for (let v = 0; v < owner.length; v++) pos[3 * v + 1] = relative[v] + base[owner[v]];
+    t.mesh.geometry.attributes.position.needsUpdate = true;
+    // a sphere from building centres (the tile) padded by the largest footprint and height; computeBoundingSphere scans every vertex
+    const pad = t.parts.reach, c = new THREE.Vector3((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    t.mesh.geometry.boundingSphere = new THREE.Sphere(c, Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2 + pad);
+  }
+  function meshFrom(parts) {
     const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    g.setIndex(index); g.computeBoundingSphere();
-    const mesh = new THREE.Mesh(g, material);
-    mesh.castShadow = mesh.receiveShadow = false;
-    return mesh;
+    g.setAttribute('position', new THREE.BufferAttribute(parts.position, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(parts.color, 3));
+    g.setIndex(new THREE.BufferAttribute(parts.index, 1));
+    const relative = new Float32Array(parts.owner.length), { position: p, owner, centre } = parts;
+    let reach = 0;
+    for (let v = 0; v < relative.length; v++) {
+      relative[v] = p[3 * v + 1];
+      reach = Math.max(reach, Math.abs(p[3 * v + 1]), Math.abs(p[3 * v] - centre[2 * owner[v]]), Math.abs(p[3 * v + 2] - centre[2 * owner[v] + 1]));
+    }
+    return { mesh: new THREE.Mesh(g, material), parts: { relative, owner, centre, n: parts.n, reach: reach * Math.SQRT2 } };
   }
 
   async function load(key) {
@@ -74,8 +102,8 @@ export function createBuildings({ county, baseUrl }) {
     try {
       const response = await fetch(new URL(`${Z}/${key}.bin.gz`, base));
       if (!response.ok) throw Error(response.status);
-      t.data = parseBuildings(await inflate(response));
-      t.mesh = build(t.data); t.built = performance.now(); group.add(t.mesh); t.state = 'ready';
+      const built = meshFrom(await buildInWorker(await inflate(response)));
+      Object.assign(t, built); seat(t); t.built = performance.now(); group.add(t.mesh); t.state = 'ready';
     } catch (error) { t.state = 'failed'; console.warn('Building tile', key, error.message); }
     finally { inflight--; }
   }
@@ -101,10 +129,10 @@ export function createBuildings({ county, baseUrl }) {
     for (const [, key] of wanted) { if (inflight >= 4) break; load(key); }
     // re-seat once on finer terrain, and drop tiles unused for a while
     for (const [key, t] of tiles) {
-      if (t.state === 'ready' && t.built && now - t.built > 4000 && !t.reseated) { group.remove(t.mesh); t.mesh.geometry.dispose(); t.mesh = build(t.data); group.add(t.mesh); t.reseated = true; }
+      if (t.state === 'ready' && t.built && now - t.built > 4000 && !t.reseated) { seat(t); t.reseated = true; } // finer terrain has arrived
       if (now - t.used > 20_000 && t.mesh) { group.remove(t.mesh); t.mesh.geometry.dispose(); tiles.delete(key); }
       else if (t.mesh && now - t.used > 100) t.mesh.visible = false;
     }
   });
-  return { group, manifest, dispose() { for (const t of tiles.values()) t.mesh?.geometry.dispose(); material.dispose(); scene.remove(group); } };
+  return { group, manifest, dispose() { worker.terminate(); for (const t of tiles.values()) t.mesh?.geometry.dispose(); material.dispose(); scene.remove(group); } };
 }
