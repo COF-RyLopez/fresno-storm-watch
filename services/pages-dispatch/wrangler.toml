@@ -1,0 +1,8 @@
+name = "storm-watch-pages-dispatch"
+main = "worker.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+[triggers]
+# Every 15 minutes, offset from the hour like pages.yml's own schedule.
+crons = ["7,22,37,52 * * * *"]

@@ -25,3 +25,6 @@ ux/
 
 site/basemaps/frog-waterways-dark/archives/
 site/command/
+
+# three.js county scene products, uploaded to R2 (scripts/upload-county3d.mjs)
+site/data/county3d/
