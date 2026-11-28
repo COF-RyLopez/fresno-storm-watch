@@ -1,4 +1,4 @@
-/* Shared by flood-scenario.html and flood-scenario-3d.html. */
+/* Shared by flood-scenario.html and flood-scenario-3js.html. */
 html, body { margin: 0; height: 100%; }
 .stage { position: relative; height: 100%; }
 #view { position: absolute; inset: 0; background: var(--app-map-background); }

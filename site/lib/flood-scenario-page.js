@@ -1,4 +1,4 @@
-// Shared by the 2D and 3D flood-scenario pages (flood-scenario.js, flood-scenario-3d.js): scenario picker, header and legend,
+// Shared by the 2D and 3D flood-scenario pages (flood-scenario.js, flood-scenario-3js.js): scenario picker, header and legend,
 // building popup, classes and flood front, themed basemap, evacuation traffic panel, status panel, and the play / slider controls.
 import { loadTraffic } from './evacuation-traffic.js';
 import { clockLabel } from './flood-scenario-model.js';
