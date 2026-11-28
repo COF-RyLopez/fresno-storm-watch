@@ -7,6 +7,7 @@ import * as THREE from '../vendor/three-0.187.0/three.module.js';
 import { createCountyScene } from './county3d/core.js';
 import { createDrape } from './county3d/drape.js';
 import { COUNTY_BOUNDS, createFrame } from './county3d/frame.js';
+import { IMAGERY, USGS_IMAGERY } from './county3d/terrain.js';
 import { gaugeIcon } from './command-gauge.js';
 import { createMapPreview } from './map-preview.js';
 import { cloudTopHeightBand } from './cloud-top-style.js';
@@ -14,7 +15,7 @@ import { cloudTopReadout } from './cloud-top-inspection.js';
 import { RADAR_BANDS } from './hanford-radar-data.js';
 
 const ML_TILE = 512, EARTH = 40075016.686; // MapLibre zoom: 512 px tiles
-const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: Esri, Maxar, Earthstar Geographics · 3D renderer preview';
+const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: USGS The National Map (NAIP); Esri, Maxar where unavailable · 3D renderer preview';
 const empty = { type: 'FeatureCollection', features: [] };
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const rings = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
@@ -97,7 +98,10 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
   const drape = createDrape({ frame, paint });
 
   let selectedName = '', selectedKind = '';
-  const county = createCountyScene({ container: host, bounds: COUNTY_BOUNDS, nightFloor: 0.6, terrain: { decorate: drape.decorate, detail: 0.9 } });
+  const county = createCountyScene({ container: host, bounds: COUNTY_BOUNDS, nightFloor: 0.6,
+    // USGS National Map imagery (public domain, NAIP-based; one consistent source, where Esri's composite changes source between
+    // zoom levels and shows seams), Esri World Imagery for any tile USGS does not serve.
+    terrain: { decorate: drape.decorate, detail: 0.9, imagery: USGS_IMAGERY, imageryMaxZoom: 16, imageryFallback: IMAGERY } });
   const { scene, camera, controls, renderer } = county;
   const clock = setInterval(() => county.setTime(new Date()), 60_000); // the sun follows real time
 
@@ -262,7 +266,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     if (now === size) return;
     size = now;
     if (lastFit && !userMoved && host.clientWidth && host.clientHeight) fit(lastFit.bounds, false, lastFit.padding, true);
-    credit.textContent = host.clientWidth < 600 ? '© Esri, Maxar · Terrarium · 3D preview' : CREDIT;
+    credit.textContent = host.clientWidth < 600 ? 'USGS NAIP · Esri · Terrarium · 3D preview' : CREDIT;
   });
   function fit(bounds, animate = true, padding, refit = false) {
     if (!refit) { lastFit = { bounds, padding }; userMoved = false; }
