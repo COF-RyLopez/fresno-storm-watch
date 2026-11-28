@@ -8,6 +8,8 @@ import { createCountyScene } from './county3d/core.js';
 import { createDrape } from './county3d/drape.js';
 import { COUNTY_BOUNDS, createFrame } from './county3d/frame.js';
 import { IMAGERY, USGS_IMAGERY } from './county3d/terrain.js';
+import { createBuildings } from './county3d/buildings.js';
+import { CONFIG } from '../config.js';
 import { gaugeIcon } from './command-gauge.js';
 import { createMapPreview } from './map-preview.js';
 import { cloudTopHeightBand } from './cloud-top-style.js';
@@ -15,7 +17,7 @@ import { cloudTopReadout } from './cloud-top-inspection.js';
 import { RADAR_BANDS } from './hanford-radar-data.js';
 
 const ML_TILE = 512, EARTH = 40075016.686; // MapLibre zoom: 512 px tiles
-const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: USGS The National Map (NAIP); Esri, Maxar where unavailable · 3D renderer preview';
+const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: USGS The National Map (NAIP); Esri, Maxar where unavailable · Buildings: © OpenStreetMap contributors, Overture Maps Foundation · 3D renderer preview';
 const empty = { type: 'FeatureCollection', features: [] };
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const rings = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
@@ -104,6 +106,8 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     terrain: { decorate: drape.decorate, detail: 0.9, imagery: USGS_IMAGERY, imageryMaxZoom: 16, imageryFallback: IMAGERY } });
   const { scene, camera, controls, renderer } = county;
   const clock = setInterval(() => county.setTime(new Date()), 60_000); // the sun follows real time
+  // County buildings (reference context, shown within about 14 km): the R2 bucket when configured, else locally built tiles.
+  const buildings = createBuildings({ county, baseUrl: new URL('buildings/', CONFIG.county3dBaseUrl || new URL('../data/county3d/', import.meta.url)) });
 
   // ---------- screen-sized markers ----------
   const markers = new THREE.Group(); markers.renderOrder = 10; scene.add(markers);
@@ -644,7 +648,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     radar: noop, forecastClouds: noop, forecastWind: noop,
     destroy() {
       if (destroyed) return; destroyed = true;
-      clearInterval(clock); clearTimeout(cameraTimer); preview.destroy(); credit.remove(); drape.dispose();
+      clearInterval(clock); clearTimeout(cameraTimer); preview.destroy(); credit.remove(); drape.dispose(); buildings.dispose();
       for (const r of rasters.values()) r.bitmap.close?.();
       cloudTops(null); radarVolume(null); setWind(null); windGeom.dispose(); windLines.material.dispose(); windNote.remove();
       for (const t of textures.values()) t.dispose();

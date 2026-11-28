@@ -65,3 +65,36 @@ export function sampleGrid(grid, w, h, u, v) {
   const top = grid[y0 * w + x0] * (1 - fx) + grid[y0 * w + x1] * fx, bottom = grid[y1 * w + x0] * (1 - fx) + grid[y1 * w + x1] * fx;
   return top * (1 - fy) + bottom * fy;
 }
+
+/** Hip roof for a near-rectangular footprint, on its minimum-area bounding rectangle (so the eaves overhang the walls a
+ *  little): 18 vertices [x, rise, z] (rise above the eaves), or null to keep a flat roof (irregular, many-sided or large
+ *  footprints: mostly commercial). pts are [x, z] pairs; maxArea is in the same units squared. */
+export function hipRoof(pts, { minFill = 0.88, maxVerts = 16, maxArea = 600, pitch = 5 / 12 } = {}) {
+  const m = pts.length;
+  if (m < 4 || m > maxVerts) return null;
+  let area = 0;
+  for (let i = 0; i < m; i++) { const [x0, z0] = pts[i], [x1, z1] = pts[(i + 1) % m]; area += x0 * z1 - x1 * z0; }
+  area = Math.abs(area) / 2;
+  if (area > maxArea) return null;
+  let best = null;
+  for (let i = 0; i < m; i++) { // the minimum-area rectangle has a side along one of the polygon's edges (convex hull edges suffice)
+    const [x0, z0] = pts[i], [x1, z1] = pts[(i + 1) % m], L = Math.hypot(x1 - x0, z1 - z0);
+    if (L < 1e-9) continue;
+    const u = [(x1 - x0) / L, (z1 - z0) / L], v = [-u[1], u[0]];
+    let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+    for (const [x, z] of pts) {
+      const a = x * u[0] + z * u[1], b = x * v[0] + z * v[1];
+      a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b);
+    }
+    const A = (a1 - a0) * (b1 - b0);
+    if (!best || A < best.A) best = { A, u, v, ca: (a0 + a1) / 2, cb: (b0 + b1) / 2, ha: (a1 - a0) / 2, hb: (b1 - b0) / 2 };
+  }
+  if (!best || area / best.A < minFill) return null;
+  let { u, v, ca, cb, ha, hb } = best;
+  const c = [u[0] * ca + v[0] * cb, u[1] * ca + v[1] * cb];
+  if (ha < hb) [u, v, ha, hb] = [v, u, hb, ha]; // ridge along the long axis
+  const rise = hb * pitch, r = ha - hb;
+  const P = (a, b, y = 0) => [c[0] + u[0] * a + v[0] * b, y, c[1] + u[1] * a + v[1] * b];
+  const [ppp, pmp, ppm, pmm, rp, rm] = [P(ha, hb), P(-ha, hb), P(ha, -hb), P(-ha, -hb), P(r, 0, rise), P(-r, 0, rise)];
+  return new Float32Array([ppp, pmp, rm, ppp, rm, rp, ppm, pmm, rm, ppm, rm, rp, ppm, ppp, rp, pmm, pmp, rm].flat());
+}
