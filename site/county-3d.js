@@ -2,6 +2,8 @@
 // to measure the shared engine before layers and Command move onto it. No operational data yet.
 import { createCountyScene } from './lib/county3d/core.js';
 import { USGS_IMAGERY } from './lib/county3d/terrain.js';
+import { createBuildings } from './lib/county3d/buildings.js';
+import { CONFIG } from './config.js';
 
 const $ = id => document.getElementById(id);
 const PRESETS = {
@@ -46,5 +48,7 @@ showTime($('time').value);
 $('time').addEventListener('calciteSliderInput', e => showTime(e.target.value));
 $('now').addEventListener('click', () => { $('time').value = (Date.now() - midnight) / 3_600_000; showTime($('time').value); });
 
+// County buildings from the R2 bucket (CONFIG.county3dBaseUrl), or local tiles from scripts/build-county3d-buildings.mjs
+createBuildings({ county: scene, baseUrl: new URL('buildings/', CONFIG.county3dBaseUrl || new URL('./data/county3d/', location.href)) });
 window.county3d = scene; // for checks from DevTools
 $('loading').hidden = true;

@@ -5,6 +5,8 @@ export const CONFIG = Object.freeze({
   staleMs: 420_000,
   requestTimeoutMs: 25_000,
   timeZone: 'America/Los_Angeles',
+  // Public base URL of the R2 bucket fsw-county-3d (prepared county 3D tiles). Empty: the scene uses locally built tiles.
+  county3dBaseUrl: '',
   environment: {
     pollMs:300_000,
     weatherCheckMaxAgeMs:420_000,
