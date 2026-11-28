@@ -11,6 +11,7 @@ import { gaugeIcon } from './command-gauge.js';
 import { createMapPreview } from './map-preview.js';
 
 const ML_TILE = 512, EARTH = 40075016.686; // MapLibre zoom: 512 px tiles
+const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: Esri, Maxar, Earthstar Geographics · 3D renderer preview';
 const empty = { type: 'FeatureCollection', features: [] };
 const reduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const rings = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
@@ -129,25 +130,24 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     const g = c.getContext('2d'), title = String(name).slice(0, 60), sub = String(kind || '').slice(0, 60), s = 2;
     const fontA = `700 ${15 * s}px "Avenir Next", system-ui, sans-serif`, fontB = `500 ${11 * s}px "Avenir Next", system-ui, sans-serif`;
     g.font = fontA; const wA = g.measureText(title).width; g.font = fontB; const wB = sub ? g.measureText(sub).width : 0;
-    const w = Math.ceil(Math.max(wA, wB)) + 28 * s, boxH = (sub ? 44 : 30) * s, stem = 34 * s;
-    c.width = w; c.height = boxH + stem;
+    const w = Math.ceil(Math.max(wA, wB)) + 28 * s, boxH = (sub ? 44 : 30) * s;
+    c.width = w; c.height = boxH;
     g.fillStyle = 'rgba(23,33,38,.92)'; g.strokeStyle = color; g.lineWidth = 2 * s;
     g.beginPath(); g.roundRect(s, s, w - 2 * s, boxH - 2 * s, 6 * s); g.fill(); g.stroke();
-    g.fillStyle = color; g.fillRect(w / 2 - 1.5 * s, boxH - s, 3 * s, stem - 4 * s);
-    g.beginPath(); g.arc(w / 2, boxH + stem - 4 * s, 3.5 * s, 0, 7); g.fill();
     g.textAlign = 'center'; g.textBaseline = 'top'; g.fillStyle = '#f4f8fa'; g.font = fontA; g.fillText(title, w / 2, 7 * s);
     if (sub) { g.fillStyle = '#c3d2d8'; g.font = fontB; g.fillText(sub, w / 2, 27 * s); }
   });
+  const stemTex = color => texture(`stem:${color}`, c => { c.width = 16; c.height = 72; const g = c.getContext('2d'); g.fillStyle = color; g.fillRect(6.5, 0, 3, 64); g.beginPath(); g.arc(8, 64, 7, 0, 7); g.fill(); });
   const pulseRing = color => texture(`pulse:${color}`, c => { c.width = c.height = 128; const g = c.getContext('2d'); g.beginPath(); g.arc(64, 64, 52, 0, 7); g.lineWidth = 9; g.strokeStyle = color; g.stroke(); });
   let pulses = [];
   /** @type {{sprite: THREE.Sprite, lon: number, lat: number, px: number, lift: number, record?: object, minDistance?: number}[]} */
   let placed = [];
-  function marker(tex, lon, lat, { px, anchor = [0.5, 0.5], lift = 0, record, maxDistance = Infinity, order = 0 }) {
+  function marker(tex, lon, lat, { px, anchor = [0.5, 0.5], lift = 0, record, maxDistance = Infinity, order = 0, keepInView = false }) {
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, sizeAttenuation: false, transparent: true }));
     sprite.center.set(anchor[0], anchor[1]); sprite.renderOrder = 10 + order;
     const aspect = tex.image.width / tex.image.height;
     markers.add(sprite);
-    const m = { sprite, lon, lat, px, aspect, lift, record, maxDistance };
+    const m = { sprite, lon, lat, px, aspect, lift, record, maxDistance, keepInView, anchorX: anchor[0] };
     placed.push(m);
     return m;
   }
@@ -181,7 +181,10 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
         const at = one && chosen.length === 1 ? one[one.length >> 1] : [(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2];
         const p = chosen[0].properties, color = p.color && /^#/.test(p.color) ? p.color : '#ffce91';
         pulses.push(marker(pulseRing(color), at[0], at[1], { px: 46, order: 5 }));
-        marker(beacon(selectedName || p.name || 'Selected place', selectedKind, color), at[0], at[1], { px: 70, anchor: [0.5, 0], order: 6 });
+        // stem fixed on the place; the label box sits on top of it and slides sideways to stay inside the map
+        marker(stemTex(color), at[0], at[1], { px: 36, anchor: [0.5, 0.1], order: 6 });
+        const box = beacon(selectedName || p.name || 'Selected place', selectedKind, color), boxPx = selectedKind ? 44 : 30;
+        marker(box, at[0], at[1], { px: boxPx, anchor: [0.5, -(34 / boxPx)], order: 6, keepInView: true });
       }
     }
     for (const f of triggers) for (const [lon, lat] of points(f.geometry)) {
@@ -197,7 +200,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       if (f.properties?.label) marker(label(f.properties.label, '#eef8ff', 13), lon, lat, { px: 22, anchor: [0.5, -0.3], order: 2 });
     }
   }
-  const tan = () => Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+  const tan = () => Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2), screen = new THREE.Vector3();
   county.onFrame(() => {
     const H = host.clientHeight || 1, d = camera.position.distanceTo(controls.target);
     drape.track(controls.target.x, controls.target.z, d, (2 * d * tan()) / H);
@@ -207,6 +210,11 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       m.sprite.position.set(x, g + m.lift * k, z);
       m.sprite.scale.set(m.px * m.aspect * unit, m.px * unit, 1);
       m.sprite.visible = d / k < m.maxDistance;
+      if (m.keepInView) { // slide a wide label sideways so it stays inside the map; its stem still marks the place
+        const W = host.clientWidth || 1, x = (screen.copy(m.sprite.position).project(camera).x + 1) * W / 2, half = (m.px * m.aspect) / 2;
+        const shift = Math.max(0, half + 8 - x) - Math.max(0, x + half + 8 - W);
+        m.sprite.center.x = m.anchorX - shift / (m.px * m.aspect);
+      }
     }
   });
 
@@ -242,8 +250,20 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
   let cameraTimer = 0;
   const emitCamera = () => { clearTimeout(cameraTimer); cameraTimer = setTimeout(() => !destroyed && onCamera(currentCamera()), 250); };
   controls.addEventListener('end', emitCamera);
-  controls.addEventListener('start', () => { tween = null; preview.remove(); });
-  function fit(bounds, animate = true, padding) {
+  // The last fit is re-applied when the map changes size (panels open/close, phone rotation, a hidden map gaining a
+  // size), until the person moves the camera themselves.
+  let lastFit = null, userMoved = false, size = '';
+  controls.addEventListener('start', () => { tween = null; preview.remove(); userMoved = true; });
+  county.onFrame(() => {
+    const now = `${host.clientWidth}x${host.clientHeight}`;
+    if (now === size) return;
+    size = now;
+    if (lastFit && !userMoved && host.clientWidth && host.clientHeight) fit(lastFit.bounds, false, lastFit.padding, true);
+    credit.textContent = host.clientWidth < 600 ? '© Esri, Maxar · Terrarium · 3D preview' : CREDIT;
+  });
+  function fit(bounds, animate = true, padding, refit = false) {
+    if (!refit) { lastFit = { bounds, padding }; userMoved = false; }
+    if (!host.clientWidth || !host.clientHeight) return; // applied when the map gets a size
     const [w, s, e, n] = bounds, lon = (w + e) / 2, lat = (s + n) / 2;
     const pad = typeof padding === 'number' ? padding : padding ? Math.max(padding.top + padding.bottom, padding.left + padding.right) / 2 : 40;
     const W = Math.max(host.clientWidth - 2 * pad, 80), H = Math.max(host.clientHeight - 2 * pad, 80);
@@ -316,9 +336,8 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
   canvas.addEventListener('pointerleave', () => { preview.remove(); canvas.style.cursor = ''; });
 
   // ---------- attribution ----------
-  const credit = Object.assign(document.createElement('div'), { className: 'county3d-credit',
-    textContent: 'Terrain: Mapzen/AWS Terrarium · Imagery: Esri, Maxar, Earthstar Geographics · 3D renderer preview' });
-  credit.style.cssText = 'position:absolute;right:6px;bottom:4px;font:11px system-ui;color:#dfe7ea;background:rgba(23,33,38,.72);padding:2px 6px;border-radius:3px;pointer-events:none';
+  const credit = Object.assign(document.createElement('div'), { className: 'county3d-credit', textContent: CREDIT });
+  credit.style.cssText = 'position:absolute;right:6px;bottom:4px;max-width:calc(100% - 12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:11px system-ui;color:#dfe7ea;background:rgba(23,33,38,.72);padding:2px 6px;border-radius:3px;pointer-events:none';
   host.append(credit);
 
   // ---------- weather rasters: Mercator PNG + four corners, drawn into the drape ----------
