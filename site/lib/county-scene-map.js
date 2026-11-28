@@ -11,6 +11,7 @@ import { gaugeIcon } from './command-gauge.js';
 import { createMapPreview } from './map-preview.js';
 import { cloudTopHeightBand } from './cloud-top-style.js';
 import { cloudTopReadout } from './cloud-top-inspection.js';
+import { RADAR_BANDS } from './hanford-radar-data.js';
 
 const ML_TILE = 512, EARTH = 40075016.686; // MapLibre zoom: 512 px tiles
 const CREDIT = 'Terrain: Mapzen/AWS Terrarium · Imagery: Esri, Maxar, Earthstar Geographics · 3D renderer preview';
@@ -554,6 +555,36 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     if (changed && wind.field) { windBounds = windArea(2 * (camera.position.distanceTo(controls.target) / k) * tan() * ((host.clientWidth || 1) / (host.clientHeight || 1))); for (let i = 0; i < WIND_N; i++) { windSpawn(i, windBounds); wind.age[i] = Math.random() * wind.life[i]; } }
   }
 
+  // ---------- KHNX radar reflectivity volume (observation) ----------
+  // volume: {values Float32Array [height 24][y 48, northward][x 64], shape, bounds3857, heightRange} from radar-volume-data.js.
+  // Each sampled cell at or above the threshold is drawn as a translucent box at its true extent (about 3 km x 3 km x 500 m,
+  // 0-12 km MSL), coloured by RADAR_BANDS: nearest cell, no interpolation; -999 (unknown) cells are not drawn. Boxes rather
+  // than ray-marching: a few hundred occupied cells of 73,728 is typical, and a full-box ray march cost about 11 ms per frame.
+  const bandColors = RADAR_BANDS.map(({ min, color }) => [min, new THREE.Color().setRGB(...color.map(c => c / 255), THREE.SRGBColorSpace)]);
+  const radarBox = { mesh: null, volume: null, minDbz: null };
+  function radarVolume(volume, minDbz = 20) {
+    if (destroyed) return;
+    if (radarBox.mesh) { scene.remove(radarBox.mesh); radarBox.mesh.geometry.dispose(); radarBox.mesh.material.dispose(); radarBox.mesh = null; }
+    radarBox.volume = volume || null; radarBox.minDbz = minDbz;
+    if (!volume) return;
+    if (!Number.isFinite(minDbz) || minDbz < 10 || minDbz > 79.5) throw Error('Invalid Hanford volume threshold');
+    const [nz, ny, nx] = volume.shape, [west, south, east, north] = volume.bounds3857, [h0, h1] = volume.heightRange, v = volume.values;
+    const x0 = west - frame.ox, x1 = east - frame.ox, zNorth = -(north - frame.oy), zSouth = -(south - frame.oy);
+    const dx = (x1 - x0) / nx, dz = (zSouth - zNorth) / ny, dy = ((h1 - h0) / nz) * k;
+    const cells = [];
+    for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const dbz = v[(z * ny + y) * nx + x]; if (dbz !== -999 && dbz >= minDbz) cells.push([x, y, z, dbz]); }
+    if (!cells.length) return;
+    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.55, depthWrite: false, emissive: 0xffffff, emissiveIntensity: 0.15 }), cells.length);
+    const m = new THREE.Matrix4(), c = new THREE.Color();
+    cells.forEach(([x, y, z, dbz], i) => {
+      m.makeScale(dx * 0.94, dy * 0.94, dz * 0.94).setPosition(x0 + (x + 0.5) * dx, h0 * k + (z + 0.5) * dy, zSouth - (y + 0.5) * dz); // rows run northward
+      mesh.setMatrixAt(i, m);
+      mesh.setColorAt(i, c.copy(bandColors.findLast(([min]) => dbz >= min)?.[1] ?? bandColors[0][1]));
+    });
+    mesh.renderOrder = 7; mesh.computeBoundingSphere();
+    scene.add(mesh); radarBox.mesh = mesh;
+  }
+
   const noop = () => {};
   const api = {
     /** Feature flag read by the shared weather UIs: this renderer can draw true-altitude 3D surfaces. */
@@ -604,14 +635,14 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     snowfall(image) { return setRaster('snowfall', image, 0.65, true); },
     regionalRadar(image) { return setRaster('regional-radar', image, 0.65); },
     cloud(image) { setRaster('goes', image, 0.55); },
-    cloudTops,
+    cloudTops, radarVolume,
     // Not yet ported to three.js (Command does not enable them).
-    radar: noop, radarVolume: noop, forecastClouds: noop, forecastWind: noop,
+    radar: noop, forecastClouds: noop, forecastWind: noop,
     destroy() {
       if (destroyed) return; destroyed = true;
       clearInterval(clock); clearTimeout(cameraTimer); preview.destroy(); credit.remove(); drape.dispose();
       for (const r of rasters.values()) r.bitmap.close?.();
-      cloudTops(null); setWind(null); windGeom.dispose(); windLines.material.dispose(); windNote.remove();
+      cloudTops(null); radarVolume(null); setWind(null); windGeom.dispose(); windLines.material.dispose(); windNote.remove();
       for (const t of textures.values()) t.dispose();
       county.destroy();
       delete host.county3dMap;
