@@ -16,7 +16,8 @@ export function installRegionalRadar({session,info,items,renderColors,visible,so
  slider.type='range';slider.min='0';slider.step='1';slider.setAttribute('aria-label','NWS radar observation');
  controls.append(...(stepControls?[play,previous,slider,next,latest]:[play,slider,latest]));
  play.disabled=true;slider.disabled=true;
- const clouds=cloudFactory(session,{allowSurface:false});
+ // 3D renderers (session.volumetric) draw GOES cloud tops as a surface at their altitude; MapLibre Command keeps 2D infrared.
+ const clouds=cloudFactory(session,{allowSurface:session.volumetric===true});
  let active=false,suspended=false,following=true,request,timer,expiry,player,frames=[],displayed=null,index=-1,epoch=0;
  let coverage=[...regionalForecastBounds],gaps=false,cloudOpen=false;
  const fresh=()=>displayed&&Date.now()-displayed.time<=120*60000;

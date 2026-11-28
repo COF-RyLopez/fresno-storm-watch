@@ -71,7 +71,7 @@ export function gustPointFeatures(snapshot, target, now = Date.now()) {
 export async function loadGustImage(manifest, entry, signal) {
   const {frame} = hrrrAt(manifest, Date.parse(entry.valid));
   if (!frame || Date.parse(entry.valid) < Date.now()) throw Error('Forecast step is no longer current');
-  const values = validateHrrrFrame(await read(entry.file, signal), manifest, entry).gust;
+  const step = validateHrrrFrame(await read(entry.file, signal), manifest, entry), values = step.gust;
   if (!values.some(value => value !== null)) throw Error('No gust values returned for this forecast step');
   const {x0, y0, dx, dy, width, height} = manifest.grid;
   const west = x0 - dx / 2, east = west + width * dx;
@@ -97,5 +97,8 @@ export async function loadGustImage(manifest, entry, signal) {
   context.putImageData(image, 0, 0);
   const blob = await new Promise((resolve, reject) => canvas.toBlob(
     value => value ? resolve(value) : reject(Error('Gust image unavailable')), 'image/png'));
-  return {blob, coordinates: [[west,north],[east,north],[east,south],[west,south]]};
+  // The same step's 10 m wind (m/s, earth-relative u east / v north) rides along for renderers that draw wind trails;
+  // MapLibre ignores it.
+  return {blob, coordinates: [[west,north],[east,north],[east,south],[west,south]],
+    wind: step.u && step.v ? {u: step.u, v: step.v, grid: manifest.grid, valid: entry.valid} : null};
 }

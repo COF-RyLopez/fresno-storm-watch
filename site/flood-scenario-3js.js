@@ -19,7 +19,6 @@ const loading = $('loading');
 const step = text => { loading.textContent = text; };
 
 const { id, entry, DATA } = await pickScenario(ROOT);
-$('link-3d').href = `./flood-scenario-3d.html?scenario=${encodeURIComponent(id)}`;
 $('link-2d').href = `./flood-scenario.html?scenario=${encodeURIComponent(id)}`;
 step('Loading scenario and buildings…');
 const gunzip = r => new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();

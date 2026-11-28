@@ -410,12 +410,14 @@ function recordHistory(record, collection, label = "Record version") {
   return details;
 }
 
-/** @param {{work: HTMLElement, briefing: HTMLElement, controller: ReturnType<typeof import("./command-private.js").createCommandPrivate>, onFocus?: (selection: any) => void, onNavigate?: (view: string) => void, onNotices?: () => void, team?: string}} options */
+/** @param {{work: HTMLElement, briefing: HTMLElement, controller: ReturnType<typeof import("./command-private.js").createCommandPrivate>, onFocus?: (selection: any) => void, onShowEvidence?: (evidence: any) => void, onNavigate?: (view: string) => void, onNotices?: () => void, team?: string}} options */
 export function mountCommandPrivate({
   work,
   briefing,
   controller,
   onFocus = () => {},
+  // Reopen Watch on a captured place, with the camera it was captured with (weather and time are not replayed).
+  onShowEvidence = (evidence) => onFocus(evidence?.id),
   onNavigate = () => {},
   onNotices = () => {},
   team = "F.R.O.G. EOC exercise team",
@@ -1058,6 +1060,7 @@ export function mountCommandPrivate({
             "Selected evidence",
         ),
         el("pre", evidenceLines(evidence).join("\n"), "cmd-briefing-text"),
+        ...(typeof evidence.id === "string" ? [button("Show on map", () => onShowEvidence(evidence))] : []),
         button("Remove captured evidence", () =>
           controller.removeCapture(item.id),
         ),

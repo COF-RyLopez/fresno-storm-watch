@@ -61,6 +61,7 @@ export interface Modules {
   "sdk": typeof import("../../site/lib/sdk.js");
   "watch-regional-radar-ui": typeof import("../../site/lib/watch-regional-radar-ui.js");
   "watch-terrain-map": typeof import("../../site/lib/watch-terrain-map.js");
+  "county-scene-map": typeof import("../../site/lib/county-scene-map.js");
   "watch-watershed-data": typeof import("../../site/lib/watch-watershed-data.js");
   "watershed-timeline-model": typeof import("../../site/lib/watershed-timeline-model.js");
 }
