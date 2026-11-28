@@ -77,6 +77,14 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       else if (p.detour) line(f.geometry, p.color || '#5fc9b6', 2.5, [2, 1.5]);
       else line(f.geometry, p.color || '#ffb547', 3);
     }
+    // The selected place: a dark-edged white halo under its own colour, so it reads against imagery, weather and night.
+    for (const f of records.features) {
+      const p = f.properties || {};
+      if (!p.selected) continue;
+      const c = p.color || '#ffce91';
+      if (rings(f.geometry).length) { polygon(f.geometry, hexAlpha(c, 0.2), null, 0); polygon(f.geometry, null, '#172126', 9); polygon(f.geometry, null, '#ffffff', 6); polygon(f.geometry, null, c, 3.5); }
+      if (paths(f.geometry).length) { line(f.geometry, '#172126', 11); line(f.geometry, '#ffffff', 7); line(f.geometry, c, 4, p.detour ? [3, 2] : []); }
+    }
     for (const f of triggers) {
       if (paths(f.geometry).length) { ctx.globalAlpha = 0.85; line(f.geometry, '#ffce91', 5, f.properties?.detour ? [3, 2] : []); ctx.globalAlpha = 1; }
       if (rings(f.geometry).length) { ctx.globalAlpha = 0.85; polygon(f.geometry, null, '#ffce91', 5); ctx.globalAlpha = 1; }
@@ -84,6 +92,7 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
   }
   const drape = createDrape({ frame, paint });
 
+  let selectedName = '', selectedKind = '';
   const county = createCountyScene({ container: host, bounds: COUNTY_BOUNDS, nightFloor: 0.6, terrain: { decorate: drape.decorate, detail: 0.9 } });
   const { scene, camera, controls, renderer } = county;
   const clock = setInterval(() => county.setTime(new Date()), 60_000); // the sun follows real time
@@ -115,6 +124,22 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     c.width = w; c.height = h; g.font = font; g.textAlign = 'center'; g.textBaseline = 'top'; g.lineJoin = 'round';
     lines.forEach((l, i) => { g.lineWidth = 6; g.strokeStyle = '#172126'; g.strokeText(l, w / 2, 4 + i * size * 2.4); g.fillStyle = color; g.fillText(l, w / 2, 4 + i * size * 2.4); });
   });
+  // A beacon over the selected place: its name on a stem above the ground point, so "what am I looking at" is answered on the map.
+  const beacon = (name, kind, color) => texture(`beacon:${color}:${kind}:${name}`, c => {
+    const g = c.getContext('2d'), title = String(name).slice(0, 60), sub = String(kind || '').slice(0, 60), s = 2;
+    const fontA = `700 ${15 * s}px "Avenir Next", system-ui, sans-serif`, fontB = `500 ${11 * s}px "Avenir Next", system-ui, sans-serif`;
+    g.font = fontA; const wA = g.measureText(title).width; g.font = fontB; const wB = sub ? g.measureText(sub).width : 0;
+    const w = Math.ceil(Math.max(wA, wB)) + 28 * s, boxH = (sub ? 44 : 30) * s, stem = 34 * s;
+    c.width = w; c.height = boxH + stem;
+    g.fillStyle = 'rgba(23,33,38,.92)'; g.strokeStyle = color; g.lineWidth = 2 * s;
+    g.beginPath(); g.roundRect(s, s, w - 2 * s, boxH - 2 * s, 6 * s); g.fill(); g.stroke();
+    g.fillStyle = color; g.fillRect(w / 2 - 1.5 * s, boxH - s, 3 * s, stem - 4 * s);
+    g.beginPath(); g.arc(w / 2, boxH + stem - 4 * s, 3.5 * s, 0, 7); g.fill();
+    g.textAlign = 'center'; g.textBaseline = 'top'; g.fillStyle = '#f4f8fa'; g.font = fontA; g.fillText(title, w / 2, 7 * s);
+    if (sub) { g.fillStyle = '#c3d2d8'; g.font = fontB; g.fillText(sub, w / 2, 27 * s); }
+  });
+  const pulseRing = color => texture(`pulse:${color}`, c => { c.width = c.height = 128; const g = c.getContext('2d'); g.beginPath(); g.arc(64, 64, 52, 0, 7); g.lineWidth = 9; g.strokeStyle = color; g.stroke(); });
+  let pulses = [];
   /** @type {{sprite: THREE.Sprite, lon: number, lat: number, px: number, lift: number, record?: object, minDistance?: number}[]} */
   let placed = [];
   function marker(tex, lon, lat, { px, anchor = [0.5, 0.5], lift = 0, record, maxDistance = Infinity, order = 0 }) {
@@ -145,6 +170,19 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
       }
       // Lines and polygons are draped; give lines a label anchor at their middle for close views
       if (p.kind === 'nws-corridor' && p.citation) { const path = paths(f.geometry)[0]; if (path) { const [lon, lat] = path[path.length >> 1]; marker(label(p.citation, '#bfe8f2', 11), lon, lat, { px: 20, maxDistance: 120_000 }); } }
+    }
+    const chosen = records.features.filter(f => f.properties?.selected && f.geometry);
+    pulses = [];
+    if (chosen.length) {
+      const all = chosen.flatMap(f => points(f.geometry).length ? points(f.geometry) : paths(f.geometry).length ? paths(f.geometry).flat() : rings(f.geometry).flat(2));
+      if (all.length) {
+        const lons = all.map(q => q[0]), lats = all.map(q => q[1]), one = paths(chosen[0].geometry)[0];
+        // a line's own middle vertex keeps the beacon on the road; otherwise the bounds centre
+        const at = one && chosen.length === 1 ? one[one.length >> 1] : [(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2];
+        const p = chosen[0].properties, color = p.color && /^#/.test(p.color) ? p.color : '#ffce91';
+        pulses.push(marker(pulseRing(color), at[0], at[1], { px: 46, order: 5 }));
+        marker(beacon(selectedName || p.name || 'Selected place', selectedKind, color), at[0], at[1], { px: 70, anchor: [0.5, 0], order: 6 });
+      }
     }
     for (const f of triggers) for (const [lon, lat] of points(f.geometry)) {
       marker(ring('#ffce91'), lon, lat, { px: 26, order: 4 });
@@ -191,6 +229,10 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
     controls.target.copy(from.t); camera.position.copy(from.p);
     tween = { from, to, start: performance.now(), ms };
   }
+  county.onFrame(now => {
+    const t = reduced() ? 0.35 : (now % 1800) / 1800;
+    for (const m of pulses) { m.sprite.material.opacity = 1 - t; m.px = 30 + 60 * t; }
+  });
   county.onFrame(now => {
     if (!tween) return;
     const u = Math.min(1, (now - tween.start) / tween.ms), e = u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
@@ -295,7 +337,20 @@ export async function createWatchTerrain({ container, onSelect, onError, onCamer
 
   const noop = () => {};
   return {
-    set(data) { if (destroyed) return; records = data || empty; rebuildMarkers(); drape.invalidate(); },
+    set(data) {
+      if (destroyed) return;
+      records = data || empty;
+      rebuildMarkers(); drape.invalidate();
+      // Command's map caption names the selected place (it is written just after set); reuse it for the beacon rather than
+      // guessing from feature names. Fall back to the feature's own name.
+      setTimeout(() => {
+        if (destroyed) return;
+        const doc = host.ownerDocument, name = doc.getElementById('map-place')?.textContent?.trim() || '', kind = doc.getElementById('map-scope')?.textContent?.trim() || '';
+        if (name === selectedName && kind === selectedKind) return;
+        selectedName = records.features.some(f => f.properties?.selected) ? name : ''; selectedKind = selectedName ? kind : '';
+        rebuildMarkers();
+      }, 0);
+    },
     focus(bounds, animate = true, padding) { if (!destroyed) fit(bounds, animate, padding); },
     overhead(value) {
       overhead = value; const c = currentCamera();

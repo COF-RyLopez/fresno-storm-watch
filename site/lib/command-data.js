@@ -26,6 +26,7 @@ import { readCareCollection } from "./care-data.js";
 import { nwsGuidance } from "./command-alert-guidance.js";
 import { gaugeDisplay } from "./command-gauge.js";
 import { contextRecords } from "./command-context.js";
+import { describePlace } from "./place-description.js";
 import { CARE_SOURCES, ZONE_STATUS, zonesAt } from "./care-model.js";
 
 const num = (n) => (Number.isFinite(n) ? n : null);
@@ -220,13 +221,18 @@ export function riverConcerns(bundle, now = Date.now(), checkError = null) {
     });
   return { rows: [...rows, ...power], features };
 }
-export function roadConcerns(snapshot, error = null, now = Date.now()) {
+/** @param {object[] | {features: object[]} | null} [cities] Census city polygons: unnamed records are described by where
+ *  their map line is ("Detour · 3.4 mi NW of Kerman"), labelled as derived from the geometry. */
+export function roadConcerns(snapshot, error = null, now = Date.now(), cities = null) {
   if (!snapshot) return [];
   const rows = snapshot.rows;
   const conflicts = roadConflictBacklog(rows, now);
   const result = rows.map((r) => {
-    const c = base(r.key, "road", r.name),
-      geometry = arcGeometry(r.geometry);
+    const geometry = arcGeometry(r.geometry);
+    const unnamed = r.name === "Unnamed county record", noLocation = r.location === "Location not supplied";
+    const where = geometry && (unnamed || noLocation) ? describePlace(geometry, cities) : null;
+    const c = base(r.key, "road", unnamed && where ? `${r.kind || "Road record"} · ${where}` : r.name);
+    const location = noLocation && where ? `Mapped ${where} (from the record's map line; the county record has no location text)` : r.location;
     c.change = r.status;
     c.review = roadInCurrentView(r, now);
     c.sourceReview = isRoadTestRecord(r);
@@ -241,14 +247,14 @@ export function roadConcerns(snapshot, error = null, now = Date.now()) {
       ? "Ask the road-data owner to confirm or retire this source test entry"
       : "Confirm road status and access with Road Maintenance";
     c.details = [
-      r.location,
+      location,
       r.reason,
       r.comment,
       r.alternateRoute,
       ...r.issues,
     ].filter(Boolean);
     c.trigger = {
-      lines: [r.location, ...(r.issues.length ? r.issues : [r.status]), r.reason].filter(Boolean),
+      lines: [location, ...(r.issues.length ? r.issues : [r.status]), r.reason].filter(Boolean),
       question: c.sourceReview ? "Should the road-data owner retire or correct this source test entry?"
         : "Does this segment restrict travel now, and which alternate access has Road Maintenance confirmed?",
     };
@@ -437,7 +443,7 @@ export function createCommandFeeds({
         if (!alive) return;
         missing = missingRoadRecords(roads?.rows || [], next.rows, missing);
         roads = next;
-        sources.roads = roadConcerns(next);
+        sources.roads = roadConcerns(next, null, Date.now(), mapContext?.cities);
         const byId = new Map(sources.roads.map(c => [c.id, c.features[0]]));
         careRoadIndex = next.rows.map(row => {
           const feature = byId.get(row.key);
@@ -445,7 +451,7 @@ export function createCommandFeeds({
         });
         sources.missing = [...missing.values()]
           .map(({ row }) => ({
-            ...roadConcerns({ rows: [row] }, "Source record disappeared")[0],
+            ...roadConcerns({ rows: [row] }, "Source record disappeared", Date.now(), mapContext?.cities)[0],
             change: "No longer returned · access unconfirmed",
           }))
           .filter((r) => r.id);
@@ -475,8 +481,10 @@ export function createCommandFeeds({
       }),
     ]);
     if (!alive) return;
+    // Roads and city boundaries load in parallel: describe unnamed road records once both are in.
+    if (roads && mapContext?.cities && !errors["County roads"]) sources.roads = roadConcerns(roads, null, Date.now(), mapContext.cities);
     if (errors["County roads"])
-      sources.roads = roadConcerns(roads, errors["County roads"]);
+      sources.roads = roadConcerns(roads, errors["County roads"], Date.now(), mapContext?.cities);
     if (errors["NWS alerts"])
       sources.alerts = (sources.alerts || []).map((c) => ({
         ...c,

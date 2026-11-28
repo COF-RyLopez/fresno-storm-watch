@@ -964,7 +964,11 @@ function updateMap() {
       }),
     ];
   }
-  features = [...new Map(features.map((f) => [JSON.stringify([f.id, f.properties?.id, f.geometry]), f])).values()];
+  const featureKey = (f: any) => JSON.stringify([f.id, f.properties?.id, f.geometry]);
+  features = [...new Map(features.map((f) => [featureKey(f), f])).values()];
+  // Mark the selected place so a renderer can emphasise it (MapLibre ignores the property).
+  const selectedKeys = new Set((c?.features || []).map(featureKey));
+  features = features.map((f) => selectedKeys.has(featureKey(f)) ? { ...f, properties: { ...f.properties, selected: true } } : f);
   map.set({ type: "FeatureCollection", features });
   const gauges = features.filter(f => f.properties?.gaugeDisplay);
   const burnFeatures = feeds.reference.find(r=>r.id === "burn-scars")?.features || [];
@@ -1010,7 +1014,7 @@ function updateMap() {
       : citedRoads.length ? "Dashed corridors named by NWS · verify current access"
       : `${model.advisoryProfile(c.name).label} · mapped overlap, not confirmed impacts`
     : c
-    ? "Selected place · nearby context · current observations"
+    ? [c.change, "nearby records shown"].filter(Boolean).join(" · ")
     : "Reference terrain · major waterways");
   if (pendingFit && c) {
     const b = model.geometryBounds(triggerFeatures.length
