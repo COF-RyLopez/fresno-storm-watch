@@ -40,3 +40,19 @@ test('tile range covers the extent; terrarium and bilinear sampling', () => {
   assert.equal(sampleGrid([0, 10, 20, 30], 2, 2, 0.5, 0.5), 15);
   assert.equal(sampleGrid([0, 10, 20, 30], 2, 2, 5, -1), 10);
 });
+
+test('hip roofs: rectangles get a ridge along the long side; irregular or large footprints stay flat', async () => {
+  const { hipRoof } = await import('../site/lib/flood-three-model.js');
+  const rect = [[0, 0], [20, 0], [20, 10], [0, 10]], roof = hipRoof(rect);
+  assert.equal(roof.length, 18 * 3);
+  const ys = [], xs = [], zs = [];
+  for (let i = 0; i < roof.length; i += 3) { xs.push(roof[i]); ys.push(roof[i + 1]); zs.push(roof[i + 2]); }
+  assert.ok(Math.abs(Math.max(...ys) - 5 * 5 / 12) < 1e-6, 'rise = half-width x pitch');
+  assert.deepEqual([Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)].map(v => Math.round(v * 1e6) / 1e6), [0, 20, 0, 10]);
+  const ridge = [];
+  for (let i = 0; i < roof.length; i += 3) if (roof[i + 1] > 1) ridge.push(Math.round(roof[i] * 1e6) / 1e6);
+  assert.deepEqual([...new Set(ridge)].sort((a, b) => a - b), [5, 15], 'ridge runs along x, inset by the half-width');
+  assert.equal(hipRoof([[0, 0], [20, 0], [20, 4], [4, 4], [4, 20], [0, 20]]), null, 'L-shape stays flat');
+  assert.equal(hipRoof([[0, 0], [40, 0], [40, 30], [0, 30]]), null, 'over 600 square units stays flat');
+  assert.ok(hipRoof([[0, 0], [10, 10], [5, 15], [-5, 5]]), 'rotated rectangles are found');
+});
