@@ -7,6 +7,8 @@ import { screenPixels, tileTouches, tilesCovering } from './frame.js';
 
 export const DEM = (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
 export const IMAGERY = (z, x, y) => `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
+/** USGS National Map imagery (public domain, NAIP-based in the US), published to zoom 16. */
+export const USGS_IMAGERY = (z, x, y) => `https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/${z}/${y}/${x}`;
 const N = 32, ROOT_Z = 6, DEM_MAX_Z = 14, TEX = 512;
 // Coarse context around the county (about 5 degrees each way) so wide views never show the edge of the base.
 const CONTEXT_DEGREES = 5;
@@ -14,8 +16,9 @@ const CONTEXT_DEGREES = 5;
 // Fetch and decode in workers: PNG decode and getImageData on the main thread stall the frame loop.
 const WORKER = `
 const terrarium = (r, g, b) => r * 256 + g + b / 256 - 32768;
-const get = url => fetch(url, { mode: 'cors' }).then(r => r.ok ? r.blob() : Promise.reject(new Error(r.status))).then(createImageBitmap);
-onmessage = async ({ data: { id, kind, urls } }) => {
+const one = url => fetch(url, { mode: 'cors' }).then(r => r.ok ? r.blob() : Promise.reject(new Error(r.status))).then(createImageBitmap);
+const get = url => Array.isArray(url) ? one(url[0]).catch(() => url[1] ? one(url[1]) : Promise.reject(new Error('tile unavailable'))) : one(url); // [primary, fallback]
+onmessage = async ({ data: { id, kind, urls, crop } }) => {
   try {
     if (kind === 'dem') {
       const bmp = await get(urls[0]), c = new OffscreenCanvas(256, 256).getContext('2d', { willReadFrequently: true });
@@ -23,6 +26,14 @@ onmessage = async ({ data: { id, kind, urls } }) => {
       const px = c.getImageData(0, 0, 256, 256).data, h = new Float32Array(65536);
       for (let i = 0; i < 65536; i++) h[i] = terrarium(px[4 * i], px[4 * i + 1], px[4 * i + 2]);
       postMessage({ id, h }, [h.buffer]);
+    } else if (kind === 'crop') {
+      // one ancestor tile, a fraction of it enlarged to fill the texture (imagery source's maximum zoom reached)
+      const canvas = new OffscreenCanvas(${TEX}, ${TEX}), c = canvas.getContext('2d'), [u, v, f] = crop;
+      let missing = 0;
+      try { const b = await get(urls[0]); c.drawImage(b, u * 256, v * 256, f * 256, f * 256, 0, 0, ${TEX}, ${TEX}); }
+      catch { c.fillStyle = '#4a4f47'; c.fillRect(0, 0, ${TEX}, ${TEX}); missing = 1; }
+      const bitmap = canvas.transferToImageBitmap();
+      postMessage({ id, bitmap, missing }, [bitmap]);
     } else {
       const canvas = new OffscreenCanvas(${TEX}, ${TEX}), c = canvas.getContext('2d');
       c.fillStyle = '#4a4f47'; c.fillRect(0, 0, ${TEX}, ${TEX});
@@ -50,18 +61,18 @@ function gridBuffers() {
 
 /**
  * @param {{frame: ReturnType<import('./frame.js').createFrame>, renderer: THREE.WebGLRenderer, dem?: Function, imagery?: Function,
- *   maxZoom?: number, outsideMaxZoom?: number, detail?: number, maxNodes?: number, decorate?: (m: THREE.MeshStandardMaterial) => void}} options
+ *   imageryFallback?: Function, imageryMaxZoom?: number, maxZoom?: number, outsideMaxZoom?: number, detail?: number, maxNodes?: number, decorate?: (m: THREE.MeshStandardMaterial) => void}} options
  */
-export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, maxZoom = 16, outsideMaxZoom = 10, detail = 1.25, maxNodes = 700, decorate = () => {} }) {
+export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, imageryFallback = null, imageryMaxZoom = 19, maxZoom = 16, outsideMaxZoom = 10, detail = 1.25, maxNodes = 700, decorate = () => {} }) {
   const { k } = frame, group = new THREE.Group(), shared = gridBuffers();
   const anisotropy = renderer.capabilities.getMaxAnisotropy();
   const workers = [0, 1, 2].map(() => new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' }))));
   const jobs = new Map();
   let jobId = 0, turn = 0;
   workers.forEach(w => { w.onmessage = ({ data }) => { const j = jobs.get(data.id); jobs.delete(data.id); data.error ? j.reject(new Error(data.error)) : j.resolve(data); }; });
-  const run = (kind, urls) => new Promise((resolve, reject) => {
+  const run = (kind, urls, crop) => new Promise((resolve, reject) => {
     const id = ++jobId; jobs.set(id, { resolve, reject });
-    workers[turn++ % workers.length].postMessage({ id, kind, urls });
+    workers[turn++ % workers.length].postMessage({ id, kind, urls, crop });
   });
   const demCache = new Map(); // 'z/x/y' -> Promise<Float32Array>, least recently used first
   function demTile(z, x, y) {
@@ -93,7 +104,14 @@ export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, m
       const { z, x, y, rect } = node, zd = Math.min(z, DEM_MAX_Z), scale = 2 ** (z - zd);
       const dx = Math.floor(x / scale), dy = Math.floor(y / scale), ox = x - dx * scale, oy = y - dy * scale;
       const zi = z + 1, kids = [[2 * x, 2 * y], [2 * x + 1, 2 * y], [2 * x, 2 * y + 1], [2 * x + 1, 2 * y + 1]];
-      const [h, img] = await Promise.all([demTile(zd, dx, dy), run('img', kids.map(([cx, cy]) => imagery(zi, cx, cy)))]);
+      let imageJob;
+      const tile = (tz, tx, ty) => imageryFallback ? [imagery(tz, tx, ty), imageryFallback(tz, tx, ty)] : imagery(tz, tx, ty);
+      if (zi <= imageryMaxZoom) imageJob = run('img', kids.map(([cx, cy]) => tile(zi, cx, cy)));
+      else { // past the source's deepest zoom: enlarge the matching part of the deepest tile
+        const up = 2 ** (z - imageryMaxZoom), ax = Math.floor(x / up), ay = Math.floor(y / up);
+        imageJob = run('crop', [tile(imageryMaxZoom, ax, ay)], [(x - ax * up) / up, (y - ay * up) / up, 1 / up]);
+      }
+      const [h, img] = await Promise.all([demTile(zd, dx, dy), imageJob]);
       // heights at the (N+1)^2 vertices, bilinear in the (possibly ancestor) DEM tile
       const S = N + 1, grid = new Float32Array(S * S);
       for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {

@@ -1,6 +1,7 @@
 // County 3D base (plan phase 1, stage A): the whole county and its upstream watersheds as one streamed three.js scene,
 // to measure the shared engine before layers and Command move onto it. No operational data yet.
 import { createCountyScene } from './lib/county3d/core.js';
+import { USGS_IMAGERY } from './lib/county3d/terrain.js';
 
 const $ = id => document.getElementById(id);
 const PRESETS = {
@@ -15,7 +16,8 @@ const PRESETS = {
 const params = new URLSearchParams(location.search);
 const scene = createCountyScene({
   container: $('view'),
-  terrain: { detail: Number(params.get('detail')) || 1.25 },
+  // ?imagery=usgs: USGS National Map imagery (public domain, NAIP-based, to zoom 16) instead of Esri World Imagery
+  terrain: { detail: Number(params.get('detail')) || 1.25, ...(params.get('imagery') === 'usgs' ? { imagery: USGS_IMAGERY, imageryMaxZoom: 16 } : {}) },
   onPerf({ fps, worst, pixelRatio, calls, triangles, terrain }) {
     $('perf').textContent = `${fps.toFixed(0)} fps, worst frame ${Math.round(worst)} ms · resolution ×${pixelRatio} · ${calls} draw calls, `
       + `${(triangles / 1e6).toFixed(2)} M triangles · tiles ${terrain.visible} shown / ${terrain.loaded} loaded, ${terrain.inflight} loading, finest z${terrain.maxZ}`;

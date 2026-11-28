@@ -4,6 +4,9 @@ import {readCareCollection} from './lib/care-data.js';
 import {pioZoneLink} from './lib/pio-zone-context.js';
 import {el,disclosure,link} from './lib/dom.js';
 const $=id=>document.getElementById(id);
+// [min, max) approximate residents, fill alpha, legend label. Display classes only, not thresholds for action.
+const POPULATION_CLASSES=[[0,10,.05,'Under 10'],[10,100,.14,'10–99'],[100,1000,.28,'100–999'],[1000,5000,.45,'1,000–4,999'],[5000,1e9,.62,'5,000 or more']];
+let zonesExtent=null;
 const time=t=>new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',dateStyle:'medium',timeStyle:'short'}).format(t)+' PT';
 let product=null,view=null,layer=null,layerView=null,selected=null,highlight=null,epoch=0,graphics=new Map(),blobUrl=null;
 
@@ -16,7 +19,7 @@ $('zones-search').addEventListener('calciteInputInput',renderList);$('only-unkno
 document.querySelector('.skip-link').addEventListener('click',e=>{e.preventDefault();void $('zones-search').setFocus();});
 $('fit-county').onclick=()=>{history.pushState(null,'',location.pathname);clearSelection();};
 
-function clearSelection(){selected=null;highlight?.remove();highlight=null;$('selected-zone').hidden=true;renderList();void view?.goTo(layer.fullExtent.expand(1.05)).catch(mapError);}
+function clearSelection(){selected=null;highlight?.remove();highlight=null;$('selected-zone').hidden=true;renderList();void view?.goTo((zonesExtent??layer.fullExtent).expand(1.05)).catch(mapError);}
 function mapError(e){if(e.name!=='AbortError')$('map-status').textContent='Map navigation unavailable. Zone figures and downloads remain available.';}
 function renderList(){
   if(!product)return;const rows=zoneRows(product.data.features,$('zones-search').value,$('only-unknown').checked),host=$('zone-rows');host.replaceChildren();
@@ -53,16 +56,19 @@ async function initialize(){
     blobUrl=URL.createObjectURL(new Blob([JSON.stringify(display)],{type:'application/json'}));
     layer=new GeoJSONLayer({url:blobUrl,title:'Sheriff evacuation zones · approximate ACS residents',copyright:'Fresno County | U.S. Census Bureau | Esri Living Atlas | F.R.O.G.',outFields:['*'],popupEnabled:false,
       fields:[{name:'oid',type:'integer'},{name:'name',type:'string'},{name:'displayLabel',type:'string'},{name:'population',type:'double'},{name:'samplingMoe',type:'double'},{name:'availability',type:'string'}],
-      renderer:{type:'unique-value',field:'availability',uniqueValueInfos:[{value:'estimated',label:'Zone with estimated residents',symbol:{type:'simple-fill',color:[80,180,200,.06],outline:{color:'#76d7e8',width:.8}}},{value:'unknown',label:'Estimate unavailable',symbol:{type:'simple-fill',color:[160,160,160,.06],outline:{color:'#b3b6bb',width:1,style:'dash'}}}]},
-      labelingInfo:[{labelPlacement:'always-horizontal',deconflictionStrategy:'static',labelExpressionInfo:{expression:'$feature.displayLabel'},symbol:{type:'text',color:'#e5f6ff',haloColor:'#17232b',haloSize:1.5,font:{size:10,family:'Arial',weight:'bold'}},minScale:0,maxScale:0}]});
+      // Shade by approximate residents so where people are reads at a glance; unknown estimates stay dashed and unshaded.
+      renderer:{type:'class-breaks',field:'population',defaultLabel:'Estimate unavailable',defaultSymbol:{type:'simple-fill',color:[160,160,160,.04],outline:{color:'#b3b6bb',width:1,style:'dash'}},
+       classBreakInfos:POPULATION_CLASSES.map(([min,max,alpha,label])=>({minValue:min,maxValue:max,label,symbol:{type:'simple-fill',color:[80,180,200,alpha],outline:{color:'#76d7e8',width:.8}}}))},
+      // Zone names only from far out (full labels overlapped at county scale); names with residents once zoomed in.
+      labelingInfo:[['$feature.name',0,300000],['$feature.displayLabel',300000,0]].map(([expression,minScale,maxScale])=>({labelPlacement:'always-horizontal',deconflictionStrategy:'static',labelExpressionInfo:{expression},symbol:{type:'text',color:'#e5f6ff',haloColor:'#17232b',haloSize:1.5,font:{size:10,family:'Arial',weight:'bold'}},minScale,maxScale}))});
     const map=new ArcMap({basemap:new Basemap({baseLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer'})],referenceLayers:[new TileLayer({url:'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer'})]}),layers:[layer]});
-    view=new MapView({container:'zone-map',map,center:[-119.7,36.75],zoom:8,popupEnabled:false,constraints:{rotationEnabled:false},highlightOptions:{color:'#ffffff',haloOpacity:1,fillOpacity:.1}});
+    view=new MapView({container:'zone-map',map,center:[-119.7,36.75],zoom:8,popupEnabled:false,constraints:{rotationEnabled:false,snapToZoom:false},highlightOptions:{color:'#ffffff',haloOpacity:1,fillOpacity:.1}});
     await Promise.all([view.when(),layer.load()]);layerView=await view.whenLayerView(layer);const result=await layer.queryFeatures({where:'1=1',outFields:['oid','name'],returnGeometry:true});
     // The unified CDN runtime registers map components when they enter the DOM.
     const scale=document.createElement('arcgis-scale-bar');scale.setAttribute('unit','dual');view.ui.add(scale,'bottom-left');
     void customElements.whenDefined('arcgis-scale-bar').then(()=>{scale.view=view;});
     if(result.features.length!==m.counts.zones)throw Error('Map drawing did not return the full zone inventory.');graphics=new Map(result.features.map(g=>[g.attributes.oid,g]));
-    $('fit-county').disabled=false;await view.goTo(layer.fullExtent.expand(1.05),{animate:false});$('map-status').textContent='';fromUrl();
+    zonesExtent=(await layer.queryExtent()).extent??layer.fullExtent;$('fit-county').disabled=false;await view.goTo(zonesExtent.expand(1.05),{animate:false});$('map-status').textContent='';fromUrl();
     view.on('click',async event=>{try{const hit=await view.hitTest(event,{include:[layer]}),id=hit.results.find(r=>r.type==='graphic'&&r.graphic.layer===layer)?.graphic.attributes.oid;const f=product.data.features.find(f=>f.properties.oid===id);if(f)void select(f,true);}catch(e){mapError(e);}});
   }catch(error){
     $('map-status').textContent='Map unavailable: '+error.message;
