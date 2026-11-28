@@ -1,4 +1,4 @@
-// three.js version of flood-scenario-3d.js: the same scenarios and playback, drawn as a lit scene for realism. Terrain from
+// three.js flood scenario playback: the scenarios and playback of the 2D page, drawn as a lit scene for realism. Terrain from
 // Terrarium elevation tiles draped with Esri World Imagery; a water surface raised to ground + modeled depth (decoded from
 // the depth PNGs); Overture footprints as one mesh whose impact colours come from the clock in the shader; evacuation cars
 // as instanced vehicles on the terrain. World frame: x east, y up, z south, Web Mercator metres from the scenario extent

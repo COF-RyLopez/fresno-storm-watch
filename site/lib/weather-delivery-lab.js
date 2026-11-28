@@ -69,7 +69,7 @@ function focus(){
   const basin=context?.watersheds.features.find(f=>f.properties.reservoir===$('basin').value);
   if(!basin||!map)return;
   map.watershed(basin);map.focus(basin.properties.bounds,true);
-  $('map-status').textContent=`${$('basin').selectedOptions[0].textContent} · recorded reference context${$('lab-map').dataset.renderer==='three'?' · 3D preview':''}`;
+  $('map-status').textContent=`${$('basin').selectedOptions[0].textContent} · recorded reference context${$('lab-map').dataset.renderer==='three'?' · 3D map':''}`;
 }
 const median=values=>{const rows=[...values].sort((a,b)=>a-b);return rows[Math.floor(rows.length/2)];};
 async function benchmark(){

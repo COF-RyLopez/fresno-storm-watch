@@ -49,7 +49,7 @@ For the published preview use `https://cof-rylopez.github.io/fresno-storm-watch/
 | PIO outreach / AFN source-change review | Native Work tool using the shared editor, source checks, team reviews and scoped readable Command handoffs | Distinct PIO/approver account exercise and staff acceptance |
 | Pump readiness and assignments | Private inventory in Watch; records preserved; direct existing form/action links | Migrate all readiness-specific review and task actions into Work |
 | `pump-readiness.html`, `zone-population.html` | Preserved focused external entry points | Shared visual polish; retain direct URLs |
-| `flood-scenario.html`, `flood-scenario-3d.html`, `scenario-guide.html` | Preserved outside primary operator navigation | Contextual comparison when a usable product covers selection |
+| `flood-scenario.html`, `flood-scenario-3js.html`, `scenario-guide.html` | Preserved outside primary operator navigation | Contextual comparison when a usable product covers selection |
 | `river-3d.html`, `map-pilot.html`, `reported-locations.html` | Retained specialist/benchmark routes, absent from normal menus | Remove only after equivalent coverage is accepted |
 | `planning.html` | Retained detailed reference; technical qualifications move into Details | Complete maintainer/operator content split |
 | `eoc-guide.html` | Account → access/help | Keep current help and workflow links |

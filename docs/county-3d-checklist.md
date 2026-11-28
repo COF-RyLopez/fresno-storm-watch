@@ -4,9 +4,11 @@ Started 2026-11-28 to track what is on the three.js county scene, what still run
 
 ## Short answer: swap defaults, don't remove pages yet
 
-Only one old page is safe to remove now (the ArcGIS 3D flood page, which already redirects). Everything else either has no 3D replacement yet, or is a 2D page the plan keeps on purpose (phones, printing, forms).
+Only one old page was safe to remove (the ArcGIS 3D flood page), and it is gone. Everything else either has no 3D replacement yet, or is a 2D page the plan keeps on purpose (phones, printing, forms).
 
-The bigger move is to **swap defaults** rather than delete: make the 3D map the default where it already does everything the old map did, and keep the old one one click (or one URL parameter) away. Pages get deleted only after the 3D default has run through a real storm or exercise without anyone needing the fallback.
+**No redirects.** Only Ryan and Claude use the app (Ryan, 2026-11-28), so a retired page is deleted outright and links to it are updated in the same PR. No stub pages are kept for old bookmarks.
+
+The bigger move is to **swap defaults** rather than delete: make the 3D map the default where it already does everything the old map did, and keep the old one one click (or one URL parameter) away. Pages get deleted (no redirect) only after the 3D default has run through a real storm or exercise without anyone needing the fallback.
 
 Two reasons not to start deleting:
 
@@ -18,18 +20,18 @@ Two reasons not to start deleting:
 | Page | Map today | 3D status | Recommendation | What has to be true first |
 |---|---|---|---|---|
 | Command (`command/`) | MapLibre default, three.js behind `?renderer=three` | Most of the map interface done (see checklist) | **Swap default** on desktop. Keep MapLibre for phones, for machines without WebGL, and at `?renderer=maplibre` | WebGL fallback, fps check during weather playback, staff acceptance on county desktops |
-| Classic Storm Watch (`index.html`, site root) | ArcGIS MapView/SceneView + MapLibre | Not ported (by design: its useful layers move into Command) | **Keep for now.** Later: send the site root to Command, keep classic at its own address during acceptance, then retire | Every item in "Classic-only tools" is in Command or deliberately dropped |
+| Classic Storm Watch (`index.html`, site root) | ArcGIS MapView/SceneView + MapLibre | Not ported (by design: its useful layers move into Command) | **Keep for now.** Later: make Command the site root and delete classic | Every item in "Classic-only tools" is in Command or deliberately dropped |
 | Flood scenarios, 3D (`flood-scenario-3js.html`) | three.js | Done | Keep, it is the 3D flood view | |
 | Flood scenarios, 2D (`flood-scenario.html`) | ArcGIS MapView | 2D by design | **Keep** as the phone / weak-GPU fallback | |
-| Flood scenarios, ArcGIS 3D (`flood-scenario-3d.html`) | Redirect to the three.js page | Superseded | **Remove now (needs Ryan's okay).** The page still loads the whole ArcGIS SDK and stylesheet before its script redirects. Replace it with a bare redirect stub so old links keep working | Nothing |
+| ~~Flood scenarios, ArcGIS 3D (`flood-scenario-3d.html`)~~ | — | Superseded | **Removed** (PR #164, Ryan's okay 2026-11-28), no redirect | |
 | River surge (`river-3d.html`) | County engine (three.js) | Done (SceneView version already gone) | Keep | Google 3D tiles only return once the engine loads 3D Tiles (optional) |
 | County scene (`county-3d.html`) | County engine | Test bed | Keep as a developer page. Take it out of Command's Views menu once 3D is Command's default | |
-| Weather delivery lab (`weather-delivery.html`) | MapLibre default, three.js behind `?renderer=three` | Done (PR #163) | **Swap default now.** It is a lab, so low risk; keep the toggle so both renderers can still be timed | Nothing |
+| Weather delivery lab (`weather-delivery.html`) | three.js default, MapLibre at `?renderer=maplibre` | Done (PR #163) | **Default swapped to 3D** (PR #164). The toggle stays so both renderers can still be timed | |
 | Map comparison pilot (`map-pilot.html`) | MapLibre + ArcGIS | In progress in the "Migrate the next screen to 3D" thread | Add three.js there, then **retire** once Command's default is settled, since its job is comparing engines | Command default decided |
 | Evacuation-zone population (`zone-population.html`) | ArcGIS | 2D by design | **Keep 2D** (labels, print, CSV) | |
 | Reported problem locations (`reported-locations.html`) | Leaflet | 2D by design | **Keep 2D** (printable review list) | |
 | Pump readiness, rehearsal, inventory (`pump-*.html`) | ArcGIS (sign-in, location confirm) | 2D by design | **Keep 2D** (forms) | |
-| EOC workspace, guides, setup, planning, terrain notes (`eoc*.html`, `*-guide.html`, `setup.html`, `planning.html`, `terrain.html`, `pump-refresh-setup.html`) | No map | n/a | Keep. Update their links and text when classic retires (they point at `./` and describe SceneView sources) | |
+| EOC workspace, guides, setup, planning, terrain notes (`eoc*.html`, `*-guide.html`, `setup.html`, `planning.html`, `terrain.html`, `pump-refresh-setup.html`) | No map | n/a | Keep. Update their links and text when classic is deleted (they point at `./` and describe SceneView sources) | |
 
 ## Command 3D map (`site/lib/county-scene-map.js`)
 
@@ -109,4 +111,5 @@ Found in the classic app's modules with no matching module in Command (code sear
 
 Record each page removed or redirected, with the PR and Ryan's okay.
 
-- (none yet)
+- 2026-11-28, PR #164: deleted `flood-scenario-3d.html` and `flood-scenario-3d.js` (ArcGIS SceneView flood page, superseded by `flood-scenario-3js.html`). No redirect. Ryan's okay in the project thread.
+- 2026-11-28, PR #164: weather delivery lab defaults to the 3D county map; MapLibre at `?renderer=maplibre`.
