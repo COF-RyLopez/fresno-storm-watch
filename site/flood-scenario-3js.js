@@ -197,6 +197,15 @@ const slotFrame = [-1, -1];
 const DEPTH_SCALE = (255 / DEPTH_STEPS_PER_FT).toFixed(4); // R8 texel -> ft
 const WET_BAND = 14; // m of darkened, wet ground beyond the water's edge
 const depthU = { uD0: { value: slots[0] }, uD1: { value: slots[1] }, uW: { value: 0 } }; // shared by the water and the terrain
+// Ground elevation (m) on the depth frames' grid, for the water-surface slope that sets the flow direction and speed.
+const groundTex = (() => {
+  const gw = 2048, gh = Math.round((gw * H) / W), data = new Float32Array(gw * gh);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) data[j * gw + i] = groundAt(-W / 2 + ((i + 0.5) / gw) * W, -H / 2 + ((j + 0.5) / gh) * H) / k;
+  const t = new THREE.DataTexture(data, gw, gh, THREE.RedFormat, THREE.FloatType);
+  const filter = renderer.extensions.has('OES_texture_float_linear') ? THREE.LinearFilter : THREE.NearestFilter;
+  return Object.assign(t, { magFilter: filter, minFilter: filter, needsUpdate: true });
+})();
+const FLOW_STEP = 40; // m between slope samples (and three times that for a smoother second estimate)
 function waveNormals(N = 256) { // tileable ripple normal map: a sum of waves with integer frequencies
   const h = new Float32Array(N * N), waves = [];
   for (let s = 1; s <= 28; s++) { const a = Math.random() * 2 * Math.PI, f = 2 + Math.random() * 14; waves.push([Math.round(Math.cos(a) * f), Math.round(Math.sin(a) * f), 1 / f, Math.random() * 6.3]); }
@@ -244,18 +253,32 @@ const water = new THREE.Mesh(grid, new THREE.ShaderMaterial({
     #include <common>
     #include <fog_pars_fragment>
     #include <logdepthbuf_pars_fragment>
-    uniform sampler2D uD0, uD1, uNormals, uRamp; uniform samplerCube uSky; uniform float uW, uTime, uK, uRampTop, uDepthColours; uniform vec3 uSun;
+    uniform sampler2D uD0, uD1, uNormals, uRamp, uGround; uniform samplerCube uSky; uniform float uW, uTime, uK, uRampTop, uDepthColours; uniform vec3 uSun; uniform vec2 uFlowStep;
     varying vec2 vUv; varying vec3 vWorld; varying float vLift;
     vec3 ripple(vec2 p, float s, vec2 v) { return texture2D(uNormals, p * s + v * uTime).rgb * 2.0 - 1.0; }
+    vec3 chop(vec2 q) { return (texture2D(uNormals, q / 23.0).rgb * 2.0 - 1.0) + (texture2D(uNormals, q / 7.0 + 0.31).rgb * 2.0 - 1.0) * 0.6; }
+    float eta(vec2 uv) { return texture2D(uGround, uv).r + mix(texture2D(uD0, uv).r, texture2D(uD1, uv).r, uW) * ${DEPTH_SCALE} * ${FT}; } // water surface, m
+    vec2 slope(vec2 s) { return vec2(eta(vUv + vec2(s.x, 0.0)) - eta(vUv - vec2(s.x, 0.0)), eta(vUv + vec2(0.0, s.y)) - eta(vUv - vec2(0.0, s.y))); }
     void main() {
       #include <logdepthbuf_fragment>
       float d0 = texture2D(uD0, vUv).r * ${DEPTH_SCALE}, d1 = texture2D(uD1, vUv).r * ${DEPTH_SCALE};
       float d = mix(d0, d1, uW); // ft, at the PNG's resolution
       if (d < 0.04) discard;
       vec2 p = vWorld.xz / uK;
-      vec3 n1 = ripple(p, 1.0 / 23.0, vec2(0.011, 0.004)), n2 = ripple(p, 1.0 / 7.0, vec2(-0.006, 0.013)), n3 = ripple(p, 1.0 / 180.0, vec2(0.002, -0.001));
+      // Flow: down the water-surface slope (x east, z south; averaged over two baselines to smooth the 30 m terrain), at a
+      // Manning speed for rough urban flow (n = 0.06), capped. Ripples and foam ride it in real time, whatever the playback rate.
+      vec2 g = slope(uFlowStep) / ${2 * 40}.0 * 0.5 + slope(uFlowStep * 3.0) / ${6 * 40}.0 * 0.5;
+      float S = length(g), dm = d * ${FT};
+      float speed = min(sqrt(S) * pow(dm, 0.667) / 0.06, 3.0);
+      vec2 dir = S > 1e-6 ? -g / S : vec2(1.0, 0.0), flow = dir * speed;
+      // two-phase flow map: each layer drifts for P seconds and resets while its weight is zero
+      const float P = 4.0;
+      float ph0 = fract(uTime / P), ph1 = fract(uTime / P + 0.5), w0 = 1.0 - abs(2.0 * ph0 - 1.0);
+      vec2 o0 = flow * ph0 * P, o1 = flow * ph1 * P + vec2(5.3, 11.7);
+      vec3 nf = chop(p - o0) * w0 + chop(p - o1) * (1.0 - w0);
+      vec3 n3 = ripple(p, 1.0 / 180.0, vec2(0.002, -0.001)); // slow wind swell, independent of the current
       float far = smoothstep(300.0, 2500.0, distance(cameraPosition, vWorld) / uK); // calm the fine ripples with distance: they shimmer
-      vec3 N = normalize(vec3(n1.x * (1.0 - far) + n2.x * 0.6 * (1.0 - far) + n3.x * 0.8, 5.0 + 6.0 * far, n1.y * (1.0 - far) + n2.y * 0.6 * (1.0 - far) + n3.y * 0.8));
+      vec3 N = normalize(vec3(nf.x * (1.0 - far) + n3.x * 0.8, 5.0 + 6.0 * far, nf.y * (1.0 - far) + n3.y * 0.8));
       vec3 V = normalize(cameraPosition - vWorld);
       float fres = 0.02 + 0.98 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
       vec3 R = reflect(-V, N);
@@ -271,8 +294,13 @@ const water = new THREE.Mesh(grid, new THREE.ShaderMaterial({
       vec3 glint = vec3(1.0, 0.93, 0.8) * pow(max(dot(R, uSun), 0.0), 420.0) * 6.0 * (1.0 - uDepthColours);
       // Patchy foam only where the water is rising fast (the advancing front) and in a thin line at the very edge.
       float rising = smoothstep(0.08, 0.8, abs(d1 - d0)) * (1.0 - smoothstep(0.0, 3.0, d));
-      float patches = texture2D(uNormals, p / 61.0 + uTime * vec2(0.012, 0.008)).r * 0.65 + texture2D(uNormals, p / 23.0 - uTime * vec2(0.006, 0.01)).g * 0.35;
-      float foam = smoothstep(0.6, 0.78, patches) * clamp(rising + (1.0 - smoothstep(0.04, 0.2, d)) * 0.5, 0.0, 1.0) * (1.0 - uDepthColours);
+      // Foam: streaks stretched along the current and carried by it; more of it where the flow is fast.
+      mat2 toFlow = mat2(dir.x, -dir.y, dir.y, dir.x); // world xz -> (along, across)
+      vec2 st = vec2(1.0 / 70.0, 1.0 / 13.0);
+      float patches = texture2D(uNormals, toFlow * (p - o0) * st).r * w0 + texture2D(uNormals, toFlow * (p - o1) * st).r * (1.0 - w0);
+      patches = patches * 0.7 + texture2D(uNormals, p / 41.0).g * 0.3;
+      float churn = smoothstep(0.7, 2.4, speed);
+      float foam = smoothstep(0.6, 0.76, patches) * clamp(rising + churn * 0.8 + (1.0 - smoothstep(0.04, 0.2, d)) * 0.5, 0.0, 1.0) * (1.0 - uDepthColours);
       // out = ground * T(1-F) + body (1-T)(1-F) + sky F, written as a colour over the ground with alpha a
       float a = 1.0 - T * (1.0 - F);
       vec3 col = (body * (1.0 - T) * (1.0 - F) + sky * F + glint) / max(a, 1e-3);
@@ -283,7 +311,7 @@ const water = new THREE.Mesh(grid, new THREE.ShaderMaterial({
       #include <fog_fragment>
     }`
 }));
-Object.assign(water.material.uniforms, depthU, { uSky: { value: skyCube } });
+Object.assign(water.material.uniforms, depthU, { uSky: { value: skyCube }, uGround: { value: groundTex }, uFlowStep: { value: new THREE.Vector2((FLOW_STEP * k) / W, (FLOW_STEP * k) / H) } });
 water.renderOrder = 1;
 water.frustumCulled = false;
 scene.add(water);
