@@ -9,7 +9,7 @@ import { Sky } from './vendor/three-0.187.0/addons/Sky.js';
 import { positionsAt } from './lib/evacuation-traffic.js';
 import { blend, rowsToObjects, summarize } from './lib/flood-scenario-model.js';
 import { CLASSES, createPlayer, fieldInfos, pickScenario, showScenario, showStatus, trafficCounts, trafficLoader } from './lib/flood-scenario-page.js';
-import { decodeDepth, DEPTH_STEPS_PER_FT, legendDepth, parseFootprints, sampleGrid, terrarium, tileRange } from './lib/flood-three-model.js';
+import { DEPTH_STEPS_PER_FT, parseFootprints, sampleGrid, terrarium, tileRange } from './lib/flood-three-model.js';
 
 const ROOT = './data/flood-scenarios/';
 const $ = id => document.getElementById(id);
@@ -147,27 +147,42 @@ async function loadDetail() {
 }
 
 // ---------- water ----------
-const toFt = legendDepth(scenario.legend);
-const frameCache = new Map(); // frame index -> Promise<Uint8Array>; ponytail: last 8 frames kept, a worker if decoding stutters
+// Depth frames are fetched and decoded in a worker: ~45 ms per frame on the main thread stalled playback once per frame.
+// A blob module worker imports the import-mapped (cache-keyed) model URL, so it updates with the page.
+const depthWorker = new Worker(URL.createObjectURL(new Blob([`
+  import { decodeDepth, legendDepth } from ${JSON.stringify(import.meta.resolve('./lib/flood-three-model.js'))};
+  const toFt = legendDepth(${JSON.stringify(scenario.legend)});
+  onmessage = async ({ data: { i, url } }) => {
+    try {
+      const bmp = await createImageBitmap(await (await fetch(url)).blob());
+      const ctx = new OffscreenCanvas(bmp.width, bmp.height).getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(bmp, 0, 0);
+      const depth = decodeDepth(ctx.getImageData(0, 0, bmp.width, bmp.height).data, toFt);
+      postMessage({ i, depth, size: [bmp.width, bmp.height] }, [depth.buffer]);
+    } catch (error) { postMessage({ i, error: String(error) }); }
+  };`], { type: 'text/javascript' })), { type: 'module' });
+const pending = new Map(); // frame index -> { resolve, reject }
+depthWorker.onmessage = ({ data: { i, depth, size, error } }) => {
+  const p = pending.get(i);
+  pending.delete(i);
+  if (error) { frameCache.delete(i); p?.reject(new Error(error)); } else { frameSize = size; p?.resolve(depth); }
+};
+const frameCache = new Map(); // frame index -> Promise<Uint8Array>; last 8 frames kept
 let frameSize = null;
 function frameDepth(i) {
   if (!frameCache.has(i)) {
-    frameCache.set(i, fetch(DATA + frames[i].image).then(r => r.blob()).then(createImageBitmap).then(bmp => {
-      const c = new OffscreenCanvas(bmp.width, bmp.height), ctx = c.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(bmp, 0, 0);
-      frameSize = [bmp.width, bmp.height];
-      return decodeDepth(ctx.getImageData(0, 0, bmp.width, bmp.height).data, toFt);
-    }));
+    frameCache.set(i, new Promise((resolve, reject) => { pending.set(i, { resolve, reject }); depthWorker.postMessage({ i, url: new URL(DATA + frames[i].image, location.href).href }); }));
     if (frameCache.size > 8) frameCache.delete(frameCache.keys().next().value);
   }
   return frameCache.get(i);
 }
-const depthTexture = (data = new Uint8Array(1), w = 1, h = 1) => { // a new texture per frame: WebGL storage does not resize
+const depthTexture = (data = new Uint8Array(1), w = 1, h = 1) => { // WebGL storage does not resize: a new size needs a new texture
   const t = new THREE.DataTexture(data, w, h, THREE.RedFormat, THREE.UnsignedByteType);
   Object.assign(t, { magFilter: THREE.LinearFilter, minFilter: THREE.LinearFilter, unpackAlignment: 1, needsUpdate: true });
   return t;
 };
-const slots = [depthTexture(), depthTexture()];
+const pool = [depthTexture(), depthTexture()]; // two GPU textures, refilled in place
+const slots = [...pool];
 const slotFrame = [-1, -1];
 function waveNormals(N = 256) { // tileable ripple normal map: a sum of waves with integer frequencies
   const h = new Float32Array(N * N), waves = [];
@@ -253,14 +268,25 @@ async function showFrames(i0, i1) {
   const key = `${i0},${i1}`;
   if (key === wantFrames) return;
   wantFrames = key;
-  const [a, b] = await Promise.all([frameDepth(i0), frameDepth(i1)]);
+  const [a, b] = await Promise.all([frameDepth(i0), frameDepth(i1)]).catch(e => { console.warn('Depth frame:', e.message); return []; });
+  if (!a) { if (wantFrames === key) wantFrames = ''; return; } // the next render retries
   if (wantFrames !== key) return;
-  for (const [slot, data, i] of [[0, a, i0], [1, b, i1]]) {
-    if (slotFrame[slot] === i) continue;
-    slots[slot].dispose();
-    slots[slot] = water.material.uniforms[`uD${slot}`].value = depthTexture(data, ...frameSize);
-    slotFrame[slot] = i;
-  }
+  // Reuse a texture that already holds a wanted frame (stepping forward, the old i1 becomes i0) and refill the other in
+  // place: a same-size update is one texSubImage2D, where a new texture also reallocated GPU storage (~100 ms per frame step).
+  const held = new Map(slotFrame.map((f, s) => [f, slots[s]]));
+  const next = [held.get(i0), held.get(i1)];
+  const spare = pool.filter(t => !next.includes(t));
+  [[0, a, i0], [1, b, i1]].forEach(([s, data, i]) => {
+    if (next[s]) return;
+    if (s === 1 && i1 === i0) { next[1] = next[0]; return; }
+    let t = spare.pop();
+    if (t.image.width === frameSize[0] && t.image.height === frameSize[1]) { t.image.data = data; t.needsUpdate = true; } else { t.dispose(); pool[pool.indexOf(t)] = t = depthTexture(data, ...frameSize); }
+    next[s] = t;
+  });
+  [slots[0], slots[1]] = next;
+  [slotFrame[0], slotFrame[1]] = [i0, i1];
+  water.material.uniforms.uD0.value = slots[0];
+  water.material.uniforms.uD1.value = slots[1];
   frameDepth(Math.min(i1 + 1, frames.length - 1)); // prefetch
 }
 
