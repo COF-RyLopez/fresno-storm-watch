@@ -18,6 +18,7 @@ const exportsByModule = {
   "sdk": ["loadCoreSdk"],
   "watch-regional-radar-ui": ["installRegionalRadar"],
   "watch-terrain-map": ["createWatchTerrain"],
+  "county-scene-map": ["createWatchTerrain"],
   "watch-watershed-data": ["loadWatershedRain"],
   "watershed-timeline-model": ["precipitationTimeline"],
 } as const satisfies {[K in keyof Modules]: readonly FunctionExports<Modules[K]>[]};

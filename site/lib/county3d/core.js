@@ -8,9 +8,9 @@ import { createTerrain } from './terrain.js';
 
 /**
  * @param {{container: HTMLElement, bounds?: number[], time?: Date, terrain?: object, onPerf?: (p: object) => void,
- *   maxPixelRatio?: number}} options
+ *   maxPixelRatio?: number, nightFloor?: number}} options  nightFloor 0..1 keeps the ground readable at night
  */
-export function createCountyScene({ container, bounds = COUNTY_BOUNDS, time = new Date(), terrain: terrainOptions = {}, onPerf = () => {}, maxPixelRatio = 2 }) {
+export function createCountyScene({ container, bounds = COUNTY_BOUNDS, time = new Date(), terrain: terrainOptions = {}, onPerf = () => {}, maxPixelRatio = 2, nightFloor = 0 }) {
   const frame = createFrame(bounds), { k } = frame;
   const [lonC, latC] = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
   // Reversed depth where supported keeps early-z; logarithmic depth is only the fallback (it disables early-z).
@@ -39,7 +39,7 @@ export function createCountyScene({ container, bounds = COUNTY_BOUNDS, time = ne
   const sun = new THREE.DirectionalLight(0xfff1dc, 2.2), hemi = new THREE.HemisphereLight(0xcfe4ff, 0x6b5a40, 0.5);
   scene.add(sun, sun.target, hemi);
   scene.fog = new THREE.FogExp2(0xb4c3ce, 1 / (700_000 * k)); // light aerial perspective: the county view spans ~250 km
-  const sunDir = new THREE.Vector3();
+  const sunDir = new THREE.Vector3(), MOON = new THREE.Vector3(-0.45, 0.8, 0.4).normalize();
   let clock = time;
   /** Set the scene clock: moves the sun and sky (night is dark), returns {elevation, azimuth}. */
   function setTime(date) {
@@ -47,15 +47,18 @@ export function createCountyScene({ container, bounds = COUNTY_BOUNDS, time = ne
     const { elevation, azimuth } = sunPosition(date, lonC, latC), e = THREE.MathUtils.degToRad(elevation), a = THREE.MathUtils.degToRad(azimuth);
     sunDir.set(Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e));
     sky.material.uniforms.sunPosition.value.copy(sunDir);
-    sun.position.copy(sunDir).multiplyScalar(100_000 * k); // a directional light only uses position - target
     cubeCamera.update(renderer, skyScene);
     scene.background = cube.texture;
     envRT?.dispose();
     envRT = pmrem.fromScene(skyScene, 0.02);
     scene.environment = envRT.texture;
-    const day = THREE.MathUtils.smoothstep(elevation, -4, 8);
-    sun.intensity = 2.2 * THREE.MathUtils.smoothstep(elevation, 0, 10);
-    sun.color.setHSL(0.09, 0.6, 0.5 + 0.4 * THREE.MathUtils.smoothstep(elevation, 2, 25));
+    const sunUp = THREE.MathUtils.smoothstep(elevation, 0, 10), day = Math.max(THREE.MathUtils.smoothstep(elevation, -4, 8), nightFloor);
+    // With a night floor the key light swings from the sun to a dim, cool light from high in the south-west ("moonlight"),
+    // so relief stays readable after dark without pretending it is day.
+    const moon = nightFloor > 0 ? 1 - sunUp : 0;
+    sun.position.copy(sunDir).lerp(MOON, moon).normalize().multiplyScalar(100_000 * k); // a directional light only uses position - target
+    sun.intensity = 2.2 * Math.max(sunUp, nightFloor * 0.55 * moon);
+    sun.color.setHSL(moon > 0.5 ? 0.6 : 0.09, moon > 0.5 ? 0.25 : 0.6, 0.5 + 0.4 * THREE.MathUtils.smoothstep(elevation, 2, 25));
     hemi.intensity = 0.06 + 0.44 * day;
     scene.environmentIntensity = 0.12 + 0.48 * day;
     scene.fog.color.setRGB(0.04 + 0.66 * day, 0.05 + 0.71 * day, 0.07 + 0.74 * day);
@@ -106,6 +109,8 @@ export function createCountyScene({ container, bounds = COUNTY_BOUNDS, time = ne
     if (tg !== null) controls.target.y += (tg - controls.target.y) * 0.2;
     const cg = terrain.groundAt(camera.position.x, camera.position.z);
     if (cg !== null && camera.position.y < cg + 25 * k) camera.position.y = cg + 25 * k;
+    // aerial perspective scales with the view so wide views stay crisp and close views keep depth
+    scene.fog.density = 1 / Math.max(700_000 * k, 5 * camera.position.distanceTo(controls.target));
     for (const hook of hooks) hook(now, dt);
     terrain.update(camera, container.clientHeight);
     renderer.render(scene, camera);
@@ -126,11 +131,13 @@ export function createCountyScene({ container, bounds = COUNTY_BOUNDS, time = ne
   setTime(time);
   view((bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2, 230_000, 40);
 
-  return {
+  const api = {
     THREE, frame, renderer, scene, camera, controls, terrain, groundAt, setTime, view, sun, sunDir,
     get time() { return clock; },
     /** Register a per-frame hook (now ms, dt ms); returns an unsubscribe function. */
     onFrame(fn) { hooks.add(fn); return () => hooks.delete(fn); },
-    destroy() { renderer.setAnimationLoop(null); terrain.dispose(); controls.dispose(); envRT?.dispose(); cube.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); }
+    destroy() { renderer.setAnimationLoop(null); terrain.dispose(); controls.dispose(); envRT?.dispose(); cube.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); delete container.county3d; }
   };
+  container.county3d = api; // for checks from DevTools
+  return api;
 }

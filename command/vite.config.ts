@@ -10,7 +10,7 @@ const sharedModules = {
     order: "post" as const,
     async handler(html: string) {
       const imports: Record<string, string> = {};
-      for (const directory of ["", "lib/"]) {
+      for (const directory of ["", "lib/", "lib/county3d/"]) {
         const base = new URL("../site/" + directory, import.meta.url);
         for (const name of (await readdir(base))
           .filter((n) => /\.m?js$/.test(n))

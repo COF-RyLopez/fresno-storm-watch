@@ -7,7 +7,9 @@ import { screenPixels, tileTouches, tilesCovering } from './frame.js';
 
 export const DEM = (z, x, y) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
 export const IMAGERY = (z, x, y) => `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
-const N = 32, ROOT_Z = 8, DEM_MAX_Z = 14, TEX = 512;
+const N = 32, ROOT_Z = 6, DEM_MAX_Z = 14, TEX = 512;
+// Coarse context around the county (about 5 degrees each way) so wide views never show the edge of the base.
+const CONTEXT_DEGREES = 5;
 
 // Fetch and decode in workers: PNG decode and getImageData on the main thread stall the frame loop.
 const WORKER = `
@@ -48,9 +50,9 @@ function gridBuffers() {
 
 /**
  * @param {{frame: ReturnType<import('./frame.js').createFrame>, renderer: THREE.WebGLRenderer, dem?: Function, imagery?: Function,
- *   maxZoom?: number, outsideMaxZoom?: number, detail?: number, maxNodes?: number}} options
+ *   maxZoom?: number, outsideMaxZoom?: number, detail?: number, maxNodes?: number, decorate?: (m: THREE.MeshStandardMaterial) => void}} options
  */
-export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, maxZoom = 16, outsideMaxZoom = 11, detail = 1.25, maxNodes = 700 }) {
+export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, maxZoom = 16, outsideMaxZoom = 10, detail = 1.25, maxNodes = 700, decorate = () => {} }) {
   const { k } = frame, group = new THREE.Group(), shared = gridBuffers();
   const anisotropy = renderer.capabilities.getMaxAnisotropy();
   const workers = [0, 1, 2].map(() => new Worker(URL.createObjectURL(new Blob([WORKER], { type: 'text/javascript' }))));
@@ -80,7 +82,8 @@ export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, m
     }
     get maxZ() { return this.inside ? maxZoom : outsideMaxZoom; }
   }
-  const roots = tilesCovering(frame.bounds, ROOT_Z).map(([z, x, y]) => new Node(z, x, y, null));
+  const [bw, bs, be, bn] = frame.bounds, context = [bw - CONTEXT_DEGREES, bs - CONTEXT_DEGREES, be + CONTEXT_DEGREES, bn + CONTEXT_DEGREES];
+  const roots = tilesCovering(context, ROOT_Z).map(([z, x, y]) => new Node(z, x, y, null));
   const loaded = new Set();
   let inflight = 0, frameNo = 0;
 
@@ -120,7 +123,9 @@ export function createTerrain({ frame, renderer, dem = DEM, imagery = IMAGERY, m
       geom.computeBoundingSphere();
       const map = new THREE.Texture(img.bitmap);
       Object.assign(map, { colorSpace: THREE.SRGBColorSpace, flipY: false, anisotropy, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, needsUpdate: true });
-      const mesh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ map, roughness: 0.95, metalness: 0 }));
+      const material = new THREE.MeshStandardMaterial({ map, roughness: 0.95, metalness: 0 });
+      decorate(material);
+      const mesh = new THREE.Mesh(geom, material);
       mesh.position.set(cx, 0, cz);
       mesh.visible = false;
       mesh.receiveShadow = true;

@@ -1026,7 +1026,9 @@ async function ensureMap() {
   if (mapLoading) return mapLoading;
   mapLoading = (async () => {
     try {
-      const { createWatchTerrain } = await moduleAt("watch-terrain-map");
+      // three.js county scene (docs/county-3d-plan.md, phase 2) on request; MapLibre stays the default during acceptance.
+      const renderer = new URLSearchParams(location.search).get("renderer") === "three" ? "county-scene-map" : "watch-terrain-map";
+      const { createWatchTerrain } = await moduleAt(renderer);
       map = await createWatchTerrain({
         container: $("command-map"),
         onInspect: value=>inspector.reading(value),
