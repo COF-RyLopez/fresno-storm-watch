@@ -179,6 +179,17 @@ const privateController = privateModel.createCommandPrivate({
     renderCoverage();
   },
 });
+// Views menu: switch between the standard map and the 3D preview, keeping the place in the URL hash.
+{
+  const params = new URLSearchParams(location.search), three = params.get("renderer") === "three", toggle = $<HTMLAnchorElement>("renderer-toggle");
+  if (three) params.delete("renderer"); else params.set("renderer", "three");
+  toggle.textContent = three ? "Use the standard map" : "Try the 3D map (preview)";
+  const refresh = () => { toggle.href = `${location.pathname}${params.size ? "?" + params : ""}${location.hash}`; };
+  refresh(); addEventListener("hashchange", refresh);
+  // a new page load is needed to switch renderers; a hash-only change would not reload
+  toggle.addEventListener("click", (event) => { event.preventDefault(); location.assign(toggle.href); });
+  document.querySelectorAll<HTMLAnchorElement>(".views-panel a").forEach((a) => a.addEventListener("click", () => $<HTMLDetailsElement>("views-menu").open = false));
+}
 privateView = privateUI.mountCommandPrivate({
   work: $("work-view"),
   briefing: $("briefing-view"),

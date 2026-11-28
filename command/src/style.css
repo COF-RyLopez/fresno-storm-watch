@@ -211,6 +211,39 @@ small {
   display: block;
   margin-top: 14px;
 }
+/* Views: one place to reach every other screen, grouped, each with what it is for. */
+.views-panel {
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(70vh, 560px);
+  overflow: auto;
+}
+.views-panel strong {
+  display: block;
+  margin-top: 16px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #9fb0b8);
+}
+.views-panel strong:first-child {
+  margin-top: 0;
+}
+.views-panel a {
+  margin-top: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.views-panel a:hover,
+.views-panel a:focus-visible {
+  text-decoration: underline;
+}
+.views-panel small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted, #9fb0b8);
+}
 .incident-strip {
   display: flex;
   gap: 20px;

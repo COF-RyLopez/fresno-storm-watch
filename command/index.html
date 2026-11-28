@@ -32,6 +32,24 @@
         ><button data-view="briefing">Briefing</button>
       </nav>
       <span class="exercise-label">Exercise preview</span>
+      <details class="account views" id="views-menu">
+        <summary>
+          Views <calcite-icon icon="apps" scale="s"></calcite-icon>
+        </summary>
+        <div class="account-panel views-panel">
+          <strong>This map</strong>
+          <a id="renderer-toggle" href="?renderer=three">Try the 3D map (preview)</a>
+          <strong>3D views</strong>
+          <a href="../flood-scenario-3js.html">Flood scenarios<small>Dam-failure playback: water, buildings, evacuation traffic. Planning exercise.</small></a>
+          <a href="../river-3d.html">River surge<small>How water from rising gauges moves downstream. Illustrative.</small></a>
+          <a href="../county-3d.html">County scene<small>Terrain and imagery test bed, no operational data.</small></a>
+          <strong>Maps &amp; records</strong>
+          <a href="../zone-population.html">Evacuation-zone population<small>Estimated residents per Sheriff zone. Read-only.</small></a>
+          <a href="../reported-locations.html">Reported problem locations<small>District 1 and OES review list, printable.</small></a>
+          <a href="../eoc.html">EOC workspace<small>Incident, activation and briefing records. Sign-in required.</small></a>
+          <a href="../">Classic Storm Watch<small>The previous county view, kept during acceptance.</small></a>
+        </div>
+      </details>
       <details class="account">
         <summary>
           Account <calcite-icon icon="user" scale="s"></calcite-icon>
