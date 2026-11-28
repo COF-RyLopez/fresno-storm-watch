@@ -18,7 +18,9 @@ export function createDrape({ frame, paint, countySize = 4096, detailSize = 4096
   const make = px => {
     const canvas = document.createElement('canvas'); canvas.width = canvas.height = px;
     const tex = new THREE.CanvasTexture(canvas);
-    Object.assign(tex, { colorSpace: THREE.SRGBColorSpace, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, anisotropy: 8 });
+    // Canvas row 0 is north, as in the shader's uv (z grows south): CanvasTexture flips by default, which mirrored every
+    // draped layer north-south about the middle of its canvas.
+    Object.assign(tex, { colorSpace: THREE.SRGBColorSpace, flipY: false, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, anisotropy: 8 });
     return { canvas, ctx: canvas.getContext('2d'), tex, px, rect: { x0: 0, z0: 0, size: 1 } };
   };
   const levels = [make(countySize), make(detailSize)];
