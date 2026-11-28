@@ -1,5 +1,7 @@
 # Fresno County in 3D: porting Storm Watch to three.js
 
+Page-by-page status and what is left: `docs/county-3d-checklist.md`.
+
 Started 2026-11-27. A working plan, written after the three.js flood-scenario pages (PR #156, #157, draft #158) proved the renderer. Update it as phases land; the change log at the end records what changed and what was measured.
 
 ## Why
